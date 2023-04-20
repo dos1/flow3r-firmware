@@ -1,0 +1,162 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_EXCMD	mixed	/number, pattern, mixed, or combineV2/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROC_CWD	/home/zjfms/fluff/badge2023/bootstrap/software/espan/main/	//
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	5.9.0	/p5.9.20220828.0/
+AD7147_BASE_ADDR	captouch.c	/^#define AD7147_BASE_ADDR /;"	d	file:
+AD7147_REG_DEVICE_ID	captouch.c	/^#define AD7147_REG_DEVICE_ID /;"	d	file:
+AD7147_REG_PWR_CONTROL	captouch.c	/^#define AD7147_REG_PWR_CONTROL /;"	d	file:
+AD7147_REG_STAGE_CAL_EN	captouch.c	/^#define AD7147_REG_STAGE_CAL_EN /;"	d	file:
+AD7147_REG_STAGE_HIGH_INT_ENABLE	captouch.c	/^#define AD7147_REG_STAGE_HIGH_INT_ENABLE /;"	d	file:
+CIN	captouch.c	/^#define CIN /;"	d	file:
+CIN_BIAS	captouch.c	/^#define CIN_BIAS /;"	d	file:
+CIN_CDC_NEG	captouch.c	/^#define CIN_CDC_NEG /;"	d	file:
+CIN_CDC_POS	captouch.c	/^#define CIN_CDC_POS /;"	d	file:
+CONFIG_I2C_MASTER_SCL	Kconfig.projbuild	/^    config I2C_MASTER_SCL$/;"	c	menu:Example Configuration
+CONFIG_I2C_MASTER_SCL_MODULE	Kconfig.projbuild	/^    config I2C_MASTER_SCL$/;"	c	menu:Example Configuration
+CONFIG_I2C_MASTER_SDA	Kconfig.projbuild	/^    config I2C_MASTER_SDA$/;"	c	menu:Example Configuration
+CONFIG_I2C_MASTER_SDA_MODULE	Kconfig.projbuild	/^    config I2C_MASTER_SDA$/;"	c	menu:Example Configuration
+DEF_apa102LEDStrip	apa102LEDStrip.h	/^#define DEF_apa102LEDStrip$/;"	d
+DMA_BUFFER_COUNT	audio.c	/^#define DMA_BUFFER_COUNT /;"	d	file:
+DMA_BUFFER_SIZE	audio.c	/^#define DMA_BUFFER_SIZE /;"	d	file:
+ESP_INTR_FLAG_DEFAULT	captouch.c	/^#define ESP_INTR_FLAG_DEFAULT /;"	d	file:
+Example Configuration	Kconfig.projbuild	/^menu "Example Configuration"$/;"	m
+I2C_MASTER_FREQ_HZ	espan.c	/^#define I2C_MASTER_FREQ_HZ /;"	d	file:
+I2C_MASTER_NUM	captouch.c	/^#define I2C_MASTER_NUM /;"	d	file:
+I2C_MASTER_NUM	espan.c	/^#define I2C_MASTER_NUM /;"	d	file:
+I2C_MASTER_RX_BUF_DISABLE	espan.c	/^#define I2C_MASTER_RX_BUF_DISABLE /;"	d	file:
+I2C_MASTER_SCL	Kconfig.projbuild	/^    config I2C_MASTER_SCL$/;"	c	menu:Example Configuration
+I2C_MASTER_SCL_IO	espan.c	/^#define I2C_MASTER_SCL_IO /;"	d	file:
+I2C_MASTER_SDA	Kconfig.projbuild	/^    config I2C_MASTER_SDA$/;"	c	menu:Example Configuration
+I2C_MASTER_SDA_IO	espan.c	/^#define I2C_MASTER_SDA_IO /;"	d	file:
+I2C_MASTER_TX_BUF_DISABLE	espan.c	/^#define I2C_MASTER_TX_BUF_DISABLE /;"	d	file:
+LEDs	apa102LEDStrip.h	/^    unsigned char *LEDs;$/;"	m	struct:apa102LEDStrip	typeref:typename:unsigned char *
+MIN	audio.c	/^#define MIN(/;"	d	file:
+SAMPLE_RATE	audio.c	/^#define SAMPLE_RATE /;"	d	file:
+TAG	captouch.c	/^static const char *TAG = "captouch";$/;"	v	typeref:typename:const char *	file:
+TAG	espan.c	/^static const char *TAG = "espan";$/;"	v	typeref:typename:const char *	file:
+TIMEOUT_MS	captouch.c	/^#define TIMEOUT_MS /;"	d	file:
+_audio_init	audio.c	/^static void _audio_init(int i2s_num) {$/;"	f	typeref:typename:void	file:
+_bytesPerLED	apa102LEDStrip.h	/^    unsigned char _bytesPerLED;$/;"	m	struct:apa102LEDStrip	typeref:typename:unsigned char
+_counter	apa102LEDStrip.h	/^    short int _counter;$/;"	m	struct:apa102LEDStrip	typeref:typename:short int
+_endFrameLength	apa102LEDStrip.h	/^    short int _endFrameLength;$/;"	m	struct:apa102LEDStrip	typeref:typename:short int
+_frameLength	apa102LEDStrip.h	/^    short int _frameLength;$/;"	m	struct:apa102LEDStrip	typeref:typename:short int
+_globalBrightness	apa102LEDStrip.h	/^    unsigned char _globalBrightness;$/;"	m	struct:apa102LEDStrip	typeref:typename:unsigned char
+_numLEDs	apa102LEDStrip.h	/^    short int _numLEDs;$/;"	m	struct:apa102LEDStrip	typeref:typename:short int
+active_paddles	espan.c	/^static bool active_paddles[10];$/;"	v	typeref:typename:bool[10]	file:
+active_sounds	audio.c	/^static sound_cfg_t active_sounds[11];$/;"	v	typeref:typename:sound_cfg_t[11]	file:
+ad7147_device_config	captouch.c	/^struct ad7147_device_config {$/;"	s	file:
+ad7147_stage_config	captouch.c	/^struct ad7147_stage_config {$/;"	s	file:
+ad714x_chip	captouch.c	/^struct ad714x_chip {$/;"	s	file:
+ad714x_default_config	captouch.c	/^static struct ad7147_stage_config ad714x_default_config(void)$/;"	f	typeref:struct:ad7147_stage_config	file:
+ad714x_i2c_read	captouch.c	/^static esp_err_t ad714x_i2c_read(const struct ad714x_chip *chip, const uint16_t reg, uint16_t *d/;"	f	typeref:typename:esp_err_t	file:
+ad714x_i2c_write	captouch.c	/^static esp_err_t ad714x_i2c_write(const struct ad714x_chip *chip, const uint16_t reg, const uint/;"	f	typeref:typename:esp_err_t	file:
+ad714x_set_device_config	captouch.c	/^static void ad714x_set_device_config(const struct ad714x_chip *chip, const struct ad7147_device_/;"	f	typeref:typename:void	file:
+ad714x_set_stage_config	captouch.c	/^static void ad714x_set_stage_config(const struct ad714x_chip *chip, const uint8_t stage, const s/;"	f	typeref:typename:void	file:
+addr	captouch.c	/^    uint8_t addr;$/;"	m	struct:ad714x_chip	typeref:typename:uint8_t	file:
+afe_offsets	captouch.c	/^    int afe_offsets[13];$/;"	m	struct:ad714x_chip	typeref:typename:int[13]	file:
+apa102LEDStrip	apa102LEDStrip.h	/^struct apa102LEDStrip$/;"	s
+app_main	espan.c	/^void app_main(void)$/;"	f	typeref:typename:void
+audio_init	audio.c	/^void audio_init() { _audio_init(0); }$/;"	f	typeref:typename:void
+audio_player_task	audio.c	/^static void audio_player_task(void* arg) {$/;"	f	typeref:typename:void	file:
+avg_fp_skip	captouch.c	/^    unsigned int avg_fp_skip:2;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:2	file:
+avg_lp_skip	captouch.c	/^    unsigned int avg_lp_skip:2;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:2	file:
+bank2	captouch.c	/^static const uint16_t bank2 = 0x80;$/;"	v	typeref:typename:const uint16_t	file:
+black	espan.c	/^uint8_t black[] = {0,0,0};$/;"	v	typeref:typename:uint8_t[]
+blue	espan.c	/^uint8_t blue[] = {0,0,32};$/;"	v	typeref:typename:uint8_t[]
+bot_map	espan.c	/^uint8_t bot_map[] = {0, 0, 1, 1, 2, 2, 3, 3, 4, 4};$/;"	v	typeref:typename:uint8_t[]
+buffer	audio.c	/^    const int16_t*  buffer;$/;"	m	struct:sound_cfg	typeref:typename:const int16_t *	file:
+buscfg	espan.c	/^spi_bus_config_t buscfg;$/;"	v	typeref:typename:spi_bus_config_t
+bytesPerPixel	espan.c	/^#define bytesPerPixel /;"	d	file:
+captouch_init	captouch.c	/^void captouch_init(void)$/;"	f	typeref:typename:void
+captouch_init_chip	captouch.c	/^static void captouch_init_chip(const struct ad714x_chip* chip)$/;"	f	typeref:typename:void	file:
+captouch_print_debug_info	captouch.c	/^void captouch_print_debug_info(void)$/;"	f	typeref:typename:void
+captouch_print_debug_info_chip	captouch.c	/^static void captouch_print_debug_info_chip(const struct ad714x_chip* chip)$/;"	f	typeref:typename:void	file:
+cdc_bias	captouch.c	/^    unsigned int cdc_bias:2;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:2	file:
+chip_bot	captouch.c	/^static const struct ad714x_chip chip_bot = {.addr = AD7147_BASE_ADDR, .gpio = 3, .afe_offsets = /;"	v	typeref:typename:const struct ad714x_chip	file:
+chip_top	captouch.c	/^static const struct ad714x_chip chip_top = {.addr = AD7147_BASE_ADDR + 1, .gpio = 48, .afe_offse/;"	v	typeref:typename:const struct ad714x_chip	file:
+cinX_connection_setup	captouch.c	/^    unsigned int cinX_connection_setup[13];$/;"	m	struct:ad7147_stage_config	typeref:typename:unsigned int[13]	file:
+decimation	captouch.c	/^    unsigned int decimation:2;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:2	file:
+devcfg	espan.c	/^spi_device_interface_config_t devcfg;$/;"	v	typeref:typename:spi_device_interface_config_t
+espan_handle_captouch	espan.c	/^void espan_handle_captouch(uint16_t pressed_top, uint16_t pressed_bot)$/;"	f	typeref:typename:void
+ext_source	captouch.c	/^    unsigned int ext_source:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+free_buffer	audio.c	/^    bool            free_buffer;$/;"	m	struct:sound_cfg	typeref:typename:bool	file:
+getPixel	apa102LEDStrip.c	/^void getPixel(struct apa102LEDStrip *ledObject, short int pixelIndex, unsigned char *pixelColour/;"	f	typeref:typename:void
+gpio	captouch.c	/^    uint8_t gpio;$/;"	m	struct:ad714x_chip	typeref:typename:uint8_t	file:
+gpio_event_handler	captouch.c	/^static void gpio_event_handler(void* arg)$/;"	f	typeref:typename:void	file:
+gpio_evt_queue	captouch.c	/^static QueueHandle_t gpio_evt_queue = NULL;$/;"	v	typeref:typename:QueueHandle_t	file:
+gpio_isr_handler	captouch.c	/^static void IRAM_ATTR gpio_isr_handler(void* arg)$/;"	f	typeref:typename:void IRAM_ATTR	file:
+i2c_master_init	espan.c	/^static esp_err_t i2c_master_init(void)$/;"	f	typeref:typename:esp_err_t	file:
+initLEDs	apa102LEDStrip.c	/^void initLEDs(struct apa102LEDStrip *ledObject, short int numLEDs, unsigned char bytesPerLED, un/;"	f	typeref:typename:void
+int_pol	captouch.c	/^    unsigned int int_pol:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+leds	espan.c	/^struct apa102LEDStrip leds;$/;"	v	typeref:struct:apa102LEDStrip
+lp_conv_delay	captouch.c	/^    unsigned int lp_conv_delay:2;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:2	file:
+maxSPIFrameInBytes	espan.c	/^#define maxSPIFrameInBytes /;"	d	file:
+maxSPIFrequency	espan.c	/^#define maxSPIFrequency /;"	d	file:
+maxValuePerColour	espan.c	/^#define maxValuePerColour /;"	d	file:
+neg_afe_offset	captouch.c	/^    unsigned int neg_afe_offset:6;$/;"	m	struct:ad7147_stage_config	typeref:typename:unsigned int:6	file:
+neg_afe_offset_disable	captouch.c	/^    unsigned int neg_afe_offset_disable:1;$/;"	m	struct:ad7147_stage_config	typeref:typename:unsigned int:1	file:
+neg_afe_offset_swap	captouch.c	/^    unsigned int neg_afe_offset_swap:1;$/;"	m	struct:ad7147_stage_config	typeref:typename:unsigned int:1	file:
+neg_peak_detect	captouch.c	/^    unsigned int neg_peak_detect:3;$/;"	m	struct:ad7147_stage_config	typeref:typename:unsigned int:3	file:
+neg_threshold_sensitivity	captouch.c	/^    unsigned int neg_threshold_sensitivity:4;$/;"	m	struct:ad7147_stage_config	typeref:typename:unsigned int:4	file:
+paddle_leds	espan.c	/^static const uint8_t paddle_leds[][9] = {$/;"	v	typeref:typename:const uint8_t[][9]	file:
+play_bootsound	audio.c	/^void play_bootsound() {$/;"	f	typeref:typename:void
+play_pan	audio.c	/^void play_pan(int pan) {$/;"	f	typeref:typename:void
+pos_afe_offset	captouch.c	/^    unsigned int pos_afe_offset:6;$/;"	m	struct:ad7147_stage_config	typeref:typename:unsigned int:6	file:
+pos_afe_offset_disable	captouch.c	/^    unsigned int pos_afe_offset_disable:1;$/;"	m	struct:ad7147_stage_config	typeref:typename:unsigned int:1	file:
+pos_afe_offset_swap	captouch.c	/^    unsigned int pos_afe_offset_swap:1;$/;"	m	struct:ad7147_stage_config	typeref:typename:unsigned int:1	file:
+pos_peak_detect	captouch.c	/^    unsigned int pos_peak_detect:3;$/;"	m	struct:ad7147_stage_config	typeref:typename:unsigned int:3	file:
+pos_threshold_sensitivity	captouch.c	/^    unsigned int pos_threshold_sensitivity:4;$/;"	m	struct:ad7147_stage_config	typeref:typename:unsigned int:4	file:
+position	audio.c	/^    size_t          position;$/;"	m	struct:sound_cfg	typeref:typename:size_t	file:
+power_mode	captouch.c	/^    unsigned int power_mode:2;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:2	file:
+pressed_bot	captouch.c	/^static uint16_t pressed_top, pressed_bot;$/;"	v	typeref:typename:uint16_t	file:
+pressed_top	captouch.c	/^static uint16_t pressed_top, pressed_bot;$/;"	v	typeref:typename:uint16_t	file:
+red	espan.c	/^uint8_t red[] = {32,0,0};$/;"	v	typeref:typename:uint8_t[]
+renderLEDs	espan.c	/^void renderLEDs()$/;"	f	typeref:typename:void
+ret	espan.c	/^esp_err_t ret;$/;"	v	typeref:typename:esp_err_t
+se_connection_setup	captouch.c	/^    unsigned int se_connection_setup:2;$/;"	m	struct:ad7147_stage_config	typeref:typename:unsigned int:2	file:
+sequence_stage_num	captouch.c	/^    unsigned int sequence_stage_num:4;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:4	file:
+setPixel	apa102LEDStrip.c	/^void setPixel(struct apa102LEDStrip *ledObject, short int pixelIndex, unsigned char *pixelColour/;"	f	typeref:typename:void
+setupSPI	espan.c	/^int setupSPI()$/;"	f	typeref:typename:int
+size	audio.c	/^    size_t          size;$/;"	m	struct:sound_cfg	typeref:typename:size_t	file:
+slot	audio.c	/^    size_t          slot;$/;"	m	struct:sound_cfg	typeref:typename:size_t	file:
+sound_active	audio.c	/^static bool sound_active(void)$/;"	f	typeref:typename:bool	file:
+sound_cfg	audio.c	/^typedef struct sound_cfg {$/;"	s	file:
+sound_cfg_t	audio.c	/^} sound_cfg_t;$/;"	t	typeref:struct:sound_cfg	file:
+sound_queue	audio.c	/^static QueueHandle_t sound_queue = NULL;$/;"	v	typeref:typename:QueueHandle_t	file:
+spiTransObject	espan.c	/^spi_transaction_t spiTransObject;$/;"	v	typeref:typename:spi_transaction_t
+spi_led	espan.c	/^spi_device_handle_t spi_led;$/;"	v	typeref:typename:spi_device_handle_t
+stage0_cal_en	captouch.c	/^    unsigned int stage0_cal_en:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage0_high_int_enable	captouch.c	/^    unsigned int stage0_high_int_enable:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage10_cal_en	captouch.c	/^    unsigned int stage10_cal_en:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage10_high_int_enable	captouch.c	/^    unsigned int stage10_high_int_enable:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage11_cal_en	captouch.c	/^    unsigned int stage11_cal_en:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage11_high_int_enable	captouch.c	/^    unsigned int stage11_high_int_enable:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage1_cal_en	captouch.c	/^    unsigned int stage1_cal_en:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage1_high_int_enable	captouch.c	/^    unsigned int stage1_high_int_enable:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage2_cal_en	captouch.c	/^    unsigned int stage2_cal_en:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage2_high_int_enable	captouch.c	/^    unsigned int stage2_high_int_enable:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage3_cal_en	captouch.c	/^    unsigned int stage3_cal_en:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage3_high_int_enable	captouch.c	/^    unsigned int stage3_high_int_enable:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage4_cal_en	captouch.c	/^    unsigned int stage4_cal_en:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage4_high_int_enable	captouch.c	/^    unsigned int stage4_high_int_enable:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage5_cal_en	captouch.c	/^    unsigned int stage5_cal_en:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage5_high_int_enable	captouch.c	/^    unsigned int stage5_high_int_enable:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage6_cal_en	captouch.c	/^    unsigned int stage6_cal_en:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage6_high_int_enable	captouch.c	/^    unsigned int stage6_high_int_enable:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage7_cal_en	captouch.c	/^    unsigned int stage7_cal_en:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage7_high_int_enable	captouch.c	/^    unsigned int stage7_high_int_enable:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage8_cal_en	captouch.c	/^    unsigned int stage8_cal_en:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage8_high_int_enable	captouch.c	/^    unsigned int stage8_high_int_enable:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage9_cal_en	captouch.c	/^    unsigned int stage9_cal_en:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stage9_high_int_enable	captouch.c	/^    unsigned int stage9_high_int_enable:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+stages	captouch.c	/^    int stages;$/;"	m	struct:ad714x_chip	typeref:typename:int	file:
+sw_reset	captouch.c	/^    unsigned int sw_reset:1;$/;"	m	struct:ad7147_device_config	typeref:typename:unsigned int:1	file:
+top_map	espan.c	/^uint8_t top_map[] = {1, 1, 1, 0, 0, 4, 4, 4, 3, 3, 2, 2};$/;"	v	typeref:typename:uint8_t[]
+totalPixels	espan.c	/^#define totalPixels /;"	d	file:
