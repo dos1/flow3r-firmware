@@ -95,7 +95,7 @@ void os_app_main(void)
     ESP_LOGI(TAG, "I2C initialized successfully");
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    set_global_vol_dB(0);
+    set_global_vol_dB(-90);
 
     audio_init();
     leds_init();
