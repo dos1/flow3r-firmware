@@ -19,6 +19,18 @@ set(MICROPY_QSTRDEFS_PORT
     ${PROJECT_DIR}/qstrdefsport.h
 )
 
+set(BADGE23_LIB
+    ${PROJECT_DIR}/badge23/apa102LEDStrip.c
+    ${PROJECT_DIR}/badge23/audio.c
+    ${PROJECT_DIR}/badge23/captouch.c
+    ${PROJECT_DIR}/badge23/display.c
+    ${PROJECT_DIR}/badge23/espan.c
+    ${PROJECT_DIR}/badge23/leds.c
+    ${PROJECT_DIR}/badge23/scope.c
+    ${PROJECT_DIR}/badge23/synth.c
+    ${PROJECT_DIR}/badge23/components/gc9a01/gc9a01.c
+)
+
 set(MICROPY_SOURCE_SHARED
     ${MICROPY_DIR}/shared/readline/readline.c
     ${MICROPY_DIR}/shared/netutils/netutils.c
@@ -164,6 +176,7 @@ idf_component_register(
         ${MICROPY_SOURCE_DRIVERS}
         ${MICROPY_SOURCE_PORT}
         ${MICROPY_SOURCE_BOARD}
+        ${BADGE23_LIB}
     INCLUDE_DIRS
         ${MICROPY_INC_CORE}
         ${MICROPY_INC_USERMOD}
