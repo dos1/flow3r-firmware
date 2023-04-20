@@ -2,6 +2,33 @@
 plays an infinite scripted note sequence and provides a basic micropython repl
 makes extra noise when Crtl+D'd in the repl (importing py libraries works too)
 
+some fun commands to try:
+'''
+import badge_audio
+#turn on sound
+badge_audio.set_global_volume_dB(-10)
+#turn off all demo oscillators
+badge_audio.dump_all_sources()
+
+import synth
+a=synth.tinysynth(440,1);
+a.start();
+b=synth.tinysynth(660,0);
+b.start();
+b.stop();
+
+#tiny issue with garbage collect:
+badge_audio.count_sources();
+a.__del__();
+badge_audio.count_sources();
+import gc
+del b
+gc.collect()
+badge_audio.count_sources();
+#...don't know how to hook up gc to __del__, maybe wrong approach
+
+'''
+
 ## how to build
 
 1. install esp-idf v4.4:
@@ -51,7 +78,7 @@ $ picocom -b 115200 /dev/ttyACM0
 
 ## how to modify
 
-general info
+### general info
 global + micropython entry point: app_main() in micropython/ports/esp32/main.c (includes badge23/espan.h)
 c entry point, called by^: os_app_main() in badge23/espan.c
 register new c files for compilation: add to set(BADGE23_LIB) in micropython/ports/esp32/main/CMakelists.txt
