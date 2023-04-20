@@ -89,21 +89,21 @@ void espan_handle_captouch(uint16_t pressed_top, uint16_t pressed_bot)
 #define VIOLIN_VOL_BOOST 0.004
 #define VIOLIN_SENS_POW 2
 
-void old_app_main(void)
+void os_app_main(void)
 {
     ESP_ERROR_CHECK(i2c_master_init());
     ESP_LOGI(TAG, "I2C initialized successfully");
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    mp_hal_stdout_tx_str("test\n\r");
+    set_global_vol_dB(0);
 
     audio_init();
     leds_init();
     //display_init();
     captouch_init();
 
-    mp_hal_stdout_tx_str("test2\n\r");
-    play_bootsound();
+    mp_hal_stdout_tx_str("task inits done\n\r");
+    //play_bootsound();
     //not sure how slow captouch_get_cross is so duplicating edge detection here;
     bool prev_petals[10] = {0};
     //pitch bend as movement relative to inital touch pos to make intonation easier
