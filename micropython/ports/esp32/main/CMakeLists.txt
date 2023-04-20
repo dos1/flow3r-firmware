@@ -20,15 +20,15 @@ set(MICROPY_QSTRDEFS_PORT
 )
 
 set(BADGE23_LIB
-    ${PROJECT_DIR}/badge23/apa102LEDStrip.c
-    ${PROJECT_DIR}/badge23/audio.c
-    ${PROJECT_DIR}/badge23/captouch.c
-    ${PROJECT_DIR}/badge23/display.c
-    ${PROJECT_DIR}/badge23/espan.c
-    ${PROJECT_DIR}/badge23/leds.c
-    ${PROJECT_DIR}/badge23/scope.c
-    ${PROJECT_DIR}/badge23/synth.c
-    ${PROJECT_DIR}/badge23/components/gc9a01/gc9a01.c
+    ${PROJECT_DIR}/../../../badge23/apa102LEDStrip.c
+    ${PROJECT_DIR}/../../../badge23/audio.c
+    ${PROJECT_DIR}/../../../badge23/captouch.c
+    ${PROJECT_DIR}/../../../badge23/display.c
+    ${PROJECT_DIR}/../../../badge23/espan.c
+    ${PROJECT_DIR}/../../../badge23/leds.c
+    ${PROJECT_DIR}/../../../badge23/scope.c
+    ${PROJECT_DIR}/../../../badge23/synth.c
+    ${PROJECT_DIR}/../../../badge23/components/gc9a01/gc9a01.c
 )
 
 set(MICROPY_SOURCE_SHARED

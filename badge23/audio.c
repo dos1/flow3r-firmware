@@ -178,8 +178,21 @@ static void _audio_init(void) {
 }
 
 #define MIN(a,b) ((a > b) ? b : a)
-#define GLOBAL_VOL 3000
 #define LR_PHASE -1
+#define NAT_LOG_DB 0.1151292546497023
+
+static uint16_t _global_vol = 3000;
+
+void set_global_vol_dB(int8_t vol_dB){
+    if(vol_dB < (BADGE_MIN_VOLUME_DB)){
+        _global_vol = 0;
+    } else {
+        if(vol_dB > (BADGE_MAX_VOLUME_DB)) vol_dB = (BADGE_MAX_VOLUME_DB);
+        uint16_t buf =  3000 * exp(vol_dB * NAT_LOG_DB);
+        if(buf > (BADGE_VOLUME_LIMIT)) buf = (BADGE_VOLUME_LIMIT);
+        _global_vol = buf;
+    }
+}
 
 static void audio_player_task(void* arg) {
     int16_t buffer[DMA_BUFFER_SIZE * 2];
@@ -193,7 +206,7 @@ static void audio_player_task(void* arg) {
                 sample += trad_osc(&(synths[j]));
             }
             write_to_scope((int16_t) (1600. * sample));
-            sample = GLOBAL_VOL * sample;
+            sample = _global_vol * sample;
             if(sample > 32767) sample = 32767;
             if(sample < -32767) sample = -32767;
             buffer[i] = (int16_t) sample;

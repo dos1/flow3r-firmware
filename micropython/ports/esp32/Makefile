@@ -9,7 +9,7 @@ ifdef BOARD_DIR
 BOARD ?= $(notdir $(BOARD_DIR:/=))
 else
 # If not given on the command line, then default to GENERIC.
-BOARD ?= GENERIC
+BOARD ?= GENERIC_S3_BADGE
 BOARD_DIR ?= boards/$(BOARD)
 endif
 
