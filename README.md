@@ -1,19 +1,16 @@
-## current hw functionality
-plays an infinite scripted note sequence and provides a basic micropython repl
-makes extra noise when Crtl+D'd in the repl (importing py libraries works too)
+## current functionality
+micropython repl hooked up, hw functionality partly broken
 
 some fun commands to try:
-'''
+```
 import badge_audio
 #turn on sound
 badge_audio.set_global_volume_dB(-10)
-#turn off all demo oscillators
-badge_audio.dump_all_sources()
 
-import synth
-a=synth.tinysynth(440,1);
+from synth import tinysynth
+a=tinysynth(440,1); # enters decay phase without stop signal
 a.start();
-b=synth.tinysynth(660,0);
+b=tinysynth(660,0); # sustains until stop signal
 b.start();
 b.stop();
 
@@ -26,8 +23,13 @@ del b
 gc.collect()
 badge_audio.count_sources();
 #...don't know how to hook up gc to __del__, maybe wrong approach
+```
 
-'''
+files can be transferred with mpremote, such as:
+```
+mpremote fs cp python_payload/boot.py :boot.py
+mpremote fs cp python_payload/boot_button_demo.py :boot_button_demo.py
+```
 
 ## how to build
 

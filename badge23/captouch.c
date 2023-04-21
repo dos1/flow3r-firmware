@@ -162,7 +162,6 @@ void gpio_event_handler(void* arg)
     struct ad714x_chip* chip;
     uint16_t pressed;
     while(true) {
-        /*
         if(xQueueReceive(gpio_evt_queue, &chip, portMAX_DELAY)) {
             ad714x_i2c_read(chip, 9, &pressed, 1);
             ESP_LOGI(TAG, "Addr %x, High interrupt %X", chip->addr, pressed);
@@ -173,13 +172,6 @@ void gpio_event_handler(void* arg)
             if(chip == &chip_bot) pressed_bot = pressed;
             espan_handle_captouch(pressed_top, pressed_bot);
         }
-        */
-        vTaskDelay(1000/portTICK_PERIOD_MS);
-        counter++;
-        pressed = counter & ((1 << 5) - 1);
-        pressed_bot = pressed;
-        pressed_top = pressed;
-        espan_handle_captouch(pressed_top, pressed_bot);
     }
 }
 
