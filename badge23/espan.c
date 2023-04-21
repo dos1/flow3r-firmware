@@ -95,12 +95,12 @@ void os_app_main(void)
     ESP_LOGI(TAG, "I2C initialized successfully");
 
     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    set_global_vol_dB(-90);
+    set_global_vol_dB(0);
 
     audio_init();
     leds_init();
     //display_init();
-    captouch_init();
+    //captouch_init();
 
     mp_hal_stdout_tx_str("task inits done\n\r");
     //play_bootsound();
@@ -115,8 +115,7 @@ void os_app_main(void)
     int i = 0;
     void * asdasd = &i;
     while(1) {
-        gpio_event_handler(asdasd);
-
+        continue;
         i = (i + 1) % 10;
         if(!(i == 2 || i == 8)) continue;
         if(VIB){

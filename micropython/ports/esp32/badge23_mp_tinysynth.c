@@ -57,6 +57,13 @@ STATIC mp_obj_t tinysynth_stop(mp_obj_t self_in) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(tinysynth_stop_obj, tinysynth_stop);
 
+STATIC mp_obj_t tinysynth_freq(mp_obj_t self_in, mp_obj_t freq) {
+    synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    self->osc.freq = mp_obj_get_float(freq);
+    return mp_obj_new_float(self->osc.freq);
+}
+MP_DEFINE_CONST_FUN_OBJ_2(tinysynth_freq_obj, tinysynth_freq);
+
 STATIC mp_obj_t tinysynth_deinit(mp_obj_t self_in) {
     synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
     remove_audio_source(self->source_index);
@@ -68,6 +75,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(tinysynth_deinit_obj, tinysynth_deinit);
 STATIC const mp_rom_map_elem_t tinysynth_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_start), MP_ROM_PTR(&tinysynth_start_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&tinysynth_stop_obj) },
+    { MP_ROM_QSTR(MP_QSTR_freq), MP_ROM_PTR(&tinysynth_freq_obj) },
     { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&tinysynth_deinit_obj) },
 };
 

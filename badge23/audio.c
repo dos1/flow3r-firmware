@@ -24,7 +24,7 @@ static void audio_player_task(void* arg);
 #define DMA_BUFFER_COUNT    2
 #define I2S_PORT 0
 
-static void i2s_init_idk_lol(void){
+static void i2s_init(void){
     
     static const i2s_config_t i2s_config = {
         .mode = I2S_MODE_MASTER | I2S_MODE_TX,
@@ -90,6 +90,7 @@ typedef struct _audio_source_t{
 static audio_source_t * _audio_sources = NULL;
 
 uint16_t add_audio_source(void * render_data, void * render_function){
+    //construct audio source struct
     audio_source_t * src = malloc(sizeof(audio_source_t));
     if(src == NULL) return;
     src->render_data = render_data;
@@ -97,13 +98,29 @@ uint16_t add_audio_source(void * render_data, void * render_function){
     src->next = NULL;
     src->index = 0;
 
-    audio_source_t * audio_source = _audio_sources;
-    if(audio_source == NULL){
-        
+    //handle empty list special case
+    if(_audio_sources == NULL){
         _audio_sources = src;
+        return 0; //only nonempty lists from here on out!
     }
+
+    //searching for lowest unused index
+    audio_source_t * index_source = _audio_sources;
+    while(1){
+        if(src->index == (index_source->index)){
+            src->index++; //someone else has index already, try next
+            index_source = _audio_sources; //start whole list for new index
+        } else {
+            index_source = index_source->next;
+        }
+        if(index_source == NULL){ //traversed the entire list
+            break;
+        }
+    }
+
+    audio_source_t * audio_source = _audio_sources;
+    //append new source to linked list
     while(audio_source != NULL){
-        src->index++;
         if(audio_source->next == NULL){
             audio_source->next = src;
             break;
@@ -125,7 +142,8 @@ void remove_audio_source(uint16_t index){
             } else {
                 start_gap->next = audio_source->next;
             }
-            free(audio_source);
+            vTaskDelay(20 / portTICK_PERIOD_MS); //give other tasks time to stop using
+            free(audio_source); //terrible hack tbh
             break;
         }
         start_gap = audio_source;
@@ -145,10 +163,10 @@ uint16_t count_audio_sources(){
 
 static void _audio_init(void) {
     init_scope(241);
-    //i2s_init_std_duplex();
-    i2s_init_idk_lol();
+    i2s_init();
     //ESP_ERROR_CHECK(i2s_channel_enable(tx_chan));
 
+    /*
     for(int i = 0; i < NUM_SYNTH; i++){
         if((i%2) || (!DRUMS_TOP) ){ //bottom leaves
             synths[i].decay_steps = 50;
@@ -193,6 +211,7 @@ static void _audio_init(void) {
         }
         add_audio_source(&(synths[i]), trad_osc);
     }
+    */
     TaskHandle_t handle;
     xTaskCreate(&audio_player_task, "Audio player", 20000, NULL, configMAX_PRIORITIES - 1, &handle);
 }
