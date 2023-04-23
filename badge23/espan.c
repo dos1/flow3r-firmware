@@ -66,14 +66,14 @@ void espan_handle_captouch(uint16_t pressed_top, uint16_t pressed_bot)
     bool changed = false;
     for(int i=0; i<10; i++) {
         if(active_paddles[i] == false && paddles[i] == true) {
-            if(!(i == 2 || i == 8)) synth_start(i);
+            //if(!(i == 2 || i == 8)) synth_start(i);
             leds_animate(i);
             active_paddles[i] = true;
             changed = true;
         } else if(active_paddles[i] == true && paddles[i] == false) {
             active_paddles[i] = false;
             changed = true;
-        if(!(i == 2 || i == 8)) synth_stop(i);
+        //if(!(i == 2 || i == 8)) synth_stop(i);
         }
     }
 
@@ -103,7 +103,6 @@ void os_app_main(void)
     captouch_init();
 
     mp_hal_stdout_tx_str("task inits done\n\r");
-    //play_bootsound();
     //not sure how slow captouch_get_cross is so duplicating edge detection here;
     bool prev_petals[10] = {0};
     //pitch bend as movement relative to inital touch pos to make intonation easier
@@ -121,6 +120,7 @@ void os_app_main(void)
         vTaskDelay(3 / portTICK_PERIOD_MS);
 
         continue;
+        /*
         i = (i + 1) % 10;
         if(!(i == 2 || i == 8)) continue;
         if(VIB){
@@ -175,6 +175,7 @@ void os_app_main(void)
 
         vTaskDelay(10 / portTICK_PERIOD_MS);
         //captouch_print_debug_info();
+        */
     }
 
     ESP_ERROR_CHECK(i2c_driver_delete(I2C_MASTER_NUM));
