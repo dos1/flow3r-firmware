@@ -116,9 +116,9 @@ void os_app_main(void)
     void * asdasd = &i;
     while(1) {
         manual_captouch_readout(1);
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(3 / portTICK_PERIOD_MS);
         manual_captouch_readout(0);
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(3 / portTICK_PERIOD_MS);
 
         continue;
         i = (i + 1) % 10;

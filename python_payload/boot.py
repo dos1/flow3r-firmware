@@ -3,4 +3,4 @@
 #esp.osdebug(None)
 #import webrepl
 #webrepl.start()
-import boot_button_demo
+import cap_touch_demo
