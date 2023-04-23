@@ -60,8 +60,8 @@ set(MICROPY_SOURCE_DRIVERS
 )
 
 set(MICROPY_SOURCE_PORT
-    ${PROJECT_DIR}/badge23_mp_audio.c
-    ${PROJECT_DIR}/badge23_mp_tinysynth.c
+    ${PROJECT_DIR}/badge23_mp_hardware.c
+    ${PROJECT_DIR}/badge23_mp_synth.c
     ${PROJECT_DIR}/main.c
     ${PROJECT_DIR}/uart.c
     ${PROJECT_DIR}/usb.c

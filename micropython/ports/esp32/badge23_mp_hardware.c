@@ -11,6 +11,16 @@
 #include "py/builtin.h"
 #include "py/runtime.h"
 #include "../badge23/audio.h"
+#include "../badge23/captouch.h"
+
+STATIC mp_obj_t mp_get_captouch(size_t n_args, const mp_obj_t *args) {
+    uint16_t captouch = read_captouch();
+    uint8_t pad = mp_obj_get_int(args[0]);
+    uint8_t output = (captouch >> pad) & 1;
+
+    return mp_obj_new_int(output);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_get_captouch_obj, 1, 2, mp_get_captouch);
 
 STATIC mp_obj_t mp_set_global_volume_dB(size_t n_args, const mp_obj_t *args) {
     mp_float_t x = mp_obj_get_float(args[0]);
@@ -36,19 +46,20 @@ STATIC mp_obj_t mp_dump_all_sources(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_dump_all_sources_obj, 0, 2, mp_dump_all_sources);
 
-STATIC const mp_rom_map_elem_t mp_module_badge_audio_globals_table[] = {
+STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_audio) },
+    { MP_ROM_QSTR(MP_QSTR_get_captouch), MP_ROM_PTR(&mp_get_captouch_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_global_volume_dB), MP_ROM_PTR(&mp_set_global_volume_dB_obj) },
     { MP_ROM_QSTR(MP_QSTR_count_sources), MP_ROM_PTR(&mp_count_sources_obj) },
     { MP_ROM_QSTR(MP_QSTR_dump_all_sources), MP_ROM_PTR(&mp_dump_all_sources_obj) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(mp_module_badge_audio_globals, mp_module_badge_audio_globals_table);
+STATIC MP_DEFINE_CONST_DICT(mp_module_hardware_globals, mp_module_hardware_globals_table);
 
-const mp_obj_module_t mp_module_badge_audio = {
+const mp_obj_module_t mp_module_hardware = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t *)&mp_module_badge_audio_globals,
+    .globals = (mp_obj_dict_t *)&mp_module_hardware_globals,
 };
 
-MP_REGISTER_MODULE(MP_QSTR_badge_audio, mp_module_badge_audio);
+MP_REGISTER_MODULE(MP_QSTR_hardware, mp_module_hardware);
 

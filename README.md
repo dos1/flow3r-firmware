@@ -3,9 +3,9 @@ micropython repl hooked up, hw functionality partly broken
 
 some fun commands to try:
 ```
-import badge_audio
+import hardware
 #turn on sound
-badge_audio.set_global_volume_dB(-10)
+hardware.set_global_volume_dB(-10)
 
 from synth import tinysynth
 a=tinysynth(440,1); # enters decay phase without stop signal
@@ -15,20 +15,20 @@ b.start();
 b.stop();
 
 #tiny issue with garbage collect:
-badge_audio.count_sources();
+hardware.count_sources();
 a.__del__();
-badge_audio.count_sources();
+hardware.count_sources();
 import gc
 del b
 gc.collect()
-badge_audio.count_sources();
+hardware.count_sources();
 #...don't know how to hook up gc to __del__, maybe wrong approach
 ```
 
 files can be transferred with mpremote, such as:
 ```
 mpremote fs cp python_payload/boot.py :boot.py
-mpremote fs cp python_payload/boot_button_demo.py :boot_button_demo.py
+mpremote fs cp python_payload/cap_touch_demo.py :cap_touch_demo.py
 ```
 
 ## how to build
@@ -66,7 +66,7 @@ flash + build: (put badge into bootloader mode*)
 ```
 $ make deploy PORT=/dev/ttyACM0
 ```
-__*press right shoulder button down during boot (on modified "last gen" prototypes)__
+_*press right shoulder button down during boot (on modified "last gen" prototypes)_
 
 empty build cache (useful when moving files around):
 ```
