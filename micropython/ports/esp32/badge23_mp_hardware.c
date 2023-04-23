@@ -27,7 +27,7 @@ STATIC mp_obj_t mp_set_global_volume_dB(size_t n_args, const mp_obj_t *args) {
     int8_t d = x;
     set_global_vol_dB(d);
     mp_float_t l = x;
-    return mp_obj_new_float(l);
+    return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_set_global_volume_dB_obj, 1, 2, mp_set_global_volume_dB);
 
@@ -42,7 +42,7 @@ STATIC mp_obj_t mp_dump_all_sources(size_t n_args, const mp_obj_t *args) {
     for(uint16_t i = 0; i < d; i++){
         remove_audio_source(i);
     }
-    return mp_obj_new_int(d);
+    return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_dump_all_sources_obj, 0, 2, mp_dump_all_sources);
 
