@@ -100,7 +100,7 @@ void os_app_main(void)
     audio_init();
     leds_init();
     //display_init();
-    //captouch_init();
+    captouch_init();
 
     mp_hal_stdout_tx_str("task inits done\n\r");
     //play_bootsound();
@@ -115,6 +115,11 @@ void os_app_main(void)
     int i = 0;
     void * asdasd = &i;
     while(1) {
+        manual_captouch_readout(1);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        manual_captouch_readout(0);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+
         continue;
         i = (i + 1) % 10;
         if(!(i == 2 || i == 8)) continue;

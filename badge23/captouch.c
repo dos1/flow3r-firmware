@@ -2,6 +2,7 @@
 //#include <string.h>
 #include "esp_log.h"
 #include "driver/i2c.h"
+#include <stdint.h>
 
 
 static const char *TAG = "captouch";
@@ -150,6 +151,12 @@ static QueueHandle_t gpio_evt_queue = NULL;
 static void IRAM_ATTR gpio_isr_handler(void* arg)
 {
     struct ad714x_chip* chip = (struct ad714x_chip *) arg;
+    xQueueSendFromISR(gpio_evt_queue, &chip, NULL);
+}
+
+void manual_captouch_readout(uint8_t top)
+{
+    struct ad714x_chip* chip = top ? (&chip_top) : (&chip_bot);
     xQueueSendFromISR(gpio_evt_queue, &chip, NULL);
 }
 
