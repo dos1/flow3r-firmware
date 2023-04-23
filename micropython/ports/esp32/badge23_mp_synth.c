@@ -32,7 +32,7 @@ STATIC mp_obj_t tinysynth_make_new(const mp_obj_type_t *type, size_t n_args, siz
     self->osc.attack_steps = 3;
     self->osc.vol = 1.;
     self->osc.gate = 0.01;
-    self->osc.freq = mp_obj_get_int(args[0]);
+    self->osc.freq = mp_obj_get_float(args[0]);
     self->osc.counter = 0;
     self->osc.bend = 1;
     self->osc.noise_reg = 1;
