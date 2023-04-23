@@ -4,6 +4,10 @@
 #include "../../../badge23/synth.h"
 #include "../../../badge23/audio.h"
 
+#if !MICROPY_ENABLE_FINALISER
+#error "BADGE23_SYNTH requires MICROPY_ENABLE_FINALISER"
+#endif
+
 typedef struct _synth_tinysynth_obj_t {
     mp_obj_base_t base;
     trad_osc_t osc;
@@ -44,7 +48,7 @@ STATIC mp_obj_t tinysynth_make_new(const mp_obj_type_t *type, size_t n_args, siz
 STATIC mp_obj_t tinysynth_start(mp_obj_t self_in) {
     synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
     self->osc.env_phase = 1;
-    return mp_obj_new_int(1);
+    return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(tinysynth_start_obj, tinysynth_start);
 
@@ -53,21 +57,21 @@ STATIC mp_obj_t tinysynth_stop(mp_obj_t self_in) {
     if(self->osc.env_phase){
         self->osc.env_phase = 3;
     }
-    return mp_obj_new_int(1);
+    return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(tinysynth_stop_obj, tinysynth_stop);
 
 STATIC mp_obj_t tinysynth_freq(mp_obj_t self_in, mp_obj_t freq) {
     synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
     self->osc.freq = mp_obj_get_float(freq);
-    return mp_obj_new_float(self->osc.freq);
+    return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(tinysynth_freq_obj, tinysynth_freq);
 
 STATIC mp_obj_t tinysynth_deinit(mp_obj_t self_in) {
     synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
     remove_audio_source(self->source_index);
-    return mp_obj_new_int(1);
+    return mp_const_none;
 }
 
 MP_DEFINE_CONST_FUN_OBJ_1(tinysynth_deinit_obj, tinysynth_deinit);
