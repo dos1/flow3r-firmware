@@ -26,7 +26,7 @@ STATIC void tinysynth_print(const mp_print_t *print, mp_obj_t self_in, mp_print_
 
 STATIC mp_obj_t tinysynth_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 2, 2, true);
-    synth_tinysynth_obj_t *self = m_new_obj(synth_tinysynth_obj_t);
+    synth_tinysynth_obj_t *self = m_new_obj_with_finaliser(synth_tinysynth_obj_t);
     self->base.type = &synth_tinysynth_type;
     self->osc.decay_steps = 50;
     self->osc.attack_steps = 3;

@@ -3,8 +3,8 @@ from hardware import *
 
 set_global_volume_dB(0)
 synths = []
-for i in range(10):
-    synths += [tinysynth(440+50*i,1)]
+for i in range(5):
+    synths += [tinysynth(440,1)]
 
 chords = [[0,3,7,10,12],[-2,2,5,8,10],[i-2,3,7,10,14],[-4,0,3,8,12],[-1,2,5,7,11]]
 
