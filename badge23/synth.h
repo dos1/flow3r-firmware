@@ -45,4 +45,13 @@ typedef struct {
     float real_feedback;        //compensated feedback value
 } ks_osc_t; //karplus strong
 
-float trad_osc(trad_osc_t * osc);
+float run_trad_osc(trad_osc_t * osc);
+
+void trad_osc_set_freq_semitone(trad_osc_t * osc, float bend);
+void trad_osc_set_freq_Hz(trad_osc_t * osc, float freq);
+void trad_osc_set_waveform(trad_osc_t * osc, uint8_t waveform);
+void trad_osc_set_attack(trad_osc_t * osc, uint16_t attack);
+void trad_osc_set_decay(trad_osc_t * osc, uint16_t decay);
+void trad_env_stop(trad_osc_t * osc);
+void trad_env_fullstop(trad_osc_t * osc);
+void trad_env_start(trad_osc_t * osc);

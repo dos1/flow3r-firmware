@@ -6,6 +6,10 @@ synths = []
 for i in range(5):
     synths += [tinysynth(440,1)]
 
+for synth in synths:
+    synth.decay(300)
+    synth.waveform(3)
+
 chords = [[0,3,7,10,12],[-2,2,5,8,10],[-2,3,7,10,14],[-4,0,3,8,12],[-1,2,5,7,11]]
 
 chord = chords[3]
@@ -17,5 +21,5 @@ while True:
                 chord = chords[int((i-1)/2)]
             else:
                 i = int(i/2)
-                synths[i].freq(440*(2**(chord[i]/12)))
+                synths[i].tone(chord[i])
                 synths[i].start()

@@ -39,7 +39,7 @@ STATIC mp_obj_t tinysynth_make_new(const mp_obj_type_t *type, size_t n_args, siz
     self->osc.waveform = 1;
     self->osc.skip_hold = mp_obj_get_int(args[1]);
     //set_extra_synth(&(self->osc));
-    self->source_index = add_audio_source(&(self->osc), trad_osc);
+    self->source_index = add_audio_source(&(self->osc), run_trad_osc);
 
     return MP_OBJ_FROM_PTR(self);
 }
@@ -47,26 +47,52 @@ STATIC mp_obj_t tinysynth_make_new(const mp_obj_type_t *type, size_t n_args, siz
 // Class methods
 STATIC mp_obj_t tinysynth_start(mp_obj_t self_in) {
     synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    self->osc.env_phase = 1;
+    trad_env_start(&(self->osc));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(tinysynth_start_obj, tinysynth_start);
 
 STATIC mp_obj_t tinysynth_stop(mp_obj_t self_in) {
     synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    if(self->osc.env_phase){
-        self->osc.env_phase = 3;
-    }
+    trad_env_stop(&(self->osc));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_1(tinysynth_stop_obj, tinysynth_stop);
 
 STATIC mp_obj_t tinysynth_freq(mp_obj_t self_in, mp_obj_t freq) {
     synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
-    self->osc.freq = mp_obj_get_float(freq);
+    trad_osc_set_freq_Hz(&(self->osc), mp_obj_get_float(freq));
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_2(tinysynth_freq_obj, tinysynth_freq);
+
+STATIC mp_obj_t tinysynth_tone(mp_obj_t self_in, mp_obj_t tone) {
+    synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    trad_osc_set_freq_semitone(&(self->osc), mp_obj_get_float(tone));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_2(tinysynth_tone_obj, tinysynth_tone);
+
+STATIC mp_obj_t tinysynth_waveform(mp_obj_t self_in, mp_obj_t waveform) {
+    synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    trad_osc_set_waveform(&(self->osc), mp_obj_get_int(waveform));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_2(tinysynth_waveform_obj, tinysynth_waveform);
+
+STATIC mp_obj_t tinysynth_attack(mp_obj_t self_in, mp_obj_t attack) {
+    synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    trad_osc_set_attack(&(self->osc), mp_obj_get_int(attack));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_2(tinysynth_attack_obj, tinysynth_attack);
+
+STATIC mp_obj_t tinysynth_decay(mp_obj_t self_in, mp_obj_t decay) {
+    synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    trad_osc_set_decay(&(self->osc), mp_obj_get_int(decay));
+    return mp_const_none;
+}
+MP_DEFINE_CONST_FUN_OBJ_2(tinysynth_decay_obj, tinysynth_decay);
 
 STATIC mp_obj_t tinysynth_deinit(mp_obj_t self_in) {
     synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
@@ -80,6 +106,10 @@ STATIC const mp_rom_map_elem_t tinysynth_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_start), MP_ROM_PTR(&tinysynth_start_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&tinysynth_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_freq), MP_ROM_PTR(&tinysynth_freq_obj) },
+    { MP_ROM_QSTR(MP_QSTR_tone), MP_ROM_PTR(&tinysynth_tone_obj) },
+    { MP_ROM_QSTR(MP_QSTR_waveform), MP_ROM_PTR(&tinysynth_waveform_obj) },
+    { MP_ROM_QSTR(MP_QSTR_attack), MP_ROM_PTR(&tinysynth_attack_obj) },
+    { MP_ROM_QSTR(MP_QSTR_decay), MP_ROM_PTR(&tinysynth_decay_obj) },
     { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&tinysynth_deinit_obj) },
 };
 

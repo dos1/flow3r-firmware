@@ -17,7 +17,7 @@ float ks_osc(ks_osc_t * ks, float input){
 float waveshaper(uint8_t shape, float in);
 float nes_noise(uint16_t * reg, uint8_t mode, uint8_t run);
 
-void trad_env(trad_osc_t * osc){
+void run_trad_env(trad_osc_t * osc){
     switch(osc->env_phase){
         case 0:
             osc->env = 0; osc->counter = 0; osc->env_counter = 0;
@@ -63,8 +63,8 @@ void trad_env(trad_osc_t * osc){
     }
 }
 
-float trad_osc(trad_osc_t * osc){
-    trad_env(osc);
+float run_trad_osc(trad_osc_t * osc){
+    run_trad_env(osc);
     if(!osc->env_phase) return 0;
     float ret = 0;
 
@@ -164,4 +164,38 @@ float waveshaper(uint8_t shape, float in){
             break;
     }
     return in;
+}
+
+#define NAT_LOG_SEMITONE 0.05776226504666215
+
+void trad_osc_set_freq_semitone(trad_osc_t * osc, float bend){
+    osc->freq = 440. * exp(bend * NAT_LOG_SEMITONE);
+}
+
+void trad_osc_set_freq_Hz(trad_osc_t * osc, float freq){
+    osc->freq = freq;
+}
+
+void trad_osc_set_waveform(trad_osc_t * osc, uint8_t waveform){
+    osc->waveform = waveform;
+}
+
+void trad_osc_set_attack(trad_osc_t * osc, uint16_t attack){
+    osc->attack_steps = attack;
+}
+
+void trad_osc_set_decay(trad_osc_t * osc, uint16_t decay){
+    osc->decay_steps = decay;
+}
+
+void trad_env_stop(trad_osc_t * osc){
+    if(osc->env_phase) osc->env_phase = 3; 
+}
+
+void trad_env_fullstop(trad_osc_t * osc){
+    osc->env_phase = 0; //stop and skip decay phase
+}
+
+void trad_env_start(trad_osc_t * osc){
+    osc->env_phase = 1; //put into attack phase;
 }
