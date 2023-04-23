@@ -8,25 +8,6 @@
 #include "sdkconfig.h"
 #include <stdint.h>
 
-#define CONFIG_GC9A01_Width 240
-#define CONFIG_GC9A01_Height 240
-//#define # CONFIG_USE_SPI1_HOST is not set
-//#define # CONFIG_USE_SPI2_HOST is not set
-#define CONFIG_USE_SPI3_HOST 1
-//#define # CONFIG_USE_SPI4_HOST is not set
-#define CONFIG_GC9A01_SPI_HOST 2
-#define CONFIG_GC9A01_PIN_NUM_SCK 39
-#define CONFIG_GC9A01_PIN_NUM_MOSI 41
-#define CONFIG_GC9A01_PIN_NUM_CS 40
-#define CONFIG_GC9A01_PIN_NUM_DC 42
-#define CONFIG_GC9A01_SPI_SCK_FREQ_M 80
-//#define # CONFIG_GC9A01_CONTROL_BACK_LIGHT_USED is not set
-#define CONFIG_GC9A01_RESET_USED 1
-#define CONFIG_GC9A01_PIN_NUM_RST 38
-#define CONFIG_GC9A01_BUFFER_MODE 1
-//#define # CONFIG_GC9A01_BUFFER_SCREEN_FAST_MODE is not set
-//#define # end of GC9A01 LCD Config
-
 
 #define GC9A01_Width	CONFIG_GC9A01_Width
 #define GC9A01_Height 	CONFIG_GC9A01_Height
