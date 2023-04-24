@@ -3,4 +3,4 @@
 #esp.osdebug(None)
 #import webrepl
 #webrepl.start()
-import cap_touch_demo
+import main

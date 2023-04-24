@@ -160,8 +160,6 @@ void manual_captouch_readout(uint8_t top)
     xQueueSend(gpio_evt_queue, &chip, NULL);
 }
 
-void espan_handle_captouch(uint16_t pressed_top, uint16_t pressed_bot);
-
 static uint16_t pressed_top, pressed_bot;
 void gpio_event_handler(void* arg)
 {
@@ -177,7 +175,6 @@ void gpio_event_handler(void* arg)
 
             if(chip == &chip_top) pressed_top = pressed;
             if(chip == &chip_bot) pressed_bot = pressed;
-            //espan_handle_captouch(pressed_top, pressed_bot);
         }
     }
 }
@@ -186,10 +183,10 @@ static uint8_t top_map[] = {2, 2, 2, 0, 0, 8, 8, 8, 6, 6, 4, 4};
 static uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9};
 
 uint16_t read_captouch(){
-
     uint16_t petals = 0;
     uint16_t top = pressed_top;
     uint16_t bot = pressed_bot;
+
     for(int i=0; i<12; i++) {
         if(top  & (1 << i)) {
             petals |= (1<<top_map[i]);
@@ -203,6 +200,11 @@ uint16_t read_captouch(){
     }
 
     return petals;
+}
+
+void captouch_force_calibration(){
+    ad714x_i2c_write(&chip_top, 2, (1 << 14));
+    ad714x_i2c_write(&chip_bot, 2, (1 << 14));
 }
 
 static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad7147_device_config device_config)
@@ -221,8 +223,7 @@ static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad71
         ad714x_set_stage_config(chip, i, &stage_config);
     }
 
-    // Force calibration
-    ad714x_i2c_write(chip, 2, (1 << 14));
+    captouch_force_calibration();
 
     gpio_config_t io_conf = {};
     io_conf.intr_type = GPIO_INTR_NEGEDGE;
@@ -232,15 +233,13 @@ static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad71
     io_conf.pull_down_en = 0;
     gpio_config(&io_conf);
 
-    gpio_evt_queue = xQueueCreate(10, sizeof(const struct ad714x_chip*));
-    xTaskCreate(gpio_event_handler, "gpio_event_handler", 2048 * 2, NULL, configMAX_PRIORITIES - 2, NULL);
-    gpio_isr_handler_add(chip->gpio, gpio_isr_handler, (void *)chip);
+    // gpio_isr_handler_add(chip->gpio, gpio_isr_handler, (void *)chip);
 
 }
 
 void captouch_init(void)
 {
-    gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
+    //gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     captouch_init_chip(&chip_top, (struct ad7147_device_config){.sequence_stage_num = 11,
                                                  .decimation = 1,
                                                  .stage0_cal_en = 1,
@@ -294,6 +293,9 @@ void captouch_init(void)
                                                  .stage8_high_int_enable = 1,
                                                  .stage9_high_int_enable = 1,
                                                  });
+
+    gpio_evt_queue = xQueueCreate(10, sizeof(const struct ad714x_chip*));
+    xTaskCreate(gpio_event_handler, "gpio_event_handler", 2048 * 2, NULL, configMAX_PRIORITIES - 2, NULL);
 }
 
 static void captouch_print_debug_info_chip(const struct ad714x_chip* chip)
