@@ -177,7 +177,7 @@ void gpio_event_handler(void* arg)
 
             if(chip == &chip_top) pressed_top = pressed;
             if(chip == &chip_bot) pressed_bot = pressed;
-            espan_handle_captouch(pressed_top, pressed_bot);
+            //espan_handle_captouch(pressed_top, pressed_bot);
         }
     }
 }
@@ -188,14 +188,16 @@ static uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9};
 uint16_t read_captouch(){
 
     uint16_t petals = 0;
+    uint16_t top = pressed_top;
+    uint16_t bot = pressed_bot;
     for(int i=0; i<12; i++) {
-        if(pressed_top  & (1 << i)) {
+        if(top  & (1 << i)) {
             petals |= (1<<top_map[i]);
         }
     }
 
     for(int i=0; i<10; i++) {
-        if(pressed_bot  & (1 << i)) {
+        if(bot  & (1 << i)) {
             petals |= (1<<bot_map[i]);
         }
     }

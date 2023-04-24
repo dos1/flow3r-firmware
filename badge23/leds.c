@@ -128,7 +128,7 @@ struct RGB HSVToRGB(struct HSV hsv) {
     return rgb;
 }
 
-static void renderLEDs()
+void renderLEDs()
 {
     spi_device_queue_trans(spi_led, &spiTransObject, portMAX_DELAY);
 }
@@ -242,7 +242,7 @@ static void _leds_init() {
 
 
     TaskHandle_t handle;
-    xTaskCreate(&leds_task, "LEDs player", 4096, NULL, configMAX_PRIORITIES - 2, &handle);
+    //xTaskCreate(&leds_task, "LEDs player", 4096, NULL, configMAX_PRIORITIES - 2, &handle);
 }
 
 static bool leds_active(void)
@@ -334,6 +334,35 @@ static void leds_task(void* arg) {
             }
         }
     }
+}
+
+void leds_set_single_rgb(uint8_t index, uint8_t red, uint8_t green, uint8_t blue){
+    uint8_t c[3];
+    c[0] = red;
+    c[1] = green;
+    c[2] = blue;
+    setPixel(&leds, index, c);
+}
+void leds_set_single_hsv(uint8_t index, float hue, float sat, float val){
+    struct RGB rgb;
+    struct HSV hsv;
+    hsv.H = hue;
+    hsv.S = sat;
+    hsv.V = val;
+    
+    rgb = HSVToRGB(hsv);
+
+    uint8_t c[3];
+    c[0] = rgb.R;
+    c[1] = rgb.G;
+    c[2] = rgb.B;
+    setPixel(&leds, index, c);
+}
+
+void leds_update(){
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+    renderLEDs();
+    vTaskDelay(10 / portTICK_PERIOD_MS);
 }
 
 void leds_init() { _leds_init(); }
