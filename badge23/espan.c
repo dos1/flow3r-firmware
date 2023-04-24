@@ -67,7 +67,7 @@ void espan_handle_captouch(uint16_t pressed_top, uint16_t pressed_bot)
     for(int i=0; i<10; i++) {
         if(active_paddles[i] == false && paddles[i] == true) {
             //if(!(i == 2 || i == 8)) synth_start(i);
-            leds_animate(i);
+            //leds_animate(i);
             active_paddles[i] = true;
             changed = true;
         } else if(active_paddles[i] == true && paddles[i] == false) {
@@ -88,6 +88,7 @@ void espan_handle_captouch(uint16_t pressed_top, uint16_t pressed_bot)
 #define VIOLIN_DECAY 10
 #define VIOLIN_VOL_BOOST 0.004
 #define VIOLIN_SENS_POW 2
+#define CAPTOUCH_POLLING_PERIOD 3
 
 void os_app_main(void)
 {
@@ -115,9 +116,9 @@ void os_app_main(void)
     void * asdasd = &i;
     while(1) {
         manual_captouch_readout(1);
-        vTaskDelay(3 / portTICK_PERIOD_MS);
+        vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
         manual_captouch_readout(0);
-        vTaskDelay(3 / portTICK_PERIOD_MS);
+        vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
 
         continue;
         /*
