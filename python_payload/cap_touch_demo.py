@@ -1,6 +1,9 @@
 from synth import tinysynth
 from hardware import *
 import time
+from machine import Pin
+
+p = Pin(0, Pin.IN)
 
 set_global_volume_dB(0)
 synths = []
@@ -11,7 +14,13 @@ for synth in synths:
     synth.decay(100)
     synth.waveform(1)
 
-chords = [[0,3,7,10,12],[-2,2,5,8,10],[-2,3,7,10,14],[-4,0,3,8,12],[-1,2,5,7,11]]
+chords = [\
+[-4,0,3,8,10],\
+[-3,0,5,7,12],\
+[-1,2,5,7,11],\
+[0,3,7,12,14],\
+[3,7,10,14,15]\
+]
 
 chord = chords[3]
 chord_index = -1
@@ -29,11 +38,15 @@ def set_chord(i):
 
 set_chord(3)
 
-def cap_touch_demo_start(delay):
+def cap_touch_demo_start():
     global chord_index
     global chord
+    global p
     while True:
         update_leds()
+        if(p.value() == 0):
+            captouch_autocalib()
+            time.sleep_ms(100)
         for i in range(10):
             if(get_captouch(i)):
                 if(i%2):
@@ -44,5 +57,3 @@ def cap_touch_demo_start(delay):
                     synths[k].tone(chord[k])
                     synths[k].start()
                     print("synth " +str(k))
-            time.sleep_ms(delay)
-
