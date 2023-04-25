@@ -409,6 +409,13 @@ void GC9A01_SetBL(uint8_t Value)
 		uint16_t color = ScreenBuff[y * GC9A01_Width + x];
 		SwapBytes(&color);
 		return color;
+    }
+
+    void GC9A01_DrawPixel(int16_t x, int16_t y, uint16_t color) {
+            if ((x < 0) || (x >= GC9A01_Width) || (y < 0) || (y >= GC9A01_Height))
+                return;
+            SwapBytes(&color);
+            ScreenBuff[y * GC9A01_Width + x] = color;
 	}
 
 	void GC9A01_FillRect(int16_t x, int16_t y, int16_t w, int16_t h,

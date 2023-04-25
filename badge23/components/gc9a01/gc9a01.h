@@ -14,16 +14,6 @@
 
 extern uint16_t ScreenBuff[GC9A01_Height * GC9A01_Width];
 
-static inline void GC9A01_DrawPixel(int16_t x, int16_t y, uint16_t color) {
-		if ((x < 0) || (x >= GC9A01_Width) || (y < 0) || (y >= GC9A01_Height))
-			return;
-
-		//SwapBytes(&color);
-
-		ScreenBuff[y * GC9A01_Width + x] = color;
-	}
-
-
 uint16_t GC9A01_GetWidth();
 uint16_t GC9A01_GetHeight();
 

@@ -34,10 +34,28 @@ static void _display_init() {
     xTaskCreate(&display_task, "Display", 4096, NULL, configMAX_PRIORITIES - 3, &handle);
     */
     
+    /* SCOPE TASK
     TimerHandle_t aa = xTimerCreate("Display", pdMS_TO_TICKS(100), pdTRUE, (void *) 0, *display_task);
     if( xTimerStart(aa, 0 ) != pdPASS )
     {
     }
+    */
+}
+
+void display_update(){
+    GC9A01_Update();
+}
+
+void display_draw_pixel(uint8_t x, uint8_t y, uint16_t col){
+    GC9A01_DrawPixel(x, y, col);
+}
+
+uint16_t display_get_pixel(uint8_t x, uint8_t y){
+    return GC9A01_GetPixel(x,y);
+}
+
+void display_fill(uint16_t col){
+    GC9A01_FillRect(0, 0, 240, 240, col);
 }
 
 void display_draw_scope(){
@@ -59,8 +77,8 @@ void display_draw_scope(){
 
     //uint32_t td = esp_log_timestamp() - t0;
     // printf("it took %lu\n", td);
+    display_update();
 
-    GC9A01_Update();
 }
 //static void display_task(void* arg) {
 static void display_task(TimerHandle_t aaaaa) {
