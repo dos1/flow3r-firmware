@@ -48,20 +48,23 @@ void os_app_main(void)
     ESP_ERROR_CHECK(i2c_master_init());
     ESP_LOGI(TAG, "I2C initialized successfully");
 
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    set_global_vol_dB(0);
-
+    set_global_vol_dB(-90);
     audio_init();
     leds_init();
-    //display_init();
     captouch_init();
 
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    //set_global_vol_dB(0);
+
     mp_hal_stdout_tx_str("task inits done\n\r");
+    display_init();
+    mp_hal_stdout_tx_str("display init done\n\r");
     while(1) {
         manual_captouch_readout(1);
         vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
         manual_captouch_readout(0);
         vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
+        //display_draw_scope();
     }
 
     ESP_ERROR_CHECK(i2c_driver_delete(I2C_MASTER_NUM));
