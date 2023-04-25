@@ -14,6 +14,36 @@
 #include "../badge23/leds.h"
 #include "../badge23/captouch.h"
 
+#include "../badge23/display.h"
+STATIC mp_obj_t mp_display_update(size_t n_args, const mp_obj_t *args) {
+    display_update();
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_display_update_obj, 0, 1, mp_display_update);
+
+STATIC mp_obj_t mp_display_draw_pixel(size_t n_args, const mp_obj_t *args) {
+    uint16_t x = mp_obj_get_int(args[0]);
+    uint16_t y = mp_obj_get_int(args[1]);
+    uint16_t col = mp_obj_get_int(args[2]);
+    display_draw_pixel(x, y, col);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_display_draw_pixel_obj, 3, 4, mp_display_draw_pixel);
+
+STATIC mp_obj_t mp_display_get_pixel(size_t n_args, const mp_obj_t *args) {
+    uint16_t x = mp_obj_get_int(args[0]);
+    uint16_t y = mp_obj_get_int(args[1]);
+    return mp_obj_new_int(display_get_pixel(x, y));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_display_get_pixel_obj, 2, 3, mp_display_get_pixel);
+
+STATIC mp_obj_t mp_display_fill(size_t n_args, const mp_obj_t *args) {
+    uint16_t col = mp_obj_get_int(args[0]);
+    display_fill(col);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_display_fill_obj, 1, 2, mp_display_fill);
+
 STATIC mp_obj_t mp_get_captouch(size_t n_args, const mp_obj_t *args) {
     uint16_t captouch = read_captouch();
     uint16_t pad = mp_obj_get_int(args[0]);
@@ -90,6 +120,10 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_set_led_rgb), MP_ROM_PTR(&mp_set_led_rgb_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_led_hsv), MP_ROM_PTR(&mp_set_led_hsv_obj) },
     { MP_ROM_QSTR(MP_QSTR_update_leds), MP_ROM_PTR(&mp_update_leds_obj) },
+    { MP_ROM_QSTR(MP_QSTR_display_update), MP_ROM_PTR(&mp_display_update_obj) },
+    { MP_ROM_QSTR(MP_QSTR_display_draw_pixel), MP_ROM_PTR(&mp_display_draw_pixel_obj) },
+    { MP_ROM_QSTR(MP_QSTR_display_get_pixel), MP_ROM_PTR(&mp_display_get_pixel_obj) },
+    { MP_ROM_QSTR(MP_QSTR_display_fill), MP_ROM_PTR(&mp_display_fill_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_hardware_globals, mp_module_hardware_globals_table);
