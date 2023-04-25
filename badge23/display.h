@@ -3,4 +3,4 @@
 #include <stdbool.h>
 
 void display_init();
-void display_show(bool active_paddles[10]);
+void display_draw_scope();
