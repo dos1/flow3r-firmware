@@ -20,7 +20,7 @@ def set_chord(i):
         chord_index = i
         for j in range(40):
             hue = int(72*(i+0.5)) % 360
-            set_led_hsv(j, hue, 1, 0.5)
+            set_led_hsv(j, hue, 1, 0.2)
         chord = chords[i]
         print("set chord " +str(i))
         update_leds()

@@ -86,29 +86,27 @@ def run_menu():
 
     if long_bottom_petal_captouch_blocking(0,20):
         clear_all_leds()
-        highlight_bottom_petal(0,255,0,0)
+        highlight_bottom_petal(0,55,0,0)
         display_fill(background)
         display_update()
         foreground = cap_touch_demo.run
         time.sleep_ms(100)
         clear_all_leds()
-        captouch_autocalib()
         cap_touch_demo.foreground()
     if long_bottom_petal_captouch_blocking(1,20):
         clear_all_leds()
-        highlight_bottom_petal(1,255,0,0)
+        highlight_bottom_petal(1,55,0,0)
         display_fill(background)
         display_update()
         foreground = melodic_demo.run
         time.sleep_ms(100)
         clear_all_leds()
-        captouch_autocalib()
         melodic_demo.foreground()
 
 def foreground_menu():
     clear_all_leds()
-    highlight_bottom_petal(0,0,255,255);
-    highlight_bottom_petal(1,255,0,255);
+    highlight_bottom_petal(0,0,55,55);
+    highlight_bottom_petal(1,55,0,55);
     display_fill(background)
     draw_text_big(select, 0, 0)
     display_update()

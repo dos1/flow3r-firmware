@@ -15,21 +15,21 @@ def change_playing_field_color(r,g,b):
     highlight_bottom_petal(1, r, g, b)
     highlight_bottom_petal(3, r, g, b)
     highlight_bottom_petal(4, r, g, b)
-    highlight_bottom_petal(2, 255, 0, 255)
-    set_led_rgb(18, 255, 0, 255)
-    set_led_rgb(19, 255, 0, 255)
-    set_led_rgb(27, 255, 0, 255)
-    set_led_rgb(28, 255, 0, 255)
+    highlight_bottom_petal(2, 55, 0, 55)
+    set_led_rgb(18, 55, 0, 55)
+    set_led_rgb(19, 55, 0, 55)
+    set_led_rgb(27, 55, 0, 55)
+    set_led_rgb(28, 55, 0, 55)
     update_leds()
 
 def adjust_playing_field_to_octave():
     global octave
     if(octave == -1):
-        change_playing_field_color(0,0,255)
+        change_playing_field_color(0,0,55)
     elif(octave == 0):
-        change_playing_field_color(0,127,127)
+        change_playing_field_color(0,27,27)
     elif(octave == 1):
-        change_playing_field_color(0,255,0)
+        change_playing_field_color(0,55,0)
 
 def run():
     global scale
