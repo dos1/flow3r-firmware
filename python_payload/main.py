@@ -42,7 +42,7 @@ def draw_text_big(text, x, y):
 def highlight_bottom_petal(num, r, g, b):
     start = 4 + 8*num
     for i in range(7):
-        set_led_rgb((i+start%40), r, g, b)
+        set_led_rgb(((i+start)%40), r, g, b)
     update_leds()
     
 def long_bottom_petal_captouch_blocking(num, ms):
@@ -96,7 +96,7 @@ def run_menu():
         cap_touch_demo.foreground()
     if long_bottom_petal_captouch_blocking(1,20):
         clear_all_leds()
-        highlight_bottom_petal(0,255,0,0)
+        highlight_bottom_petal(1,255,0,0)
         display_fill(background)
         display_update()
         foreground = melodic_demo.run
