@@ -132,7 +132,7 @@ static void _audio_init(void) {
     i2s_init();
     //ESP_ERROR_CHECK(i2s_channel_enable(tx_chan));
     TaskHandle_t handle;
-    xTaskCreate(&audio_player_task, "Audio player", 20000, NULL, configMAX_PRIORITIES - 1, &handle);
+    xTaskCreate(&audio_player_task, "Audio player", 3000, NULL, configMAX_PRIORITIES - 1, &handle);
 }
 
 #define LR_PHASE 1
