@@ -2,6 +2,7 @@
 #include "badge23/audio.h"
 #include "badge23/leds.h"
 #include "badge23/display.h"
+#include "badge23/portexpander.h"
 
 #include "esp_log.h"
 #include "driver/i2c.h"
@@ -48,6 +49,7 @@ void os_app_main(void)
     ESP_LOGI(TAG, "I2C initialized successfully");
 
     set_global_vol_dB(-90);
+    portexpander_init();
     audio_init();
     leds_init();
     captouch_init();
