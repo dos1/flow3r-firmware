@@ -1,4 +1,5 @@
 #include "badge23/leds.h"
+#include "portexpander.h"
 
 #include "driver/spi_master.h"
 
@@ -240,6 +241,9 @@ static void _leds_init() {
     spiTransObject.length = leds._frameLength*8;
     spiTransObject.tx_buffer = leds.LEDs;
 
+    portexpander_set_leds(true);
+
+    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &led_strip));
 
     TaskHandle_t handle;
     //xTaskCreate(&leds_task, "LEDs player", 4096, NULL, configMAX_PRIORITIES - 2, &handle);
