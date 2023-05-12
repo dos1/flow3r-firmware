@@ -31,7 +31,9 @@ mpremote fs cp python_payload/boot.py :boot.py
 mpremote fs cp python_payload/cap_touch_demo.py :cap_touch_demo.py
 ```
 
-## how to build
+## how to install dependencies
+
+### Generic
 
 1. install esp-idf v4.4:
 (copied from https://www.wemos.cc/en/latest/tutorials/others/build_micropython_esp32.html)
@@ -49,14 +51,22 @@ $ source export.sh
 best put something like "alias espidf='source ~/esp-idf/export.sh'" in your .bashrc etc,
 you need to run it in every new terminal and adding it to autostart did bother us
 
-2. prepare build
+### Nix(OS)
+
+```
+$ nix-shell nix/shell.nix
+```
+
+## how to build
+
+1. prepare build
 ```
 $ cd micropython/
 $ make -C mpy-cross
 $ cd ports/esp32
 $ make submodules
 ```
-3. build/flash
+2. build/flash
 make sure esp-idf is sourced as in step 1 and that you are in micropython/ports/esp32
 build:
 ```
@@ -73,7 +83,7 @@ empty build cache (useful when moving files around):
 $ make clean
 ```
 
-4. access micropython repl:
+3. access micropython repl:
 ```
 $ picocom -b 115200 /dev/ttyACM0
 ```
