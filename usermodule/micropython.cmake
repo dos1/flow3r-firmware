@@ -1,0 +1,12 @@
+add_library(usermod_badge23 INTERFACE)
+
+target_sources(usermod_badge23 INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}/mp_hardware.c
+    ${CMAKE_CURRENT_LIST_DIR}/mp_synth.c
+)
+
+target_include_directories(usermod_badge23 INTERFACE
+    ${CMAKE_CURRENT_LIST_DIR}
+)
+
+target_link_libraries(usermod INTERFACE usermod_badge23)

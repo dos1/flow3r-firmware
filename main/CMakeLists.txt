@@ -16,6 +16,8 @@ set(MICROPY_QSTRDEFS_PORT "${MICROPY_PORT_DIR}/qstrdefsport.h")
 
 include("${MICROPY_DIR}/py/py.cmake")
 
+set(USER_C_MODULES "${PROJECT_DIR}/usermodule/micropython.cmake")
+
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     # Enable extmod components that will be configured by extmod.cmake.
     # A board may also have enabled additional components.
@@ -51,8 +53,6 @@ set(MICROPY_SOURCE_DRIVERS
 )
 
 set(MICROPY_SOURCE_PORT
-    ${MICROPY_PORT_DIR}/badge23_mp_hardware.c
-    ${MICROPY_PORT_DIR}/badge23_mp_synth.c
     ${MICROPY_PORT_DIR}/main.c
     ${MICROPY_PORT_DIR}/uart.c
     ${MICROPY_PORT_DIR}/usb.c
