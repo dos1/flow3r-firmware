@@ -96,6 +96,6 @@ void portexpander_init(void)
 
     pca9557_set_directions(PEX1, (INPUT << 7) | (OUTPUT << 6) | (OUTPUT << 5) | (OUTPUT << 4) | (OUTPUT << 3) | (INPUT << 2) | (INPUT << 1) | (INPUT << 0));
 
-    pca9557_set_directions(PEX1, (INPUT << 7) | (INPUT << 6) | (INPUT << 5) | (OUTPUT << 4) | (OUTPUT << 3) | (INPUT << 2) | (OUTPUT << 1) | (INPUT << 0));
+    pca9557_set_directions(PEX2, (INPUT << 7) | (INPUT << 6) | (INPUT << 5) | (OUTPUT << 4) | (OUTPUT << 3) | (INPUT << 2) | (OUTPUT << 1) | (INPUT << 0));
 }
 
