@@ -1,6 +1,6 @@
-#include "audio.h"
-#include "synth.h" 
-#include "scope.h"
+#include "badge23/audio.h"
+#include "badge23/synth.h" 
+#include "badge23/scope.h"
 
 #include "driver/i2s.h"
 
@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "../../py/mphal.h"
 
 static void audio_player_task(void* arg);
 

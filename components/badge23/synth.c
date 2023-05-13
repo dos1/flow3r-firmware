@@ -1,5 +1,5 @@
-#include "synth.h"
-#include "audio.h"
+#include "badge23/synth.h"
+#include "badge23/audio.h"
 #include <math.h>
 
 float ks_osc(ks_osc_t * ks, float input){

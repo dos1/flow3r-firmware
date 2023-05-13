@@ -10,11 +10,12 @@
 #include "machine_rtc.h"
 #include "py/builtin.h"
 #include "py/runtime.h"
-#include "../badge23/audio.h"
-#include "../badge23/leds.h"
-#include "../badge23/captouch.h"
 
-#include "../badge23/display.h"
+#include "badge23/audio.h"
+#include "badge23/leds.h"
+#include "badge23/captouch.h"
+#include "badge23/display.h"
+
 STATIC mp_obj_t mp_display_update(size_t n_args, const mp_obj_t *args) {
     display_update();
     return mp_const_none;

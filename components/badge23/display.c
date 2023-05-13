@@ -1,5 +1,5 @@
-#include "display.h"
-#include "components/gc9a01/gc9a01.h"
+#include "badge23/display.h"
+#include "gc9a01.h"
 
 #include "esp_log.h"
 #include <freertos/FreeRTOS.h>
@@ -10,7 +10,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "scope.h"
+#include "badge23/scope.h"
 #include "esp_system.h"
 
 uint16_t *pixels;

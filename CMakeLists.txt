@@ -4,7 +4,4 @@ set(IDF_TARGET esp32s3)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
-# TODO(q3k): migrate badge23/components/* to components/*.
-list(APPEND EXTRA_COMPONENT_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/badge23/components/")
-
 project(badge23)
