@@ -60,6 +60,18 @@ all:
 
 $(BUILD)/bootloader/bootloader.bin $(BUILD)/partition_table/partition-table.bin $(BUILD)/micropython.bin: FORCE
 
+openocd:
+	OPENOCD_COMMANDS='-f board/esp32s3-builtin.cfg' idf.py $(IDFPY_FLAGS) -p $(PORT) -b $(BAUD) openocd
+
+gdb:
+	OPENOCD_COMMANDS='-f board/esp32s3-builtin.cfg' idf.py $(IDFPY_FLAGS) -p $(PORT) -b $(BAUD) gdb
+
+monitor:
+	idf.py $(IDFPY_FLAGS) -p $(PORT) -b $(BAUD) monitor
+
+menuconfig:
+	idf.py $(IDFPY_FLAGS) menuconfig
+
 clean:
 	idf.py $(IDFPY_FLAGS) fullclean
 
