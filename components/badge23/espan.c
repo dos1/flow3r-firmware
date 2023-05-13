@@ -54,6 +54,8 @@ void os_app_main(void)
     leds_init();
     captouch_init();
 
+    if(portexpander_rev6()) printf("REV6\n"); else printf("REV5\n");
+
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     //set_global_vol_dB(0);
 

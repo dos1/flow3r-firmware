@@ -34,6 +34,17 @@ static esp_err_t pca9557_i2c_read(const uint8_t addr, const uint8_t reg, uint8_t
     return ret;
 }
 
+static bool pca9557_detect(const uint8_t addr)
+{
+    uint8_t data;
+    esp_err_t ret = pca9557_i2c_read(addr, 0, &data);
+    if(ret == ESP_OK) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 static uint8_t pca9557_get(const uint8_t addr)
 {
     uint8_t pins;
@@ -83,6 +94,11 @@ void portexpander_set_lcd_reset(const bool enabled)
         pex2_state |= (1<<3);
     }
     pca9557_set(PEX2, pex2_state);
+}
+
+bool portexpander_rev6(void)
+{
+    return pca9557_detect(PEX1);
 }
 
 void portexpander_init(void)
