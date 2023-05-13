@@ -1,7 +1,9 @@
-## current functionality
-micropython repl hooked up, hw functionality partly broken
+## Current functionality
 
-some fun commands to try:
+Micropython repl hooked up, hw functionality partly broken>
+
+Some fun commands to try:
+
 ```
 import hardware
 #turn on sound
@@ -25,18 +27,19 @@ hardware.count_sources();
 #...don't know how to hook up gc to __del__, maybe wrong approach
 ```
 
-files can be transferred with mpremote, such as:
+Files can be transferred with mpremote, such as:
+
 ```
 mpremote fs cp python_payload/boot.py :boot.py
 mpremote fs cp python_payload/cap_touch_demo.py :cap_touch_demo.py
 ```
 
-## how to install dependencies
+## How to install dependencies
 
 ### Generic
 
 1. install esp-idf v4.4:
-(copied from https://www.wemos.cc/en/latest/tutorials/others/build_micropython_esp32.html)
+(copied from https://www.wemos.cc/en/latest/tutorials/others/build\_micropython\_esp32.html)
 ```
 $ cd ~
 $ git clone https://github.com/espressif/esp-idf.git
@@ -57,48 +60,62 @@ you need to run it in every new terminal and adding it to autostart did bother u
 $ nix-shell nix/shell.nix
 ```
 
-## how to build
+## How to build and flash
 
-1. prepare build
-```
-$ cd micropython/
-$ make -C mpy-cross
-$ cd ports/esp32
-$ make submodules
-```
-2. build/flash
-make sure esp-idf is sourced as in step 1 and that you are in micropython/ports/esp32
-build:
-```
-$ make
-```
-flash + build: (put badge into bootloader mode*)
-```
-$ make deploy PORT=/dev/ttyACM0
-```
-_*press right shoulder button down during boot (on modified "last gen" prototypes)_
+Standard ESP-IDF project machinery present and working. You can run `idf.py` from the git checkout and things should just work.
 
-empty build cache (useful when moving files around):
+### Building
+
 ```
-$ make clean
+$ idf.py build
 ```
 
-3. access micropython repl:
+### Flashing
+
+Put badge into bootloader mode by holding left should button down during boot.
+
+```
+$ idf.py -p /dev/ttyACM0 flash
+```
+
+You can skip `-p /dev/ttyACM0` if you set the environment variable `ESPPORT=/dev/ttyACM0`. This environment variable is also set by default when using Nix.
+
+After flashing, remember to powercycle your badge to get it into the user application.
+
+### Accessing MicroPython REPL:
 
 ```
 $ picocom -b 115200 /dev/ttyACM0
-$ # OR
-# screen /dev/ttyACM0
+$ # or
+$ screen /dev/ttyACM0
+$ # or (will eat newlines in REPL, though)
+$ idf.py -p /dev/ttyACM0 monitor
 ```
 
-## how to modify
+### Use CMake
 
-### general info
+`idf.py` calls cmake under the hood for most operations. If you dislike using wrappers you can do the same work yourself:
 
-global + micropython entry point: app_main() in micropython/ports/esp32/main.c (includes badge23/espan.h)
-c entry point, called by^: os_app_main() in badge23/espan.c
-register new c files for compilation: add to set(BADGE23_LIB) in micropython/ports/esp32/main/CMakelists.txt
-change output volume in the set_global_vol_dB(int8_t) call; -90 for mute
+```
+mkdir build
+cd build
+cmake .. -G Ninja
+ninja
+```
+
+There's `flash/monitor` targets, too (but no openocd/gdb...). To pick what port to flash to/monitor, set the ESPPORT environment variable.
+
+## How to modify
+
+### General info
+
+Global + micropython entry point: app\_main() in micropython/ports/esp32/main.c (includes badge23/espan.h).
+
+C entry point, called by^: os\_app\_main() in badge23/espan.c
+
+Register new c files for compilation: add to set(BADGE23\_SOURCE) in main/CMakelists.txt
+
+Change output volume in the set\_global\_vol\_dB(int8\_t) call; -90 for mute
 
 ### Debugging
 
@@ -120,7 +137,7 @@ static const char *TAG = "misery";
 ESP_LOGI(TAG, "i love C");
 ```
 
-However, this will **only work** if you modify `micropython/ports/esp32/boards/sdkconfig.base` to set `CONFIG_LOG_DEFAULT_LEVEL_INFO=y` (which will likely break programs interacting with micropython REPL as many components of the ESP-IDF will suddenly become very chatty). But that's fine for troubleshooting some C-land bugs.
+However, this will **only work** if you first set `CONFIG_LOG_DEFAULT_LEVEL_INFO=y` (which will likely break programs interacting with micropython REPL as many components of the ESP-IDF will suddenly become very chatty). But that's fine for troubleshooting some C-land bugs.
 
 If you want to only log errors or just add temporary logs, use `ESP_LOGE` instead, which will always print to the USB console.
 
@@ -130,26 +147,28 @@ If you want to only log errors or just add temporary logs, use `ESP_LOGE` instea
 
 First, make sure your badge is running in application mode (not bootloader mode! that will stay in bootloader mode).
 
+Then, start OpenOCD:
+
 ```
-$ make -C micropython/ports/esp32 openocd
+$ OPENOCD_COMMANDS="-f board/esp32s3-builtin.cfg" idf.py openocd
 ```
+
+(you can skip setting `OPENOCD_COMMANDS` if you're using Nix)
 
 Then, in another terminal:
 
 ```
-$ make -C micropython/ports/esp32 gdb
+$ idf.py gdb
 ```
 
-Good luck.
+Good luck. The idf.py gdb/openocd scripts seem somewhat buggy.
 
 ### ESP-IDF functionality
 
-Micropython splits up sdkconfig into a bunch of small files. Unfortunately, that doesn't work well with ESP-IDFs menuconfig.
-
-If you want to permanently toggle options, you'll have to do that by modifying `micropython/ports/esp32/boards/sdkconfig.badge23`, or another file referenced by `micropython/ports/esp32/GENERIC_S3_BADGE/mpconfigboard.cmake`. Keep in mind the usual Kconfig shenanigants: disabling an options requires removing its line (not setting it to 'n'!), and that some options might be enabled automatically by other options. After modifying files, you must `make clean` in micropython/ports/esp32. Bummer.
-
-To verify whether your configuration is what you expect it to be, you can still run menuconfig on the effective/calculated sdkconfig that micropython assembles. You can even modify the settings which will affect the build, but will be lost on `make clean` (and on git push, of course). To do so, run:
+Currently we have one large sdkconfig file. To modify it, run:
 
 ```
-$ make -C micropython/ports/esp32 menuconfig
+$ idf.py menuconfig
 ```
+
+TODO(q3k): split into defaults
