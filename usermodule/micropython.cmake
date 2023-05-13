@@ -1,3 +1,7 @@
+# If you want to add dependencies on other ESP-IDF modules, add them to
+# IDF_COMPONENTS in main/CMakeLists, as main/ is the component that the
+# usermodules are actually part of.
+
 add_library(usermod_badge23 INTERFACE)
 
 target_sources(usermod_badge23 INTERFACE

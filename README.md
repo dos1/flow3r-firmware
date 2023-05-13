@@ -107,15 +107,26 @@ There's `flash/monitor` targets, too (but no openocd/gdb...). To pick what port 
 
 ## How to modify
 
+### Structure
+
+```
+main/               - main module, starts micropython on core1 and continues
+                      executing components/badge23/.
+usermodule/         - `hardware`, `synth`, ... C modules exposed to micropython.
+components/badge23/ - main ESP-IDF `app_main`, runs on core 0 after micropython
+                      gets started on core1.
+components/gc9a01/  - low-level LCD driver.
+```
+
 ### General info
 
-Global + micropython entry point: app\_main() in micropython/ports/esp32/main.c (includes badge23/espan.h).
+Global + micropython entry point: `app_main()` in `micropython/ports/esp32/main.c`, compiled into `main/` component.
 
-C entry point, called by^: os\_app\_main() in badge23/espan.c
+C entry point, called by^: `os_app_main()` in components/badge23/espan.c
 
-Register new c files for compilation: add to set(BADGE23\_SOURCE) in main/CMakelists.txt
+Register new C files for compilation: add to components/badge23/CMakelists.txt
 
-Change output volume in the set\_global\_vol\_dB(int8\_t) call; -90 for mute
+Change output volume in the `set_global_vol_dB(int8_t)` call; -90 for mute
 
 ### Debugging
 
