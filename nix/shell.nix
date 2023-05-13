@@ -21,4 +21,10 @@ in with nixpkgs; pkgs.mkShell {
 
     ncurses5
   ];
+  shellHook = ''
+    # For esp.py openocd integration.
+    export OPENOCD_SCRIPTS="${pkgs.openocd-esp32-bin}/share/openocd/scripts"
+    # For GDB to be able to find libpython2.7 (????).
+    export LD_LIBRARY_PATH="${pkgs.python2}/lib:$LD_LIBRARY_PATH"
+  '';
 }
