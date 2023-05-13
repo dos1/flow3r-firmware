@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include "py/runtime.h"
 #include "py/obj.h"
-#include "../../../badge23/synth.h"
-#include "../../../badge23/audio.h"
+#include "badge23/synth.h"
+#include "badge23/audio.h"
 
 #if !MICROPY_ENABLE_FINALISER
 #error "BADGE23_SYNTH requires MICROPY_ENABLE_FINALISER"

@@ -103,6 +103,7 @@ set(MICROPY_SOURCE_QSTR
 
 set(IDF_COMPONENTS
     app_update
+    badge23
     bootloader_support
     bt
     driver
@@ -140,20 +141,6 @@ set(IDF_COMPONENTS
 set(MICROPY_FROZEN_MANIFEST ${MICROPY_PORT_DIR}/boards/manifest.py)
 set(MICROPY_CROSS_FLAGS -march=xtensawin)
 
-# Include badge23/* via this component for now.
-# TODO(q3k): make this into a real component.
-set(BADGE23_SOURCE
-    ${PROJECT_DIR}/badge23/apa102LEDStrip.c
-    ${PROJECT_DIR}/badge23/audio.c
-    ${PROJECT_DIR}/badge23/captouch.c
-    ${PROJECT_DIR}/badge23/display.c
-    ${PROJECT_DIR}/badge23/espan.c
-    ${PROJECT_DIR}/badge23/leds.c
-    ${PROJECT_DIR}/badge23/scope.c
-    ${PROJECT_DIR}/badge23/synth.c
-    ${PROJECT_DIR}/badge23/components/gc9a01/gc9a01.c
-)
-
 idf_component_register(
     SRCS
         ${MICROPY_SOURCE_PY}
@@ -163,7 +150,6 @@ idf_component_register(
         ${MICROPY_SOURCE_LIB}
         ${MICROPY_SOURCE_DRIVERS}
         ${MICROPY_SOURCE_PORT}
-        ${BADGE23_SOURCE}
     INCLUDE_DIRS
         # Actual micropython include paths.
         ${MICROPY_INC_CORE}

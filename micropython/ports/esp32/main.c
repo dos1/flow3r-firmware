@@ -62,7 +62,7 @@
 #include "modmachine.h"
 #include "modnetwork.h"
 #include "mpthreadport.h"
-#include "../../../badge23/espan.h"
+#include "badge23/espan.h"
 
 #if MICROPY_BLUETOOTH_NIMBLE
 #include "extmod/modbluetooth.h"

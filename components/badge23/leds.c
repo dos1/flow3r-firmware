@@ -1,4 +1,4 @@
-#include "leds.h"
+#include "badge23/leds.h"
 
 #include "driver/spi_master.h"
 
@@ -23,7 +23,7 @@ static QueueHandle_t leds_queue = NULL;
 static leds_cfg_t active_leds[11];
 static void leds_task(void* arg);
 
-#include "apa102LEDStrip.h"
+#include "badge23/apa102LEDStrip.h"
 static struct apa102LEDStrip leds;
 
 //SPI Vars

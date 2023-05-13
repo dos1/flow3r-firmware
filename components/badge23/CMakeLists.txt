@@ -1,0 +1,15 @@
+idf_component_register(
+    SRCS
+        apa102LEDStrip.c
+        audio.c
+        captouch.c
+        display.c
+        espan.c
+        leds.c
+        scope.c
+        synth.c
+    INCLUDE_DIRS
+        include
+    REQUIRES
+        gc9a01
+)

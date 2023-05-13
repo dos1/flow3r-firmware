@@ -1,4 +1,4 @@
-#include "scope.h"
+#include "badge23/scope.h"
 #include <string.h>
 
 scope_t * scope;

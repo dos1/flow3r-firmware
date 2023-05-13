@@ -1,8 +1,7 @@
-#include "captouch.h"
-#include "audio.h"
-#include "leds.h"
-#include "../../py/mphal.h"
-#include "display.h"
+#include "badge23/captouch.h"
+#include "badge23/audio.h"
+#include "badge23/leds.h"
+#include "badge23/display.h"
 
 #include "esp_log.h"
 #include "driver/i2c.h"
@@ -56,9 +55,7 @@ void os_app_main(void)
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     //set_global_vol_dB(0);
 
-    mp_hal_stdout_tx_str("task inits done\n\r");
     display_init();
-    mp_hal_stdout_tx_str("display init done\n\r");
     while(1) {
         manual_captouch_readout(1);
         vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
