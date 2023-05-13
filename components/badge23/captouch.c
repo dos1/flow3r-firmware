@@ -21,12 +21,13 @@ static const char *TAG = "captouch";
 struct ad714x_chip {
     uint8_t addr;
     uint8_t gpio;
-    int afe_offsets[13];
+    int pos_afe_offsets[13];
+    int neg_afe_offsets[13];
     int stages;
 };
 
-static const struct ad714x_chip chip_top = {.addr = AD7147_BASE_ADDR + 1, .gpio = 48, .afe_offsets = {24, 12, 16, 33, 30, 28, 31, 27, 22, 24, 18, 19, }, .stages=12};
-static const struct ad714x_chip chip_bot = {.addr = AD7147_BASE_ADDR, .gpio = 3, .afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3}, .stages=10};
+static const struct ad714x_chip chip_top = {.addr = AD7147_BASE_ADDR + 1, .gpio = 48, .pos_afe_offsets = {24, 12, 16, 33, 30, 28, 31, 27, 22, 24, 18, 19, }, .stages=12};
+static const struct ad714x_chip chip_bot = {.addr = AD7147_BASE_ADDR, .gpio = 3, .pos_afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3}, .stages=10};
 
 static esp_err_t ad714x_i2c_write(const struct ad714x_chip *chip, const uint16_t reg, const uint16_t data)
 {
@@ -219,7 +220,9 @@ static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad71
         struct ad7147_stage_config stage_config;
         stage_config = ad714x_default_config();
         stage_config.cinX_connection_setup[i] = CIN_CDC_POS;
-        stage_config.pos_afe_offset=chip->afe_offsets[i];
+        stage_config.pos_afe_offset=chip->pos_afe_offsets[i];
+        stage_config.neg_afe_offset=chip->neg_afe_offsets[i];
+        stage_config.neg_afe_offset_swap=1;
         ad714x_set_stage_config(chip, i, &stage_config);
     }
 
