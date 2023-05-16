@@ -1,2 +1,2 @@
 include("micropython/ports/esp32/boards")
-freeze("./python_payload")
+freeze("./python_modules")
