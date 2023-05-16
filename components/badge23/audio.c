@@ -3,6 +3,8 @@
 #include "badge23/scope.h"
 
 #include "driver/i2s.h"
+#include "driver/i2c.h"
+
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -11,13 +13,111 @@
 #include <math.h>
 #include <string.h>
 
+#define TIMEOUT_MS                  1000
+
+#define I2C_MASTER_NUM              0                          /*!< I2C master i2c port number, the number of i2c peripheral interfaces available will depend on the chip */
+
+
+#if 1
+static uint8_t max98091_i2c_read(const uint8_t reg)
+{
+    const uint8_t tx[] = {reg};
+    uint8_t rx[1];
+    esp_err_t ret = i2c_master_write_read_device(I2C_MASTER_NUM, 0x10, tx, sizeof(tx), rx, sizeof(rx), TIMEOUT_MS / portTICK_PERIOD_MS);
+    return rx[0];
+}
+#endif
+
+static esp_err_t max98091_i2c_write(const uint8_t reg, const uint8_t data)
+{
+    const uint8_t tx[] = {reg, data};
+    esp_err_t ret = i2c_master_write_to_device(I2C_MASTER_NUM, 0x10, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
+
+    if(max98091_i2c_read(reg) != data) printf("Write of %04X to %02X apparently failed\n", data, reg);
+
+    return ret;
+}
+
+
+
+static void init_codec()
+{
+    // Enable CODEC
+
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+    ESP_ERROR_CHECK(max98091_i2c_write(0x00, 0x80)); // shutdown
+    vTaskDelay(10 / portTICK_PERIOD_MS);
+
+    ESP_ERROR_CHECK(max98091_i2c_write(0x45, 0)); // shutdown
+
+    ESP_ERROR_CHECK(max98091_i2c_write(0x1b, 1 << 4)); // pclk = mclk / 1
+
+    ESP_ERROR_CHECK(max98091_i2c_write(0x26,  (1 << 7) | (1 << 6))); // music, dc filter in record
+
+    ESP_ERROR_CHECK(max98091_i2c_write(0x06, 1 << 2)); // Sets up DAI for left-justified slave mode operation.
+    ESP_ERROR_CHECK(max98091_i2c_write(0x07, 1 << 5)); // Sets up the DAC to speaker path
+
+    // Somehow this was needed to get an input signal to the ADC, even though
+    // all other registers should be taken care of later. Don't know why.
+    ESP_ERROR_CHECK(max98091_i2c_write(0x09, 1 << 6)); // Sets up the line in to adc path
+
+    ESP_ERROR_CHECK(max98091_i2c_write(0x25, (1 << 1) | (1 << 0))); // SDOUT, SDIN enabled
+    ESP_ERROR_CHECK(max98091_i2c_write(0x42, 1 << 0)); // bandgap bias
+    ESP_ERROR_CHECK(max98091_i2c_write(0x43, 1 << 0)); // high performane mode
+
+    // Table 51. Digital Audio Interface (DAI) Format Configuration Register
+
+    ESP_ERROR_CHECK(max98091_i2c_write(0x2E, 1)); // Left DAC -> Left Speaker
+    ESP_ERROR_CHECK(max98091_i2c_write(0x2F, 2)); // Right DAC -> Right Speaker
+
+    //max98091_i2c_write(0x2E, (1<<2) | (1<<1)); // Line A -> Left Speaker
+    //max98091_i2c_write(0x2F, (1<<3) | (1<<0)); // LIne B -> Right Speaker
+
+    ESP_ERROR_CHECK(max98091_i2c_write(0x29, 1)); // Left DAC -> Left HP
+    ESP_ERROR_CHECK(max98091_i2c_write(0x2A, 2)); // Right DAC -> Right HP
+
+    // Mic bias is off
+    ESP_ERROR_CHECK(max98091_i2c_write(0x3E, (1<<4) |(1<<3) | (1<<2) | (1<<1) | (1<<0))); // enable micbias, line input amps, ADCs
+    ESP_ERROR_CHECK(max98091_i2c_write(0x0D, (1<<3) | (1<<2))); // IN3 SE -> Line A, IN4 SE -> Line B
+    ESP_ERROR_CHECK(max98091_i2c_write(0x15, (1<<4) )); // line B -> left ADC
+    ESP_ERROR_CHECK(max98091_i2c_write(0x16, (1<<3) )); // line A -> right ADC
+    ESP_ERROR_CHECK(max98091_i2c_write(0x44, (1<<2) | (1<<1) | (1<<0) )); // 128x oversampling, dithering, high performance ADC
+
+    max98091_i2c_write(0x13, (1<<4) | (1<<5) | (1<<1) | (1<<0) ); // enable digital mic
+
+    // Enable headset mic
+#if 0
+    max98091_i2c_write(0x13, 0);
+    ESP_ERROR_CHECK(max98091_i2c_write(0x0F, (0<<1) | (1<<0) )); // IN5/IN6 to MIC1
+    ESP_ERROR_CHECK(max98091_i2c_write(0x10, (1<<6) | (1<<4) | (1<<2) )); // 20 dB gain on MIC1
+    ESP_ERROR_CHECK(max98091_i2c_write(0x15, (1<<5) )); // MIC1 -> left ADC
+    ESP_ERROR_CHECK(max98091_i2c_write(0x16, (1<<5) )); // MIC1 -> right ADC
+#endif
+
+    ESP_ERROR_CHECK(max98091_i2c_write(0x3F, (1<<1) | (1<<0))); // output enable: enable dacs
+
+    ESP_ERROR_CHECK(max98091_i2c_write(0x45, 1<<7)); // power up
+    //max98091_i2c_write(0x31, 0x2c); // 0db, no mute
+    //max98091_i2c_write(0x32, 0x2c); // 0db, no mute
+    ESP_ERROR_CHECK(max98091_i2c_write(0x3F, (1<<7) | (1<<6) | (1<<5) | (1<<4) | (1<<1) | (1<<0))); // enable outputs, dacs
+
+    //max98091_i2c_write(0x27, (1<<4) | (1<<5)); // full playback gain
+
+    //max98091_i2c_write(0x31, 0x3f); // +14 db speaker
+    //max98091_i2c_write(0x32, 0x3f); // +14 db speaker
+    ESP_ERROR_CHECK(max98091_i2c_write(0x41, 0x0));
+
+    ESP_ERROR_CHECK(max98091_i2c_write(0x3D, 1<<7)); // jack detect enable
+}
+
+
 static void audio_player_task(void* arg);
 
 #define DMA_BUFFER_SIZE     64
 #define DMA_BUFFER_COUNT    2
 #define I2S_PORT 0
 
-static void i2s_init(void){
+static void i2s_init_rev1(void){
     
     static const i2s_config_t i2s_config = {
         .mode = I2S_MODE_MASTER | I2S_MODE_TX,
@@ -37,6 +137,34 @@ static void i2s_init(void){
         .mck_io_num = 11,
         .ws_io_num = 12,
         .data_out_num = 14,
+        .data_in_num = I2S_PIN_NO_CHANGE
+    };
+    i2s_driver_install(I2S_PORT, &i2s_config, 0, NULL);
+
+    i2s_set_pin(I2S_PORT, &pin_config);
+
+}
+
+static void i2s_init_rev4(void){
+    
+    static const i2s_config_t i2s_config = {
+        .mode = I2S_MODE_MASTER | I2S_MODE_TX,
+        .sample_rate = SAMPLE_RATE,
+        .bits_per_sample = 16,
+        .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
+        //.communication_format = I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB,
+        .communication_format = I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_LSB,
+        //^...technically wrong but works...?
+        .intr_alloc_flags = 0, // default interrupt priority
+        .dma_buf_count = DMA_BUFFER_COUNT,
+        .dma_buf_len = DMA_BUFFER_SIZE,
+        .use_apll = false
+    };
+    static const i2s_pin_config_t pin_config = {
+        .bck_io_num = 10,
+        .mck_io_num = 18,
+        .ws_io_num = 11,
+        .data_out_num = 12,
         .data_in_num = I2S_PIN_NO_CHANGE
     };
     i2s_driver_install(I2S_PORT, &i2s_config, 0, NULL);
@@ -127,8 +255,13 @@ uint16_t count_audio_sources(){
 }
 
 static void _audio_init(void) {
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    printf("hewoooo\n");
+    init_codec();
+    printf("awa\n");
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
     init_scope(241);
-    i2s_init();
+    i2s_init_rev4();
     //ESP_ERROR_CHECK(i2s_channel_enable(tx_chan));
     TaskHandle_t handle;
     xTaskCreate(&audio_player_task, "Audio player", 3000, NULL, configMAX_PRIORITIES - 1, &handle);
