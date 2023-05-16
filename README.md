@@ -66,6 +66,18 @@ Standard ESP-IDF project machinery present and working. You can run `idf.py` fro
 
 ### Building
 
+Prepare build:
+
+```
+$ cd micropython/
+$ make -C mpy-cross
+$ cd ports/esp32
+$ make submodules
+$ cd ../../../
+```
+
+Build normally with idf.py:
+
 ```
 $ idf.py build
 ```
