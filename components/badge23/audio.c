@@ -1,6 +1,7 @@
 #include "badge23/audio.h"
 #include "badge23/synth.h" 
 #include "badge23/scope.h"
+#include "../../../revision_config.h"
 
 #include "driver/i2s.h"
 #include "driver/i2c.h"
@@ -17,8 +18,13 @@
 
 #define I2C_MASTER_NUM              0                          /*!< I2C master i2c port number, the number of i2c peripheral interfaces available will depend on the chip */
 
+static void audio_player_task(void* arg);
 
-#if 1
+#define DMA_BUFFER_SIZE     64
+#define DMA_BUFFER_COUNT    2
+#define I2S_PORT 0
+
+#ifdef HARDWARE_REVISION_04
 static uint8_t max98091_i2c_read(const uint8_t reg)
 {
     const uint8_t tx[] = {reg};
@@ -26,7 +32,6 @@ static uint8_t max98091_i2c_read(const uint8_t reg)
     esp_err_t ret = i2c_master_write_read_device(I2C_MASTER_NUM, 0x10, tx, sizeof(tx), rx, sizeof(rx), TIMEOUT_MS / portTICK_PERIOD_MS);
     return rx[0];
 }
-#endif
 
 static esp_err_t max98091_i2c_write(const uint8_t reg, const uint8_t data)
 {
@@ -110,14 +115,40 @@ static void init_codec()
     ESP_ERROR_CHECK(max98091_i2c_write(0x3D, 1<<7)); // jack detect enable
 }
 
+static void i2s_init(void){
+    init_codec();
+    vTaskDelay(100 / portTICK_PERIOD_MS); // dunno if necessary
+    
+    static const i2s_config_t i2s_config = {
+        .mode = I2S_MODE_MASTER | I2S_MODE_TX,
+        .sample_rate = SAMPLE_RATE,
+        .bits_per_sample = 16,
+        .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
+        //.communication_format = I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB,
+        .communication_format = I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_LSB,
+        //^...technically wrong but works...? in idf v5 it's msb but don't try that late at night
+        .intr_alloc_flags = 0, // default interrupt priority
+        .dma_buf_count = DMA_BUFFER_COUNT,
+        .dma_buf_len = DMA_BUFFER_SIZE,
+        .use_apll = false
+    };
+    static const i2s_pin_config_t pin_config = {
+        .bck_io_num = 10,
+        .mck_io_num = 18,
+        .ws_io_num = 11,
+        .data_out_num = 12,
+        .data_in_num = I2S_PIN_NO_CHANGE
+    };
+    i2s_driver_install(I2S_PORT, &i2s_config, 0, NULL);
 
-static void audio_player_task(void* arg);
+    i2s_set_pin(I2S_PORT, &pin_config);
 
-#define DMA_BUFFER_SIZE     64
-#define DMA_BUFFER_COUNT    2
-#define I2S_PORT 0
+}
+#endif
 
-static void i2s_init_rev1(void){
+
+#ifdef HARDWARE_REVISION_01
+static void i2s_init(void){
     
     static const i2s_config_t i2s_config = {
         .mode = I2S_MODE_MASTER | I2S_MODE_TX,
@@ -142,36 +173,8 @@ static void i2s_init_rev1(void){
     i2s_driver_install(I2S_PORT, &i2s_config, 0, NULL);
 
     i2s_set_pin(I2S_PORT, &pin_config);
-
 }
-
-static void i2s_init_rev4(void){
-    
-    static const i2s_config_t i2s_config = {
-        .mode = I2S_MODE_MASTER | I2S_MODE_TX,
-        .sample_rate = SAMPLE_RATE,
-        .bits_per_sample = 16,
-        .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-        //.communication_format = I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB,
-        .communication_format = I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_LSB,
-        //^...technically wrong but works...?
-        .intr_alloc_flags = 0, // default interrupt priority
-        .dma_buf_count = DMA_BUFFER_COUNT,
-        .dma_buf_len = DMA_BUFFER_SIZE,
-        .use_apll = false
-    };
-    static const i2s_pin_config_t pin_config = {
-        .bck_io_num = 10,
-        .mck_io_num = 18,
-        .ws_io_num = 11,
-        .data_out_num = 12,
-        .data_in_num = I2S_PIN_NO_CHANGE
-    };
-    i2s_driver_install(I2S_PORT, &i2s_config, 0, NULL);
-
-    i2s_set_pin(I2S_PORT, &pin_config);
-
-}
+#endif
 
 typedef struct _audio_source_t{
     void * render_data;
@@ -255,13 +258,8 @@ uint16_t count_audio_sources(){
 }
 
 static void _audio_init(void) {
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    printf("hewoooo\n");
-    init_codec();
-    printf("awa\n");
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
     init_scope(241);
-    i2s_init_rev4();
+    i2s_init();
     //ESP_ERROR_CHECK(i2s_channel_enable(tx_chan));
     TaskHandle_t handle;
     xTaskCreate(&audio_player_task, "Audio player", 3000, NULL, configMAX_PRIORITIES - 1, &handle);
