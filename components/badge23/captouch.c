@@ -2,8 +2,22 @@
 //#include <string.h>
 #include "esp_log.h"
 #include "driver/i2c.h"
+#include "../../../revision_config.h"
 #include <stdint.h>
 
+#ifdef HARDWARE_REVISION_04
+static const uint8_t top_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 8, 8}; //flipped top and bottom from bootstrap reference
+static const uint8_t top_stages = 12;
+static const uint8_t bot_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4}; //idk y :~)
+static const uint8_t bottom_stages = 12;
+#endif
+
+#ifdef HARDWARE_REVISION_01
+static const uint8_t top_map[] = {2, 2, 2, 0, 0, 8, 8, 8, 6, 6, 4, 4};
+static const uint8_t top_stages = 12;
+static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9};
+static const uint8_t bottom_stages = 10;
+#endif
 
 static const char *TAG = "captouch";
 
@@ -25,8 +39,8 @@ struct ad714x_chip {
     int stages;
 };
 
-static const struct ad714x_chip chip_top = {.addr = AD7147_BASE_ADDR + 1, .gpio = 48, .afe_offsets = {24, 12, 16, 33, 30, 28, 31, 27, 22, 24, 18, 19, }, .stages=12};
-static const struct ad714x_chip chip_bot = {.addr = AD7147_BASE_ADDR, .gpio = 3, .afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3}, .stages=10};
+static const struct ad714x_chip chip_top = {.addr = AD7147_BASE_ADDR + 1, .gpio = 48, .afe_offsets = {24, 12, 16, 33, 30, 28, 31, 27, 22, 24, 18, 19, }, .stages=top_stages};
+static const struct ad714x_chip chip_bot = {.addr = AD7147_BASE_ADDR, .gpio = 3, .afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3}, .stages=bottom_stages};
 
 static esp_err_t ad714x_i2c_write(const struct ad714x_chip *chip, const uint16_t reg, const uint16_t data)
 {
@@ -179,21 +193,18 @@ void gpio_event_handler(void* arg)
     }
 }
 
-static uint8_t top_map[] = {2, 2, 2, 0, 0, 8, 8, 8, 6, 6, 4, 4};
-static uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9};
-
 uint16_t read_captouch(){
     uint16_t petals = 0;
     uint16_t top = pressed_top;
     uint16_t bot = pressed_bot;
 
-    for(int i=0; i<12; i++) {
+    for(int i=0; i<top_stages; i++) {
         if(top  & (1 << i)) {
             petals |= (1<<top_map[i]);
         }
     }
 
-    for(int i=0; i<10; i++) {
+    for(int i=0; i<bottom_stages; i++) {
         if(bot  & (1 << i)) {
             petals |= (1<<bot_map[i]);
         }
