@@ -12,4 +12,5 @@ idf_component_register(
         include
     REQUIRES
         gc9a01
+        espressif__led_strip
 )

@@ -57,7 +57,7 @@ void os_app_main(void)
 
     set_global_vol_dB(-90);
     audio_init();
-    //leds_init();
+    leds_init();
     captouch_init();
 
     vTaskDelay(2000 / portTICK_PERIOD_MS);
