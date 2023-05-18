@@ -63,7 +63,7 @@ void os_app_main(void)
     vTaskDelay(2000 / portTICK_PERIOD_MS);
     set_global_vol_dB(0);
 
-    //display_init();
+    display_init();
     while(1) {
         manual_captouch_readout(1);
         vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
