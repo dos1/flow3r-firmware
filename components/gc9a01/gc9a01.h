@@ -7,10 +7,43 @@
 
 #include "sdkconfig.h"
 #include <stdint.h>
+#include "../../revision_config.h"
 
 
-#define GC9A01_Width	CONFIG_GC9A01_Width
-#define GC9A01_Height 	CONFIG_GC9A01_Height
+#ifdef CONFIG_GC9A01_PIN_NUM_MOSI
+#warning "idf menuconfig is ignored for display config, it breaks hardware revision switching atm"
+#endif
+
+#ifdef HARDWARE_REVISION_01
+#define USE_SPI3_HOST 1
+#define GC9A01_SPI_HOST 2
+#define GC9A01_PIN_NUM_SCK 39
+#define GC9A01_PIN_NUM_MOSI 41
+#define GC9A01_PIN_NUM_CS 40
+#define GC9A01_PIN_NUM_DC 42
+#define GC9A01_SPI_SCK_FREQ_M 80
+#define GC9A01_RESET_USED 1
+#define GC9A01_PIN_NUM_RST 38
+#define GC9A01_BUFFER_MODE 1
+#endif
+
+#ifdef HARDWARE_REVISION_04
+#define USE_SPI3_HOST 1
+#define GC9A01_SPI_HOST 2
+#define GC9A01_PIN_NUM_SCK 41
+#define GC9A01_PIN_NUM_MOSI 42
+#define GC9A01_PIN_NUM_CS 40
+#define GC9A01_PIN_NUM_DC 38
+#define GC9A01_SPI_SCK_FREQ_M 80
+#define GC9A01_CONTROL_BACK_LIGHT_USED 1
+#define GC9A01_PIN_NUM_BCKL 46
+#define GC9A01_BACK_LIGHT_MODE_PWM 1
+#define GC9A01_CONTROL_BACK_LIGHT_MODE 1
+#define GC9A01_BUFFER_MODE 1
+#endif
+
+#define GC9A01_Width	240
+#define GC9A01_Height 	240
 
 extern uint16_t ScreenBuff[GC9A01_Height * GC9A01_Width];
 
