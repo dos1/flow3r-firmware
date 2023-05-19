@@ -4,6 +4,11 @@ import time
 import cap_touch_demo
 import melodic_demo
 
+MODULES = [
+    cap_touch_demo,
+    melodic_demo,
+]
+
 boot = Pin(0, Pin.IN)
 vol_up = Pin(35, Pin.IN, Pin.PULL_UP)
 vol_down = Pin(37, Pin.IN, Pin.PULL_UP)
@@ -86,24 +91,23 @@ def run_menu():
     draw_volume_slider()
     display_update()
 
-    if long_bottom_petal_captouch_blocking(0,20):
+    selected_petal = None
+    selected_module = None
+    for petal, module in enumerate(MODULES):
+        if long_bottom_petal_captouch_blocking(petal, 20):
+            selected_petal = petal
+            selected_module = module
+            break
+
+    if selected_petal is not None:
         clear_all_leds()
-        highlight_bottom_petal(0,55,0,0)
+        highlight_bottom_petal(selected_petal, 55, 0, 0)
         display_fill(background)
         display_update()
-        foreground = cap_touch_demo.run
+        foreground = selected_module.run
         time.sleep_ms(100)
         clear_all_leds()
-        cap_touch_demo.foreground()
-    if long_bottom_petal_captouch_blocking(1,20):
-        clear_all_leds()
-        highlight_bottom_petal(1,55,0,0)
-        display_fill(background)
-        display_update()
-        foreground = melodic_demo.run
-        time.sleep_ms(100)
-        clear_all_leds()
-        melodic_demo.foreground()
+        selected_module.foreground()
 
 def foreground_menu():
     clear_all_leds()
@@ -131,8 +135,9 @@ def main():
     global foreground
     time.sleep_ms(5000)
     captouch_autocalib()
-    cap_touch_demo.init()
-    melodic_demo.init()
+
+    for module in MODULES:
+        module.init()
 
     foreground = run_menu
     foreground_menu()
