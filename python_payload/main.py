@@ -26,10 +26,10 @@ SELECT_TEXT = [
     " ##  #### #### ####  ##    #   #",
 ]
 
-background = 0
-g = 0b0000011111100000
-r = 0b1111100000000000
-b = 0b0000000000011111
+BACKGROUND_COLOR = 0
+GREEN = 0b0000011111100000
+RED = 0b1111100000000000
+BLUE = 0b0000000000011111
 
 # pin numbers
 # right side: left 37, down 0, right 35
@@ -48,15 +48,15 @@ def draw_text_big(text, x, y):
     for l, line in enumerate(text):
         for p, pixel in enumerate(line):
             if(pixel == '#'):
-                display_draw_pixel(xpos - 2*p, ypos - 2*l, r)
-                display_draw_pixel(xpos - 2*p, ypos - 2*l-1, b)
-                display_draw_pixel(xpos - 2*p-1, ypos - 2*l, b)
-                display_draw_pixel(xpos - 2*p-1, ypos - 2*l-1, r)
+                display_draw_pixel(xpos - 2*p, ypos - 2*l, RED)
+                display_draw_pixel(xpos - 2*p, ypos - 2*l-1, BLUE)
+                display_draw_pixel(xpos - 2*p-1, ypos - 2*l, BLUE)
+                display_draw_pixel(xpos - 2*p-1, ypos - 2*l-1, RED)
 
-def highlight_bottom_petal(num, r, g, b):
+def highlight_bottom_petal(num, RED, GREEN, BLUE):
     start = 4 + 8*num
     for i in range(7):
-        set_led_rgb(((i+start)%40), r, g, b)
+        set_led_rgb(((i+start)%40), RED, GREEN, BLUE)
     update_leds()
 
 def long_bottom_petal_captouch_blocking(num, ms):
@@ -79,14 +79,14 @@ def draw_volume_slider():
     if length < 0:
         length = 0
     length = int(length)
-    draw_rect(70,20,100,10,g)
+    draw_rect(70,20,100,10,GREEN)
     draw_rect(71,21,98,8, 0)
-    draw_rect(72+96-length,22,length,6,g)
+    draw_rect(72+96-length,22,length,6,GREEN)
 
 
 def run_menu():
     global foreground
-    display_fill(background)
+    display_fill(BACKGROUND_COLOR)
     draw_text_big(SELECT_TEXT, 0, 0)
     draw_volume_slider()
     display_update()
@@ -102,7 +102,7 @@ def run_menu():
     if selected_petal is not None:
         clear_all_leds()
         highlight_bottom_petal(selected_petal, 55, 0, 0)
-        display_fill(background)
+        display_fill(BACKGROUND_COLOR)
         display_update()
         foreground = selected_module.run
         time.sleep_ms(100)
@@ -113,7 +113,7 @@ def foreground_menu():
     clear_all_leds()
     highlight_bottom_petal(0,0,55,55);
     highlight_bottom_petal(1,55,0,55);
-    display_fill(background)
+    display_fill(BACKGROUND_COLOR)
     draw_text_big(SELECT_TEXT, 0, 0)
     display_update()
 
