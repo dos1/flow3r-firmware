@@ -8,6 +8,7 @@ idf_component_register(
         leds.c
         scope.c
         synth.c
+        spio.c
     INCLUDE_DIRS
         include
     REQUIRES
