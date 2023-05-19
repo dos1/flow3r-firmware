@@ -14,7 +14,7 @@ BOOTSEL_PIN = Pin(0, Pin.IN)
 VOL_UP_PIN = Pin(35, Pin.IN, Pin.PULL_UP)
 VOL_DOWN_PIN = Pin(37, Pin.IN, Pin.PULL_UP)
 
-foreground = 0
+CURRENT_APP_RUN = None
 VOLUME = 0
 
 SELECT_TEXT = [
@@ -36,7 +36,7 @@ BACKGROUND_COLOR = 0
 # 0 (bootsel) probably not but idk? never tried
 
 def run_menu():
-    global foreground
+    global CURRENT_APP_RUN
     display_fill(BACKGROUND_COLOR)
     utils.draw_text_big(SELECT_TEXT, 0, 0)
     utils.draw_volume_slider(VOLUME)
@@ -55,7 +55,7 @@ def run_menu():
         utils.highlight_bottom_petal(selected_petal, 55, 0, 0)
         display_fill(BACKGROUND_COLOR)
         display_update()
-        foreground = selected_module.run
+        CURRENT_APP_RUN = selected_module.run
         time.sleep_ms(100)
         utils.clear_all_leds()
         selected_module.foreground()
@@ -83,28 +83,28 @@ def set_rel_volume(vol):
     time.sleep_ms(100)
 
 def main():
-    global foreground
+    global CURRENT_APP_RUN
     time.sleep_ms(5000)
     captouch_autocalib()
 
     for module in MODULES:
         module.init()
 
-    foreground = run_menu
+    CURRENT_APP_RUN = run_menu
     foreground_menu()
     set_global_volume_dB(VOLUME)
 
     while True:
         if(BOOTSEL_PIN.value() == 0):
-            if foreground == run_menu:
+            if CURRENT_APP_RUN == run_menu:
                 captouch_autocalib()
             else:
-                foreground = run_menu
+                CURRENT_APP_RUN = run_menu
                 foreground_menu()
         if(VOL_UP_PIN.value() == 0):
             set_rel_volume(+3)
         if(VOL_DOWN_PIN.value() == 0):
             set_rel_volume(-3)
-        foreground()
+        CURRENT_APP_RUN()
 
 main()
