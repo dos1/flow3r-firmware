@@ -9,9 +9,9 @@ MODULES = [
     melodic_demo,
 ]
 
-boot = Pin(0, Pin.IN)
-vol_up = Pin(35, Pin.IN, Pin.PULL_UP)
-vol_down = Pin(37, Pin.IN, Pin.PULL_UP)
+BOOTSEL_PIN = Pin(0, Pin.IN)
+VOL_UP_PIN = Pin(35, Pin.IN, Pin.PULL_UP)
+VOL_DOWN_PIN = Pin(37, Pin.IN, Pin.PULL_UP)
 
 foreground = 0
 volume = 0
@@ -144,15 +144,15 @@ def main():
     set_global_volume_dB(volume)
 
     while True:
-        if(boot.value() == 0):
+        if(BOOTSEL_PIN.value() == 0):
             if foreground == run_menu:
                 captouch_autocalib()
             else:
                 foreground = run_menu
                 foreground_menu()
-        if(vol_up.value() == 0):
+        if(VOL_UP_PIN.value() == 0):
             set_rel_volume(+3)
-        if(vol_down.value() == 0):
+        if(VOL_DOWN_PIN.value() == 0):
             set_rel_volume(-3)
         foreground()
 
