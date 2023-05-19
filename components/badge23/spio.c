@@ -6,8 +6,6 @@
 static int8_t leftbutton = 0;
 static int8_t rightbutton = 0;
 
-typedef
-
 #ifdef HARDWARE_REVISION_01
 
 #define RIGHT_BUTTON_LEFT 37
@@ -91,7 +89,7 @@ static void _init_buttons(){
     cfg.pin_bit_mask = 1;
     cfg.pull_up_en = GPIO_PULLUP_DISABLE;
     ESP_ERROR_CHECK(gpio_config(&cfg));
-    printf("nya");
+    printf("nya\n");
 }
 
 void update_button_state(){
