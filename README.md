@@ -66,14 +66,10 @@ Standard ESP-IDF project machinery present and working. You can run `idf.py` fro
 
 ### Building
 
-Prepare build:
+Prepare submodules:
 
 ```
-$ cd micropython/
-$ make -C mpy-cross
-$ cd ports/esp32
-$ make submodules
-$ cd ../../../
+$ make -C micropython/ports/esp32 submodules
 ```
 
 Build normally with idf.py:
