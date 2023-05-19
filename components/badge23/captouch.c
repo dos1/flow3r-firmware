@@ -168,27 +168,33 @@ static void IRAM_ATTR gpio_isr_handler(void* arg)
     xQueueSendFromISR(gpio_evt_queue, &chip, NULL);
 }
 
+static uint16_t pressed_top, pressed_bot;
+
+static void captouch_chip_readout(struct ad714x_chip * chip){
+    uint16_t pressed;
+    ad714x_i2c_read(chip, 9, &pressed, 1);
+    ESP_LOGI(TAG, "Addr %x, High interrupt %X", chip->addr, pressed);
+
+    pressed &= ((1 << chip->stages) - 1);
+
+    if(chip == &chip_top) pressed_top = pressed;
+    if(chip == &chip_bot) pressed_bot = pressed;
+}
+
 void manual_captouch_readout(uint8_t top)
 {
     struct ad714x_chip* chip = top ? (&chip_top) : (&chip_bot);
-    xQueueSend(gpio_evt_queue, &chip, NULL);
+    captouch_chip_readout(chip);
+    //xQueueSend(gpio_evt_queue, &chip, NULL);
 }
 
-static uint16_t pressed_top, pressed_bot;
 void gpio_event_handler(void* arg)
 {
     static unsigned long counter = 0;
     struct ad714x_chip* chip;
-    uint16_t pressed;
     while(true) {
         if(xQueueReceive(gpio_evt_queue, &chip, portMAX_DELAY)) {
-            ad714x_i2c_read(chip, 9, &pressed, 1);
-            ESP_LOGI(TAG, "Addr %x, High interrupt %X", chip->addr, pressed);
-
-            pressed &= ((1 << chip->stages) - 1);
-
-            if(chip == &chip_top) pressed_top = pressed;
-            if(chip == &chip_bot) pressed_bot = pressed;
+            captouch_chip_readout(chip);
         }
     }
 }
@@ -306,7 +312,7 @@ void captouch_init(void)
                                                  });
 
     gpio_evt_queue = xQueueCreate(10, sizeof(const struct ad714x_chip*));
-    xTaskCreate(gpio_event_handler, "gpio_event_handler", 2048 * 2, NULL, configMAX_PRIORITIES - 2, NULL);
+    //xTaskCreate(gpio_event_handler, "gpio_event_handler", 2048 * 2, NULL, configMAX_PRIORITIES - 2, NULL);
 }
 
 static void captouch_print_debug_info_chip(const struct ad714x_chip* chip)

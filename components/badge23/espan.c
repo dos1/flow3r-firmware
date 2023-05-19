@@ -2,6 +2,7 @@
 #include "badge23/audio.h"
 #include "badge23/leds.h"
 #include "badge23/display.h"
+#include "badge23/spio.h"
 #include "../../../revision_config.h"
 
 #include "esp_log.h"
@@ -58,6 +59,7 @@ void os_app_main(void)
     set_global_vol_dB(-90);
     audio_init();
     leds_init();
+    init_buttons();
     captouch_init();
 
     vTaskDelay(2000 / portTICK_PERIOD_MS);
@@ -68,6 +70,8 @@ void os_app_main(void)
         manual_captouch_readout(1);
         vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
         manual_captouch_readout(0);
+        vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
+        update_button_state();
         vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
         //display_draw_scope();
     }
