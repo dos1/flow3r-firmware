@@ -15,7 +15,7 @@ VOL_UP_PIN = Pin(35, Pin.IN, Pin.PULL_UP)
 VOL_DOWN_PIN = Pin(37, Pin.IN, Pin.PULL_UP)
 
 foreground = 0
-volume = 0
+VOLUME = 0
 
 SELECT_TEXT = [
     " ##  #### #    ####  ##  ##### #",
@@ -39,7 +39,7 @@ def run_menu():
     global foreground
     display_fill(BACKGROUND_COLOR)
     utils.draw_text_big(SELECT_TEXT, 0, 0)
-    utils.draw_volume_slider(volume)
+    utils.draw_volume_slider(VOLUME)
     display_update()
 
     selected_petal = None
@@ -69,17 +69,17 @@ def foreground_menu():
     display_update()
 
 def set_rel_volume(vol):
-    global volume
-    vol += volume
+    global VOLUME
+    vol += VOLUME
     if vol > 20:
         vol = 20
     if vol < -40:
         vol = -40
-    volume = vol
+    VOLUME = vol
     if vol == -40: #mute
         set_global_volume_dB(-90)
     else:
-        set_global_volume_dB(volume)
+        set_global_volume_dB(VOLUME)
     time.sleep_ms(100)
 
 def main():
@@ -92,7 +92,7 @@ def main():
 
     foreground = run_menu
     foreground_menu()
-    set_global_volume_dB(volume)
+    set_global_volume_dB(VOLUME)
 
     while True:
         if(BOOTSEL_PIN.value() == 0):
