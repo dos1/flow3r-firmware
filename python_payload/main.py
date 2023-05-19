@@ -1,39 +1,28 @@
-from machine import Pin
 from hardware import *
 import utils
 import time
-import cap_touch_demo
+import harmonic_demo
 import melodic_demo
 
 MODULES = [
-    cap_touch_demo,
+    harmonic_demo,
     melodic_demo,
 ]
-
-BOOTSEL_PIN = Pin(0, Pin.IN)
-VOL_UP_PIN = Pin(35, Pin.IN, Pin.PULL_UP)
-VOL_DOWN_PIN = Pin(37, Pin.IN, Pin.PULL_UP)
 
 CURRENT_APP_RUN = None
 VOLUME = 0
 
 SELECT_TEXT = [
-    " ##  #### #    ####  ##  ##### #",
-    "#  # #    #    #    #  #   #   #",
-    "#    #    #    #    #      #   #",
-    " ##  #### #    #### #      #   #",
-    "   # #    #    #    #      #   #",
-    "#  # #    #    #    #  #   #    ",
-    " ##  #### #### ####  ##    #   #",
+    " ##  #### #    ####  ##  #####          ",
+    "#  # #    #    #    #  #   #        ##" ,
+    "#    #    #    #    #      #     #    #",
+    " ##  #### #    #### #      #         #" ,
+    "   # #    #    #    #      #     #    #",
+    "#  # #    #    #    #  #   #        ## ",
+    " ##  #### #### ####  ##    #            ",
 ]
 
 BACKGROUND_COLOR = 0
-
-# pin numbers
-# right side: left 37, down 0, right 35
-# left side: left 7, down 6, right 5
-# NOTE: All except for 0 should be initialized with Pin.PULL_UP
-# 0 (bootsel) probably not but idk? never tried
 
 def run_menu():
     global CURRENT_APP_RUN
@@ -95,16 +84,16 @@ def main():
     set_global_volume_dB(VOLUME)
 
     while True:
-        if(BOOTSEL_PIN.value() == 0):
+        if(get_button(0) == 2):
             if CURRENT_APP_RUN == run_menu:
                 captouch_autocalib()
             else:
                 CURRENT_APP_RUN = run_menu
                 foreground_menu()
-        if(VOL_UP_PIN.value() == 0):
-            set_rel_volume(+3)
-        if(VOL_DOWN_PIN.value() == 0):
-            set_rel_volume(-3)
+        if(get_button(0) == 1):
+            set_rel_volume(+1)
+        if(get_button(0) == -1):
+            set_rel_volume(-1)
         CURRENT_APP_RUN()
 
 main()
