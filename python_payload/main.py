@@ -16,14 +16,14 @@ VOL_DOWN_PIN = Pin(37, Pin.IN, Pin.PULL_UP)
 foreground = 0
 volume = 0
 
-select = [\
-[0,1,1,0,0,1,1,1,1,0,1,0,0,0,0,1,1,1,1,0,0,1,1,0,0,1,1,1,1,1,0,1],\
-[1,0,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1],\
-[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1],\
-[0,1,1,0,0,1,1,1,1,0,1,0,0,0,0,1,1,1,1,0,1,0,0,0,0,0,0,1,0,0,0,1],\
-[0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1],\
-[1,0,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0],\
-[0,1,1,0,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,0,0,1,1,0,0,0,0,1,0,0,0,1],\
+SELECT_TEXT = [
+    " ##  #### #    ####  ##  ##### #",
+    "#  # #    #    #    #  #   #   #",
+    "#    #    #    #    #      #   #",
+    " ##  #### #    #### #      #   #",
+    "   # #    #    #    #      #   #",
+    "#  # #    #    #    #  #   #    ",
+    " ##  #### #### ####  ##    #   #",
 ]
 
 background = 0
@@ -47,7 +47,7 @@ def draw_text_big(text, x, y):
     xpos = 120+int(len(text[0])/2) + int(x)
     for l, line in enumerate(text):
         for p, pixel in enumerate(line):
-            if(pixel == 1):
+            if(pixel == '#'):
                 display_draw_pixel(xpos - 2*p, ypos - 2*l, r)
                 display_draw_pixel(xpos - 2*p, ypos - 2*l-1, b)
                 display_draw_pixel(xpos - 2*p-1, ypos - 2*l, b)
@@ -87,7 +87,7 @@ def draw_volume_slider():
 def run_menu():
     global foreground
     display_fill(background)
-    draw_text_big(select, 0, 0)
+    draw_text_big(SELECT_TEXT, 0, 0)
     draw_volume_slider()
     display_update()
 
@@ -114,7 +114,7 @@ def foreground_menu():
     highlight_bottom_petal(0,0,55,55);
     highlight_bottom_petal(1,55,0,55);
     display_fill(background)
-    draw_text_big(select, 0, 0)
+    draw_text_big(SELECT_TEXT, 0, 0)
     display_update()
 
 def set_rel_volume(vol):
