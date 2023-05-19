@@ -11,8 +11,8 @@ def clear_all_leds():
     update_leds()
 
 def draw_text_big(text, x, y):
-    ypos = 120+int(len(text)/2) + int(y)
-    xpos = 120+int(len(text[0])/2) + int(x)
+    ypos = 120+int(len(text)) + int(y)
+    xpos = 120+int(len(text[0])) + int(x)
     for l, line in enumerate(text):
         for p, pixel in enumerate(line):
             if(pixel == '#'):
