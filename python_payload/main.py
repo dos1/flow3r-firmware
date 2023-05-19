@@ -3,9 +3,28 @@ from hardware import *
 import time
 import cap_touch_demo
 import melodic_demo
+
 boot = Pin(0, Pin.IN)
 vol_up = Pin(35, Pin.IN, Pin.PULL_UP)
 vol_down = Pin(37, Pin.IN, Pin.PULL_UP)
+
+foreground = 0
+volume = 0
+
+select = [\
+[0,1,1,0,0,1,1,1,1,0,1,0,0,0,0,1,1,1,1,0,0,1,1,0,0,1,1,1,1,1,0,1],\
+[1,0,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1],\
+[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1],\
+[0,1,1,0,0,1,1,1,1,0,1,0,0,0,0,1,1,1,1,0,1,0,0,0,0,0,0,1,0,0,0,1],\
+[0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1],\
+[1,0,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0],\
+[0,1,1,0,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,0,0,1,1,0,0,0,0,1,0,0,0,1],\
+]
+
+background = 0
+g = 0b0000011111100000
+r = 0b1111100000000000
+b = 0b0000000000011111
 
 # pin numbers
 # right side: left 37, down 0, right 35
@@ -17,16 +36,6 @@ def clear_all_leds():
     for i in range(40):
         set_led_rgb(i, 0, 0, 0)
     update_leds()
-
-select = [\
-[0,1,1,0,0,1,1,1,1,0,1,0,0,0,0,1,1,1,1,0,0,1,1,0,0,1,1,1,1,1,0,1],\
-[1,0,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1],\
-[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1],\
-[0,1,1,0,0,1,1,1,1,0,1,0,0,0,0,1,1,1,1,0,1,0,0,0,0,0,0,1,0,0,0,1],\
-[0,0,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1],\
-[1,0,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0],\
-[0,1,1,0,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,0,0,1,1,0,0,0,0,1,0,0,0,1],\
-]
 
 def draw_text_big(text, x, y):
     ypos = 120+int(len(text)/2) + int(y)
@@ -44,26 +53,19 @@ def highlight_bottom_petal(num, r, g, b):
     for i in range(7):
         set_led_rgb(((i+start)%40), r, g, b)
     update_leds()
-    
+
 def long_bottom_petal_captouch_blocking(num, ms):
     if(get_captouch((num*2) + 1) == 1):
         time.sleep_ms(ms)
         if(get_captouch((num*2) + 1) == 1):
             return True
     return False
-    
-foreground = 0
-volume = 0
-
-def init_menu():
-    pass
 
 def draw_rect(x,y,w,h,col):
     for j in range(w):
         for k in range(h):
             display_draw_pixel(x+j,y+k,col)
-            
-    
+
 def draw_volume_slider():
     global volume
     length = 96 + ((volume - 20) * 1.6)
@@ -75,7 +77,7 @@ def draw_volume_slider():
     draw_rect(70,20,100,10,g)
     draw_rect(71,21,98,8, 0)
     draw_rect(72+96-length,22,length,6,g)
-    
+
 
 def run_menu():
     global foreground
@@ -111,21 +113,6 @@ def foreground_menu():
     draw_text_big(select, 0, 0)
     display_update()
 
-background = 0;
-g = 0b0000011111100000;
-r = 0b1111100000000000;
-b = 0b0000000000011111;
-
-time.sleep_ms(5000)
-captouch_autocalib()
-cap_touch_demo.init()
-melodic_demo.init()
-
-init_menu()
-foreground = run_menu
-foreground_menu()
-set_global_volume_dB(volume)
-
 def set_rel_volume(vol):
     global volume
     vol += volume
@@ -140,15 +127,28 @@ def set_rel_volume(vol):
         set_global_volume_dB(volume)
     time.sleep_ms(100)
 
-while True:
-    if(boot.value() == 0):
-        if foreground == run_menu:
-            captouch_autocalib()
-        else:
-            foreground = run_menu
-            foreground_menu()
-    if(vol_up.value() == 0):
-        set_rel_volume(+3)
-    if(vol_down.value() == 0):
-        set_rel_volume(-3)
-    foreground()
+def main():
+    global foreground
+    time.sleep_ms(5000)
+    captouch_autocalib()
+    cap_touch_demo.init()
+    melodic_demo.init()
+
+    foreground = run_menu
+    foreground_menu()
+    set_global_volume_dB(volume)
+
+    while True:
+        if(boot.value() == 0):
+            if foreground == run_menu:
+                captouch_autocalib()
+            else:
+                foreground = run_menu
+                foreground_menu()
+        if(vol_up.value() == 0):
+            set_rel_volume(+3)
+        if(vol_down.value() == 0):
+            set_rel_volume(-3)
+        foreground()
+
+main()
