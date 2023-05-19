@@ -162,12 +162,11 @@ static int setupSPI()
     return ret;
 }
 
-static void set_single_led(uint8_t index, uint8_t[3] c){
+void set_single_led(uint8_t index, uint8_t c[3]){
     setPixel(&leds, index, c);
 }
 
 static void _leds_init() {
-    leds_queue = xQueueCreate(10, sizeof(leds_cfg_t));
     memset(active_leds, 0 , sizeof(active_leds));
 
     setupSPI();
@@ -190,47 +189,6 @@ led_strip_t *led_strip_init(uint8_t channel, uint8_t gpio, uint16_t led_num);
 
 #define LED_GPIO_NUM 14
 #define LED_RMT_CHAN 0
-
-#if 0
-//ESP-IDF 5.0 for reference
-led_strip_handle_t led_strip;
-
-/* LED strip initialization with the GPIO and pixels number*/
-led_strip_config_t strip_config = {
-    .strip_gpio_num = 14, // The GPIO that connected to the LED strip's data line
-    .max_leds = 40, // The number of LEDs in the strip,
-    .led_pixel_format = LED_PIXEL_FORMAT_GRB, // Pixel format of your LED strip
-    .led_model = LED_MODEL_WS2812, // LED strip model
-    .flags.invert_out = false, // whether to invert the output signal (useful when your hardware has a level inverter)
-};
-
-led_strip_rmt_config_t rmt_config = {
-    .clk_src = RMT_CLK_SRC_DEFAULT, // different clock source can lead to different power consumption
-    .resolution_hz = 10 * 1000 * 1000, // 10MHz
-    .flags.with_dma = true, // whether to enable the DMA feature
-};
-
-static void renderLEDs()
-{
-    ESP_ERROR_CHECK(led_strip_refresh(led_strip));
-
-}
-
-void set_single_led(int led, uint8_t c[3])
-{
-    led = ((39-led) + 1 + 32)%40;
-    ESP_ERROR_CHECK(led_strip_set_pixel(led_strip, led, c[0], c[1], c[2]));
-}
-
-static void _leds_init() {
-    memset(active_leds, 0 , sizeof(active_leds));
-
-    ESP_ERROR_CHECK(led_strip_new_rmt_device(&strip_config, &rmt_config, &led_strip));
-
-    TaskHandle_t handle;
-    xTaskCreate(&leds_task, "LEDs player", 4096, NULL, configMAX_PRIORITIES - 2, &handle);
-}
-#endif
 
 led_strip_t * led_strip;
 

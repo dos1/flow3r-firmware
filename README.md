@@ -62,6 +62,8 @@ $ nix-shell nix/shell.nix
 
 ## How to build and flash
 
+Select the right firmware for your hardware in`./revision_config.h` by (un)commenting your (un)desired revision(s) (default: rev4).
+
 Standard ESP-IDF project machinery present and working. You can run `idf.py` from the git checkout and things should just work.
 
 ### Building
