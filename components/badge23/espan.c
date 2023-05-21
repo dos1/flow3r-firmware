@@ -21,7 +21,7 @@ static const char *TAG = "espan";
 #define I2C_MASTER_TX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
 #define I2C_MASTER_RX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
 
-#if defined(CONFIG_BADGE23_HW_GEN_P4)
+#if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 #define CONFIG_I2C_MASTER_SDA 2
 #define CONFIG_I2C_MASTER_SCL 1
 

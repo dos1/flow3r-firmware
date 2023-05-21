@@ -11,7 +11,7 @@
 #if defined(CONFIG_BADGE23_HW_GEN_P1)
 #define LED_SPI_PORT
 
-#elif defined(CONFIG_BADGE23_HW_GEN_P4)
+#elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 #define LED_ASYNC_PORT
 
 #else
