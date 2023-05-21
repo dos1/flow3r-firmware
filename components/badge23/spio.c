@@ -59,7 +59,7 @@ void update_button_state(){
     }
 }
 
-#elif defined(CONFIG_BADGE23_HW_GEN_P4)
+#elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 
 #include "driver/i2c.h"
 #define I2C_MASTER_NUM 0

@@ -24,7 +24,7 @@ static void audio_player_task(void* arg);
 #define DMA_BUFFER_COUNT    2
 #define I2S_PORT 0
 
-#if defined(CONFIG_BADGE23_HW_GEN_P4)
+#if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 static uint8_t max98091_i2c_read(const uint8_t reg)
 {
     const uint8_t tx[] = {reg};

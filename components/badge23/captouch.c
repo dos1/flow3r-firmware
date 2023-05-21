@@ -5,7 +5,7 @@
 #include "badge23_hwconfig.h"
 #include <stdint.h>
 
-#if defined(CONFIG_BADGE23_HW_GEN_P4)
+#if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 static const uint8_t top_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 8, 8}; //flipped top and bottom from bootstrap reference
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4}; //idk y :~)
@@ -41,8 +41,17 @@ struct ad714x_chip {
     int stages;
 };
 
-static const struct ad714x_chip chip_top = {.addr = AD7147_BASE_ADDR + 1, .gpio = 48, .afe_offsets = {24, 12, 16, 33, 30, 28, 31, 27, 22, 24, 18, 19, }, .stages=top_stages};
-static const struct ad714x_chip chip_bot = {.addr = AD7147_BASE_ADDR, .gpio = 3, .afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3}, .stages=bottom_stages};
+// Captouch sensor chips addresses are swapped on proto3. Whoops.
+#if defined(CONFIG_BADGE23_HW_GEN_P3)
+#define AD7147_BASE_ADDR_TOP (AD7147_BASE_ADDR)
+#define AD7147_BASE_ADDR_BOT (AD7147_BASE_ADDR + 1)
+#else
+#define AD7147_BASE_ADDR_TOP (AD7147_BASE_ADDR + 1)
+#define AD7147_BASE_ADDR_BOT (AD7147_BASE_ADDR)
+#endif
+
+static const struct ad714x_chip chip_top = {.addr = AD7147_BASE_ADDR_TOP, .gpio = 48, .afe_offsets = {24, 12, 16, 33, 30, 28, 31, 27, 22, 24, 18, 19, }, .stages=top_stages};
+static const struct ad714x_chip chip_bot = {.addr = AD7147_BASE_ADDR_BOT, .gpio = 3, .afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3}, .stages=bottom_stages};
 
 static esp_err_t ad714x_i2c_write(const struct ad714x_chip *chip, const uint16_t reg, const uint16_t data)
 {
