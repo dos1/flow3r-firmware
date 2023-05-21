@@ -15,3 +15,8 @@ target_include_directories(usermod_badge23 INTERFACE
 )
 
 target_link_libraries(usermod INTERFACE usermod_badge23)
+
+
+
+#Also add uctx as a usermodule
+include(${CMAKE_CURRENT_LIST_DIR}/uctx/uctx/micropython.cmake)
