@@ -1,0 +1,37 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  GIT_SUBMODULE_PATHS: micropython/lib/berkeley-db-1.xx micropython/lib/micropython-lib
+
+
+stages:
+  - build
+
+build-p1:
+  stage: build
+  tags:
+    - nixos
+  script:
+    - nix-shell nix/shell.nix --command "idf.py -g p1 build"
+  artifacts:
+    expose_as: 'Proto 1 ELF'
+    paths: ['build/badge23.elf']
+
+build-p3:
+  stage: build
+  tags:
+    - nixos
+  script:
+    - nix-shell nix/shell.nix --command "idf.py -g p3 build"
+  artifacts:
+    expose_as: 'Proto 3 ELF'
+    paths: ['build/badge23.elf']
+
+build-p4:
+  stage: build
+  tags:
+    - nixos
+  script:
+    - nix-shell nix/shell.nix --command "idf.py -g p4 build"
+  artifacts:
+    expose_as: 'Proto 4 ELF'
+    paths: ['build/badge23.elf']
