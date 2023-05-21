@@ -6,14 +6,16 @@
 #include <math.h>
 #include "esp_system.h"
 #include "badge23/leds.h"
-#include "../../../revision_config.h"
+#include "badge23_hwconfig.h"
 
-#ifdef HARDWARE_REVISION_01
+#if defined(CONFIG_BADGE23_HW_GEN_P1)
 #define LED_SPI_PORT
-#endif
 
-#ifdef HARDWARE_REVISION_04
+#elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 #define LED_ASYNC_PORT
+
+#else
+#error "leds not implemented for this badge generation"
 #endif
 
 typedef struct leds_cfg {

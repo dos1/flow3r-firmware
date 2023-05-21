@@ -1,12 +1,12 @@
 //special purpose input outputs
 #include "driver/gpio.h"
-#include "../../../revision_config.h"
+#include "badge23_hwconfig.h"
 #include "stdint.h"
 
 static int8_t leftbutton = 0;
 static int8_t rightbutton = 0;
 
-#ifdef HARDWARE_REVISION_01
+#if defined(CONFIG_BADGE23_HW_GEN_P1)
 
 #define RIGHT_BUTTON_LEFT 37
 #define RIGHT_BUTTON_MID 0
@@ -58,9 +58,8 @@ void update_button_state(){
         leftbutton = 0;
     }
 }
-#endif
 
-#ifdef HARDWARE_REVISION_04
+#elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 
 #include "driver/i2c.h"
 #define I2C_MASTER_NUM 0
@@ -122,6 +121,9 @@ void update_button_state(){
         leftbutton = 0;
     }
 }
+
+#else
+#error "spio not implemented for this badge generation"
 #endif
 
 void init_buttons(){

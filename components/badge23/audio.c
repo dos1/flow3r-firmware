@@ -1,7 +1,7 @@
 #include "badge23/audio.h"
 #include "badge23/synth.h" 
 #include "badge23/scope.h"
-#include "../../../revision_config.h"
+#include "badge23_hwconfig.h"
 
 #include "driver/i2s.h"
 #include "driver/i2c.h"
@@ -24,7 +24,7 @@ static void audio_player_task(void* arg);
 #define DMA_BUFFER_COUNT    2
 #define I2S_PORT 0
 
-#ifdef HARDWARE_REVISION_04
+#if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 static uint8_t max98091_i2c_read(const uint8_t reg)
 {
     const uint8_t tx[] = {reg};
@@ -144,10 +144,9 @@ static void i2s_init(void){
     i2s_set_pin(I2S_PORT, &pin_config);
 
 }
-#endif
 
+#elif defined(CONFIG_BADGE23_HW_GEN_P1)
 
-#ifdef HARDWARE_REVISION_01
 static void i2s_init(void){
     
     static const i2s_config_t i2s_config = {
@@ -174,6 +173,8 @@ static void i2s_init(void){
 
     i2s_set_pin(I2S_PORT, &pin_config);
 }
+#else
+#error "audio not implemented for this badge generation"
 #endif
 
 typedef struct _audio_source_t{
