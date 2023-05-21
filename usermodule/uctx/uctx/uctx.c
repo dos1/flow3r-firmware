@@ -758,12 +758,12 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_ctx_add_stop_obj, 3, 4, mp_ctx_add_stop);
 
 STATIC void generic_method_lookup(mp_obj_t obj, qstr attr, mp_obj_t *dest) {
     const mp_obj_type_t *type = mp_obj_get_type(obj);
-    if (type->locals_dict != NULL) {
+    if (MP_OBJ_TYPE_HAS_SLOT(type, locals_dict)) {
          // generic method lookup
          // this is a lookup in the object (ie not class or type)
-         assert(type->locals_dict->base.type == &mp_type_dict); // MicroPython restriction, for now
-         mp_map_t *locals_map = &type->locals_dict->map;
-         mp_map_elem_t *elem = mp_map_lookup(locals_map, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);
+         //assert(type->locals_dict->base.type == &mp_type_dict); // MicroPython restriction, for now
+         //mp_map_t *locals_map = &MP_OBJ_TYPE_GET_SLOT(type, locals_dict)->map;
+         mp_map_elem_t *elem = mp_map_lookup(&MP_OBJ_TYPE_GET_SLOT(type, locals_dict)->map, MP_OBJ_NEW_QSTR(attr), MP_MAP_LOOKUP);
          if (elem != NULL) {
              mp_convert_member_lookup(obj, type, elem->value, dest);
          }
@@ -903,7 +903,17 @@ static mp_obj_t mp_ctx_event_make_new(
 	return MP_OBJ_FROM_PTR(o);
 }
 
+MP_DEFINE_CONST_OBJ_TYPE(
+    mp_ctx_event_type,
+    MP_QSTR_ctx_event_type,
+    MP_TYPE_FLAG_NONE,
+    //print, array_print,
+    make_new, mp_ctx_event_make_new,
+    attr, mp_ctx_event_attr,
+    locals_dict, &mp_ctx_event_locals_dict
+);
 
+/*
 const mp_obj_type_t mp_ctx_event_type = {
 	.base        = { &mp_type_type },
 	.name        = MP_QSTR_CtxEvent,
@@ -911,6 +921,7 @@ const mp_obj_type_t mp_ctx_event_type = {
 	.locals_dict = (mp_obj_t)&mp_ctx_event_locals_dict,
         .attr = mp_ctx_event_attr
 };
+*/
 
 static void mp_ctx_listen_cb_handler (CtxEvent *event, void *data1, void*data2)
 {
@@ -1093,7 +1104,6 @@ static mp_obj_t mp_ctx_make_new(
     int stride = args[ARG_stride].u_int;
     int memory_budget = args[ARG_memory_budget].u_int;
     int flags = args[ARG_flags].u_int;
-
     if (args[ARG_set_pixels].u_obj != MP_OBJ_NULL)
     {
         mp_obj_t set_pixels_in = args[ARG_set_pixels].u_obj;
@@ -1115,7 +1125,6 @@ static mp_obj_t mp_ctx_make_new(
              flags);
 	return MP_OBJ_FROM_PTR(o);
     }
-
     if (args[ARG_buffer].u_obj != MP_OBJ_NULL)
     {
         mp_buffer_info_t buffer_info;
@@ -1128,7 +1137,6 @@ static mp_obj_t mp_ctx_make_new(
                                           width, height, stride, format);
 	return MP_OBJ_FROM_PTR(o);
     }
-
 #ifdef EMSCRIPTEN
     o->ctx          = ctx_wasm_get_context(memory_budget);
 #else
@@ -1500,6 +1508,17 @@ static const mp_rom_map_elem_t mp_ctx_locals_dict_table[] = {
 };
 static MP_DEFINE_CONST_DICT(mp_ctx_locals_dict, mp_ctx_locals_dict_table);
 
+MP_DEFINE_CONST_OBJ_TYPE(
+    mp_ctx_type,
+    MP_QSTR_ctx_type,
+    MP_TYPE_FLAG_NONE,
+    //print, array_print,
+    make_new, mp_ctx_make_new,
+    attr, mp_ctx_attr,
+    locals_dict, &mp_ctx_locals_dict
+);
+
+/*
 const mp_obj_type_t mp_ctx_type = {
 	.base        = { &mp_type_type },
 	.name        = MP_QSTR_Context,
@@ -1507,6 +1526,7 @@ const mp_obj_type_t mp_ctx_type = {
 	.locals_dict = (mp_obj_t)&mp_ctx_locals_dict,
         .attr        = mp_ctx_attr
 };
+*/
 
 /* The globals table for this module */
 static const mp_rom_map_elem_t mp_ctx_module_globals_table[] = {
