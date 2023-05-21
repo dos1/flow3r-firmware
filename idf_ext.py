@@ -40,9 +40,9 @@ def action_extensions(base_actions, project_path=os.getcwd()):
         if name is None:
             supported = []
             supported += GENERATIONS.keys()
-            for _, names in GENERATIONS.values():
+            for _, names in GENERATIONS.items():
                 supported += names
-            sort(supported)
+            supported = sorted(supported)
             raise Exception(f'Invalid generation: want one of {", ".join(supported)}')
 
         sdkconfig_name = 'sdkconfig.' + name
