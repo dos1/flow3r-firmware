@@ -16,6 +16,7 @@
 #include "badge23/captouch.h"
 #include "badge23/display.h"
 #include "badge23/spio.h"
+#include "badge23_hwconfig.h"
 
 STATIC mp_obj_t mp_display_update(size_t n_args, const mp_obj_t *args) {
     display_update();
@@ -119,6 +120,12 @@ STATIC mp_obj_t mp_update_leds(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_update_leds_obj, 0, 2, mp_update_leds);
 
+STATIC mp_obj_t mp_version(void) {
+    mp_obj_t str = mp_obj_new_str(badge23_hw_name, strlen(badge23_hw_name));
+    return str;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_version_obj, mp_version);
+
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_audio) },
     { MP_ROM_QSTR(MP_QSTR_get_captouch), MP_ROM_PTR(&mp_get_captouch_obj) },
@@ -134,6 +141,7 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_display_draw_pixel), MP_ROM_PTR(&mp_display_draw_pixel_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_get_pixel), MP_ROM_PTR(&mp_display_get_pixel_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_fill), MP_ROM_PTR(&mp_display_fill_obj) },
+    { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&mp_version_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_hardware_globals, mp_module_hardware_globals_table);
