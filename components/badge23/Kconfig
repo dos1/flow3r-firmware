@@ -1,0 +1,32 @@
+menu "Badge23 Config"
+    choice BADGE23_HW_GEN
+        prompt "Badge23 Hardware Generation"
+        default BADGE23_HW_GEN_P4
+        config BADGE23_HW_GEN_P1
+            help
+                Protoype version 1, a.k.a. proto1. Very early protoype.
+                Visual identifiers:
+                 - No line in/out jacks
+                 - White bottom board
+                 - USB-C jack points side of leaf
+            bool "Prototype 1"
+        config BADGE23_HW_GEN_P3
+            help
+                Prototype version 3, a.k.a. proto3
+                Visual identifiers:
+                  - Sticker with B3xx (xx being arbitrary digits) on the back
+            bool "Prototype 3"
+        config BADGE23_HW_GEN_P4
+            help
+                Prototype version 4, a.k.a. proto4
+                Visual identifiers:
+                  - Sticker with B4xx (xx being arbitrary digits) on the back
+            bool "Prototype 4"
+        config BADGE23_HW_GEN_ADILESS
+            help
+                Prototype version 5, a.k.a. adi-less
+                Visual identifiers:
+                  - Sticker with B5xx (xx being arbitrary digits) on the back
+            bool "Prototype 5 / ADI-less"
+    endchoice
+endmenu

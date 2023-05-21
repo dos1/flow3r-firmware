@@ -62,8 +62,6 @@ $ nix-shell nix/shell.nix
 
 ## How to build and flash
 
-Select the right firmware for your hardware in`./revision_config.h` by (un)commenting your (un)desired revision(s) (default: rev4).
-
 Standard ESP-IDF project machinery present and working. You can run `idf.py` from the git checkout and things should just work.
 
 ### Building
@@ -80,6 +78,15 @@ Build normally with idf.py:
 $ idf.py build
 ```
 
+By default, code for the fourth generation prototype will be built. To select a different generation, either set `-g`/`--generation` during an `idf.py build` (which will get cached for subsequent builds) or set the BADGE_GENERATION environment variable to one of the following values:
+
+^ `-g` / `BADGE_GENERATION` value ^ Badge Generation                   ^ 
+| `p1` or `proto1`                | Prototype 1                        |
+| `p3` or `proto3`                | Prototype 3 (B3xx)                 |
+| `p4` or `proto4`                | Prototype 4 (B4xx)                 |
+
+**Important**: when switching generations, do a full clean by running `rm -rf sdkconfig build`. Otherwise you will get _weird_ errors and likely will end up building for the wrong architecture.
+
 ### Flashing
 
 Put badge into bootloader mode by holding left should button down during boot.
@@ -91,6 +98,15 @@ $ idf.py -p /dev/ttyACM0 flash
 You can skip `-p /dev/ttyACM0` if you set the environment variable `ESPPORT=/dev/ttyACM0`. This environment variable is also set by default when using Nix.
 
 After flashing, remember to powercycle your badge to get it into the user application.
+
+
+### Cleaning
+
+For a full clean, do **not** trust `idf.py clean` or `idf.py fullclean`. Instead, do:
+
+```
+$ rm -rf build sdkconfig
+```
 
 ### Accessing MicroPython REPL:
 
@@ -186,10 +202,23 @@ Good luck. The idf.py gdb/openocd scripts seem somewhat buggy.
 
 ### ESP-IDF functionality
 
-Currently we have one large sdkconfig file. To modify it, run:
+#### sdkconfig / menuconfig
+
+We have an sdkconfig.default file per badge generation. See the build
+instructions above to see how to select the generation to build against.
+
+The build system will generate an sdkconfig, but it should not be committed into
+version control. Instead, treat it like an ephemeral artifact that you can also
+modify for your own needs during development.
+
+To run menuconfig, do the usual::
 
 ```
-$ idf.py menuconfig
+$ idf.py  menuconfig
 ```
 
-TODO(q3k): split into defaults
+(Specify -g or BADGE_GENERATION if you haven't built the firmware yet)
+
+Then, either save into the temporary sdkconfig by using 'S', or save into a
+defconfig by using 'D'. The resulting `build/defconfig` file can then be copied
+into `sdkconfig.$generation` to change the defaults for a given generation.

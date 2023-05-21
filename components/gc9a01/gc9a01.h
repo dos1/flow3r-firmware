@@ -7,14 +7,14 @@
 
 #include "sdkconfig.h"
 #include <stdint.h>
-#include "../../revision_config.h"
+#include "badge23_hwconfig.h"
 
 
 #ifdef CONFIG_GC9A01_PIN_NUM_MOSI
 #warning "idf menuconfig is ignored for display config, it breaks hardware revision switching atm"
 #endif
 
-#ifdef HARDWARE_REVISION_01
+#if defined(CONFIG_BADGE23_HW_GEN_P1)
 #define USE_SPI3_HOST 1
 #define GC9A01_SPI_HOST 2
 #define GC9A01_PIN_NUM_SCK 39
@@ -25,9 +25,8 @@
 #define GC9A01_RESET_USED 1
 #define GC9A01_PIN_NUM_RST 38
 #define GC9A01_BUFFER_MODE 1
-#endif
 
-#ifdef HARDWARE_REVISION_04
+#elif defined(CONFIG_BADGE23_HW_GEN_P4)
 #define USE_SPI3_HOST 1
 #define GC9A01_SPI_HOST 2
 #define GC9A01_PIN_NUM_SCK 41
@@ -40,6 +39,9 @@
 #define GC9A01_BACK_LIGHT_MODE_PWM 1
 #define GC9A01_CONTROL_BACK_LIGHT_MODE 1
 #define GC9A01_BUFFER_MODE 1
+
+#else
+#error "gc9a01 unimplemented for this badge generation"
 #endif
 
 #define GC9A01_Width	240
