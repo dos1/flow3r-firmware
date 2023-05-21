@@ -19,11 +19,11 @@ static int8_t rightbutton = 0;
 static void _init_buttons(){
     //configure all buttons as pullup
     uint64_t mask = 0;
-    mask |= (1 << RIGHT_BUTTON_LEFT);
-    mask |= (1 << RIGHT_BUTTON_RIGHT);
-    mask |= (1 << LEFT_BUTTON_LEFT);
-    mask |= (1 << LEFT_BUTTON_MID);
-    mask |= (1 << LEFT_BUTTON_RIGHT);
+    mask |= (1ULL << RIGHT_BUTTON_LEFT);
+    mask |= (1ULL << RIGHT_BUTTON_RIGHT);
+    mask |= (1ULL << LEFT_BUTTON_LEFT);
+    mask |= (1ULL << LEFT_BUTTON_MID);
+    mask |= (1ULL << LEFT_BUTTON_RIGHT);
     gpio_config_t cfg = {
         .pin_bit_mask = mask,
         .mode = GPIO_MODE_INPUT,
@@ -95,10 +95,10 @@ static void _init_buttons(){
 void update_button_state(){
     uint8_t port;
     esp_err_t ret = i2c_master_read_from_device(I2C_MASTER_NUM, 0b1101101, &port, sizeof(port), TIMEOUT_MS / portTICK_PERIOD_MS);
-    uint8_t rr = port & (1 << RIGHT_BUTTON_RIGHT);
-    uint8_t rm = port & (1 << RIGHT_BUTTON_MID);
-    uint8_t rl = port & (1 << RIGHT_BUTTON_LEFT);
-    uint8_t lr = port & (1 << LEFT_BUTTON_RIGHT);
+    uint8_t rr = port & (1ULL << RIGHT_BUTTON_RIGHT);
+    uint8_t rm = port & (1ULL << RIGHT_BUTTON_MID);
+    uint8_t rl = port & (1ULL << RIGHT_BUTTON_LEFT);
+    uint8_t lr = port & (1ULL << LEFT_BUTTON_RIGHT);
     uint8_t ll = gpio_get_level(LEFT_BUTTON_LEFT);
     uint8_t lm = gpio_get_level(LEFT_BUTTON_MID);
 
