@@ -99,39 +99,6 @@
 /* we keep the ctx implementation here, this compilation taget changes less
  * than the micropython target
  */
-#define CTX_EXTERNAL_MALLOC
-
-static inline void *ctx_malloc (size_t size)
-{
-  return m_malloc (size);
-}
-
-static inline void *ctx_calloc (size_t nmemb, size_t size)
-{
-  size_t byte_size = nmemb * size;
-  char *ret        = (char *)m_malloc(byte_size);
-  for (size_t i = 0; i < byte_size; i++)
-    ret[i] = 0;
-  return ret;
-}
-
-static inline void *ctx_realloc (void *ptr, size_t old_size, size_t new_size)
-{
-#if MICROPY_MALLOC_USES_ALLOCATED_SIZE
-  return m_realloc(ptr, old_size, new_size);
-#else
-  return m_realloc(ptr, new_size);
-#endif
-}
-
-static inline void ctx_free (void *ptr)
-{
-#if MICROPY_MALLOC_USES_ALLOCATED_SIZE
-  return m_free(ptr, 0);  //  XXX  !
-#else
-  return m_free(ptr);
-#endif
-}
 
 #define CTX_STATIC_FONT(font) \
   ctx_load_font_ctx(ctx_font_##font##_name, \
@@ -1072,6 +1039,13 @@ static int mp_ctx_update_fb (Ctx *ctx, void *user_data)
   mp_obj_t ret = mp_call_function_0(user_data);
   if (mp_obj_is_true (ret)) return 1;
   return 0;
+}
+
+mp_obj_t mp_ctx_from_ctx(Ctx *ctx) {
+	mp_ctx_obj_t *o = m_new_obj(mp_ctx_obj_t);
+	o->base.type    = &mp_ctx_type;
+	o->ctx = ctx;
+	return MP_OBJ_FROM_PTR(o);
 }
 
 static mp_obj_t mp_ctx_make_new(

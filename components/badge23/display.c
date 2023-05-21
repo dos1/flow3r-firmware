@@ -13,6 +13,10 @@
 #include "badge23/scope.h"
 #include "esp_system.h"
 
+#include "../../usermodule/uctx/uctx/ctx.h"
+
+Ctx *the_ctx = NULL;
+
 uint16_t *pixels;
 
 typedef struct leds_cfg {
@@ -27,6 +31,14 @@ static void _display_init() {
     GC9A01_Init();
     //    GC9A01_Screen_Load(0,0,240,240,pixels);
     GC9A01_Update();
+
+    the_ctx = ctx_new_for_framebuffer(
+        ScreenBuff,
+        GC9A01_Width,
+        GC9A01_Height,
+        GC9A01_Width * 2,
+        CTX_FORMAT_RGB565_BYTESWAPPED
+    );
 
     /*
     display_queue = xQueueCreate(1, sizeof(display_cfg_t));
