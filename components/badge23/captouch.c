@@ -33,13 +33,19 @@ static const char *TAG = "captouch";
 #define AD7147_REG_DEVICE_ID                0x17
 
 #define TIMEOUT_MS                  1000
+static const struct ad714x_chip *chip_top;
+static const struct ad714x_chip *chip_bot;
+
+void captouch_force_calibration(){}
 
 struct ad714x_chip {
     uint8_t addr;
     uint8_t gpio;
-    int afe_offsets[13];
+    int pos_afe_offsets[13];
+    int neg_afe_offsets[13];
+    int neg_afe_offset_swap;
     int stages;
-};
+};  
 
 // Captouch sensor chips addresses are swapped on proto3. Whoops.
 #if defined(CONFIG_BADGE23_HW_GEN_P3)
@@ -50,8 +56,17 @@ struct ad714x_chip {
 #define AD7147_BASE_ADDR_BOT (AD7147_BASE_ADDR)
 #endif
 
+static const struct ad714x_chip chip_top_rev5 = {.addr = AD7147_BASE_ADDR_TOP, .gpio = 15,
+    .pos_afe_offsets = {4, 2, 2, 2, 2, 3, 4, 2, 2, 2, 2, 0},
+    .stages=12};
+static const struct ad714x_chip chip_bot_rev5 = {.addr = AD7147_BASE_ADDR_BOT, .gpio = 15,
+    .pos_afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3, 3, 3},
+    .stages=12};
+/*
 static const struct ad714x_chip chip_top = {.addr = AD7147_BASE_ADDR_TOP, .gpio = 48, .afe_offsets = {24, 12, 16, 33, 30, 28, 31, 27, 22, 24, 18, 19, }, .stages=top_stages};
 static const struct ad714x_chip chip_bot = {.addr = AD7147_BASE_ADDR_BOT, .gpio = 3, .afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3}, .stages=bottom_stages};
+*/
+static void captouch_task(void* arg);
 
 static esp_err_t ad714x_i2c_write(const struct ad714x_chip *chip, const uint16_t reg, const uint16_t data)
 {
@@ -169,16 +184,6 @@ static struct ad7147_stage_config ad714x_default_config(void)
         };
 }
 
-#define ESP_INTR_FLAG_DEFAULT 0
-
-static QueueHandle_t gpio_evt_queue = NULL;
-
-static void IRAM_ATTR gpio_isr_handler(void* arg)
-{
-    struct ad714x_chip* chip = (struct ad714x_chip *) arg;
-    xQueueSendFromISR(gpio_evt_queue, &chip, NULL);
-}
-
 static uint16_t pressed_top, pressed_bot;
 
 static void captouch_chip_readout(struct ad714x_chip * chip){
@@ -188,17 +193,18 @@ static void captouch_chip_readout(struct ad714x_chip * chip){
 
     pressed &= ((1 << chip->stages) - 1);
 
-    if(chip == &chip_top) pressed_top = pressed;
-    if(chip == &chip_bot) pressed_bot = pressed;
+    if(chip == chip_top) pressed_top = pressed;
+    if(chip == chip_bot) pressed_bot = pressed;
 }
 
 void manual_captouch_readout(uint8_t top)
 {
-    struct ad714x_chip* chip = top ? (&chip_top) : (&chip_bot);
+    struct ad714x_chip* chip = top ? (chip_top) : (chip_bot);
     captouch_chip_readout(chip);
     //xQueueSend(gpio_evt_queue, &chip, NULL);
 }
 
+/*
 void gpio_event_handler(void* arg)
 {
     static unsigned long counter = 0;
@@ -209,6 +215,7 @@ void gpio_event_handler(void* arg)
         }
     }
 }
+*/
 
 uint16_t read_captouch(){
     uint16_t petals = 0;
@@ -230,11 +237,6 @@ uint16_t read_captouch(){
     return petals;
 }
 
-void captouch_force_calibration(){
-    ad714x_i2c_write(&chip_top, 2, (1 << 14));
-    ad714x_i2c_write(&chip_bot, 2, (1 << 14));
-}
-
 static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad7147_device_config device_config)
 {
     uint16_t data;
@@ -247,26 +249,14 @@ static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad71
         struct ad7147_stage_config stage_config;
         stage_config = ad714x_default_config();
         stage_config.cinX_connection_setup[i] = CIN_CDC_POS;
-        stage_config.pos_afe_offset=chip->afe_offsets[i];
+        stage_config.pos_afe_offset=chip->pos_afe_offsets[i];
         ad714x_set_stage_config(chip, i, &stage_config);
     }
-
-    captouch_force_calibration();
-
-    gpio_config_t io_conf = {};
-    io_conf.intr_type = GPIO_INTR_NEGEDGE;
-    io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pin_bit_mask = (1ULL << chip->gpio);
-    io_conf.pull_up_en = 1;
-    io_conf.pull_down_en = 0;
-    gpio_config(&io_conf);
-
-    // gpio_isr_handler_add(chip->gpio, gpio_isr_handler, (void *)chip);
-
 }
 
 void captouch_init(void)
 {
+#if 0
     //gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
     captouch_init_chip(&chip_top, (struct ad7147_device_config){.sequence_stage_num = 11,
                                                  .decimation = 1,
@@ -295,10 +285,22 @@ void captouch_init(void)
                                                  .stage9_high_int_enable = 1,
                                                  .stage10_high_int_enable = 1,
                                                  .stage11_high_int_enable = 1,
+#endif
+//    if(portexpander_rev6()) {
+//        chip_top = &chip_top_rev6;
+//        chip_bot = &chip_bot_rev6;
+//    } else {
+        chip_top = &chip_top_rev5;
+        chip_bot = &chip_bot_rev5;
+//    }
+
+    captouch_init_chip(chip_top, (struct ad7147_device_config){.sequence_stage_num = 11,
+                                                 .decimation = 1,
                                                  });
 
-    captouch_init_chip(&chip_bot, (struct ad7147_device_config){.sequence_stage_num = 11,
+    captouch_init_chip(chip_bot, (struct ad7147_device_config){.sequence_stage_num = 11,
                                                  .decimation = 1,
+#if 0
                                                  .stage0_cal_en = 1,
                                                  .stage1_cal_en = 1,
                                                  .stage2_cal_en = 1,
@@ -324,29 +326,114 @@ void captouch_init(void)
 
     gpio_evt_queue = xQueueCreate(10, sizeof(const struct ad714x_chip*));
     //xTaskCreate(gpio_event_handler, "gpio_event_handler", 2048 * 2, NULL, configMAX_PRIORITIES - 2, NULL);
+#endif
+                                                 });
+
+    TaskHandle_t handle;
+    //xTaskCreatePinnedToCore(&captouch_task, "captouch", 4096, NULL, configMAX_PRIORITIES - 2, &handle, 1);
+    xTaskCreate(&captouch_task, "captouch", 4096, NULL, configMAX_PRIORITIES - 2, &handle);
 }
+
+static void print_cdc(uint16_t *data)
+{
+    ESP_LOGI(TAG, "CDC results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
+}
+
+static void print_ambient(uint16_t *data)
+{
+    ESP_LOGI(TAG, "AMB results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
+}
+
+
+static uint16_t trigger(uint16_t *data, uint16_t *ambient)
+{
+    uint16_t pressed = 0;
+    for(int i=0; i<12; i++) {
+        // TODO: random value
+        if(data[i] - ambient[i] > 2000) {
+            pressed |= (1<<i);
+        }
+    }
+    return pressed;
+}
+
+uint16_t cdc_data[2][12] = {0,};
+uint16_t cdc_ambient[2][12] = {0,};
+
+//extern void espan_handle_captouch(uint16_t pressed_top, uint16_t pressed_bot);
+
+static void captouch_task(void* arg)
+{
+    int cycle = 0;
+
+
+    // TODO: keep constant track of ambient or allow recalibration
+
+    uint32_t ambient_acc[2][12] = {{0,}, {0,}};
+    for(int i = 0; i < 16; i++) {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        ad714x_i2c_read(chip_top, 0xB, cdc_ambient[0], chip_top->stages);
+        print_ambient(cdc_ambient[0]);
+        ad714x_i2c_read(chip_bot, 0xB, cdc_ambient[1], chip_bot->stages);
+        print_ambient(cdc_ambient[1]);
+        for(int j=0;j<12;j++){
+            ambient_acc[0][j] += cdc_ambient[0][j];
+            ambient_acc[1][j] += cdc_ambient[1][j];
+        }
+    }
+
+    // TODO: use median instead of average
+    for(int i=0;i<12;i++){
+        cdc_ambient[0][i] = ambient_acc[0][i] / 16;
+        cdc_ambient[1][i] = ambient_acc[1][i] / 16;
+    }
+
+
+    while(true) {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        cycle++;
+
+        ad714x_i2c_read(chip_top, 0xB, cdc_data[0], chip_top->stages);
+        pressed_top = trigger(cdc_data[0], cdc_ambient[0]);
+
+        if(cycle % 100 == 0) {
+            print_ambient(cdc_ambient[0]);
+            print_cdc(cdc_data[0]);
+        }
+
+        ad714x_i2c_read(chip_bot, 0xB, cdc_data[1], chip_bot->stages);
+        pressed_bot = trigger(cdc_data[1], cdc_ambient[1]);
+        if(cycle % 100 == 0) {
+            print_ambient(cdc_ambient[1]);
+            print_cdc(cdc_data[1]);
+        }
+        //espan_handle_captouch(pressed_top, pressed_bot);
+    }
+}
+
 
 static void captouch_print_debug_info_chip(const struct ad714x_chip* chip)
 {
-    uint16_t data[12] = {0,};
-    uint16_t ambient[12] = {0,};
+    uint16_t *data;
+    uint16_t *ambient;
     const int stages = chip->stages;
-#if 1
-    for(int stage=0; stage<stages; stage++) {
-        ad714x_i2c_read(chip, 0x0FA + stage * (0x104 - 0xE0), data, 1);
-        ESP_LOGI(TAG, "stage %d threshold: %X", stage, data[0]);
+
+    if(chip == chip_top) {
+        data = cdc_data[0];
+        ambient = cdc_ambient[0];
+    } else {
+        data = cdc_data[1];
+        ambient = cdc_ambient[1];
     }
 
-    ad714x_i2c_read(chip, 0xB, data, stages);
+#if 1
     ESP_LOGI(TAG, "CDC results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
 
     for(int stage=0; stage<stages; stage++) {
-        ad714x_i2c_read(chip, 0x0F1 + stage * (0x104 - 0xE0), &ambient[stage], 1);
         ESP_LOGI(TAG, "stage %d ambient: %X diff: %d", stage, ambient[stage], data[stage] - ambient[stage]);
     }
-
 #endif
-#if 1
+#if 0
     ad714x_i2c_read(chip, 8, data, 1);
     ESP_LOGI(TAG, "Low interrupt %X", data[0]);
     ad714x_i2c_read(chip, 9, data, 1);
@@ -362,56 +449,17 @@ static void captouch_print_debug_info_chip(const struct ad714x_chip* chip)
 
 void captouch_print_debug_info(void)
 {
-    captouch_print_debug_info_chip(&chip_top);
-    captouch_print_debug_info_chip(&chip_bot);
+    captouch_print_debug_info_chip(chip_top);
+    captouch_print_debug_info_chip(chip_bot);
 }
 
 void captouch_get_cross(int paddle, int *x, int *y)
 {
-    uint16_t data[12] = {0,};
-    uint16_t ambient[12] = {0,};
+    uint16_t *data;
+    uint16_t *ambient;
 
     int result[2] = {0, 0};
     float total = 0;
-
-#if 0
-    if(paddle == 2) {
-        ad714x_i2c_read(&chip_top, 0xB, data, 3);
-        //ESP_LOGI(TAG, "CDC results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
-
-        for(int stage=0; stage<3; stage++) {
-            ad714x_i2c_read(&chip_top, 0x0F1 + stage * (0x104 - 0xE0), &ambient[stage], 1);
-            //ESP_LOGI(TAG, "stage %d ambient: %X diff: %d", stage, ambient[stage], data[stage] - ambient[stage]);
-        }
-
-        int vectors[][2] = {{0, 0}, {0,240}, {240, 120}};
-        total = (data[0] - ambient[0]) + (data[1] - ambient[1]) + (data[2] - ambient[2]);
-
-        result[0] = vectors[0][0] * (data[0] - ambient[0]) + vectors[1][0] * (data[1] - ambient[1]) + vectors[2][0] * (data[2] - ambient[2]);
-        result[1] = vectors[0][1] * (data[0] - ambient[0]) + vectors[1][1] * (data[1] - ambient[1]) + vectors[2][1] * (data[2] - ambient[2]);
-    }
-
-    if(paddle == 8) {
-        ad714x_i2c_read(&chip_top, 0xB + 5, data + 5, 3);
-        //ESP_LOGI(TAG, "CDC results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
-
-        for(int stage=5; stage<8; stage++) {
-            ad714x_i2c_read(&chip_top, 0x0F1 + stage * (0x104 - 0xE0), &ambient[stage], 1);
-            //ESP_LOGI(TAG, "stage %d ambient: %X diff: %d", stage, ambient[stage], data[stage] - ambient[stage]);
-        }
-
-        int vectors[][2] = {{240, 240}, {240, 0}, {0, 120}};
-        total = (data[5] - ambient[5]) + (data[6] - ambient[6]) + (data[7] - ambient[7]);
-
-        result[0] = vectors[0][0] * (data[5] - ambient[5]) + vectors[1][0] * (data[6] - ambient[6]) + vectors[2][0] * (data[7] - ambient[7]);
-        result[1] = vectors[0][1] * (data[5] - ambient[5]) + vectors[1][1] * (data[6] - ambient[6]) + vectors[2][1] * (data[7] - ambient[7]);
-    }
-
-    *x = result[0] / total;
-    *y = result[1] / total;
-
-    //ESP_LOGI(TAG, "x=%d y=%d\n", *x, *y);
-#endif
 
     const int paddle_info_1[] = {
         4,
@@ -440,18 +488,15 @@ void captouch_get_cross(int paddle, int *x, int *y)
 
     struct ad714x_chip* chip;
     if (paddle % 2 == 0) {
-        chip = &chip_top;
+        //chip = chip_top;
+        data = cdc_data[0];
+        ambient = cdc_ambient[0];
     } else {
-        chip = &chip_bot;
+        //chip = chip_bot;
+        data = cdc_data[1];
+        ambient = cdc_ambient[1];
     }
-
-    ad714x_i2c_read(chip, 0xB, data, 12);
     //ESP_LOGI(TAG, "CDC results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
-
-    for(int stage=0; stage<12; stage++) {
-        ad714x_i2c_read(chip, 0x0F1 + stage * (0x104 - 0xE0), &ambient[stage], 1);
-        //ESP_LOGI(TAG, "stage %d ambient: %X diff: %d", stage, ambient[stage], data[stage] - ambient[stage]);
-    }
 
     int diff1 = data[paddle_info_1[paddle]] - ambient[paddle_info_1[paddle]];
     int diff2 = data[paddle_info_2[paddle]] - ambient[paddle_info_2[paddle]];
