@@ -34,7 +34,6 @@ static const char *TAG = "captouch";
 static const struct ad714x_chip *chip_top;
 static const struct ad714x_chip *chip_bot;
 
-void captouch_force_calibration(){}
 
 struct ad714x_chip {
     uint8_t addr;
@@ -55,7 +54,7 @@ static const struct ad714x_chip chip_bot_rev5 = {.addr = AD7147_BASE_ADDR    , .
 static const struct ad714x_chip chip_top = {.addr = AD7147_BASE_ADDR + 1, .gpio = 48, .afe_offsets = {24, 12, 16, 33, 30, 28, 31, 27, 22, 24, 18, 19, }, .stages=top_stages};
 static const struct ad714x_chip chip_bot = {.addr = AD7147_BASE_ADDR, .gpio = 3, .afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3}, .stages=bottom_stages};
 */
-static void captouch_task(void* arg);
+//static void captouch_task(void* arg);
 
 static esp_err_t ad714x_i2c_write(const struct ad714x_chip *chip, const uint16_t reg, const uint16_t data)
 {
@@ -320,7 +319,7 @@ void captouch_init(void)
 
     TaskHandle_t handle;
     //xTaskCreatePinnedToCore(&captouch_task, "captouch", 4096, NULL, configMAX_PRIORITIES - 2, &handle, 1);
-    xTaskCreate(&captouch_task, "captouch", 4096, NULL, configMAX_PRIORITIES - 2, &handle);
+    //xTaskCreate(&captouch_task, "captouch", 4096, NULL, configMAX_PRIORITIES - 2, &handle);
 }
 
 static void print_cdc(uint16_t *data)
@@ -351,52 +350,66 @@ uint16_t cdc_ambient[2][12] = {0,};
 
 //extern void espan_handle_captouch(uint16_t pressed_top, uint16_t pressed_bot);
 
+static uint8_t calib_cycles = 0;
+void captouch_force_calibration(){
+    if(!calib_cycles){ //last calib has finished
+        calib_cycles = 16; //goal cycles, can be argument someday
+    }
+}
+
+void captouch_read_cycle(){
+        static int cycle = 0;
+        static uint8_t calib_cycle = 0; 
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+        if(calib_cycles){
+            if(calib_cycle == 0){ // last cycle has finished
+                calib_cycle = calib_cycles;
+            }
+            uint32_t ambient_acc[2][12] = {{0,}, {0,}};
+            for(int i = 0; i < 16; i++) {
+                vTaskDelay(10 / portTICK_PERIOD_MS);
+                ad714x_i2c_read(chip_top, 0xB, cdc_ambient[0], chip_top->stages);
+                print_ambient(cdc_ambient[0]);
+                ad714x_i2c_read(chip_bot, 0xB, cdc_ambient[1], chip_bot->stages);
+                print_ambient(cdc_ambient[1]);
+                for(int j=0;j<12;j++){
+                    ambient_acc[0][j] += cdc_ambient[0][j];
+                    ambient_acc[1][j] += cdc_ambient[1][j];
+                }
+            }
+
+            // TODO: use median instead of average
+            calib_cycle--;
+            if(!calib_cycle){ //calib cycle is complete
+                for(int i=0;i<12;i++){
+                    cdc_ambient[0][i] = ambient_acc[0][i] / calib_cycles;
+                    cdc_ambient[1][i] = ambient_acc[1][i] / calib_cycles;
+                }
+                calib_cycles = 0;
+            }
+        } else {
+            cycle++;
+
+            ad714x_i2c_read(chip_top, 0xB, cdc_data[0], chip_top->stages);
+            pressed_top = trigger(cdc_data[0], cdc_ambient[0]);
+
+            if(cycle % 100 == 0) {
+                print_ambient(cdc_ambient[0]);
+                print_cdc(cdc_data[0]);
+            }
+
+            ad714x_i2c_read(chip_bot, 0xB, cdc_data[1], chip_bot->stages);
+            pressed_bot = trigger(cdc_data[1], cdc_ambient[1]);
+            if(cycle % 100 == 0) {
+                print_ambient(cdc_ambient[1]);
+                print_cdc(cdc_data[1]);
+            }
+        }
+}
+
 static void captouch_task(void* arg)
 {
-    int cycle = 0;
-
-
-    // TODO: keep constant track of ambient or allow recalibration
-
-    uint32_t ambient_acc[2][12] = {{0,}, {0,}};
-    for(int i = 0; i < 16; i++) {
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-        ad714x_i2c_read(chip_top, 0xB, cdc_ambient[0], chip_top->stages);
-        print_ambient(cdc_ambient[0]);
-        ad714x_i2c_read(chip_bot, 0xB, cdc_ambient[1], chip_bot->stages);
-        print_ambient(cdc_ambient[1]);
-        for(int j=0;j<12;j++){
-            ambient_acc[0][j] += cdc_ambient[0][j];
-            ambient_acc[1][j] += cdc_ambient[1][j];
-        }
-    }
-
-    // TODO: use median instead of average
-    for(int i=0;i<12;i++){
-        cdc_ambient[0][i] = ambient_acc[0][i] / 16;
-        cdc_ambient[1][i] = ambient_acc[1][i] / 16;
-    }
-
-
     while(true) {
-        vTaskDelay(10 / portTICK_PERIOD_MS);
-        cycle++;
-
-        ad714x_i2c_read(chip_top, 0xB, cdc_data[0], chip_top->stages);
-        pressed_top = trigger(cdc_data[0], cdc_ambient[0]);
-
-        if(cycle % 100 == 0) {
-            print_ambient(cdc_ambient[0]);
-            print_cdc(cdc_data[0]);
-        }
-
-        ad714x_i2c_read(chip_bot, 0xB, cdc_data[1], chip_bot->stages);
-        pressed_bot = trigger(cdc_data[1], cdc_ambient[1]);
-        if(cycle % 100 == 0) {
-            print_ambient(cdc_ambient[1]);
-            print_cdc(cdc_data[1]);
-        }
-        //espan_handle_captouch(pressed_top, pressed_bot);
     }
 }
 

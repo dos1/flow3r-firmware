@@ -63,17 +63,13 @@ void os_app_main(void)
     captouch_init();
 
     vTaskDelay(2000 / portTICK_PERIOD_MS);
-    set_global_vol_dB(0);
-
+    //set_global_vol_dB(0);
+    captouch_force_calibration();
     display_init();
     while(1) {
-        manual_captouch_readout(1);
-        vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
-        manual_captouch_readout(0);
         vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
         update_button_state();
-        vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
-        //display_draw_scope();
+        captouch_read_cycle();
     }
 
     ESP_ERROR_CHECK(i2c_driver_delete(I2C_MASTER_NUM));
