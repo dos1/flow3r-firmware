@@ -1,31 +1,6 @@
 ## Current functionality
 
-Micropython repl hooked up, hw functionality partly broken>
-
-Some fun commands to try:
-
-```
-import hardware
-#turn on sound
-hardware.set_global_volume_dB(-10)
-
-from synth import tinysynth
-a=tinysynth(440,1); # enters decay phase without stop signal
-a.start();
-b=tinysynth(660,0); # sustains until stop signal
-b.start();
-b.stop();
-
-#tiny issue with garbage collect:
-hardware.count_sources();
-a.__del__();
-hardware.count_sources();
-import gc
-del b
-gc.collect()
-hardware.count_sources();
-#...don't know how to hook up gc to __del__, maybe wrong approach
-```
+See python_payload/README.md for a demo application.
 
 Files can be transferred with mpremote, such as:
 
