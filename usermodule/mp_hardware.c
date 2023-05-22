@@ -123,9 +123,7 @@ STATIC mp_obj_t mp_update_leds(size_t n_args, const mp_obj_t *args) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_update_leds_obj, 0, 2, mp_update_leds);
 
 STATIC mp_obj_t mp_get_ctx(size_t n_args, const mp_obj_t *args) {
-    if (mp_ctx == NULL) {
-        mp_ctx = mp_ctx_from_ctx(the_ctx);
-    }
+    mp_ctx = mp_ctx_from_ctx(the_ctx);
     return mp_ctx;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_get_ctx_obj, 0, 0, mp_get_ctx);
