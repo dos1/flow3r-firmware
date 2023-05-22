@@ -1,4 +1,4 @@
-## Current functionality
+## Demo Payload
 
 See python_payload/README.md for a demo application.
 
@@ -6,8 +6,15 @@ Files can be transferred with mpremote, such as:
 
 ```
 mpremote fs cp python_payload/boot.py :boot.py
-mpremote fs cp python_payload/cap_touch_demo.py :cap_touch_demo.py
 ```
+
+Alternatively, adafruit-ampy may work more reliably sometimes:
+
+```
+ampy -p /dev/ttyACM0 -d3 put boot.py
+```
+
+Please transfer all .py files in python_payload/ for using the demo payload.
 
 ## How to install dependencies
 
