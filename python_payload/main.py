@@ -42,6 +42,7 @@ def run_menu():
     if selected_petal is not None:
         utils.clear_all_leds()
         utils.highlight_bottom_petal(selected_petal, 55, 0, 0)
+        leds_update()
         display_fill(BACKGROUND_COLOR)
         display_update()
         CURRENT_APP_RUN = selected_module.run
@@ -53,6 +54,7 @@ def foreground_menu():
     utils.clear_all_leds()
     utils.highlight_bottom_petal(0,0,55,55);
     utils.highlight_bottom_petal(1,55,0,55);
+    leds_update()
     display_fill(BACKGROUND_COLOR)
     utils.draw_text_big(SELECT_TEXT, 0, 0)
     display_update()
@@ -84,15 +86,15 @@ def main():
     set_global_volume_dB(VOLUME)
 
     while True:
-        if(get_button(0) == 2):
+        if(button_get(0) == 2):
             if CURRENT_APP_RUN == run_menu:
                 captouch_autocalib()
             else:
                 CURRENT_APP_RUN = run_menu
                 foreground_menu()
-        if(get_button(0) == 1):
+        if(button_get(0) == 1):
             set_rel_volume(+1)
-        if(get_button(0) == -1):
+        if(button_get(0) == -1):
             set_rel_volume(-1)
         CURRENT_APP_RUN()
 

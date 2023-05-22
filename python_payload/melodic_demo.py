@@ -1,14 +1,11 @@
 from synth import tinysynth
 from hardware import *
+from utils import *
 
 octave = 0
 synths = []
 scale = [0,2,4,5,7,9,11]
 
-def highlight_bottom_petal(num, r, g, b):
-    start = 4 + 8*num
-    for i in range(7):
-        set_led_rgb(((i+start)%40), r, g, b)
 
 def change_playing_field_color(r,g,b):
     highlight_bottom_petal(0, r, g, b)
@@ -16,11 +13,11 @@ def change_playing_field_color(r,g,b):
     highlight_bottom_petal(3, r, g, b)
     highlight_bottom_petal(4, r, g, b)
     highlight_bottom_petal(2, 55, 0, 55)
-    set_led_rgb(18, 55, 0, 55)
-    set_led_rgb(19, 55, 0, 55)
-    set_led_rgb(27, 55, 0, 55)
-    set_led_rgb(28, 55, 0, 55)
-    update_leds()
+    led_set_rgb(15, 55, 0, 55)
+    led_set_rgb(16, 55, 0, 55)
+    led_set_rgb(24, 55, 0, 55)
+    led_set_rgb(25, 55, 0, 55)
+    leds_update()
 
 def adjust_playing_field_to_octave():
     global octave
@@ -36,7 +33,7 @@ def run():
     global octave
     global synths
     for i in range(10):
-        if(get_captouch(i)):
+        if(captouch_get(i)):
             if(i == 4):
                 octave = -1
                 adjust_playing_field_to_octave()

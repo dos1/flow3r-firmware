@@ -20,10 +20,10 @@ def set_chord(i):
         chord_index = i
         for j in range(40):
             hue = int(72*(i+0.5)) % 360
-            set_led_hsv(j, hue, 1, 0.2)
+            led_set_hsv(j, hue, 1, 0.2)
         chord = chords[i]
         print("set chord " +str(i))
-        update_leds()
+        leds_update()
 
 
 def run():
@@ -31,7 +31,7 @@ def run():
     global chord
     global synths
     for i in range(10):
-        if(get_captouch(i)):
+        if(captouch_get(i)):
             if(i%2):
                 k = int((i-1)/2)
                 set_chord(k)

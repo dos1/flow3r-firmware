@@ -24,14 +24,14 @@ STATIC mp_obj_t mp_display_update(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_display_update_obj, 0, 1, mp_display_update);
 
-STATIC mp_obj_t mp_display_draw_pixel(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t mp_display_set_pixel(size_t n_args, const mp_obj_t *args) {
     uint16_t x = mp_obj_get_int(args[0]);
     uint16_t y = mp_obj_get_int(args[1]);
     uint16_t col = mp_obj_get_int(args[2]);
     display_draw_pixel(x, y, col);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_display_draw_pixel_obj, 3, 4, mp_display_draw_pixel);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_display_set_pixel_obj, 3, 4, mp_display_set_pixel);
 
 STATIC mp_obj_t mp_display_get_pixel(size_t n_args, const mp_obj_t *args) {
     uint16_t x = mp_obj_get_int(args[0]);
@@ -47,14 +47,14 @@ STATIC mp_obj_t mp_display_fill(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_display_fill_obj, 1, 2, mp_display_fill);
 
-STATIC mp_obj_t mp_get_captouch(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t mp_captouch_get(size_t n_args, const mp_obj_t *args) {
     uint16_t captouch = read_captouch();
     uint16_t pad = mp_obj_get_int(args[0]);
     uint8_t output = (captouch >> pad) & 1;
 
     return mp_obj_new_int(output);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_get_captouch_obj, 1, 2, mp_get_captouch);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_captouch_get_obj, 1, 2, mp_captouch_get);
 
 STATIC mp_obj_t mp_captouch_autocalib(size_t n_args, const mp_obj_t *args) {
     captouch_force_calibration();
@@ -62,12 +62,12 @@ STATIC mp_obj_t mp_captouch_autocalib(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_captouch_autocalib_obj, 0, 2, mp_captouch_autocalib);
 
-STATIC mp_obj_t mp_get_button(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t mp_button_get(size_t n_args, const mp_obj_t *args) {
     uint8_t leftbutton = mp_obj_get_int(args[0]);
     int8_t ret = get_button_state(leftbutton);
     return mp_obj_new_int(ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_get_button_obj, 1, 2, mp_get_button);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_button_get_obj, 1, 2, mp_button_get);
 
 STATIC mp_obj_t mp_set_global_volume_dB(size_t n_args, const mp_obj_t *args) {
     mp_float_t x = mp_obj_get_float(args[0]);
@@ -94,7 +94,7 @@ STATIC mp_obj_t mp_dump_all_sources(size_t n_args, const mp_obj_t *args) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_dump_all_sources_obj, 0, 2, mp_dump_all_sources);
 
 
-STATIC mp_obj_t mp_set_led_rgb(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t mp_led_set_rgb(size_t n_args, const mp_obj_t *args) {
     uint8_t index =  mp_obj_get_int(args[0]);
     uint8_t red =  mp_obj_get_int(args[1]);
     uint8_t green =  mp_obj_get_int(args[2]);
@@ -102,9 +102,9 @@ STATIC mp_obj_t mp_set_led_rgb(size_t n_args, const mp_obj_t *args) {
     leds_set_single_rgb(index, red, green, blue);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_set_led_rgb_obj, 4, 5, mp_set_led_rgb);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_led_set_rgb_obj, 4, 5, mp_led_set_rgb);
 
-STATIC mp_obj_t mp_set_led_hsv(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t mp_led_set_hsv(size_t n_args, const mp_obj_t *args) {
     uint8_t index =  mp_obj_get_int(args[0]);
     float hue =  mp_obj_get_float(args[1]);
     float sat =  mp_obj_get_float(args[2]);
@@ -112,13 +112,13 @@ STATIC mp_obj_t mp_set_led_hsv(size_t n_args, const mp_obj_t *args) {
     leds_set_single_hsv(index, hue, sat, val);
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_set_led_hsv_obj, 4, 5, mp_set_led_hsv);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_led_set_hsv_obj, 4, 5, mp_led_set_hsv);
 
-STATIC mp_obj_t mp_update_leds(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t mp_leds_update(size_t n_args, const mp_obj_t *args) {
     leds_update();
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_update_leds_obj, 0, 2, mp_update_leds);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_leds_update_obj, 0, 2, mp_leds_update);
 
 STATIC mp_obj_t mp_version(void) {
     mp_obj_t str = mp_obj_new_str(badge23_hw_name, strlen(badge23_hw_name));
@@ -128,17 +128,17 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_version_obj, mp_version);
 
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_audio) },
-    { MP_ROM_QSTR(MP_QSTR_get_captouch), MP_ROM_PTR(&mp_get_captouch_obj) },
+    { MP_ROM_QSTR(MP_QSTR_captouch_get), MP_ROM_PTR(&mp_captouch_get_obj) },
     { MP_ROM_QSTR(MP_QSTR_captouch_autocalib), MP_ROM_PTR(&mp_captouch_autocalib_obj) },
-    { MP_ROM_QSTR(MP_QSTR_get_button), MP_ROM_PTR(&mp_get_button_obj) },
+    { MP_ROM_QSTR(MP_QSTR_button_get), MP_ROM_PTR(&mp_button_get_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_global_volume_dB), MP_ROM_PTR(&mp_set_global_volume_dB_obj) },
     { MP_ROM_QSTR(MP_QSTR_count_sources), MP_ROM_PTR(&mp_count_sources_obj) },
     { MP_ROM_QSTR(MP_QSTR_dump_all_sources), MP_ROM_PTR(&mp_dump_all_sources_obj) },
-    { MP_ROM_QSTR(MP_QSTR_set_led_rgb), MP_ROM_PTR(&mp_set_led_rgb_obj) },
-    { MP_ROM_QSTR(MP_QSTR_set_led_hsv), MP_ROM_PTR(&mp_set_led_hsv_obj) },
-    { MP_ROM_QSTR(MP_QSTR_update_leds), MP_ROM_PTR(&mp_update_leds_obj) },
+    { MP_ROM_QSTR(MP_QSTR_led_set_rgb), MP_ROM_PTR(&mp_led_set_rgb_obj) },
+    { MP_ROM_QSTR(MP_QSTR_led_set_hsv), MP_ROM_PTR(&mp_led_set_hsv_obj) },
+    { MP_ROM_QSTR(MP_QSTR_leds_update), MP_ROM_PTR(&mp_leds_update_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_update), MP_ROM_PTR(&mp_display_update_obj) },
-    { MP_ROM_QSTR(MP_QSTR_display_draw_pixel), MP_ROM_PTR(&mp_display_draw_pixel_obj) },
+    { MP_ROM_QSTR(MP_QSTR_display_set_pixel), MP_ROM_PTR(&mp_display_set_pixel_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_get_pixel), MP_ROM_PTR(&mp_display_get_pixel_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_fill), MP_ROM_PTR(&mp_display_fill_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&mp_version_obj) },

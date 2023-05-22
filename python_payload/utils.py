@@ -7,8 +7,8 @@ BLUE = 0b0000000000011111
 
 def clear_all_leds():
     for i in range(40):
-        set_led_rgb(i, 0, 0, 0)
-    update_leds()
+        led_set_rgb(i, 0, 0, 0)
+    leds_update()
 
 def draw_text_big(text, x, y):
     ypos = 120+int(len(text)) + int(y)
@@ -16,28 +16,27 @@ def draw_text_big(text, x, y):
     for l, line in enumerate(text):
         for p, pixel in enumerate(line):
             if(pixel == '#'):
-                display_draw_pixel(xpos - 2*p, ypos - 2*l, RED)
-                display_draw_pixel(xpos - 2*p, ypos - 2*l-1, BLUE)
-                display_draw_pixel(xpos - 2*p-1, ypos - 2*l, BLUE)
-                display_draw_pixel(xpos - 2*p-1, ypos - 2*l-1, RED)
+                display_set_pixel(xpos - 2*p, ypos - 2*l, RED)
+                display_set_pixel(xpos - 2*p, ypos - 2*l-1, BLUE)
+                display_set_pixel(xpos - 2*p-1, ypos - 2*l, BLUE)
+                display_set_pixel(xpos - 2*p-1, ypos - 2*l-1, RED)
 
 def highlight_bottom_petal(num, RED, GREEN, BLUE):
-    start = 4 + 8*num
+    start = 1 + 8*num
     for i in range(7):
-        set_led_rgb(((i+start)%40), RED, GREEN, BLUE)
-    update_leds()
+        led_set_rgb(((i+start)%40), RED, GREEN, BLUE)
 
 def long_bottom_petal_captouch_blocking(num, ms):
-    if(get_captouch((num*2) + 1) == 1):
+    if(captouch_get((num*2) + 1) == 1):
         time.sleep_ms(ms)
-        if(get_captouch((num*2) + 1) == 1):
+        if(captouch_get((num*2) + 1) == 1):
             return True
     return False
 
 def draw_rect(x,y,w,h,col):
     for j in range(w):
         for k in range(h):
-            display_draw_pixel(x+j,y+k,col)
+            display_set_pixel(x+j,y+k,col)
 
 def draw_volume_slider(volume):
     length = 96 + ((volume - 20) * 1.6)
