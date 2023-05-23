@@ -6,24 +6,27 @@
 #include <stdint.h>
 
 #ifdef HARDWARE_REVISION_04
-static const uint8_t top_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 8, 8}; //flipped top and bottom from bootstrap reference
+static const uint8_t top_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4};
 static const uint8_t top_stages = 12;
-static const uint8_t bot_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4}; //idk y :~)
-static const uint8_t bottom_stages = 12;
+static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 8, 8};
+static const uint8_t bot_stages = 12;
+#define AD7147_ADDR_TOP            0b101100
+#define AD7147_ADDR_BOT            0b101101
 #endif
 
 #ifdef HARDWARE_REVISION_01
 static const uint8_t top_map[] = {2, 2, 2, 0, 0, 8, 8, 8, 6, 6, 4, 4};
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9};
-static const uint8_t bottom_stages = 10;
+static const uint8_t bot_stages = 10;
+#define AD7147_ADDR_TOP            0b101101
+#define AD7147_ADDR_BOT            0b101100
 #endif
 
 static const char *TAG = "captouch";
 
 #define I2C_MASTER_NUM              0                          /*!< I2C master i2c port number, the number of i2c peripheral interfaces available will depend on the chip */
 
-#define AD7147_BASE_ADDR            0x2C
 
 #define AD7147_REG_PWR_CONTROL              0x00
 #define AD7147_REG_STAGE_CAL_EN             0x01
@@ -31,8 +34,8 @@ static const char *TAG = "captouch";
 #define AD7147_REG_DEVICE_ID                0x17
 
 #define TIMEOUT_MS                  1000
-static const struct ad714x_chip *chip_top;
-static const struct ad714x_chip *chip_bot;
+static struct ad714x_chip *chip_top;
+static struct ad714x_chip *chip_bot;
 
 
 struct ad714x_chip {
@@ -44,17 +47,12 @@ struct ad714x_chip {
     int stages;
 };  
 
-static const struct ad714x_chip chip_top_rev5 = {.addr = AD7147_BASE_ADDR + 1, .gpio = 15,
+static struct ad714x_chip chip_top_rev5 = {.addr = AD7147_ADDR_TOP, .gpio = 15,
     .pos_afe_offsets = {4, 2, 2, 2, 2, 3, 4, 2, 2, 2, 2, 0},
-    .stages=12};
-static const struct ad714x_chip chip_bot_rev5 = {.addr = AD7147_BASE_ADDR    , .gpio = 15,
+    .stages=top_stages};
+static struct ad714x_chip chip_bot_rev5 = {.addr = AD7147_ADDR_BOT, .gpio = 15,
     .pos_afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3, 3, 3},
-    .stages=12};
-/*
-static const struct ad714x_chip chip_top = {.addr = AD7147_BASE_ADDR + 1, .gpio = 48, .afe_offsets = {24, 12, 16, 33, 30, 28, 31, 27, 22, 24, 18, 19, }, .stages=top_stages};
-static const struct ad714x_chip chip_bot = {.addr = AD7147_BASE_ADDR, .gpio = 3, .afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3}, .stages=bottom_stages};
-*/
-//static void captouch_task(void* arg);
+    .stages=bot_stages};
 
 static esp_err_t ad714x_i2c_write(const struct ad714x_chip *chip, const uint16_t reg, const uint16_t data)
 {
@@ -216,7 +214,7 @@ uint16_t read_captouch(){
         }
     }
 
-    for(int i=0; i<bottom_stages; i++) {
+    for(int i=0; i<bot_stages; i++) {
         if(bot  & (1 << i)) {
             petals |= (1<<bot_map[i]);
         }
@@ -310,16 +308,10 @@ void captouch_init(void)
                                                  .stage7_high_int_enable = 1,
                                                  .stage8_high_int_enable = 1,
                                                  .stage9_high_int_enable = 1,
-                                                 });
-
-    gpio_evt_queue = xQueueCreate(10, sizeof(const struct ad714x_chip*));
-    //xTaskCreate(gpio_event_handler, "gpio_event_handler", 2048 * 2, NULL, configMAX_PRIORITIES - 2, NULL);
 #endif
                                                  });
 
-    TaskHandle_t handle;
-    //xTaskCreatePinnedToCore(&captouch_task, "captouch", 4096, NULL, configMAX_PRIORITIES - 2, &handle, 1);
-    //xTaskCreate(&captouch_task, "captouch", 4096, NULL, configMAX_PRIORITIES - 2, &handle);
+    //gpio_evt_queue = xQueueCreate(10, sizeof(const struct ad714x_chip*));
 }
 
 static void print_cdc(uint16_t *data)
@@ -348,9 +340,7 @@ static uint16_t trigger(uint16_t *data, uint16_t *ambient)
 uint16_t cdc_data[2][12] = {0,};
 uint16_t cdc_ambient[2][12] = {0,};
 
-//extern void espan_handle_captouch(uint16_t pressed_top, uint16_t pressed_bot);
-
-static uint8_t calib_cycles = 0;
+static volatile uint8_t calib_cycles = 0;
 void captouch_force_calibration(){
     if(!calib_cycles){ //last calib has finished
         calib_cycles = 16; //goal cycles, can be argument someday
@@ -407,12 +397,7 @@ void captouch_read_cycle(){
         }
 }
 
-static void captouch_task(void* arg)
-{
-    while(true) {
-    }
-}
-
+static void captouch_task(void* arg){}
 
 static void captouch_print_debug_info_chip(const struct ad714x_chip* chip)
 {

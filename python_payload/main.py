@@ -84,16 +84,22 @@ def main():
     set_global_volume_dB(VOLUME)
 
     while True:
-        if(get_button(0) == 2):
-            if CURRENT_APP_RUN == run_menu:
-                captouch_autocalib()
+        if((get_button(1) == 2) and (CURRENT_APP_RUN == run_menu)):
+            display_fill(255)
+            display_update()
+            captouch_autocalib()
+            time.sleep_ms(2000)
+            foreground_menu()
+        else:
+            if(get_button(0) == 2):
+                if CURRENT_APP_RUN != run_menu:
+                    CURRENT_APP_RUN = run_menu
+                    foreground_menu()
             else:
-                CURRENT_APP_RUN = run_menu
-                foreground_menu()
-        if(get_button(0) == 1):
-            set_rel_volume(+1)
-        if(get_button(0) == -1):
-            set_rel_volume(-1)
-        CURRENT_APP_RUN()
+                if(get_button(0) == 1):
+                    set_rel_volume(+1)
+                if(get_button(0) == -1):
+                    set_rel_volume(-1)
+                CURRENT_APP_RUN()
 
 main()
