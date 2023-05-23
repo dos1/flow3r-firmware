@@ -55,6 +55,25 @@ STATIC mp_obj_t mp_get_captouch(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_get_captouch_obj, 1, 2, mp_get_captouch);
 
+STATIC mp_obj_t mp_captouch_get_petal_pad_raw(size_t n_args, const mp_obj_t *args) {
+    uint8_t petal = mp_obj_get_int(args[0]);
+    uint8_t pad = mp_obj_get_int(args[1]);
+    uint16_t output = captouch_get_petal_pad_raw(petal, pad, 0);
+
+    return mp_obj_new_int(output);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_captouch_get_petal_pad_raw_obj, 2, 3, mp_captouch_get_petal_pad_raw);
+
+STATIC mp_obj_t mp_captouch_get_petal_pad(size_t n_args, const mp_obj_t *args) {
+    uint8_t petal = mp_obj_get_int(args[0]);
+    uint8_t pad = mp_obj_get_int(args[1]);
+    int32_t cdc = captouch_get_petal_pad_raw(petal, pad, 0);
+    int32_t amb = captouch_get_petal_pad_raw(petal, pad, 1);
+
+    return mp_obj_new_int(cdc-amb);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_captouch_get_petal_pad_obj, 2, 3, mp_captouch_get_petal_pad);
+
 STATIC mp_obj_t mp_captouch_autocalib(size_t n_args, const mp_obj_t *args) {
     captouch_force_calibration();
     return mp_const_none;
@@ -122,6 +141,8 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_update_leds_obj, 0, 2, mp_update_l
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_audio) },
     { MP_ROM_QSTR(MP_QSTR_get_captouch), MP_ROM_PTR(&mp_get_captouch_obj) },
+    { MP_ROM_QSTR(MP_QSTR_captouch_get_petal_pad_raw), MP_ROM_PTR(&mp_captouch_get_petal_pad_raw_obj) },
+    { MP_ROM_QSTR(MP_QSTR_captouch_get_petal_pad), MP_ROM_PTR(&mp_captouch_get_petal_pad_obj) },
     { MP_ROM_QSTR(MP_QSTR_captouch_autocalib), MP_ROM_PTR(&mp_captouch_autocalib_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_button), MP_ROM_PTR(&mp_get_button_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_global_volume_dB), MP_ROM_PTR(&mp_set_global_volume_dB_obj) },

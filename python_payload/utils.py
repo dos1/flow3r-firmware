@@ -5,6 +5,26 @@ RED = 0b1111100000000000
 GREEN = 0b0000011111100000
 BLUE = 0b0000000000011111
 
+def captouch_get_phi(petal):
+    if(petal%2):
+        return 0
+    else:
+        l = captouch_get_petal_pad(petal,1)
+        r = captouch_get_petal_pad(petal,2)
+        b = captouch_get_petal_pad(petal,3)
+        return l - r
+
+def captouch_get_rad(petal):
+    if(petal%2):
+        t = captouch_get_petal_pad(petal,0)
+        b = captouch_get_petal_pad(petal,3)
+        return t - b
+    else:
+        l = captouch_get_petal_pad(petal,1)
+        r = captouch_get_petal_pad(petal,2)
+        b = captouch_get_petal_pad(petal,3)
+        return (l + r)/2 - b
+
 def clear_all_leds():
     for i in range(40):
         set_led_rgb(i, 0, 0, 0)

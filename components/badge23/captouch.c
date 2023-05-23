@@ -10,6 +10,8 @@ static const uint8_t top_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4};
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 8, 8};
 static const uint8_t bot_stages = 12;
+static const uint8_t top_segment_map[] = {1,3,2,3,1,2,1,3,2,1,3,2}; //checked
+static const uint8_t bot_segment_map[] = {0,3,0,3,0,3,0,3,0,3,0,3}; //idk
 #define AD7147_ADDR_TOP            0b101100
 #define AD7147_ADDR_BOT            0b101101
 #endif
@@ -19,6 +21,8 @@ static const uint8_t top_map[] = {2, 2, 2, 0, 0, 8, 8, 8, 6, 6, 4, 4};
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9};
 static const uint8_t bot_stages = 10;
+static const uint8_t top_segment_map[] = {1,2,3,1,2,3,1,2,3,1,2,3}; //idk
+static const uint8_t bot_segment_map[] = {0,3,0,3,0,3,0,3,0,3,0,3}; //idk
 #define AD7147_ADDR_TOP            0b101101
 #define AD7147_ADDR_BOT            0b101100
 #endif
@@ -204,23 +208,23 @@ void gpio_event_handler(void* arg)
 */
 
 uint16_t read_captouch(){
-    uint16_t petals = 0;
+    uint16_t bin_petals = 0;
     uint16_t top = pressed_top;
     uint16_t bot = pressed_bot;
 
     for(int i=0; i<top_stages; i++) {
         if(top  & (1 << i)) {
-            petals |= (1<<top_map[i]);
+            bin_petals |= (1<<top_map[i]);
         }
     }
 
     for(int i=0; i<bot_stages; i++) {
         if(bot  & (1 << i)) {
-            petals |= (1<<bot_map[i]);
+            bin_petals |= (1<<bot_map[i]);
         }
     }
 
-    return petals;
+    return bin_petals;
 }
 
 static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad7147_device_config device_config)
@@ -242,43 +246,8 @@ static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad71
 
 void captouch_init(void)
 {
-#if 0
-    //gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
-    captouch_init_chip(&chip_top, (struct ad7147_device_config){.sequence_stage_num = 11,
-                                                 .decimation = 1,
-                                                 .stage0_cal_en = 1,
-                                                 .stage1_cal_en = 1,
-                                                 .stage2_cal_en = 1,
-                                                 .stage3_cal_en = 1,
-                                                 .stage4_cal_en = 1,
-                                                 .stage5_cal_en = 1,
-                                                 .stage6_cal_en = 1,
-                                                 .stage7_cal_en = 1,
-                                                 .stage8_cal_en = 1,
-                                                 .stage9_cal_en = 1,
-                                                 .stage10_cal_en = 1,
-                                                 .stage11_cal_en = 1,
-
-                                                 .stage0_high_int_enable = 1,
-                                                 .stage1_high_int_enable = 1,
-                                                 .stage2_high_int_enable = 1,
-                                                 .stage3_high_int_enable = 1,
-                                                 .stage4_high_int_enable = 1,
-                                                 .stage5_high_int_enable = 1,
-                                                 .stage6_high_int_enable = 1,
-                                                 .stage7_high_int_enable = 1,
-                                                 .stage8_high_int_enable = 1,
-                                                 .stage9_high_int_enable = 1,
-                                                 .stage10_high_int_enable = 1,
-                                                 .stage11_high_int_enable = 1,
-#endif
-//    if(portexpander_rev6()) {
-//        chip_top = &chip_top_rev6;
-//        chip_bot = &chip_bot_rev6;
-//    } else {
-        chip_top = &chip_top_rev5;
-        chip_bot = &chip_bot_rev5;
-//    }
+    chip_top = &chip_top_rev5;
+    chip_bot = &chip_bot_rev5;
 
     captouch_init_chip(chip_top, (struct ad7147_device_config){.sequence_stage_num = 11,
                                                  .decimation = 1,
@@ -286,42 +255,17 @@ void captouch_init(void)
 
     captouch_init_chip(chip_bot, (struct ad7147_device_config){.sequence_stage_num = 11,
                                                  .decimation = 1,
-#if 0
-                                                 .stage0_cal_en = 1,
-                                                 .stage1_cal_en = 1,
-                                                 .stage2_cal_en = 1,
-                                                 .stage3_cal_en = 1,
-                                                 .stage4_cal_en = 1,
-                                                 .stage5_cal_en = 1,
-                                                 .stage6_cal_en = 1,
-                                                 .stage7_cal_en = 1,
-                                                 .stage8_cal_en = 1,
-                                                 .stage9_cal_en = 1,
-
-                                                 .stage0_high_int_enable = 1,
-                                                 .stage1_high_int_enable = 1,
-                                                 .stage2_high_int_enable = 1,
-                                                 .stage3_high_int_enable = 1,
-                                                 .stage4_high_int_enable = 1,
-                                                 .stage5_high_int_enable = 1,
-                                                 .stage6_high_int_enable = 1,
-                                                 .stage7_high_int_enable = 1,
-                                                 .stage8_high_int_enable = 1,
-                                                 .stage9_high_int_enable = 1,
-#endif
                                                  });
-
-    //gpio_evt_queue = xQueueCreate(10, sizeof(const struct ad714x_chip*));
 }
 
 static void print_cdc(uint16_t *data)
 {
-    ESP_LOGI(TAG, "CDC results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
+    printf("CDC results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
 }
 
 static void print_ambient(uint16_t *data)
 {
-    ESP_LOGI(TAG, "AMB results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
+    printf("AMB results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
 }
 
 
@@ -347,8 +291,52 @@ void captouch_force_calibration(){
     }
 }
 
+#define PETAL_SEGMENT__TIP 0
+#define PETAL_SEGMENT__LEFT 1
+#define PETAL_SEGMENT__RIGHT 2
+#define PETAL_SEGMENT__BASE 3
+
+typedef struct{
+    uint8_t segments_config; //mask according to PETAL_SEGMENT_*
+    uint16_t amb_values[4]; //ordered according to PETAL_SEGMENT_*
+    uint16_t cdc_values[4]; //ordered according to PETAL_SEGMENT_*
+    bool pressed;
+} petal_t;
+
+static petal_t petals[10];
+
+void cdc_to_petal(bool bot, bool amb, uint16_t cdc_data[], uint8_t cdc_data_length){
+    if(bot){
+        for(int i = 0; i < cdc_data_length; i++){
+            if(amb){
+                petals[top_map[i]].amb_values[top_segment_map[i]] = cdc_data[i];
+            } else {
+                petals[top_map[i]].cdc_values[top_segment_map[i]] = cdc_data[i];
+            }
+        }
+    } else {
+        for(int i = 0; i < cdc_data_length; i++){
+            if(amb){
+                petals[bot_map[i]].amb_values[bot_segment_map[i]] = cdc_data[i];
+            } else {
+                petals[bot_map[i]].cdc_values[bot_segment_map[i]] = cdc_data[i];
+            }
+        }
+    }
+}
+
+uint16_t captouch_get_petal_pad_raw(uint8_t petal, uint8_t pad, uint8_t amb){
+    if(petal > 9) petal = 9;
+    if(pad > 3) pad = 3;
+    if(amb){
+        return petals[petal].amb_values[pad];
+    } else {
+        return petals[petal].cdc_values[pad];
+    }
+}
+
 void captouch_read_cycle(){
-        static int cycle = 0;
+        static int cycle = 1;
         static uint8_t calib_cycle = 0; 
         vTaskDelay(10 / portTICK_PERIOD_MS);
         if(calib_cycles){
@@ -359,9 +347,7 @@ void captouch_read_cycle(){
             for(int i = 0; i < 16; i++) {
                 vTaskDelay(10 / portTICK_PERIOD_MS);
                 ad714x_i2c_read(chip_top, 0xB, cdc_ambient[0], chip_top->stages);
-                print_ambient(cdc_ambient[0]);
                 ad714x_i2c_read(chip_bot, 0xB, cdc_ambient[1], chip_bot->stages);
-                print_ambient(cdc_ambient[1]);
                 for(int j=0;j<12;j++){
                     ambient_acc[0][j] += cdc_ambient[0][j];
                     ambient_acc[1][j] += cdc_ambient[1][j];
@@ -375,12 +361,15 @@ void captouch_read_cycle(){
                     cdc_ambient[0][i] = ambient_acc[0][i] / calib_cycles;
                     cdc_ambient[1][i] = ambient_acc[1][i] / calib_cycles;
                 }
+                cdc_to_petal(0, 1, cdc_ambient[0], 12);
+                cdc_to_petal(1, 1, cdc_ambient[1], 12);
                 calib_cycles = 0;
             }
         } else {
-            cycle++;
+            //cycle++;
 
             ad714x_i2c_read(chip_top, 0xB, cdc_data[0], chip_top->stages);
+            cdc_to_petal(0, 0, cdc_data[0], 12);
             pressed_top = trigger(cdc_data[0], cdc_ambient[0]);
 
             if(cycle % 100 == 0) {
@@ -389,6 +378,7 @@ void captouch_read_cycle(){
             }
 
             ad714x_i2c_read(chip_bot, 0xB, cdc_data[1], chip_bot->stages);
+            cdc_to_petal(1, 0, cdc_data[0], 12);
             pressed_bot = trigger(cdc_data[1], cdc_ambient[1]);
             if(cycle % 100 == 0) {
                 print_ambient(cdc_ambient[1]);
