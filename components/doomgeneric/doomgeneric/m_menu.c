@@ -1016,8 +1016,7 @@ void M_Options(int choice)
 //
 void M_ChangeMessages(int choice)
 {
-    // warning: unused parameter `int choice'
-    choice = 0;
+    (void)choice;
     showMessages = 1 - showMessages;
 	
     if (!showMessages)
@@ -1044,7 +1043,7 @@ void M_EndGameResponse(int key)
 
 void M_EndGame(int choice)
 {
-    choice = 0;
+    (void)choice;
     if (!usergame)
     {
 	S_StartSound(NULL,sfx_oof);
@@ -1068,18 +1067,18 @@ void M_EndGame(int choice)
 //
 void M_ReadThis(int choice)
 {
-    choice = 0;
+    (void)choice;
     M_SetupNextMenu(&ReadDef1);
 }
 
 void M_ReadThis2(int choice)
 {
+    (void)choice;
     // Doom 1.9 had two menus when playing Doom 1
     // All others had only one
 
     if (gameversion <= exe_doom_1_9 && gamemode != commercial)
     {
-        choice = 0;
         M_SetupNextMenu(&ReadDef2);
     }
     else
@@ -1092,7 +1091,7 @@ void M_ReadThis2(int choice)
 
 void M_FinishReadThis(int choice)
 {
-    choice = 0;
+    (void)choice;
     M_SetupNextMenu(&MainDef);
 }
 
@@ -1196,7 +1195,7 @@ void M_ChangeSensitivity(int choice)
 
 void M_ChangeDetail(int choice)
 {
-    choice = 0;
+    (void)choice;
     detailLevel = 1 - detailLevel;
 
     R_SetViewSize (screenblocks, detailLevel);
