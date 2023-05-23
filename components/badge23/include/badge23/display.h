@@ -5,6 +5,7 @@
 #include "../../usermodule/uctx/uctx/ctx.h"
 
 void display_init();
+void display_ctx_init();
 void display_draw_scope();
 void display_update();
 void display_draw_pixel(uint8_t x, uint8_t y, uint16_t col);

@@ -141,6 +141,12 @@ STATIC mp_obj_t mp_get_ctx(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_get_ctx_obj, 0, 0, mp_get_ctx);
 
+STATIC mp_obj_t mp_reset_ctx(size_t n_args, const mp_obj_t *args) {
+    display_ctx_init();
+    mp_ctx = mp_ctx_from_ctx(the_ctx);
+    return mp_ctx;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_reset_ctx_obj, 0, 0, mp_reset_ctx);
 
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_audio) },
@@ -160,6 +166,7 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_display_fill), MP_ROM_PTR(&mp_display_fill_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&mp_version_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_ctx), MP_ROM_PTR(&mp_get_ctx_obj) },
+    { MP_ROM_QSTR(MP_QSTR_reset_ctx), MP_ROM_PTR(&mp_reset_ctx_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_hardware_globals, mp_module_hardware_globals_table);

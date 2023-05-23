@@ -37,10 +37,10 @@ ctx.text_baseline = ctx.MIDDLE
 #ctx.rgb() expects individual values for the channels, so unpack a list/tuple with *
 #operations on ctx can be chained
 #create a blue background
-ctx.rgb(*BLUE).rectangle(0,0,WIDTH,HEIGHT).fill()
+ctx.rgb(*BLUE).rectangle(-WIDTH/2,-HEIGHT/2,WIDTH,HEIGHT).fill()
 
 #Write some text
-ctx.move_to(WIDTH/2,HEIGHT/2).rgb(*WHITE).text("Hi :)")
+ctx.move_to(0,0).rgb(*WHITE).text("Hi :)")
 hardware.display_update()
 
 
@@ -48,7 +48,7 @@ class Worm():
 	def __init__(self):
 		self.color = randrgb()
 		self.direction = random.random()*math.pi*2
-		self.size = random.randint(5,30)
+		self.size = 10
 		self.speed = self.size/5
 		(x,y) = xy_from_polar(40, self.direction+90)
 		self.x = x
@@ -59,26 +59,19 @@ class Worm():
 	def draw(self):
 		ctx.rgb(*self.color)
 		ctx.round_rectangle(
-			WIDTH/2+self.x-self.size/2,
-			HEIGHT/2+self.y-self.size/2,
+			self.x-self.size/2,
+			self.y-self.size/2,
 			self.size,self.size,self.size//2
 		).fill()
 		
 	def mutate(self):
-		self.size += random.randint(-3,4)
-		self.color =  ([max(0,min(1,x+(random.random()*0.1-0.05))) for x in self.color])
-		
+		self.color =  ([max(0,min(1,x+((random.random()-0.5)*0.3))) for x in self.color])
 		
 	
 	def move(self):
-		if self.size < 3:
-			self.size+=1
-			
-		if self.size > 30:
-			self.size-=1
-		
-		self.speed = min(3,self.size/4)	
-		#self.speed = self.size/5
+		dist = math.sqrt(self.x**2+self.y**2)
+		self.size = (120-dist)/3
+		self.speed = self.size/5
 		
 		self.direction += (random.random()-0.5)*math.pi/4
 		
@@ -86,7 +79,7 @@ class Worm():
 		self.x+=dx
 		self.y+=dy
 		
-		dist = math.sqrt(self.x**2+self.y**2)
+		
 		if dist>110-self.size/2 and dist>self._lastdist:
 			polar_position=math.atan2(self.y,self.x)
 			dx=dx*-abs(math.cos(polar_position))
