@@ -88,7 +88,10 @@ def main():
 
     while True:
         if((get_button(1) == 2) and (CURRENT_APP_RUN == run_menu)):
+            display_fill(255)
+            display_update()
             captouch_autocalib()
+            time.sleep_ms(2000)
             foreground_menu()
         else:
             if(get_button(0) == 2):
