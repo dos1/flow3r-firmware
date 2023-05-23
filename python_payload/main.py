@@ -4,11 +4,13 @@ import time
 import harmonic_demo
 import melodic_demo
 import demo_worms
+import cap_touch_demo
 
 MODULES = [
     harmonic_demo,
     melodic_demo,
     demo_worms,
+    cap_touch_demo,
 ]
 
 CURRENT_APP_RUN = None

@@ -10,8 +10,8 @@ static const uint8_t top_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4};
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 8, 8};
 static const uint8_t bot_stages = 12;
-static const uint8_t top_segment_map[] = {1,3,2,3,1,2,1,3,2,1,3,2}; //checked
-static const uint8_t bot_segment_map[] = {0,3,0,3,0,3,0,3,0,3,0,3}; //idk
+static const uint8_t top_segment_map[] = {1,3,2,2,3,1,1,3,2,1,3,2}; //checked
+static const uint8_t bot_segment_map[] = {3,0,3,0,3,0,0,3,0,3,0,3}; //idk
 
 #elif defined(CONFIG_BADGE23_HW_GEN_P1)
 static const uint8_t top_map[] = {2, 2, 2, 0, 0, 8, 8, 8, 6, 6, 4, 4};
@@ -314,7 +314,7 @@ typedef struct{
 static petal_t petals[10];
 
 void cdc_to_petal(bool bot, bool amb, uint16_t cdc_data[], uint8_t cdc_data_length){
-    if(bot){
+    if(!bot){
         for(int i = 0; i < cdc_data_length; i++){
             if(amb){
                 petals[top_map[i]].amb_values[top_segment_map[i]] = cdc_data[i];
@@ -386,7 +386,7 @@ void captouch_read_cycle(){
             }
 
             ad714x_i2c_read(chip_bot, 0xB, cdc_data[1], chip_bot->stages);
-            cdc_to_petal(1, 0, cdc_data[0], 12);
+            cdc_to_petal(1, 0, cdc_data[1], 12);
             pressed_bot = trigger(cdc_data[1], cdc_ambient[1]);
             if(cycle % 100 == 0) {
                 print_ambient(cdc_ambient[1]);
