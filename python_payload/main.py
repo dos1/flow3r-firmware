@@ -3,10 +3,12 @@ import utils
 import time
 import harmonic_demo
 import melodic_demo
+import cap_touch_demo
 
 MODULES = [
     harmonic_demo,
     melodic_demo,
+    cap_touch_demo,
 ]
 
 CURRENT_APP_RUN = None
