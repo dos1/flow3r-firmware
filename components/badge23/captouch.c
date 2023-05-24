@@ -18,6 +18,8 @@ static const uint8_t bot_stages = 12;
 static const uint8_t top_segment_map[] = {1,3,2,2,3,1,1,3,2,1,3,2}; //PETAL_SEGMENT_*
 static const uint8_t bot_segment_map[] = {3,0,3,0,0,0,3,0,3,1,2,3}; //PETAL_SEGMENT_*
 static const uint8_t bot_stage_config[] = {0,1,2,3,5,6,7,8,9,10,11,12};
+#define DEFAULT_THRES_TOP 8000
+#define DEFAULT_THRES_BOT 12000
 #define AD7147_ADDR_TOP            0b101100
 #define AD7147_ADDR_BOT            0b101101
 #endif
@@ -27,8 +29,11 @@ static const uint8_t top_map[] = {2, 2, 2, 0, 0, 8, 8, 8, 6, 6, 4, 4};
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9};
 static const uint8_t bot_stages = 10;
-static const uint8_t top_segment_map[] = {1,2,3,1,2,3,1,2,3,1,2,3}; //idk
-static const uint8_t bot_segment_map[] = {0,3,0,3,0,3,0,3,0,3,0,3}; //idk
+static const uint8_t top_segment_map[] = {1,2,0,1,2,1,2,0,1,2,1,2}; //idk
+static const uint8_t bot_segment_map[] = {3,0,3,0,3,0,0,3,0,3}; //idk
+static const uint8_t bot_stage_config[] = {0,1,2,3,4,5,6,7,8,9,10,11};
+#define DEFAULT_THRES_TOP 2000
+#define DEFAULT_THRES_BOT 12000
 #define AD7147_ADDR_TOP            0b101101
 #define AD7147_ADDR_BOT            0b101100
 #endif
@@ -44,13 +49,12 @@ static const char *TAG = "captouch";
 
 #define TIMEOUT_MS                  1000
 
-#define DEFAULT_THRES_TOP 8000
-#define DEFAULT_THRES_BOT 12000
 
 static struct ad714x_chip *chip_top;
 static struct ad714x_chip *chip_bot;
 
 typedef struct{
+    uint8_t config_mask;
     uint16_t amb_values[4]; //ordered according to PETAL_SEGMENT_*
     uint16_t cdc_values[4]; //ordered according to PETAL_SEGMENT_*
     uint16_t thres_values[4]; //ordered according to PETAL_SEGMENT_*
@@ -212,8 +216,7 @@ static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad71
     }
 }
 
-void captouch_init(void)
-{
+static void captouch_init_petals(){
     for(int i = 0; i < 10; i++){
         for(int j = 0; j < 4; j++){
             petals[i].amb_values[j] = 0;
@@ -224,7 +227,61 @@ void captouch_init(void)
                 petals[i].thres_values[j] = DEFAULT_THRES_TOP;
             }
         }
+        petals[i].config_mask = 0;
     }
+    for(int i = 0; i < bot_stages; i++){
+        petals[bot_map[i]].config_mask |= 1 << bot_segment_map[i]; 
+    }
+    for(int i = 0; i < top_stages; i++){
+        petals[top_map[i]].config_mask |= 1 << top_segment_map[i]; 
+    }
+}
+
+int32_t captouch_get_petal_rad(uint8_t petal){
+    uint8_t cf = petals[petal].config_mask;
+    if(cf == 0b1110){ //LEFT, RIGHT, BASE
+        int32_t left = petals[petal].cdc_values[PETAL_SEGMENT_LEFT];
+        left -= petals[petal].amb_values[PETAL_SEGMENT_LEFT];
+        int32_t right = petals[petal].cdc_values[PETAL_SEGMENT_RIGHT];
+        right -= petals[petal].amb_values[PETAL_SEGMENT_RIGHT];
+        int32_t base = petals[petal].cdc_values[PETAL_SEGMENT_BASE];
+        base -= petals[petal].amb_values[PETAL_SEGMENT_BASE];
+        return (left + right)/2 - base;
+    }
+    if(cf == 0b111){ //LEFT, RIGHT, TIP
+        int32_t left = petals[petal].cdc_values[PETAL_SEGMENT_LEFT];
+        left -= petals[petal].amb_values[PETAL_SEGMENT_LEFT];
+        int32_t right = petals[petal].cdc_values[PETAL_SEGMENT_RIGHT];
+        right -= petals[petal].amb_values[PETAL_SEGMENT_RIGHT];
+        int32_t tip = petals[petal].cdc_values[PETAL_SEGMENT_TIP];
+        tip -= petals[petal].amb_values[PETAL_SEGMENT_TIP];
+        return (-left - right)/2 + tip;
+    }
+    if(cf == 0b1001){ //TIP, BASE
+        int32_t tip = petals[petal].cdc_values[PETAL_SEGMENT_TIP];
+        tip -= petals[petal].amb_values[PETAL_SEGMENT_TIP];
+        int32_t base = petals[petal].cdc_values[PETAL_SEGMENT_BASE];
+        base -= petals[petal].amb_values[PETAL_SEGMENT_BASE];
+        return tip - base;
+    }
+    return 0;
+}
+
+int32_t captouch_get_petal_phi(uint8_t petal){
+    uint8_t cf = petals[petal].config_mask;
+    if((cf == 0b1110) || (cf == 0b110) || (cf == 0b111)){ //LEFT, RIGHT, (BASE)
+        int32_t left = petals[petal].cdc_values[PETAL_SEGMENT_LEFT];
+        left -= petals[petal].amb_values[PETAL_SEGMENT_LEFT];
+        int32_t right = petals[petal].cdc_values[PETAL_SEGMENT_RIGHT];
+        right -= petals[petal].amb_values[PETAL_SEGMENT_RIGHT];
+        return left - right;
+    }
+    return 0;
+}
+
+void captouch_init(void)
+{
+    captouch_init_petals();
     chip_top = &chip_top_rev5;
     chip_bot = &chip_bot_rev5;
 

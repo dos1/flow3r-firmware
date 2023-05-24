@@ -11,3 +11,5 @@ uint16_t captouch_get_petal_pad_raw(uint8_t petal, uint8_t pad, uint8_t amb);
 void captouch_force_calibration();
 void captouch_set_petal_pad_threshold(uint8_t petal, uint8_t pad, uint16_t thres);
 uint16_t read_captouch();
+int32_t captouch_get_petal_phi(uint8_t petal);
+int32_t captouch_get_petal_rad(uint8_t petal);
