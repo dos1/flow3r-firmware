@@ -16,6 +16,12 @@ class Engine():
 		self.next_timed = None
 		self.last_input_state = None
 	
+	def add(self,event):
+		if isinstance(event,EventTimed):
+			self.add_timed(event)
+		elif isinstance(event,Event):
+			self.add_input(event)
+			
 	def add_timed(self,event):
 		self.events_timed.append(event)
 		self.events_timed = sorted(self.events_timed, key = lambda event: event.deadline)
@@ -95,6 +101,8 @@ class Event():
 		self.condition = condition
 		if not condition:
 			self.condition = lambda x: True
+		
+		the_engine.add(self)
 			
 		#print (data)
 		
@@ -109,21 +117,24 @@ class Event():
 class EventTimed(Event):
 	def __init__(self,ms,name="timer", *args, **kwargs):
 		#super().__init__(name,data,action)
+		self.deadline = time.ticks_add(time.ticks_ms(),ms)
+		
 		super().__init__(*args, **kwargs)
 		self.name=name
-		self.deadline = time.ticks_add(time.ticks_ms(),ms)
 		self.type=EVENTTYPE_TIMED
 		
 	def __repr__(self):
 		return ("event on tick {} ({})".format(self.deadline,self.name))
-		
-e = Engine()
-e.add_timed(EventTimed(200,name="bar",action=lambda data: print("GNANGNAGNA")))
-e.add_timed(EventTimed(100,name="foo"))
-e.add_input(Event(name="baz",
+
+global the_engine
+the_engine = Engine()
+
+EventTimed(200,name="bar",action=lambda data: print("GNANGNAGNA"))
+EventTimed(100,name="foo")
+Event(name="baz",
 	action=lambda data: print(data),
-	condition=lambda data: data.get('type')=="captouch")
+	condition=lambda data: data.get('type')=="captouch"
 )
 
-print (e.events_timed)
+print (the_engine.events_timed)
 #e.eventloop()
