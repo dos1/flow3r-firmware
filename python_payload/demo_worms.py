@@ -114,9 +114,9 @@ def handle_input(data):
 		if len(worms)>10:
 			worms.pop(0)
 
-engine = event.Engine()
-engine.add_input(event.Event(name="control",action=handle_input, 
-	condition=lambda data: data.get("type","")=="captouch" and data.get("to")==1))
+
+event.Event(name="worms_control",action=handle_input, 
+	condition=lambda data: data.get("type","")=="captouch" and data.get("to")==1)
 
 while True:
 	for w in worms:
@@ -124,7 +124,7 @@ while True:
 		w.move()
 	
 	hardware.display_update()
-	engine._eventloop_single()
+	event.the_engine._eventloop_single()
 	time.sleep(0.001)
 	
 
