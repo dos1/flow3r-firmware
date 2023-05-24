@@ -12,13 +12,11 @@ def xy_from_polar(r,deg):
 	)  )
 
 ctx = hardware.get_ctx()
-ctx.text_align = ctx.CENTER
-ctx.text_baseline = ctx.MIDDLE
-
-synth = tinysynth(440,1)
-synth.decay(25)
-
 popcorn = [9,7,9,5,0,5,-3,999]
+synth = tinysynth(440,1)
+
+sequencer = None
+handler = None
 
 def on_step(data):
 	note = popcorn[data["step"]]
@@ -39,8 +37,24 @@ def on_step(data):
 	ctx.move_to(x,y).rgb(0.5,0.5,0).text("{}".format(data["step"]))
 	hardware.display_update()
 	
-	
-	
-	
-event.Sequence(bpm=160, steps=8, action=on_step, loop=True)
-event.the_engine.eventloop()
+def handle_input(data={}):
+    sequencer.remove()
+    ev.remove()
+
+
+def init():
+    ctx.text_align = ctx.CENTER
+    ctx.text_baseline = ctx.MIDDLE
+
+    synth = tinysynth(440,1)
+    synth.decay(25)
+    global sequencer
+    sequencer = event.Sequence(bpm=160, steps=8, action=on_step, loop=True)
+    global ev
+    ev=event.Event(name="sparabo",action=handle_input, 
+        condition=lambda e:  e["type"] =="button" and e["change"] and e["value"] == 2)
+
+def run():
+    init();
+    print("run")
+    event.the_engine.eventloop()
