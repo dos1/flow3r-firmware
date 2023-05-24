@@ -126,6 +126,22 @@ class EventTimed(Event):
 	def __repr__(self):
 		return ("event on tick {} ({})".format(self.deadline,self.name))
 
+
+class Sequence():
+	def __init__(self,bpm=60,loop=True,steps=16,action=None):
+		self.bpm = bpm
+		if not action:
+			self.action = lambda data: print("step {}".format(data.get("step")))
+		else:
+			self.action = action
+		stepsize_ms = int(60*1000/bpm)
+		for i in range(steps):
+			EventTimed(stepsize_ms*i,name="seq{}".format(i),action=self.action, data={'step':i})
+		
+		if loop:
+			EventTimed(stepsize_ms*steps,name="loop",action=lambda data: Sequence(bpm=bpm,loop=loop,steps=steps,action=action))
+
+		
 global the_engine
 the_engine = Engine()
 
@@ -136,5 +152,10 @@ Event(name="baz",
 	condition=lambda data: data.get('type')=="captouch"
 )
 
+
+
+#Sequence(action=axelf)
+
 print (the_engine.events_timed)
-#e.eventloop()
+#the_engine.eventloop()
+
