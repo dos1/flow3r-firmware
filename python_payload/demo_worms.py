@@ -2,6 +2,7 @@ import hardware
 import random
 import time
 import math
+import event
 
 def xy_from_polar(r,deg):
     #rad = deg/180*math.pi
