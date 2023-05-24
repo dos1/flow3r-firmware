@@ -69,13 +69,23 @@ def set_rel_volume(vol):
         set_global_volume_dB(VOLUME)
     time.sleep_ms(100)
 
+def captouch_cal():
+    global ctx
+    display_fill(0b0000000111100111)
+    ctx.move_to(0,0).rgb(0,255,0).text("cal")
+    display_update()
+    captouch_autocalib()
+    time.sleep_ms(5000)
+    display_fill(0)
+    display_update()
+
 def main():
     global CURRENT_APP_RUN
     global ctx
     while not init_done():
         pass
 
-    captouch_autocalib()
+    captouch_cal()
 
     ctx = get_ctx()
     ctx.text_align = ctx.CENTER
@@ -90,10 +100,7 @@ def main():
 
     while True:
         if((get_button(1) == 2) and (CURRENT_APP_RUN == run_menu)):
-            display_fill(255)
-            display_update()
-            captouch_autocalib()
-            time.sleep_ms(2000)
+            captouch_cal()
             foreground_menu()
         else:
             if(get_button(0) == 2):

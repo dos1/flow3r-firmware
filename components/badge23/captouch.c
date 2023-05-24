@@ -5,13 +5,18 @@
 #include "badge23_hwconfig.h"
 #include <stdint.h>
 
+#define PETAL_SEGMENT_TIP 0
+#define PETAL_SEGMENT_LEFT 1
+#define PETAL_SEGMENT_RIGHT 2
+#define PETAL_SEGMENT_BASE 3
+
 #if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 static const uint8_t top_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4};
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 7, 7, 9, 9, 8, 8, 8};
 static const uint8_t bot_stages = 12;
-static const uint8_t top_segment_map[] = {1,3,2,2,3,1,1,3,2,1,3,2}; //checked
-static const uint8_t bot_segment_map[] = {3,0,3,0,0,0,3,0,3,1,2,3}; //checked
+static const uint8_t top_segment_map[] = {1,3,2,2,3,1,1,3,2,1,3,2}; //PETAL_SEGMENT_*
+static const uint8_t bot_segment_map[] = {3,0,3,0,0,0,3,0,3,1,2,3}; //PETAL_SEGMENT_*
 static const uint8_t bot_stage_config[] = {0,1,2,3,5,6,7,8,9,10,11,12};
 
 #elif defined(CONFIG_BADGE23_HW_GEN_P1)
@@ -40,16 +45,27 @@ static const char *TAG = "captouch";
 
 #define I2C_MASTER_NUM              0                          /*!< I2C master i2c port number, the number of i2c peripheral interfaces available will depend on the chip */
 
-
 #define AD7147_REG_PWR_CONTROL              0x00
 #define AD7147_REG_STAGE_CAL_EN             0x01
 #define AD7147_REG_STAGE_HIGH_INT_ENABLE    0x06
 #define AD7147_REG_DEVICE_ID                0x17
 
 #define TIMEOUT_MS                  1000
+
+#define DEFAULT_THRES_TOP 8000
+#define DEFAULT_THRES_BOT 12000
+
 static struct ad714x_chip *chip_top;
 static struct ad714x_chip *chip_bot;
 
+typedef struct{
+    uint16_t amb_values[4]; //ordered according to PETAL_SEGMENT_*
+    uint16_t cdc_values[4]; //ordered according to PETAL_SEGMENT_*
+    uint16_t thres_values[4]; //ordered according to PETAL_SEGMENT_*
+    bool pressed;
+} petal_t;
+
+static petal_t petals[10];
 
 struct ad714x_chip {
     uint8_t addr;
@@ -183,59 +199,6 @@ static struct ad7147_stage_config ad714x_default_config(void)
         };
 }
 
-static uint16_t pressed_top, pressed_bot;
-
-static void captouch_chip_readout(struct ad714x_chip * chip){
-    uint16_t pressed;
-    ad714x_i2c_read(chip, 9, &pressed, 1);
-    ESP_LOGI(TAG, "Addr %x, High interrupt %X", chip->addr, pressed);
-
-    pressed &= ((1 << chip->stages) - 1);
-
-    if(chip == chip_top) pressed_top = pressed;
-    if(chip == chip_bot) pressed_bot = pressed;
-}
-
-void manual_captouch_readout(uint8_t top)
-{
-    struct ad714x_chip* chip = top ? (chip_top) : (chip_bot);
-    captouch_chip_readout(chip);
-    //xQueueSend(gpio_evt_queue, &chip, NULL);
-}
-
-/*
-void gpio_event_handler(void* arg)
-{
-    static unsigned long counter = 0;
-    struct ad714x_chip* chip;
-    while(true) {
-        if(xQueueReceive(gpio_evt_queue, &chip, portMAX_DELAY)) {
-            captouch_chip_readout(chip);
-        }
-    }
-}
-*/
-
-uint16_t read_captouch(){
-    uint16_t bin_petals = 0;
-    uint16_t top = pressed_top;
-    uint16_t bot = pressed_bot;
-
-    for(int i=0; i<top_stages; i++) {
-        if(top  & (1 << i)) {
-            bin_petals |= (1<<top_map[i]);
-        }
-    }
-
-    for(int i=0; i<bot_stages; i++) {
-        if(bot  & (1 << i)) {
-            bin_petals |= (1<<bot_map[i]);
-        }
-    }
-
-    return bin_petals;
-}
-
 static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad7147_device_config device_config)
 {
     uint16_t data;
@@ -259,6 +222,17 @@ static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad71
 
 void captouch_init(void)
 {
+    for(int i = 0; i < 10; i++){
+        for(int j = 0; j < 4; j++){
+            petals[i].amb_values[j] = 0;
+            petals[i].cdc_values[j] = 0;
+            if(i%2){
+                petals[i].thres_values[j] = DEFAULT_THRES_BOT;
+            } else {
+                petals[i].thres_values[j] = DEFAULT_THRES_TOP;
+            }
+        }
+    }
     chip_top = &chip_top_rev5;
     chip_bot = &chip_bot_rev5;
 
@@ -281,17 +255,14 @@ static void print_ambient(uint16_t *data)
     printf("AMB results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
 }
 
-
-static uint16_t trigger(uint16_t *data, uint16_t *ambient)
-{
-    uint16_t pressed = 0;
-    for(int i=0; i<12; i++) {
-        // TODO: random value
-        if(data[i] - ambient[i] > 8000) {
-            pressed |= (1<<i);
+uint16_t read_captouch(){
+    uint16_t bin_petals = 0;
+    for(int i = 0; i < 10; i++) {
+        if(petals[i].pressed){
+            bin_petals |= (1<<i);
         }
     }
-    return pressed;
+    return bin_petals;
 }
 
 uint16_t cdc_data[2][12] = {0,};
@@ -304,19 +275,26 @@ void captouch_force_calibration(){
     }
 }
 
-#define PETAL_SEGMENT__TIP 0
-#define PETAL_SEGMENT__LEFT 1
-#define PETAL_SEGMENT__RIGHT 2
-#define PETAL_SEGMENT__BASE 3
-
-typedef struct{
-    uint8_t segments_config; //mask according to PETAL_SEGMENT_*
-    uint16_t amb_values[4]; //ordered according to PETAL_SEGMENT_*
-    uint16_t cdc_values[4]; //ordered according to PETAL_SEGMENT_*
-    bool pressed;
-} petal_t;
-
-static petal_t petals[10];
+void check_petals_pressed(){
+    for(int i = 0; i < 10; i++){
+        bool pressed = 0;
+        for(int j = 0; j < 4; j++){
+            if((petals[i].amb_values[j] +
+                petals[i].thres_values[j]) <
+                petals[i].cdc_values[j]){
+                pressed = 1;
+            }
+        }
+        // TODO: DEBOUNCE
+        if(pressed && (!petals[i].pressed)){
+            // TODO: PETAL_PRESS_CALLBACK
+        }
+        if((!pressed) && petals[i].pressed){
+            // TODO: PETAL_RELEASE_CALLBACK
+        }
+        petals[i].pressed = pressed;
+    }
+}
 
 void cdc_to_petal(bool bot, bool amb, uint16_t cdc_data[], uint8_t cdc_data_length){
     if(!bot){
@@ -348,8 +326,13 @@ uint16_t captouch_get_petal_pad_raw(uint8_t petal, uint8_t pad, uint8_t amb){
     }
 }
 
+void captouch_set_petal_pad_threshold(uint8_t petal, uint8_t pad, uint16_t thres){
+    if(petal > 9) petal = 9;
+    if(pad > 3) pad = 3;
+    petals[petal].thres_values[pad] = thres;    
+}
+
 void captouch_read_cycle(){
-        static int cycle = 1;
         static uint8_t calib_cycle = 0; 
         vTaskDelay(10 / portTICK_PERIOD_MS);
         if(calib_cycles){
@@ -379,24 +362,13 @@ void captouch_read_cycle(){
                 calib_cycles = 0;
             }
         } else {
-            //cycle++;
-
             ad714x_i2c_read(chip_top, 0xB, cdc_data[0], chip_top->stages);
             cdc_to_petal(0, 0, cdc_data[0], 12);
-            pressed_top = trigger(cdc_data[0], cdc_ambient[0]);
-
-            if(cycle % 100 == 0) {
-                print_ambient(cdc_ambient[0]);
-                print_cdc(cdc_data[0]);
-            }
 
             ad714x_i2c_read(chip_bot, 0xB, cdc_data[1], chip_bot->stages);
             cdc_to_petal(1, 0, cdc_data[1], 12);
-            pressed_bot = trigger(cdc_data[1], cdc_ambient[1]);
-            if(cycle % 100 == 0) {
-                print_ambient(cdc_ambient[1]);
-                print_cdc(cdc_data[1]);
-            }
+
+            check_petals_pressed();
         }
 }
 
