@@ -15,13 +15,22 @@ CURRENT_APP_RUN = None
 VOLUME = 0
 
 SELECT_TEXT = [
-    " ##  #### #    ####  ##  #####          ",
-    "#  # #    #    #    #  #   #        ##" ,
+    " ##  #### #    ####  ##  #####         ",
+    "#  # #    #    #    #  #   #        ## ",
     "#    #    #    #    #      #     #    #",
-    " ##  #### #    #### #      #         #" ,
+    " ##  #### #    #### #      #         # ",
     "   # #    #    #    #      #     #    #",
     "#  # #    #    #    #  #   #        ## ",
-    " ##  #### #### ####  ##    #            ",
+    " ##  #### #### ####  ##    #           ",
+]
+
+CAL_TEXT = [
+    " ###  ###  #   ",
+    "#    #   # #   ",
+    "#    #   # #   ",
+    "#    ##### #   ",
+    "#    #   # #   ",
+    " ### #   # ####",
 ]
 
 BACKGROUND_COLOR = 0
@@ -55,6 +64,7 @@ def foreground_menu():
     utils.clear_all_leds()
     utils.highlight_bottom_petal(0,0,55,55);
     utils.highlight_bottom_petal(1,55,0,55);
+    utils.highlight_bottom_petal(2,55,55,0);
     display_fill(BACKGROUND_COLOR)
     utils.draw_text_big(SELECT_TEXT, 0, 0)
     display_update()
@@ -73,10 +83,19 @@ def set_rel_volume(vol):
         set_global_volume_dB(VOLUME)
     time.sleep_ms(100)
 
+def captouch_cal():
+    display_fill(0b0000000111100111)
+    utils.draw_text_big(CAL_TEXT, 0, 0)
+    display_update()
+    captouch_autocalib()
+    time.sleep_ms(5000)
+    display_fill(0)
+    display_update()
+
 def main():
     global CURRENT_APP_RUN
     time.sleep_ms(5000)
-    captouch_autocalib()
+    captouch_cal()
 
     for module in MODULES:
         module.init()
@@ -87,10 +106,7 @@ def main():
 
     while True:
         if((get_button(1) == 2) and (CURRENT_APP_RUN == run_menu)):
-            display_fill(255)
-            display_update()
-            captouch_autocalib()
-            time.sleep_ms(2000)
+            captouch_cal()
             foreground_menu()
         else:
             if(get_button(0) == 2):
