@@ -8,10 +8,11 @@
 #if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 static const uint8_t top_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4};
 static const uint8_t top_stages = 12;
-static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 8, 8};
+static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 7, 7, 9, 9, 8, 8, 8};
 static const uint8_t bot_stages = 12;
 static const uint8_t top_segment_map[] = {1,3,2,2,3,1,1,3,2,1,3,2}; //checked
-static const uint8_t bot_segment_map[] = {3,0,3,0,3,0,0,3,0,3,0,3}; //idk
+static const uint8_t bot_segment_map[] = {3,0,3,0,0,0,3,0,3,1,2,3}; //checked
+static const uint8_t bot_stage_config[] = {0,1,2,3,5,6,7,8,9,10,11,12};
 
 #elif defined(CONFIG_BADGE23_HW_GEN_P1)
 static const uint8_t top_map[] = {2, 2, 2, 0, 0, 8, 8, 8, 6, 6, 4, 4};
@@ -246,7 +247,11 @@ static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad71
     for(int i=0; i<chip->stages; i++) {
         struct ad7147_stage_config stage_config;
         stage_config = ad714x_default_config();
-        stage_config.cinX_connection_setup[i] = CIN_CDC_POS;
+        if(chip == chip_bot){
+            stage_config.cinX_connection_setup[bot_stage_config[i]] = CIN_CDC_POS;
+        } else {
+            stage_config.cinX_connection_setup[i] = CIN_CDC_POS;
+        }
         stage_config.pos_afe_offset=chip->pos_afe_offsets[i];
         ad714x_set_stage_config(chip, i, &stage_config);
     }
@@ -282,7 +287,7 @@ static uint16_t trigger(uint16_t *data, uint16_t *ambient)
     uint16_t pressed = 0;
     for(int i=0; i<12; i++) {
         // TODO: random value
-        if(data[i] - ambient[i] > 2000) {
+        if(data[i] - ambient[i] > 8000) {
             pressed |= (1<<i);
         }
     }
