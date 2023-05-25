@@ -394,7 +394,7 @@ void captouch_set_petal_pad_threshold(uint8_t petal, uint8_t pad, uint16_t thres
 
 void captouch_read_cycle(){
         static uint8_t calib_cycle = 0; 
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        //vTaskDelay(10 / portTICK_PERIOD_MS);
         if(calib_cycles){
             if(calib_cycle == 0){ // last cycle has finished
                 calib_cycle = calib_cycles;
