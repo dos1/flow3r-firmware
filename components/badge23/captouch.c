@@ -2,7 +2,7 @@
 //#include <string.h>
 #include "esp_log.h"
 #include "driver/i2c.h"
-#include "../../../revision_config.h"
+#include "badge23_hwconfig.h"
 #include <stdint.h>
 
 #define PETAL_SEGMENT_TIP 0
@@ -10,7 +10,7 @@
 #define PETAL_SEGMENT_RIGHT 2
 #define PETAL_SEGMENT_BASE 3
 
-#ifdef HARDWARE_REVISION_04
+#if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 static const uint8_t top_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4};
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 7, 7, 9, 9, 8, 8, 8};
@@ -20,11 +20,7 @@ static const uint8_t bot_segment_map[] = {3,0,3,0,0,0,3,0,3,1,2,3}; //PETAL_SEGM
 static const uint8_t bot_stage_config[] = {0,1,2,3,5,6,7,8,9,10,11,12};
 #define DEFAULT_THRES_TOP 8000
 #define DEFAULT_THRES_BOT 12000
-#define AD7147_ADDR_TOP            0b101100
-#define AD7147_ADDR_BOT            0b101101
-#endif
-
-#ifdef HARDWARE_REVISION_01
+#elif defined(CONFIG_BADGE23_HW_GEN_P1)
 static const uint8_t top_map[] = {2, 2, 2, 0, 0, 8, 8, 8, 6, 6, 4, 4};
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9};
@@ -36,8 +32,18 @@ static const uint8_t bot_stage_config[] = {0,1,2,3,4,5,6,7,8,9,10,11};
 #define DEFAULT_THRES_BOT 12000
 #define AD7147_ADDR_TOP            0b101101
 #define AD7147_ADDR_BOT            0b101100
+#else
+#error "captouch not implemented for this badge generation"
 #endif
 
+#if defined(CONFIG_BADGE23_HW_GEN_P4)
+#define AD7147_ADDR_TOP            0b101100
+#define AD7147_ADDR_BOT            0b101101
+#elif defined(CONFIG_BADGE23_HW_GEN_P3)
+#define AD7147_ADDR_TOP            0b101101
+#define AD7147_ADDR_BOT            0b101100
+#endif
+ 
 static const char *TAG = "captouch";
 
 #define I2C_MASTER_NUM              0                          /*!< I2C master i2c port number, the number of i2c peripheral interfaces available will depend on the chip */
@@ -263,6 +269,11 @@ int32_t captouch_get_petal_rad(uint8_t petal){
         int32_t base = petals[petal].cdc_values[PETAL_SEGMENT_BASE];
         base -= petals[petal].amb_values[PETAL_SEGMENT_BASE];
         return tip - base;
+    }
+    if(cf == 0b1){ //TIP
+        int32_t tip = petals[petal].cdc_values[PETAL_SEGMENT_TIP];
+        tip -= petals[petal].amb_values[PETAL_SEGMENT_TIP];
+        return tip;
     }
     return 0;
 }

@@ -3,7 +3,7 @@
 #include "badge23/leds.h"
 #include "badge23/display.h"
 #include "badge23/spio.h"
-#include "../../../revision_config.h"
+#include "badge23_hwconfig.h"
 
 #include "esp_log.h"
 #include "driver/i2c.h"
@@ -21,14 +21,16 @@ static const char *TAG = "espan";
 #define I2C_MASTER_TX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
 #define I2C_MASTER_RX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
 
-#ifdef HARDWARE_REVISION_04
+#if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 #define CONFIG_I2C_MASTER_SDA 2
 #define CONFIG_I2C_MASTER_SCL 1
-#endif
 
-#ifdef HARDWARE_REVISION_01
+#elif defined(CONFIG_BADGE23_HW_GEN_P1)
 #define CONFIG_I2C_MASTER_SDA 10
 #define CONFIG_I2C_MASTER_SCL 9
+
+#else
+#error "i2c not implemented for this badge generation"
 #endif
 
 static esp_err_t i2c_master_init(void)
@@ -53,6 +55,7 @@ static esp_err_t i2c_master_init(void)
 
 void os_app_main(void)
 {
+    ESP_LOGI(TAG, "Starting on %s...", badge23_hw_name);
     ESP_ERROR_CHECK(i2c_master_init());
     ESP_LOGI(TAG, "I2C initialized successfully");
 
