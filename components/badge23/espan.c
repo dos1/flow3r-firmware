@@ -8,6 +8,7 @@
 #include "esp_log.h"
 #include "driver/i2c.h"
 #include "driver/spi_master.h"
+#include <freertos/timers.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -54,6 +55,11 @@ static esp_err_t i2c_master_init(void)
 #define CAPTOUCH_POLLING_PERIOD 15
 static uint8_t hw_init_done = 0;
 
+void i2c_task(TimerHandle_t data){
+    update_button_state();
+    captouch_read_cycle();
+}
+
 void os_app_main(void)
 {
     ESP_LOGI(TAG, "Starting on %s...", badge23_hw_name);
@@ -66,15 +72,10 @@ void os_app_main(void)
     init_buttons();
     captouch_init();
     display_init();
-    hw_init_done = 1;
-    while(1) {
-        vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
-        update_button_state();
-        captouch_read_cycle();
-    }
 
-    ESP_ERROR_CHECK(i2c_driver_delete(I2C_MASTER_NUM));
-    ESP_LOGI(TAG, "I2C de-initialized successfully");
+    TimerHandle_t i2c = xTimerCreate("I2C task", pdMS_TO_TICKS(CAPTOUCH_POLLING_PERIOD), pdTRUE, (void *) 0, *i2c_task);
+    if( xTimerStart(i2c, 0 ) != pdPASS) ESP_LOGI(TAG, "I2C task initialization failed");
+    hw_init_done = 1;
 }
 
 uint8_t hardware_is_initialized(){
