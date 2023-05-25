@@ -57,6 +57,7 @@ static const char *TAG = "captouch";
 
 #define TIMEOUT_MS                  1000
 
+#define PETAL_PRESSED_DEBOUNCE 2
 
 static struct ad714x_chip *chip_top;
 static struct ad714x_chip *chip_bot;
@@ -66,7 +67,7 @@ typedef struct{
     uint16_t amb_values[4]; //ordered according to PETAL_SEGMENT_*
     uint16_t cdc_values[4]; //ordered according to PETAL_SEGMENT_*
     uint16_t thres_values[4]; //ordered according to PETAL_SEGMENT_*
-    bool pressed;
+    uint8_t pressed;
 } petal_t;
 
 static petal_t petals[10];
@@ -345,6 +346,7 @@ uint8_t captouch_calibration_active(){
 void check_petals_pressed(){
     for(int i = 0; i < 10; i++){
         bool pressed = 0;
+        bool prev = petals[i].pressed;
         for(int j = 0; j < 4; j++){
             if((petals[i].amb_values[j] +
                 petals[i].thres_values[j]) <
@@ -352,14 +354,18 @@ void check_petals_pressed(){
                 pressed = 1;
             }
         }
-        // TODO: DEBOUNCE
-        if(pressed && (!petals[i].pressed)){
+        if(pressed){
+            petals[i].pressed = PETAL_PRESSED_DEBOUNCE;
+        } else if(petals[i].pressed){
+            petals[i].pressed--;
+        }
+
+        if(petals[i].pressed && (!prev)){
             // TODO: PETAL_PRESS_CALLBACK
         }
-        if((!pressed) && petals[i].pressed){
+        if((!petals[i].pressed) && prev){
             // TODO: PETAL_RELEASE_CALLBACK
         }
-        petals[i].pressed = pressed;
     }
 }
 
