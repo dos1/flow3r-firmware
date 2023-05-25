@@ -9,13 +9,24 @@ chords = [\
 [3,7,10,14,15]\
 ]
 
+chord_names = [
+"Fadd9",\
+"Dadd9",\
+"E7",\
+"A-add9",\
+"Cj7",\
+]
+
 chord_index = 3
 chord = chords[3]
 synths = []
+ctx = None
 
 def set_chord(i):
     global chord_index
+    global chord_names
     global chord
+    global ctx
     if(i != chord_index):
         chord_index = i
         for j in range(40):
@@ -23,6 +34,9 @@ def set_chord(i):
             set_led_hsv(j, hue, 1, 0.2)
         chord = chords[i]
         update_leds()
+        display_fill(0)
+        ctx.move_to(0,0).rgb(0,255,0).text(chord_names[i])
+        display_update()
 
 
 def run():
@@ -43,6 +57,10 @@ def init():
     global chord_index
     global chord
     global synths
+    global ctx
+    ctx = get_ctx()
+    ctx.text_align = ctx.CENTER
+    ctx.text_baseline = ctx.MIDDLE
 
     for i in range(5):
         synths += [tinysynth(440,1)]
