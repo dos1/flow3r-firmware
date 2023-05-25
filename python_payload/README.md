@@ -14,6 +14,8 @@ INSTRUMENT 2, MELODY PLAYER: the 3 most down-pointing petal LEDs are lit in pink
 
 INSTRUMENT 3, CAP TOUCH DEBUG: shows 10 dots corresponding to the 10 petals. each gets bigger if the captouch threshold is exceeded (i.e., a touch is registered) and moves with the current position on the petal (1d for 2-segment petals, 2d for 3-segment petals). note that on p3/p4 the inner pad of the bottom petal opposed to the usb c port is currently not registered for technical reasons.
 
+INSTRUMENT 4, WORMS: worms
+
 ### captouch calibration:
 
 the captouch controller can be recalibrated by pressing the left shoulder button while in the menu. the screen shows the text "CAL" while in calibration. the screen background is teal for 0.5s to give the user time to remove their hands, then turns plum for the actual calibration. calibration is intended to get a baseline for pads that are not being touched at the moment, it is recommeded to lie the badge flat on the able while recalibrating. calibration is also performed at startup. 
