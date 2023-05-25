@@ -15,33 +15,36 @@ MODULES = [
 
 CURRENT_APP_RUN = None
 VOLUME = 0
-
-SELECT_TEXT = [
-    " ##  #### #    ####  ##  #####         ",
-    "#  # #    #    #    #  #   #        ## ",
-    "#    #    #    #    #      #     #    #",
-    " ##  #### #    #### #      #         # ",
-    "   # #    #    #    #      #     #    #",
-    "#  # #    #    #    #  #   #        ## ",
-    " ##  #### #### ####  ##    #           ",
-]
-
-CAL_TEXT = [
-    " ###  ###  #   ",
-    "#    #   # #   ",
-    "#    #   # #   ",
-    "#    ##### #   ",
-    "#    #   # #   ",
-    " ### #   # ####",
-]
+ctx = None
 
 BACKGROUND_COLOR = 0
 
+
+def draw_volume_slider(volume):
+    global ctx
+    length = 96 + ((volume - 20) * 1.6)
+    if length > 96:
+        length = 96
+    if length < 0:
+        length = 0
+    length = int(length)
+
+    ctx.rgb(0,0,0)#dummy
+    ctx.round_rectangle(-49,41,98,8,3).fill()#dummy idk
+
+    ctx.rgb(0,255,0)
+    ctx.round_rectangle(-51,49,102,12,3).fill()
+    ctx.rgb(0,0,0)
+    ctx.round_rectangle(-50,50,100,10,3).fill()
+    ctx.rgb(0,255,0)
+    ctx.round_rectangle(-48,52, length ,6,3).fill()
+
 def run_menu():
     global CURRENT_APP_RUN
+    global ctx
     display_fill(BACKGROUND_COLOR)
-    utils.draw_text_big(SELECT_TEXT, 0, 0)
-    utils.draw_volume_slider(VOLUME)
+    draw_volume_slider(VOLUME)
+    ctx.move_to(0,0).rgb(255,0,255).text("select :3")
     display_update()
 
     selected_petal = None
@@ -69,7 +72,6 @@ def foreground_menu():
     utils.highlight_bottom_petal(2,55,55,0);
     utils.highlight_bottom_petal(3,0,110,0);
     display_fill(BACKGROUND_COLOR)
-    utils.draw_text_big(SELECT_TEXT, 0, 0)
     display_update()
 
 def set_rel_volume(vol):
@@ -87,12 +89,13 @@ def set_rel_volume(vol):
     time.sleep_ms(100)
 
 def captouch_cal():
+    global ctx
     display_fill(0b0000000111100111)
-    utils.draw_text_big(CAL_TEXT, 0, 0)
+    ctx.move_to(0,0).rgb(0,255,0).text("cal")
     display_update()
     time.sleep_ms(500)
     display_fill(0b0011100000000111)
-    utils.draw_text_big(CAL_TEXT, 0, 0)
+    ctx.move_to(0,0).rgb(0,255,0).text("cal")
     display_update()
     captouch_autocalib()
     while(captouch_calibration_active()):
@@ -102,12 +105,17 @@ def captouch_cal():
 
 def main():
     global CURRENT_APP_RUN
+    global ctx
     while not init_done():
         pass
 
     captouch_autocalib() #dry run
     while(captouch_calibration_active()):
         pass
+
+    ctx = get_ctx()
+    ctx.text_align = ctx.CENTER
+    ctx.text_baseline = ctx.MIDDLE
 
     captouch_cal()
 
