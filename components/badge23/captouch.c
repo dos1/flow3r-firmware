@@ -328,11 +328,15 @@ uint16_t read_captouch(){
 uint16_t cdc_data[2][12] = {0,};
 uint16_t cdc_ambient[2][12] = {0,};
 
-static volatile uint8_t calib_cycles = 0;
+static uint8_t calib_cycles = 0;
 void captouch_force_calibration(){
     if(!calib_cycles){ //last calib has finished
         calib_cycles = 16; //goal cycles, can be argument someday
     }
+}
+
+uint8_t captouch_calibration_active(){
+    return calib_cycles ? 1 : 0;
 }
 
 void check_petals_pressed(){
@@ -394,28 +398,31 @@ void captouch_set_petal_pad_threshold(uint8_t petal, uint8_t pad, uint16_t thres
 
 void captouch_read_cycle(){
         static uint8_t calib_cycle = 0; 
-        //vTaskDelay(10 / portTICK_PERIOD_MS);
+        static uint8_t calib_div = 1;
+        static uint32_t ambient_acc[2][12] = {{0,}, {0,}};
         if(calib_cycles){
             if(calib_cycle == 0){ // last cycle has finished
                 calib_cycle = calib_cycles;
-            }
-            uint32_t ambient_acc[2][12] = {{0,}, {0,}};
-            for(int i = 0; i < 16; i++) {
-                vTaskDelay(10 / portTICK_PERIOD_MS);
-                ad714x_i2c_read(chip_top, 0xB, cdc_ambient[0], chip_top->stages);
-                ad714x_i2c_read(chip_bot, 0xB, cdc_ambient[1], chip_bot->stages);
+                calib_div = calib_cycles;
                 for(int j=0;j<12;j++){
-                    ambient_acc[0][j] += cdc_ambient[0][j];
-                    ambient_acc[1][j] += cdc_ambient[1][j];
+                    ambient_acc[0][j] = 0;
+                    ambient_acc[1][j] = 0;
                 }
+            }
+
+            ad714x_i2c_read(chip_top, 0xB, cdc_ambient[0], chip_top->stages);
+            ad714x_i2c_read(chip_bot, 0xB, cdc_ambient[1], chip_bot->stages);
+            for(int j=0;j<12;j++){
+                ambient_acc[0][j] += cdc_ambient[0][j];
+                ambient_acc[1][j] += cdc_ambient[1][j];
             }
 
             // TODO: use median instead of average
             calib_cycle--;
             if(!calib_cycle){ //calib cycle is complete
                 for(int i=0;i<12;i++){
-                    cdc_ambient[0][i] = ambient_acc[0][i] / calib_cycles;
-                    cdc_ambient[1][i] = ambient_acc[1][i] / calib_cycles;
+                    cdc_ambient[0][i] = ambient_acc[0][i] / calib_div;
+                    cdc_ambient[1][i] = ambient_acc[1][i] / calib_div;
                 }
                 cdc_to_petal(0, 1, cdc_ambient[0], 12);
                 cdc_to_petal(1, 1, cdc_ambient[1], 12);

@@ -52,6 +52,7 @@ static esp_err_t i2c_master_init(void)
 }
 
 #define CAPTOUCH_POLLING_PERIOD 10
+static uint8_t hw_init_done = 0;
 
 void os_app_main(void)
 {
@@ -64,11 +65,8 @@ void os_app_main(void)
     leds_init();
     init_buttons();
     captouch_init();
-
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
-    //set_global_vol_dB(0);
-    captouch_force_calibration();
     display_init();
+    hw_init_done = 1;
     while(1) {
         vTaskDelay((CAPTOUCH_POLLING_PERIOD) / portTICK_PERIOD_MS);
         update_button_state();
@@ -78,3 +76,8 @@ void os_app_main(void)
     ESP_ERROR_CHECK(i2c_driver_delete(I2C_MASTER_NUM));
     ESP_LOGI(TAG, "I2C de-initialized successfully");
 }
+
+uint8_t hardware_is_initialized(){
+    return hw_init_done;
+}
+

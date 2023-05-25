@@ -87,14 +87,25 @@ def captouch_cal():
     display_fill(0b0000000111100111)
     utils.draw_text_big(CAL_TEXT, 0, 0)
     display_update()
+    time.sleep_ms(500)
+    display_fill(0b0011100000000111)
+    utils.draw_text_big(CAL_TEXT, 0, 0)
+    display_update()
     captouch_autocalib()
-    time.sleep_ms(5000)
+    while(captouch_calibration_active()):
+        pass
     display_fill(0)
     display_update()
 
 def main():
     global CURRENT_APP_RUN
-    time.sleep_ms(5000)
+    while not init_done():
+        pass
+
+    captouch_autocalib() #dry run
+    while(captouch_calibration_active()):
+        pass
+
     captouch_cal()
 
     for module in MODULES:
