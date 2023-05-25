@@ -16,7 +16,13 @@
 #include "badge23/captouch.h"
 #include "badge23/display.h"
 #include "badge23/spio.h"
+#include "badge23/espan.h"
 #include "badge23_hwconfig.h"
+
+STATIC mp_obj_t mp_init_done(size_t n_args, const mp_obj_t *args) {
+    return mp_obj_new_int(hardware_is_initialized());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_init_done_obj, 0, 1, mp_init_done);
 
 STATIC mp_obj_t mp_display_update(size_t n_args, const mp_obj_t *args) {
     display_update();
@@ -128,6 +134,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_version_obj, mp_version);
 
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_audio) },
+    { MP_ROM_QSTR(MP_QSTR_init_done), MP_ROM_PTR(&mp_init_done_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_captouch), MP_ROM_PTR(&mp_get_captouch_obj) },
     { MP_ROM_QSTR(MP_QSTR_captouch_autocalib), MP_ROM_PTR(&mp_captouch_autocalib_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_button), MP_ROM_PTR(&mp_get_button_obj) },

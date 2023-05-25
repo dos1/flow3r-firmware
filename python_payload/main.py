@@ -73,7 +73,9 @@ def set_rel_volume(vol):
 
 def main():
     global CURRENT_APP_RUN
-    time.sleep_ms(5000)
+    while not init_done():
+        pass
+
     captouch_autocalib()
 
     for module in MODULES:
