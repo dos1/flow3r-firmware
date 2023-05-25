@@ -4,11 +4,13 @@ import time
 import harmonic_demo
 import melodic_demo
 import cap_touch_demo
+import demo_worms
 
 MODULES = [
     harmonic_demo,
     melodic_demo,
     cap_touch_demo,
+    demo_worms,
 ]
 
 CURRENT_APP_RUN = None
@@ -65,6 +67,7 @@ def foreground_menu():
     utils.highlight_bottom_petal(0,0,55,55);
     utils.highlight_bottom_petal(1,55,0,55);
     utils.highlight_bottom_petal(2,55,55,0);
+    utils.highlight_bottom_petal(3,0,110,0);
     display_fill(BACKGROUND_COLOR)
     utils.draw_text_big(SELECT_TEXT, 0, 0)
     display_update()

@@ -13,6 +13,10 @@
 #include "badge23/scope.h"
 #include "esp_system.h"
 
+#include "../../usermodule/uctx/uctx/ctx.h"
+
+Ctx *the_ctx = NULL;
+
 uint16_t *pixels;
 
 typedef struct leds_cfg {
@@ -27,7 +31,9 @@ static void _display_init() {
     GC9A01_Init();
     //    GC9A01_Screen_Load(0,0,240,240,pixels);
     GC9A01_Update();
-
+    
+	
+	
     /*
     display_queue = xQueueCreate(1, sizeof(display_cfg_t));
     TaskHandle_t handle;
@@ -40,6 +46,20 @@ static void _display_init() {
     {
     }
     */
+}
+
+
+void display_ctx_init() {
+	the_ctx = ctx_new_for_framebuffer(
+        ScreenBuff,
+        GC9A01_Width,
+        GC9A01_Height,
+        GC9A01_Width * 2,
+        CTX_FORMAT_RGB565_BYTESWAPPED
+    );
+	
+	// rotate by 180 deg and translate x and y by 120 px to have (0,0) at the center of the screen
+	ctx_apply_transform(the_ctx,-1,0,120,0,-1,120,0,0,1);
 }
 
 void display_update(){
@@ -85,5 +105,8 @@ static void display_task(TimerHandle_t aaaaa) {
     display_draw_scope();
 }
 
-void display_init() { _display_init(); }
+void display_init() { 
+	_display_init(); 
+	display_ctx_init();
+}
 
