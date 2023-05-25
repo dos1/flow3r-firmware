@@ -28,16 +28,24 @@ class Engine():
     def add_timed(self,event):
         self.events_timed.append(event)
         self._sort_timed()
-    
-    def remove_timed(self,group_id):
-        self.events_timed = [event for event in self.events_timed if event.group_id==group_id]
-        self._sort_timed()
-    
-    def _sort_timed(self):
-        self.events_timed = sorted(self.events_timed, key = lambda event: event.deadline)
 
     def add_input(self,event):
         self.events_input.append(event)
+
+    def remove(self,group_id):
+        self.remove_input(group_id)
+        self.remove_timed(group_id)
+
+    def remove_timed(self,group_id):
+        self.events_timed = [event for event in self.events_timed if event.group_id!=group_id]
+        self._sort_timed()
+    
+    def remove_input(self,group_id):
+        self.events_input = [event for event in self.events_input if event.group_id!=group_id]
+
+    def _sort_timed(self):
+        self.events_timed = sorted(self.events_timed, key = lambda event: event.deadline)
+
     
     def _handle_timed(self):
         if not self.next_timed and self.events_timed:
@@ -52,48 +60,53 @@ class Engine():
                 self.next_timed = None
                 
     def _handle_input(self):
-        input_state={
-            "b0":(hardware.get_button(0),"button",0),
-            "b1":(hardware.get_button(1),"button",1)
-        }
-        
+        input_state = []
+
+        #buttons
+        for i in [0,1]:
+            input_state.append({
+                "type" : "button",
+                "index" : i,
+                "value" : hardware.get_button(i)
+            })
+
+        #captouch
         for i in range(0,10):
-            input_state["c"+str(i)]=(hardware.get_captouch(i),"captouch",i)
-            
+            input_state.append({
+                "type" : "captouch",
+                "index" : i,
+                "value" : hardware.get_captouch(i),
+                "radius" : hardware.captouch_get_petal_rad(i),
+                "angle" : hardware.captouch_get_petal_phi(i)/10000
+            })
+
         
         if not self.last_input_state:
             self.last_input_state=input_state
+            #tprint (input_state)
             return
         
-        diff=[]
-        for key in input_state:
-            if input_state[key][0] != self.last_input_state[key][0]:
-                diff.append({
-                    "type" : input_state[key][1],
-                    "index" : input_state[key][2],
-                    "value" : input_state[key][0],
-                    "from" : self.last_input_state[key][0],
-                    "ticks_ms": time.ticks_ms(),
-                    "change": True
-                })
+        for i in range(len(input_state)):
+            entry = input_state[i]
+            last_entry = self.last_input_state[i]
+            
+            #update for all
+            entry["ticks_ms"] = time.ticks_ms()
+
+            if entry["value"] != last_entry["value"]:
+                #update only when value changed
+                entry["change"] = True
+                entry["from"] = last_entry["value"]
             else:
-                 diff.append({
-                    "type" : input_state[key][1],
-                    "index" : input_state[key][2],
-                    "value" : input_state[key][0],
-                    "ticks_ms": time.ticks_ms(),
-                    "change": False
-                })
-    
-        if diff:
-            #print(diff)
-            for d in diff:
-                triggered_events = list(filter(lambda e: e.condition(d),self.events_input))
-                #print (triggered_events)
-                #map(lambda e: e.trigger(d), triggered_events)
-                for e in triggered_events:
-                    e.trigger(d)
-                    
+                #update only when value did not change
+                 entry["change"] = False
+
+            #find and trigger the events q
+            triggered_events = list(filter(lambda e: e.condition(entry),self.events_input))
+            #print (triggered_events)
+            #map(lambda e: e.trigger(d), triggered_events)
+            for e in triggered_events:
+                e.trigger(entry)
             
         self.last_input_state=input_state        
         
@@ -105,6 +118,7 @@ class Engine():
         self._handle_timed()
         self._handle_input()
         self._handle_userloop()
+        hardware.display_update()
         
             
     def eventloop(self):
