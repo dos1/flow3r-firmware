@@ -1,5 +1,6 @@
 idf_component_register(
     SRCS
+        doomgeneric/doomgeneric_badge23.c
         doomgeneric/am_map.c
         doomgeneric/d_event.c
         doomgeneric/d_items.c
@@ -83,4 +84,9 @@ idf_component_register(
         doomgeneric/w_main.c
         doomgeneric/w_wad.c
         doomgeneric/z_zone.c
+    INCLUDE_DIRS
+        .
+    REQUIRES
+        gc9a01
+        spi_flash
 )
