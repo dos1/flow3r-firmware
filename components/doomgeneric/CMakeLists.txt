@@ -78,7 +78,7 @@ idf_component_register(
         doomgeneric/v_video.c
         doomgeneric/w_checksum.c
         doomgeneric/w_file.c
-        doomgeneric/w_file_stdc.c
+        doomgeneric/w_file_badge23.c
         doomgeneric/wi_stuff.c
         doomgeneric/w_main.c
         doomgeneric/w_wad.c
