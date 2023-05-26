@@ -42,5 +42,5 @@ idf_component_get_property(main_args esptool_py FLASH_ARGS)
 idf_component_get_property(sub_args esptool_py FLASH_SUB_ARGS)
 esptool_py_flash_target(wad-flash "${main_args}" "${sub_args}" ALWAYS_PLAINTEXT)
 esptool_py_flash_to_partition(wad-flash "wad" "${image_path}")
-#esptool_py_flash_to_partition(flash "wad" "${image_path}")
+esptool_py_flash_to_partition(flash "wad" "${image_path}")
 

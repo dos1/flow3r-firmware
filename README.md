@@ -1,3 +1,10 @@
+## HOWTODOOM
+
+Should work on p3/p4/p5.
+
+ 1. Acquire doom1.wad, place in checkout
+ 2. `idf.py -g $GEN flash` (where $GEN is p3, p4 or p5)
+
 ## Current functionality
 
 Micropython repl hooked up, hw functionality partly broken>
