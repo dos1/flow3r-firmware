@@ -43,10 +43,17 @@ planefunction_t		ceilingfunc;
 
 // Here comes the obnoxious "visplane".
 #define MAXVISPLANES	128
-visplane_t		visplanes[MAXVISPLANES];
+visplane_t*     visplanes;
 visplane_t*		lastvisplane;
 visplane_t*		floorplane;
 visplane_t*		ceilingplane;
+
+void R_Visplanes_Allocate(void) {
+    visplanes = calloc(MAXVISPLANES, sizeof(visplane_t));
+    if (visplanes == NULL) {
+        I_Error("Failed to allocate visplanes");
+    }
+}
 
 // ?
 #define MAXOPENINGS	SCREENWIDTH*64
@@ -127,7 +134,7 @@ R_MapPlane
      || x2 >= viewwidth
      || y > viewheight)
     {
-	I_Error ("R_MapPlane: %i, %i at %i",x1,x2,y);
+	I_Error ("R_MapPlane: %i (%i), %i (%i) at %i",x1,viewwidth,x2,viewheight,y);
     }
 #endif
 
