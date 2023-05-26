@@ -24,7 +24,7 @@
 #define GC9A01_SPI_SCK_FREQ_M 80
 #define GC9A01_RESET_USED 1
 #define GC9A01_PIN_NUM_RST 38
-#define GC9A01_BUFFER_MODE 1
+#define GC9A01_BUFFER_MODE 0
 
 #elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 #define USE_SPI3_HOST 1
@@ -38,7 +38,7 @@
 #define GC9A01_PIN_NUM_BCKL 46
 #define GC9A01_BACK_LIGHT_MODE_PWM 1
 #define GC9A01_CONTROL_BACK_LIGHT_MODE 1
-#define GC9A01_BUFFER_MODE 1
+#define GC9A01_BUFFER_MODE 0
 
 #else
 #error "gc9a01 unimplemented for this badge generation"
@@ -60,6 +60,8 @@ void GC9A01_FillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
 void GC9A01_Update();
 void GC9A01_SetBL(uint8_t Value);
 uint16_t GC9A01_GetPixel(int16_t x, int16_t y);
+void GC9A01_SetWindow(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1);
+void GC9A01_RawLCDDataSync(const uint8_t *data, int len);
 
 void GC9A01_Screen_Shot(uint16_t x,uint16_t y,uint16_t width ,uint16_t height,uint16_t * Buffer);
 void GC9A01_Screen_Load(uint16_t x,uint16_t y,uint16_t width ,uint16_t height,uint16_t * Buffer);

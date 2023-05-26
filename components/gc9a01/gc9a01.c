@@ -204,6 +204,10 @@ void lcd_data(const uint8_t *data, int len)
     while (offset < len);
 }
 
+void GC9A01_RawLCDDataSync(const uint8_t *data, int len) {
+    lcd_data(data, len);
+}
+
 void lcd_send_byte(uint8_t Data)
 {
 	lcd_data(&Data,1);
@@ -389,9 +393,15 @@ void GC9A01_SetBL(uint8_t Value)
 		h = GC9A01_Height - y;
 
 	GC9A01_SetWindow(x, y, x + w - 1, y + h - 1);
+    uint16_t *buf = malloc(w * h * 2);
+    if (buf == NULL) {
+        return;
+    }
 
 	for (uint32_t i = 0; i < (h * w); i++)
-		GC9A01_RamWrite(&color, 1);
+        buf[i] = color;
+    lcd_data(buf, h*w*2);
+    free(buf);
 	}
 
 //Buffer mode
