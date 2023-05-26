@@ -41,7 +41,7 @@ static const char *player_colors[] =
 
 // Array of end-of-level statistics that have been captured.
 
-#define MAX_CAPTURES 32
+#define MAX_CAPTURES 2
 static wbstartstruct_t captured_stats[MAX_CAPTURES];
 static int num_captured_stats = 0;
 
