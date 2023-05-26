@@ -278,7 +278,7 @@ void R_InitSpriteDefs (char** namelist)
 //
 // GAME FUNCTIONS
 //
-vissprite_t	vissprites[MAXVISSPRITES];
+vissprite_t*	vissprites;
 vissprite_t*	vissprite_p;
 int		newvissprite;
 
@@ -291,6 +291,10 @@ int		newvissprite;
 void R_InitSprites (char** namelist)
 {
     int		i;
+    vissprites = calloc(MAXVISSPRITES, sizeof(vissprite_t));
+    if (vissprites == NULL) {
+        I_Error("Failed to allocate vissprites");
+    }
 	
     for (i=0 ; i<SCREENWIDTH ; i++)
     {
