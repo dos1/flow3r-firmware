@@ -87,9 +87,9 @@ class Menu():
     
 
 class MenuItem():
-    def __init__(self,name="item"):
+    def __init__(self,name="item",action=None):
         self.name= name
-        self.action= None
+        self.action= action
         self.ui = ui.Icon(label=name)
 
     def __repr__(self):
@@ -118,16 +118,45 @@ class MenuItemBack(MenuItem):
     def enter(self,data={}):
         menu_back()
 
+class MenuItemControl(MenuItem):
+    def __init__(self,name,control):
+        super().__init__(name=name)
+        self.control=control
+        self.ui=control.ui
+
+    def enter(self):
+        print("menu enter")
+        self.control.enter()
+
+    def scroll(self,delta):
+        self.control.scroll(delta)
+
 def on_scroll(d):
     if active_menu is None:
         return
 
-    if active_menu.angle_step<0.5:
-        active_menu.angle_step+=0.025
-    if d["value"] == -1:
-        active_menu.rotate_steps(-1)
-    elif d["value"] == 1:
-        active_menu.rotate_steps(1)
+    if d["index"]==0:#right button
+        hovered=active_menu.get_hovered_item()
+        if hasattr(hovered, "scroll"):
+            hovered.scroll(d["value"])
+
+    else: #index=1, #left button
+        if active_menu.angle_step<0.5:
+            active_menu.angle_step+=0.025
+        if d["value"] == -1:
+            active_menu.rotate_steps(-1)
+        elif d["value"] == 1:
+            active_menu.rotate_steps(1)
+
+    render()
+
+def on_scroll_captouch(d):
+    if active_menu is None:
+        return
+    if abs(d["radius"]) < 10000:
+        return
+    print(d["angle"])
+    active_menu.rotate_to(d["angle"]+math.pi)
     render()
 
 def on_release(d):
@@ -145,17 +174,22 @@ def on_enter(d):
     else:
         active_menu.get_hovered_item().enter()
     
-event.Event(name="menu rotation",
+event.Event(name="menu rotation button",group_id="menu",
     condition=lambda e: e["type"] =="button" and not e["change"] and abs(e["value"])==1 ,
     action=on_scroll
 )
 
-event.Event(name="menu rotation release",
+event.Event(name="menu rotation captouch",group_id="menu",
+    condition=lambda e: e["type"] =="captouch" and not e["change"] and abs(e["value"])==1 and e["index"]==2,
+    action=on_scroll_captouch
+)
+
+event.Event(name="menu rotation button release",group_id="menu",
     condition=lambda e: e["type"] =="button" and e["change"] and e["value"] ==0,
     action=on_release
 )
 
-event.Event(name="menu enter",
+event.Event(name="menu button enter",group_id="menu",
     condition=lambda e: e["type"] =="button" and e["change"] and e["value"] == 2,
     action=on_enter
 )
@@ -166,7 +200,7 @@ def render():
         return
     hardware.get_ctx().rectangle(-120,-120,240,240).rgb(0,0,0).fill()
     active_menu.draw()
-    hardware.display_update()
+    #hardware.display_update()
 
 def set_active_menu(menu):
     global active_menu
