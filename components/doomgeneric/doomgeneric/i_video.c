@@ -151,8 +151,10 @@ void cmap_to_fb(uint8_t * out, uint8_t * in, int in_pixels)
     uint32_t pix;
     uint16_t r, g, b;
 
+    in += in_pixels;
     for (i = 0; i < in_pixels; i++)
     {
+        in--;
         c = colors[*in];  /* R:8 G:8 B:8 format! */
         r = (uint16_t)(c.r >> (8 - s_Fb.red.length));
         g = (uint16_t)(c.g >> (8 - s_Fb.green.length));
@@ -163,11 +165,10 @@ void cmap_to_fb(uint8_t * out, uint8_t * in, int in_pixels)
 
         for (k = 0; k < fb_scaling; k++) {
             for (j = 0; j < s_Fb.bits_per_pixel/8; j++) {
-                *out = (pix >> (j*8));
+                *out = (pix >> ((1-j)*8));
                 out++;
             }
         }
-        in++;
     }
 }
 
@@ -180,17 +181,17 @@ void I_InitGraphics (void)
 	s_Fb.yres = DOOMGENERIC_RESY;
 	s_Fb.xres_virtual = s_Fb.xres;
 	s_Fb.yres_virtual = s_Fb.yres;
-	s_Fb.bits_per_pixel = 32;
+	s_Fb.bits_per_pixel = 16;
 
-	s_Fb.blue.length = 8;
-	s_Fb.green.length = 8;
-	s_Fb.red.length = 8;
-	s_Fb.transp.length = 8;
+	s_Fb.blue.length = 5;
+	s_Fb.green.length = 6;
+	s_Fb.red.length = 5;
+	s_Fb.transp.length = 0;
 
 	s_Fb.blue.offset = 0;
-	s_Fb.green.offset = 8;
-	s_Fb.red.offset = 16;
-	s_Fb.transp.offset = 24;
+	s_Fb.green.offset = 5;
+	s_Fb.red.offset = 11;
+	s_Fb.transp.offset = 0;
 	
 
     printf("I_InitGraphics: framebuffer: x_res: %d, y_res: %d, x_virtual: %d, y_virtual: %d, bpp: %d\n",
@@ -202,17 +203,17 @@ void I_InitGraphics (void)
     printf("I_InitGraphics: DOOM screen size: w x h: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
 
-    i = M_CheckParmWithArgs("-scaling", 1);
-    if (i > 0) {
-        i = atoi(myargv[i + 1]);
-        fb_scaling = i;
+    //i = M_CheckParmWithArgs("-scaling", 1);
+    //if (i > 0) {
+    //    i = atoi(myargv[i + 1]);
+    //    fb_scaling = i;
         printf("I_InitGraphics: Scaling factor: %d\n", fb_scaling);
-    } else {
-        fb_scaling = s_Fb.xres / SCREENWIDTH;
-        if (s_Fb.yres / SCREENHEIGHT < fb_scaling)
-            fb_scaling = s_Fb.yres / SCREENHEIGHT;
-        printf("I_InitGraphics: Auto-scaling factor: %d\n", fb_scaling);
-    }
+    //} else {
+    //    fb_scaling = s_Fb.xres / SCREENWIDTH;
+    //    if (s_Fb.yres / SCREENHEIGHT < fb_scaling)
+    //        fb_scaling = s_Fb.yres / SCREENHEIGHT;
+    //    printf("I_InitGraphics: Auto-scaling factor: %d\n", fb_scaling);
+    //}
 
 
     /* Allocate screen to draw to */
@@ -250,16 +251,16 @@ void I_UpdateNoBlit (void)
 void I_FinishUpdate (void)
 {
     int y;
-    int x_offset, x_offset_end;
+    //int x_offset, x_offset_end;
     unsigned char *line_in, *line_out;
 
     /* Offsets in case FB is bigger than DOOM */
     /* 600 = s_Fb heigt, 200 screenheight */
     /* 600 = s_Fb heigt, 200 screenheight */
     /* 2048 =s_Fb width, 320 screenwidth */
-    x_offset     = (((s_Fb.xres - (SCREENWIDTH  * fb_scaling)) * s_Fb.bits_per_pixel/8)) / 2; // XXX: siglent FB hack: /4 instead of /2, since it seems to handle the resolution in a funny way
+    //x_offset     = (((s_Fb.xres - (SCREENWIDTH  * fb_scaling)) * s_Fb.bits_per_pixel/8)) / 2; // XXX: siglent FB hack: /4 instead of /2, since it seems to handle the resolution in a funny way
     //x_offset     = 0;
-    x_offset_end = ((s_Fb.xres - (SCREENWIDTH  * fb_scaling)) * s_Fb.bits_per_pixel/8) - x_offset;
+    //x_offset_end = ((s_Fb.xres - (SCREENWIDTH  * fb_scaling)) * s_Fb.bits_per_pixel/8) - x_offset;
 
     /* DRAW SCREEN */
     line_in  = (unsigned char *) I_VideoBuffer;
@@ -267,24 +268,13 @@ void I_FinishUpdate (void)
 
     y = SCREENHEIGHT;
 
+    line_in += SCREENWIDTH * SCREENHEIGHT;
     while (y--)
     {
-        int i;
-        for (i = 0; i < fb_scaling; i++) {
-            line_out += x_offset;
-#ifdef CMAP256
-            for (fb_scaling == 1) {
-                memcpy(line_out, line_in, SCREENWIDTH); /* fb_width is bigger than Doom SCREENWIDTH... */
-            } else {
-                //XXX FIXME fb_scaling support!
-            }
-#else
-            //cmap_to_rgb565((void*)line_out, (void*)line_in, SCREENWIDTH);
-            cmap_to_fb((void*)line_out, (void*)line_in, SCREENWIDTH);
-#endif
-            line_out += (SCREENWIDTH * fb_scaling * (s_Fb.bits_per_pixel/8)) + x_offset_end;
-        }
-        line_in += SCREENWIDTH;
+        line_in -= SCREENWIDTH;
+        cmap_to_fb((void*)line_out, (void*)(line_in + 40), SCREENWIDTH - 80);
+        line_out += 240 * 2;
+        //line_in += SCREENWIDTH;
     }
 
 	DG_DrawFrame();
