@@ -38,9 +38,15 @@ def on_step(data):
 	hardware.display_update()
 	
 def handle_input(data={}):
+    print("removed")
+    
+    
     sequencer.remove()
     ev.remove()
 
+    #TODO this is a bad hack!
+    event.the_engine.events_timed=[]
+    
 
 def init():
     ctx.text_align = ctx.CENTER

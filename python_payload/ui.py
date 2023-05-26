@@ -2,6 +2,12 @@ import hardware
 import random
 import math
 import time
+from math import sin,cos,pi
+
+
+GO_GREEN = (63/255,255/255,33/53)
+PUSH_RED = (251/255,72/255,196/255)
+
 
 class UIElement():
     def __init__(self,origin=(0,0)):
@@ -17,7 +23,6 @@ class UIElement():
             child.draw(pos)
 
     def _draw(self,pos):
-        #print(pos)
         pass
 
     def add(self, child):
@@ -40,15 +45,14 @@ class Icon(UIElement):
         self.bg_b = random.random()
         self.fg = 0
         self.label=label
-        self.size = size
+        self.size=size
         self.has_highlight = False
         super().__init__()
 
     def _draw(self,pos):
         x = int(pos[0])
         y = int(pos[1])
-        width = 55
-        height = 40
+
         self.ctx.text_align = self.ctx.CENTER
         self.ctx.text_baseline = self.ctx.MIDDLE
 
@@ -59,12 +63,32 @@ class Icon(UIElement):
                 y-hs/2,
                 hs,hs,hs//2
             ).fill()
-        self.ctx.move_to(x,y-self.size/2).rgb(self.bg_r,self.bg_g,self.bg_b).round_rectangle(
-            x-self.size/2,
-            y-self.size/2,
-            self.size,self.size,self.size//2
-        ).fill()
+        self.ctx.move_to(x,y).rgb(self.bg_r,self.bg_g,self.bg_b).arc(x,y,self.size/2,-math.pi,math.pi,True).fill()
+        #self.ctx.move_to(x,y-self.size/2).rgb(self.bg_r,self.bg_g,self.bg_b).
+        #.round_rectangle(
+        #    x-self.size/2,
+        #    y-self.size/2,
+        #    self.size,self.size,self.size//2
+        #).fill()
         self.ctx.rgb(1,1,1).move_to(x,y).text(self.label)
+
+class IconValue(Icon):
+    def __init__(self, value=0, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.value = value
+    
+    def _draw(self,pos):
+        (x,y) = pos
+
+        if self.has_highlight:
+            self.ctx.move_to(x,y).rgb(*GO_GREEN).arc(x,y,self.size/2+5,-pi,pi,True).fill()
+
+        self.ctx.move_to(x,y).rgb(*PUSH_RED).arc(x,y,self.size/2,-pi,pi,True).fill()
+        self.ctx.move_to(x,y).rgb(*GO_GREEN).arc(x,y,self.size/2-5,2*pi*self.value,0,1).fill()
+        self.ctx.rgb(0,0,0).move_to(x,y).text(self.label)
+
+
+
 class GroupStackedVertical(UIElement):
     pass
 
