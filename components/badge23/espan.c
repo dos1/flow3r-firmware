@@ -34,6 +34,9 @@ static const char *TAG = "espan";
 #error "i2c not implemented for this badge generation"
 #endif
 
+static QueueHandle_t i2c_queue = NULL;
+static uint8_t dummy_data;
+
 static esp_err_t i2c_master_init(void)
 {
     int i2c_master_port = I2C_MASTER_NUM;
@@ -52,12 +55,19 @@ static esp_err_t i2c_master_init(void)
     return i2c_driver_install(i2c_master_port, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
 }
 
-#define CAPTOUCH_POLLING_PERIOD 23
+#define CAPTOUCH_POLLING_PERIOD 10
 static uint8_t hw_init_done = 0;
 
-void i2c_task(TimerHandle_t data){
-    update_button_state();
-    captouch_read_cycle();
+void i2c_timer(TimerHandle_t data){
+    xQueueSend(i2c_queue, &dummy_data, 0);
+}
+
+void i2c_task(void * data){
+    while(1){
+        xQueueReceive(i2c_queue, &dummy_data, portMAX_DELAY);
+        captouch_read_cycle();
+        update_button_state();
+    }
 }
 
 void os_app_main(void)
@@ -73,8 +83,15 @@ void os_app_main(void)
     captouch_init();
     display_init();
 
-    TimerHandle_t i2c = xTimerCreate("I2C task", pdMS_TO_TICKS(CAPTOUCH_POLLING_PERIOD), pdTRUE, (void *) 0, *i2c_task);
-    if( xTimerStart(i2c, 0 ) != pdPASS) ESP_LOGI(TAG, "I2C task initialization failed");
+    i2c_queue = xQueueCreate(1,1);
+
+    TaskHandle_t i2c_task_handle;
+    //xTaskCreate(&i2c_task, "I2C task", 4096, NULL, configMAX_PRIORITIES , &i2c_task_handle);
+    xTaskCreatePinnedToCore(&i2c_task, "I2C task", 4096, NULL, configMAX_PRIORITIES-1, &i2c_task_handle, 0);
+
+
+    TimerHandle_t i2c_timer_handle = xTimerCreate("I2C timer", pdMS_TO_TICKS(CAPTOUCH_POLLING_PERIOD), pdTRUE, (void *) 0, *i2c_timer);
+    if( xTimerStart(i2c_timer_handle, 0 ) != pdPASS) ESP_LOGI(TAG, "I2C task initialization failed");
     hw_init_done = 1;
 }
 
