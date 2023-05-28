@@ -36,6 +36,7 @@ static const char *TAG = "espan";
 #endif
 
 static QueueHandle_t i2c_queue = NULL;
+static QueueHandle_t slow_system_status_queue = NULL;
 static uint8_t dummy_data;
 
 static esp_err_t i2c_master_init(void)
@@ -57,6 +58,7 @@ static esp_err_t i2c_master_init(void)
 }
 
 #define CAPTOUCH_POLLING_PERIOD 10
+#define SLOW_SYSTEM_STATUS_PERIOD 200
 static uint8_t hw_init_done = 0;
 
 void i2c_timer(TimerHandle_t data){
@@ -71,6 +73,18 @@ void i2c_task(void * data){
     }
 }
 
+void slow_system_status_timer(TimerHandle_t data){
+    xQueueSend(slow_system_status_queue, &dummy_data, 0);
+}
+
+void slow_system_status_task(void * data){
+    while(1){
+        xQueueReceive(slow_system_status_queue, &dummy_data, portMAX_DELAY);
+        //read out stuff like jack detection, battery status, usb connection etc.
+        audio_lineout_update_jacksense();
+    }
+}
+
 void locks_init(){
     mutex_i2c = xSemaphoreCreateMutex();
 }
@@ -82,7 +96,6 @@ void os_app_main(void)
     ESP_ERROR_CHECK(i2c_master_init());
     ESP_LOGI(TAG, "I2C initialized successfully");
 
-    set_global_vol_dB(-90);
     audio_init();
     leds_init();
     init_buttons();
@@ -101,6 +114,15 @@ void os_app_main(void)
 
     TimerHandle_t i2c_timer_handle = xTimerCreate("I2C timer", pdMS_TO_TICKS(CAPTOUCH_POLLING_PERIOD), pdTRUE, (void *) 0, *i2c_timer);
     if( xTimerStart(i2c_timer_handle, 0 ) != pdPASS) ESP_LOGI(TAG, "I2C timer initialization failed");
+
+    slow_system_status_queue = xQueueCreate(1,1);
+
+    TaskHandle_t slow_system_status_task_handle;
+    xTaskCreatePinnedToCore(&slow_system_status_task, "slow system status task", 4096, NULL, configMAX_PRIORITIES-2, &slow_system_status_task_handle, 0);
+
+    TimerHandle_t slow_system_status_timer_handle = xTimerCreate("slow system status timer", pdMS_TO_TICKS(SLOW_SYSTEM_STATUS_PERIOD), pdTRUE, (void *) 0, *slow_system_status_timer);
+    if( xTimerStart(slow_system_status_timer_handle, 0 ) != pdPASS) ESP_LOGI(TAG, "I2C task initialization failed");
+
     hw_init_done = 1;
 }
 
