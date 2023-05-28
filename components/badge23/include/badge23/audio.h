@@ -13,3 +13,9 @@ uint16_t count_audio_sources();
 
 uint16_t add_audio_source(void * render_data, void * render_function);
 void remove_audio_source(uint16_t index);
+void audio_lineout_update_jacksense(void);
+
+uint8_t audio_speaker_is_on();
+uint8_t audio_headset_is_connected();
+uint8_t audio_headphones_are_connected();
+
