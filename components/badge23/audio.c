@@ -24,6 +24,10 @@ static void audio_player_task(void* arg);
 #define DMA_BUFFER_COUNT    2
 #define I2S_PORT 0
 
+static bool headphones_connected = 0;
+static bool headset_connected = 0;
+static bool speaker_on = 1;
+
 #if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 static uint8_t max98091_i2c_read(const uint8_t reg)
 {
@@ -158,25 +162,21 @@ static void i2s_init(void){
 static uint8_t headphones_volume = 0x1A;
 static uint8_t speaker_volume = 0x2C;
 
-static bool headphones_connected = 0;
-static bool headset_connected = 0;
-static bool speaker_on = 1;
-
 static void codec_set_headphones_volume_dB(float dB){
     uint8_t reg = 0x1A; // 0dB
     if(dB > 3.) dB = 3.; //max volume
     if(dB < -67.) dB = -67.; //min volume (could also trigger false mute someday)
 
     if(dB > 1.){ //0.5dB steps
-        reg += 2.*(dB-1) + 0.5 + 1;
-    } else if(dB > -5.){  //1dB steps
+        reg += dB*2. - 0.5;
+    } else if(dB > -7.){  //1dB steps
         reg += dB + 0.5;
     } else if(dB > -19.){ //2dB steps
-        reg += 2*(dB +19) + 0.5 - 19;
+        reg += dB/2. - 2.5;
     } else if(dB > -43.){ //3dB steps
-        reg += 3.*(dB + 43.) + 0.5 - 43.;
+        reg += dB/3. - 5.5;
     } else {              //4dB steps
-        reg += 4.*(dB + 67.) + 0.5 - 67.;
+        reg += dB/4. - 8.5;
     }
 
     headphones_volume = reg;
@@ -193,17 +193,16 @@ static void codec_set_spkr_volume_dB(float dB){
     if(dB > 14.) dB = 14.; //max volume
     if(dB < -48.) dB = -48.; //min volume (could also trigger false mute someday)
 
-    // not cool maxim not cool
     if(dB > 9.){ //0.5dB steps
-        reg += 2.*(dB-9) + 0.5 + 9;
+        reg += dB*2 - 8.5;
     } else if(dB > -6.){  //1dB steps
         reg += dB + 0.5;
     } else if(dB > -14.){ //2dB steps
-        reg += 2*(dB +14) + 0.5 - 14;
+        reg += dB/2 - 2.5;
     } else if(dB > -32.){ //3dB steps
-        reg += 3.*(dB + 32.) + 0.5 - 32.;
+        reg += dB/3 - 4.5;
     } else {              //4dB steps
-        reg += 4.*(dB + 48.) + 0.5 - 48.;
+        reg += dB/4 - 7.5;
     }
 
     speaker_volume = reg;
