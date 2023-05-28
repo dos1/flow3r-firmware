@@ -1,11 +1,11 @@
 #include "badge23/audio.h"
 #include "badge23/synth.h" 
 #include "badge23/scope.h"
+#include "badge23/lock.h"
 #include "badge23_hwconfig.h"
 
 #include "driver/i2s.h"
 #include "driver/i2c.h"
-
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -29,14 +29,18 @@ static uint8_t max98091_i2c_read(const uint8_t reg)
 {
     const uint8_t tx[] = {reg};
     uint8_t rx[1];
+    xSemaphoreTake(mutex_i2c, portMAX_DELAY);
     esp_err_t ret = i2c_master_write_read_device(I2C_MASTER_NUM, 0x10, tx, sizeof(tx), rx, sizeof(rx), TIMEOUT_MS / portTICK_PERIOD_MS);
+    xSemaphoreGive(mutex_i2c);
     return rx[0];
 }
 
 static esp_err_t max98091_i2c_write(const uint8_t reg, const uint8_t data)
 {
     const uint8_t tx[] = {reg, data};
+    xSemaphoreTake(mutex_i2c, portMAX_DELAY);
     esp_err_t ret = i2c_master_write_to_device(I2C_MASTER_NUM, 0x10, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
+    xSemaphoreGive(mutex_i2c);
     if(max98091_i2c_read(reg) != data) printf("readback of %04X to %02X write failed\n", data, reg);
     return ret;
 }
@@ -142,6 +146,32 @@ static void i2s_init(void){
 
     i2s_set_pin(I2S_PORT, &pin_config);
 
+}
+
+static void codec_set_spkr_volume_dB(float dB){
+    // could add finer steps in software someday but since
+    // lineout and speakers can be doing stuff at the same
+    // time this needs to be thought through a little more
+    uint8_t reg = 0x2C; // 0dB
+    if(dB > 14.) dB = 14.; //max volume
+    if(dB < -48.) dB = -48.; //min volume (could also trigger false mute someday)
+
+    // not cool maxim not cool
+    if(dB > 9.){ //0.5dB steps
+        reg += 2.*(dB-9) + 0.5 + 9;
+    } else if(dB > -6.){  //1dB steps
+        reg += dB + 0.5;
+    } else if(dB > -14.){ //2dB steps
+        reg += 2*(dB +14) + 0.5 - 14;
+    } else if(dB > -32.){ //3dB steps
+        reg += 3.*(dB + 32.) + 0.5 - 32.;
+    } else {              //4dB steps
+        reg += 4.*(dB + 48.) + 0.5 - 48.;
+    }
+
+    max98091_i2c_write(0x31, reg); //left chan
+    max98091_i2c_write(0x32, reg); //right chan
+    //note: didn't check if chan physically mapped to l/r or flipped.
 }
 
 #elif defined(CONFIG_BADGE23_HW_GEN_P1)
@@ -270,6 +300,13 @@ static void _audio_init(void) {
 
 static uint16_t _global_vol = 3000;
 
+#if defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P3)
+void set_global_vol_dB(int8_t vol_dB){
+    codec_set_spkr_volume_dB(vol_dB);
+}
+
+#elif defined(CONFIG_BADGE23_HW_GEN_P1)
+
 void set_global_vol_dB(int8_t vol_dB){
     if(vol_dB < (BADGE_MIN_VOLUME_DB)){
         _global_vol = 0;
@@ -280,6 +317,8 @@ void set_global_vol_dB(int8_t vol_dB){
         _global_vol = buf;
     }
 }
+
+#endif
 
 static void audio_player_task(void* arg) {
     int16_t buffer[DMA_BUFFER_SIZE * 2];
