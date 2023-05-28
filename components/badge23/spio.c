@@ -3,6 +3,7 @@
 #include "badge23_hwconfig.h"
 #include "stdint.h"
 #include "badge23/spio.h"
+#include "badge23/lock.h"
 
 static int8_t leftbutton = 0;
 static int8_t rightbutton = 0;
@@ -94,7 +95,11 @@ static void _init_buttons(){
 
 void update_button_state(){
     uint8_t port;
+
+    xSemaphoreTake(mutex_i2c, portMAX_DELAY);
     esp_err_t ret = i2c_master_read_from_device(I2C_MASTER_NUM, 0b1101101, &port, sizeof(port), TIMEOUT_MS / portTICK_PERIOD_MS);
+    xSemaphoreGive(mutex_i2c);
+
     uint8_t rr = port & (1ULL << RIGHT_BUTTON_RIGHT);
     uint8_t rm = port & (1ULL << RIGHT_BUTTON_MID);
     uint8_t rl = port & (1ULL << RIGHT_BUTTON_LEFT);

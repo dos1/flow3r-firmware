@@ -4,6 +4,7 @@
 #include "badge23/display.h"
 #include "badge23/spio.h"
 #include "badge23_hwconfig.h"
+#include "badge23/lock.h"
 
 #include "esp_log.h"
 #include "driver/i2c.h"
@@ -70,8 +71,13 @@ void i2c_task(void * data){
     }
 }
 
+void locks_init(){
+    mutex_i2c = xSemaphoreCreateMutex();
+}
+
 void os_app_main(void)
 {
+    locks_init();
     ESP_LOGI(TAG, "Starting on %s...", badge23_hw_name);
     ESP_ERROR_CHECK(i2c_master_init());
     ESP_LOGI(TAG, "I2C initialized successfully");
@@ -91,9 +97,7 @@ void os_app_main(void)
     i2c_queue = xQueueCreate(1,1);
 
     TaskHandle_t i2c_task_handle;
-    //xTaskCreate(&i2c_task, "I2C task", 4096, NULL, configMAX_PRIORITIES , &i2c_task_handle);
     xTaskCreatePinnedToCore(&i2c_task, "I2C task", 4096, NULL, configMAX_PRIORITIES-1, &i2c_task_handle, 0);
-
 
     TimerHandle_t i2c_timer_handle = xTimerCreate("I2C timer", pdMS_TO_TICKS(CAPTOUCH_POLLING_PERIOD), pdTRUE, (void *) 0, *i2c_timer);
     if( xTimerStart(i2c_timer_handle, 0 ) != pdPASS) ESP_LOGI(TAG, "I2C timer initialization failed");
