@@ -37,9 +37,7 @@ static esp_err_t max98091_i2c_write(const uint8_t reg, const uint8_t data)
 {
     const uint8_t tx[] = {reg, data};
     esp_err_t ret = i2c_master_write_to_device(I2C_MASTER_NUM, 0x10, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
-
-    if(max98091_i2c_read(reg) != data) printf("Write of %04X to %02X apparently failed\n", data, reg);
-
+    if(max98091_i2c_read(reg) != data) printf("readback of %04X to %02X write failed\n", data, reg);
     return ret;
 }
 
@@ -113,6 +111,7 @@ static void init_codec()
     ESP_ERROR_CHECK(max98091_i2c_write(0x41, 0x0));
 
     ESP_ERROR_CHECK(max98091_i2c_write(0x3D, 1<<7)); // jack detect enable
+    printf("4 readbacks failing here is normal dw ^w^");
 }
 
 static void i2s_init(void){
