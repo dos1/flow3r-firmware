@@ -94,11 +94,11 @@ def main():
     while(captouch_calibration_active()):
         pass
 
-    captouch_cal()
-
     ctx = get_ctx()
     ctx.text_align = ctx.CENTER
     ctx.text_baseline = ctx.MIDDLE
+
+    captouch_cal()
 
     for module in MODULES:
         module.init()
