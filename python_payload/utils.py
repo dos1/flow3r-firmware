@@ -39,13 +39,20 @@ def draw_rect(x,y,w,h,col):
         for k in range(h):
             display_draw_pixel(x+j,y+k,col)
 
-def draw_volume_slider(volume):
+def draw_volume_slider(ctx, volume):
     length = 96 + ((volume - 20) * 1.6)
     if length > 96:
         length = 96
     if length < 0:
         length = 0
     length = int(length)
-    draw_rect(70,20,100,10,GREEN)
-    draw_rect(71,21,98,8, 0)
-    draw_rect(72+96-length,22,length,6,GREEN)
+
+    ctx.rgb(0,0,0)#dummy
+    ctx.round_rectangle(-49,41,98,8,3).fill()#dummy idk
+
+    ctx.rgb(0,255,0)
+    ctx.round_rectangle(-51,49,102,12,3).fill()
+    ctx.rgb(0,0,0)
+    ctx.round_rectangle(-50,50,100,10,3).fill()
+    ctx.rgb(0,255,0)
+    ctx.round_rectangle(-48,52, length ,6,3).fill()
