@@ -204,7 +204,45 @@ static struct ad7147_stage_config ad714x_default_config(void)
         };
 }
 
-static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad7147_device_config device_config)
+static void captouch_configure_stage(struct ad714x_chip * chip, uint8_t stage){
+    struct ad7147_stage_config stage_config;
+    stage_config = ad714x_default_config();
+    if(chip == chip_bot){
+        stage_config.cinX_connection_setup[bot_stage_config[stage]] = CIN_CDC_POS;
+    } else {
+        stage_config.cinX_connection_setup[stage] = CIN_CDC_POS;
+    }
+    stage_config.pos_afe_offset=chip->pos_afe_offsets[stage];
+    ad714x_set_stage_config(chip, stage, &stage_config);
+}
+
+static int8_t captouch_configure_stage_afe_offset(uint8_t top, uint8_t stage, int8_t delta_afe){
+    int8_t sat = 0;
+    struct ad714x_chip * chip = chip_bot;
+    if(top) chip = chip_top;
+
+    int8_t afe = chip->pos_afe_offsets[stage] - chip->neg_afe_offsets[stage];
+    afe += delta_afe;
+    if(afe >= 63){
+        afe = 63;
+        sat = 1;
+    }
+    if(afe <= -63){
+        afe = -63;
+        sat = -1;
+    }
+    if(afe>0){
+        chip->pos_afe_offsets[stage] = afe;
+        chip->neg_afe_offsets[stage] = 0;
+    } else {
+        chip->pos_afe_offsets[stage] = 0;
+        chip->neg_afe_offsets[stage] = -afe;
+    }
+    captouch_configure_stage(chip, stage);
+    return sat;
+}
+
+static void captouch_init_chip(struct ad714x_chip* chip, const struct ad7147_device_config device_config)
 {
     uint16_t data;
     ad714x_i2c_read(chip, AD7147_REG_DEVICE_ID, &data, 1);
@@ -213,15 +251,7 @@ static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad71
     ad714x_set_device_config(chip, &device_config);
 
     for(int i=0; i<chip->stages; i++) {
-        struct ad7147_stage_config stage_config;
-        stage_config = ad714x_default_config();
-        if(chip == chip_bot){
-            stage_config.cinX_connection_setup[bot_stage_config[i]] = CIN_CDC_POS;
-        } else {
-            stage_config.cinX_connection_setup[i] = CIN_CDC_POS;
-        }
-        stage_config.pos_afe_offset=chip->pos_afe_offsets[i];
-        ad714x_set_stage_config(chip, i, &stage_config);
+        captouch_configure_stage(chip, i);
     }
 }
 
@@ -405,12 +435,19 @@ void captouch_set_petal_pad_threshold(uint8_t petal, uint8_t pad, uint16_t thres
     petals[petal].thres_values[pad] = thres;    
 }
 
+static int32_t calib_target = 6000;
+#define AFE_INCR_CAP 1000
+
+void captouch_set_calibration_afe_target(uint16_t target){
+    calib_target = target;
+}
+
 void captouch_read_cycle(){
         static uint8_t calib_cycle = 0; 
         static uint8_t calib_div = 1;
         static uint32_t ambient_acc[2][12] = {{0,}, {0,}};
         if(calib_cycles){
-            if(calib_cycle == 0){ // last cycle has finished
+            if(calib_cycle == 0){ // last cycle has finished, setup new
                 calib_cycle = calib_cycles;
                 calib_div = calib_cycles;
                 for(int j=0;j<12;j++){
@@ -429,13 +466,29 @@ void captouch_read_cycle(){
             // TODO: use median instead of average
             calib_cycle--;
             if(!calib_cycle){ //calib cycle is complete
-                for(int i=0;i<12;i++){
+                for(int i = 0; i < 12; i++){
                     cdc_ambient[0][i] = ambient_acc[0][i] / calib_div;
                     cdc_ambient[1][i] = ambient_acc[1][i] / calib_div;
                 }
                 cdc_to_petal(0, 1, cdc_ambient[0], 12);
                 cdc_to_petal(1, 1, cdc_ambient[1], 12);
                 calib_cycles = 0;
+                
+                uint8_t recalib = 0;
+                for(int i = 0; i < 12; i++){
+                    for(int j = 0; j < 2; j++){
+                        int32_t diff = ((int32_t) cdc_ambient[j][i]) - calib_target;
+                        int8_t steps = diff/(AFE_INCR_CAP);
+                        if((steps > 1) || (steps < -1)){
+                            if(!captouch_configure_stage_afe_offset(1-j, i, steps)){
+                                recalib = 1;
+                            }
+                        }
+                    }
+                }
+                if(recalib){
+                    captouch_force_calibration();
+                }
             }
         } else {
             ad714x_i2c_read(chip_top, 0xB, cdc_data[0], chip_top->stages);
@@ -447,8 +500,6 @@ void captouch_read_cycle(){
             check_petals_pressed();
         }
 }
-
-static void captouch_task(void* arg){}
 
 static void captouch_print_debug_info_chip(const struct ad714x_chip* chip)
 {
@@ -491,62 +542,3 @@ void captouch_print_debug_info(void)
     captouch_print_debug_info_chip(chip_bot);
 }
 
-void captouch_get_cross(int paddle, int *x, int *y)
-{
-    uint16_t *data;
-    uint16_t *ambient;
-
-    int result[2] = {0, 0};
-    float total = 0;
-
-    const int paddle_info_1[] = {
-        4,
-        0,
-        1,
-        2,
-        11,
-        4,
-        9,
-        7,
-        6,
-        9,
-    };
-    const int paddle_info_2[] = {
-        3,
-        1,
-        0,
-        3,
-        10,
-        5,
-        8,
-        6,
-        5,
-        8,
-    };
-
-    struct ad714x_chip* chip;
-    if (paddle % 2 == 0) {
-        //chip = chip_top;
-        data = cdc_data[0];
-        ambient = cdc_ambient[0];
-    } else {
-        //chip = chip_bot;
-        data = cdc_data[1];
-        ambient = cdc_ambient[1];
-    }
-    //ESP_LOGI(TAG, "CDC results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
-
-    int diff1 = data[paddle_info_1[paddle]] - ambient[paddle_info_1[paddle]];
-    int diff2 = data[paddle_info_2[paddle]] - ambient[paddle_info_2[paddle]];
-
-    ESP_LOGI(TAG, "%10d %10d", diff1, diff2);
-
-    int vectors[][2] = {{240, 240}, {240, 0}, {0, 120}};
-    total = ((diff1) + (diff2));
-
-    result[0] = vectors[0][0] * (diff1) + vectors[1][0] * (diff2);
-    result[1] = vectors[0][1] * (diff1) + vectors[1][1] * (diff2);
-
-    *x = result[0] / total;
-    *y = result[1] / total;
-}

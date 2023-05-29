@@ -14,3 +14,5 @@ uint16_t read_captouch();
 int32_t captouch_get_petal_phi(uint8_t petal);
 int32_t captouch_get_petal_rad(uint8_t petal);
 uint8_t captouch_calibration_active();
+void captouch_set_calibration_afe_target(uint16_t target);
+

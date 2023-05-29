@@ -120,6 +120,13 @@ STATIC mp_obj_t mp_captouch_autocalib(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_captouch_autocalib_obj, 0, 2, mp_captouch_autocalib);
 
+STATIC mp_obj_t mp_captouch_set_calibration_afe_target(size_t n_args, const mp_obj_t *args) {
+    uint16_t target = mp_obj_get_int(args[0]);
+    captouch_set_calibration_afe_target(target);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_captouch_set_calibration_afe_target_obj, 1, 2, mp_captouch_set_calibration_afe_target);
+
 STATIC mp_obj_t mp_get_button(size_t n_args, const mp_obj_t *args) {
     uint8_t leftbutton = mp_obj_get_int(args[0]);
     int8_t ret = get_button_state(leftbutton);
@@ -208,6 +215,7 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_captouch_get_petal_phi), MP_ROM_PTR(&mp_captouch_get_petal_phi_obj) },
     { MP_ROM_QSTR(MP_QSTR_captouch_set_petal_pad_threshold), MP_ROM_PTR(&mp_captouch_set_petal_pad_threshold_obj) },
     { MP_ROM_QSTR(MP_QSTR_captouch_autocalib), MP_ROM_PTR(&mp_captouch_autocalib_obj) },
+    { MP_ROM_QSTR(MP_QSTR_captouch_set_calibration_afe_target), MP_ROM_PTR(&mp_captouch_set_calibration_afe_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_button), MP_ROM_PTR(&mp_get_button_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_global_volume_dB), MP_ROM_PTR(&mp_set_global_volume_dB_obj) },
     { MP_ROM_QSTR(MP_QSTR_count_sources), MP_ROM_PTR(&mp_count_sources_obj) },
