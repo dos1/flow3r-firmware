@@ -220,17 +220,13 @@ static int8_t captouch_configure_stage_afe_offset(uint8_t top, uint8_t stage, in
     int8_t sat = 0;
     struct ad714x_chip * chip = chip_bot;
     if(top) chip = chip_top;
-
     int8_t afe = chip->pos_afe_offsets[stage] - chip->neg_afe_offsets[stage];
+    if((afe >= 63) && (delta_afe > 0)) sat = 1;
+    if((afe <= 63) && (delta_afe < 0)) sat = -1;
     afe += delta_afe;
-    if(afe >= 63){
-        afe = 63;
-        sat = 1;
-    }
-    if(afe <= -63){
-        afe = -63;
-        sat = -1;
-    }
+    if(afe >= 63) afe = 63;
+    if(afe <= -63)afe = -63;
+
     if(afe>0){
         chip->pos_afe_offsets[stage] = afe;
         chip->neg_afe_offsets[stage] = 0;
