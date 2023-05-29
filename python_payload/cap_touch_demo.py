@@ -12,6 +12,7 @@ def run():
     time.sleep_ms(30)
     for i in range(10):
         size = (hardware.get_captouch(i) * 4) + 4
+        size += int(max(0, sum([hardware.captouch_get_petal_pad(i, x) for x in range(0, 3+1)]) / 8000))
         x = 70 + (hardware.captouch_get_petal_rad(i)/1000)
         x += (hardware.captouch_get_petal_phi(i)/600)*1j
         rot =  cmath.exp(2j *math.pi * i / 10)
