@@ -52,6 +52,7 @@ def foreground_menu():
     utils.highlight_bottom_petal(0,0,55,55);
     utils.highlight_bottom_petal(1,55,0,55);
     utils.highlight_bottom_petal(2,55,55,0);
+    utils.highlight_bottom_petal(3,0,110,0);
     display_fill(BACKGROUND_COLOR)
     display_update()
 
