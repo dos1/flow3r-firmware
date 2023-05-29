@@ -5,16 +5,16 @@ import math
 
 def xy_from_polar(r,deg):
     #rad = deg/180*math.pi
-    
-    return( (
+
+    return (
         r * math.sin(deg), #x
         r * math.cos(deg)  #y
-    )  )
+    )
 
 def randrgb():
     return ((random.random(),random.random(),random.random()))
-    
-    
+
+
 WIDTH = 240
 HEIGHT = 240
 
@@ -26,23 +26,11 @@ BLUE = (0,0,1)
 WHITE = (1,1,1)
 GREY = (0.5,0.5,0.5)
 
-# Get the global context (representing the whole screen)
-global ctx
+# The global context (representing the whole screen)
+ctx = None
 
-'''
-#center the text horizontally and vertically
-ctx.text_align = ctx.CENTER
-ctx.text_baseline = ctx.MIDDLE
+worms = None
 
-#ctx.rgb() expects individual values for the channels, so unpack a list/tuple with *
-#operations on ctx can be chained
-#create a blue background
-ctx.rgb(*BLUE).rectangle(-WIDTH/2,-HEIGHT/2,WIDTH,HEIGHT).fill()
-
-#Write some text
-ctx.move_to(0,0).rgb(*WHITE).text("Hi :)")
-hardware.display_update()
-'''
 
 class Worm():
     def __init__(self):
@@ -57,7 +45,6 @@ class Worm():
         self._lastdist = 0.0
     
     def draw(self):
-        global ctx
         ctx.rgb(*self.color)
         ctx.round_rectangle(
             self.x-self.size/2,
@@ -90,8 +77,6 @@ class Worm():
         self._lastdist = dist
 
 
-global worms
-
 def init():
     global worms
     global ctx
@@ -110,7 +95,17 @@ def run():
 
 
 def foreground():
-    pass
+    ctx.text_align = ctx.CENTER
+    ctx.text_baseline = ctx.MIDDLE
+
+    #ctx.rgb() expects individual values for the channels, so unpack a list/tuple with *
+    #operations on ctx can be chained
+    #create a blue background
+    ctx.rgb(*BLUE).rectangle(-WIDTH/2,-HEIGHT/2,WIDTH,HEIGHT).fill()
+
+    #Write some text
+    ctx.move_to(0,0).rgb(*WHITE).text("Hi :)")
+    hardware.display_update()
 
 #Known problems:
 #ctx.rotate(math.pi) turns the display black until powercycled
