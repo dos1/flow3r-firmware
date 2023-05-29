@@ -16,4 +16,4 @@ INSTRUMENT 3, CAP TOUCH DEBUG: shows 10 dots corresponding to the 10 petals. eac
 
 ### captouch calibration:
 
-the captouch controller can be forced into recalibration by pressing the left shoulder button while in the menu. the screen shows the text "CAL" while in calibration. calibration is also performed at startup. calibration is intended to get a baseline for pads that are not being touched at the moment, it is recommeded to lie the badge flat on the able while recalibrating.
+the captouch controller can be recalibrated by pressing the left shoulder button while in the menu. the screen shows the text "CAL" while in calibration. the screen background is teal for 0.5s to give the user time to remove their hands, then turns plum for the actual calibration. calibration is intended to get a baseline for pads that are not being touched at the moment, it is recommeded to lie the badge flat on the able while recalibrating. calibration is also performed at startup. 

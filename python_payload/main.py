@@ -74,8 +74,12 @@ def captouch_cal():
     display_fill(0b0000000111100111)
     ctx.move_to(0,0).rgb(0,255,0).text("cal")
     display_update()
+    time.sleep_ms(500)
+    display_fill(0b0011100000000111)
+    ctx.move_to(0,0).rgb(0,255,0).text("cal")
     captouch_autocalib()
-    time.sleep_ms(5000)
+    while(captouch_calibration_active()):
+        pass
     display_fill(0)
     display_update()
 
@@ -83,6 +87,10 @@ def main():
     global CURRENT_APP_RUN
     global ctx
     while not init_done():
+        pass
+
+    captouch_autocalib() # dry run
+    while(captouch_calibration_active()):
         pass
 
     captouch_cal()
