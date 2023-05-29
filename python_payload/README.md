@@ -12,7 +12,9 @@ INSTRUMENT 1, CHORD ORGAN: all LEDs are lit up in the same color. each top petal
 
 INSTRUMENT 2, MELODY PLAYER: the 3 most down-pointing petal LEDs are lit in pink. these 3 petals select between 3 different octaves. depending on octave selection, the remaining petals are lit in blue (low octave), cyan (mid octave) and green (high octave). these "playing petals" provide tones in a major scale. it is a single oscillator system, so pressing more than one "playing petal" results in the oscillator jumping between pitches rapidly, providing a HIDDEN NOISE MODE. the screen is entirely black. author's note: this one didn't turn out well at all and could use a bunch more love. we find it valuable to provide people with a simple instrument to try to play their favorite melodies on, but this ain't it yet.
 
-INSTRUMENT 3, CAP TOUCH DEBUG: shows 10 dots corresponding to the 10 petals. each gets bigger if the captouch threshold is exceeded (i.e., a touch is registered) and moves with the current position on the petal (1d for 2-segment petals, 2d for 3-segment petals). note that on p3/p4 the inner pad of the bottom petal opposed to the usb c port is currently not registered for technical reasons.
+INSTRUMENT 3, WORMS: worms
+
+INSTRUMENT 4, CAP TOUCH DEBUG: shows 10 dots corresponding to the 10 petals. each gets bigger if the captouch threshold is exceeded (i.e., a touch is registered) and moves with the current position on the petal (1d for 2-segment petals, 2d for 3-segment petals). note that on p3/p4 the inner pad of the bottom petal opposed to the usb c port is currently not registered for technical reasons.
 
 ### captouch calibration:
 
