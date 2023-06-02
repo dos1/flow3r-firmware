@@ -17,6 +17,8 @@
 
 Ctx *the_ctx = NULL;
 
+uint8_t scope_active = 0;
+
 uint16_t *pixels;
 
 typedef struct leds_cfg {
@@ -24,28 +26,13 @@ typedef struct leds_cfg {
 } display_cfg_t;
 
 static QueueHandle_t display_queue = NULL;
-static void display_task(TimerHandle_t aaaaa);
-//static void display_task(void* arg);
+static void display_task(TimerHandle_t dummy);
+static TimerHandle_t display_animation_timer;
 
 static void _display_init() {
     GC9A01_Init();
-    //    GC9A01_Screen_Load(0,0,240,240,pixels);
     GC9A01_Update();
-    
-	
-	
-    /*
-    display_queue = xQueueCreate(1, sizeof(display_cfg_t));
-    TaskHandle_t handle;
-    xTaskCreate(&display_task, "Display", 4096, NULL, configMAX_PRIORITIES - 3, &handle);
-    */
-    
-    /* SCOPE TASK
-    TimerHandle_t aa = xTimerCreate("Display", pdMS_TO_TICKS(100), pdTRUE, (void *) 0, *display_task);
-    if( xTimerStart(aa, 0 ) != pdPASS )
-    {
-    }
-    */
+    display_animation_timer = xTimerCreate("display animation timer", pdMS_TO_TICKS(100), pdTRUE, (void *) 0, *display_task);
 }
 
 
@@ -63,6 +50,7 @@ void display_ctx_init() {
 }
 
 void display_update(){
+    if(scope_active) return;
     GC9A01_Update();
 }
 
@@ -79,29 +67,18 @@ void display_fill(uint16_t col){
 }
 
 void display_draw_scope(){
-    //display_cfg_t  display_;
     uint16_t line[240];
-    /*
-    printf("waiting...\n");
-    xQueueReceive(display_queue, &display_, portMAX_DELAY);
-    printf("go...\n");
-    */
-    //uint32_t t0 = esp_log_timestamp();
     begin_scope_read();
-
     for(int y=0; y<240; y++){
         read_line_from_scope(&(line[0]), y);
         memcpy(&ScreenBuff[y * 240], line, sizeof(line));
     }
     end_scope_read();
-
-    //uint32_t td = esp_log_timestamp() - t0;
-    // printf("it took %lu\n", td);
-    display_update();
-
+    GC9A01_Update();
 }
+
 //static void display_task(void* arg) {
-static void display_task(TimerHandle_t aaaaa) {
+static void display_task(TimerHandle_t dummy) {
     display_draw_scope();
 }
 
@@ -110,3 +87,20 @@ void display_init() {
 	display_ctx_init();
 }
 
+void display_scope_start(){
+    scope_active = 1;
+    vTaskDelay(pdMS_TO_TICKS(100)); //hack: wait until last display update has stopped
+    if(xTimerStart(display_animation_timer, pdMS_TO_TICKS(100)) != pdPASS)
+    {   // timer startup has failed
+        scope_active = 0;
+    }
+}
+
+void display_scope_stop(){
+    if(!scope_active) return; //nothing to do
+    if(xTimerStop(display_animation_timer, pdMS_TO_TICKS(1000)) != pdPASS)
+    {
+        // not sure how to handle this, any ideas? just repeat query? throw error?
+    }
+    scope_active = 0;
+}

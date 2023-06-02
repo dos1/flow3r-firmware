@@ -115,6 +115,7 @@ def main():
             if(get_button(0) == 2):
                 if CURRENT_APP_RUN != run_menu:
                     CURRENT_APP_RUN = run_menu
+                    display_scope_stop()
                     foreground_menu()
             else:
                 if(get_button(0) == 1):
