@@ -23,7 +23,7 @@ def init():
     global notes
     for i in range(10):
         synth = tinysynth(440,0)
-        synth.attack(1)
+        synth.attack(0)
         if i % 2:
             synth.tone(notes[int(i/2)])
             synth.waveform(4)
@@ -38,3 +38,9 @@ def init():
 
 def foreground():
     display_scope_start()
+    for i in range(10):
+        for y in range(4):
+            captouch_set_petal_pad_threshold(i,y,4000)
+    for i in range(40):
+        set_led_rgb(i, 0,60,60)
+    update_leds()
