@@ -5,10 +5,11 @@ import harmonic_demo
 import melodic_demo
 import demo_worms
 import cap_touch_demo
+import drums_and_notes
 
 MODULES = [
     harmonic_demo,
-    melodic_demo,
+    drums_and_notes,
     demo_worms,
     cap_touch_demo,
 ]
