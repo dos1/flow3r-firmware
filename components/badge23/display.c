@@ -67,13 +67,8 @@ void display_fill(uint16_t col){
 }
 
 void display_draw_scope(){
-    uint16_t line[240];
-    begin_scope_read();
-    for(int y=0; y<240; y++){
-        read_line_from_scope(&(line[0]), y);
-        memcpy(&ScreenBuff[y * 240], line, sizeof(line));
-    }
-    end_scope_read();
+    if(!scope_active) return;
+    scope_write_to_framebuffer(&ScreenBuff);
     GC9A01_Update();
 }
 

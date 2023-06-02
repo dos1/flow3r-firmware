@@ -10,6 +10,4 @@ typedef struct {
 
 void init_scope(uint16_t size);
 void write_to_scope(int16_t value);
-void begin_scope_read();
-void end_scope_read();
-void read_line_from_scope(uint16_t * line, int16_t point);
+void scope_write_to_framebuffer(uint16_t * framebuffer);
