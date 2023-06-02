@@ -100,6 +100,15 @@ class MenuItem():
         if self.action:
             self.action(data)
 
+class MenuItemApp(MenuItem):
+    def __init__(self,app):
+        super().__init__(name=app.title)
+        self.target = app
+    
+    def enter(self,data={}):
+        if self.target:
+            self.target.run()
+
 class MenuItemSubmenu(MenuItem):
     def __init__(self,submenu):
         super().__init__(name=submenu.name)
@@ -168,37 +177,46 @@ def on_release(d):
     
 def on_enter(d):
     if active_menu is None:
+        
+        #TODO this should not bee needed...
         event.the_engine.userloop=None
         menu_back()
         return
-    else:
+
+    if active_menu:
         active_menu.get_hovered_item().enter()
+        render()
+    else:
+        return
+
     
 event.Event(name="menu rotation button",group_id="menu",
-    condition=lambda e: e["type"] =="button" and not e["change"] and abs(e["value"])==1 ,
-    action=on_scroll
+    condition=lambda e: e["type"] =="button" and not e["change"] and abs(e["value"])==1,
+    action=on_scroll, enabled=True
 )
 
 event.Event(name="menu rotation captouch",group_id="menu",
     condition=lambda e: e["type"] =="captouch" and not e["change"] and abs(e["value"])==1 and e["index"]==2,
-    action=on_scroll_captouch
+    action=on_scroll_captouch, enabled=False
 )
 
 event.Event(name="menu rotation button release",group_id="menu",
     condition=lambda e: e["type"] =="button" and e["change"] and e["value"] ==0,
-    action=on_release
+    action=on_release, enabled=True
 )
 
 event.Event(name="menu button enter",group_id="menu",
-    condition=lambda e: e["type"] =="button" and e["change"] and e["value"] == 2,
-    action=on_enter
+    condition=lambda e: e["type"] =="button" and e["change"] and e["from"] == 2,
+    action=on_enter, enabled=True
 )
 
 def render():
     print (active_menu)
     if active_menu is None:
         return
-    hardware.get_ctx().rectangle(-120,-120,240,240).rgb(0,0,0).fill()
+    
+    ui.the_ctx.rectangle(-120,-120,240,240).rgb(0,0,0).fill()
+    print("before draw")
     active_menu.draw()
     #hardware.display_update()
 
@@ -206,9 +224,21 @@ def set_active_menu(menu):
     global active_menu
     active_menu = menu
 
+def menu_disable():
+    global active_menu
+    if active_menu:
+        menu_stack.append(active_menu)
+        active_menu=None
+
 def menu_back():
+    print ("back")
     if not menu_stack:
         return
 
     previous = menu_stack.pop()
+
     set_active_menu(previous)
+    #ui.the_ctx = hardware.reset_ctx()
+    print("almost")
+    render()
+    print("rendered")

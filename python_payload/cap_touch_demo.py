@@ -25,3 +25,8 @@ def run():
 def foreground():
     pass
 
+
+from application import Application
+
+app = Application("cap touch")
+app.main_foreground = run

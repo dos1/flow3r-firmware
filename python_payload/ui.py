@@ -4,16 +4,38 @@ import math
 import time
 from math import sin,cos,pi
 
+WIDTH = 240
+HEIGHT = 240
 
+#Define a few RGB (0.0 to 1.0) colors
+BLACK = (0,0,0)
+RED = (1,0,0)
+GREEN = (0,1,0)
+BLUE = (0,0,1)
+WHITE = (1,1,1)
+GREY = (0.5,0.5,0.5)
 GO_GREEN = (63/255,255/255,33/53)
 PUSH_RED = (251/255,72/255,196/255)
 
+the_ctx = hardware.get_ctx()
+
+# Utility functions
+def xy_from_polar(r,deg):
+    #rad = deg/180*math.pi
+
+    return (
+        r * math.sin(deg), #x
+        r * math.cos(deg)  #y
+    )
+
+def randrgb():
+    return ((random.random(),random.random(),random.random()))
 
 class UIElement():
     def __init__(self,origin=(0,0)):
         self.children = []
         self.origin = origin
-        self.ctx = hardware.get_ctx()
+        self.ctx = the_ctx
     
     def draw(self, offset=(0,0)):
         pos = (self.origin[0]+offset[0],self.origin[1]+offset[1])
@@ -27,6 +49,10 @@ class UIElement():
 
     def add(self, child):
         self.children.append(child)
+
+class Viewport(UIElement):
+    def _draw(self,pos):
+        self.ctx.rgb(0.3,0.3,0.3).rectangle(-WIDTH/2,-HEIGHT/2,WIDTH,HEIGHT).fill()
 
 class Text(UIElement):
     def __init__(self,s="foo"):
@@ -104,10 +130,12 @@ class GroupRing(UIElement):
         pos = (self.origin[0]+offset[0],self.origin[1]+offset[1])
         self._draw(pos)
         for index in range(len(self.children)):
+            print("child",index)
             child = self.children[index]
             angle = 2*math.pi/len(self.children)*index+self.angle_offset
             x = math.sin(angle)*self.r+pos[0]
             y = -math.cos(angle)*self.r+pos[1]
+            print("pos",(x,y))
             child.draw(offset=(x,y))
 
     def _draw(self,pos):
