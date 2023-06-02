@@ -33,6 +33,18 @@ STATIC mp_obj_t mp_display_update(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_display_update_obj, 0, 1, mp_display_update);
 
+STATIC mp_obj_t mp_display_scope_start(size_t n_args, const mp_obj_t *args) {
+    display_scope_start();
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_display_scope_start_obj, 0, 1, mp_display_scope_start);
+
+STATIC mp_obj_t mp_display_scope_stop(size_t n_args, const mp_obj_t *args) {
+    display_scope_stop();
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_display_scope_stop_obj, 0, 1, mp_display_scope_stop);
+
 STATIC mp_obj_t mp_display_draw_pixel(size_t n_args, const mp_obj_t *args) {
     uint16_t x = mp_obj_get_int(args[0]);
     uint16_t y = mp_obj_get_int(args[1]);
@@ -161,6 +173,8 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_set_led_hsv), MP_ROM_PTR(&mp_set_led_hsv_obj) },
     { MP_ROM_QSTR(MP_QSTR_update_leds), MP_ROM_PTR(&mp_update_leds_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_update), MP_ROM_PTR(&mp_display_update_obj) },
+    { MP_ROM_QSTR(MP_QSTR_display_scope_start), MP_ROM_PTR(&mp_display_scope_start_obj) },
+    { MP_ROM_QSTR(MP_QSTR_display_scope_stop), MP_ROM_PTR(&mp_display_scope_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_draw_pixel), MP_ROM_PTR(&mp_display_draw_pixel_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_get_pixel), MP_ROM_PTR(&mp_display_get_pixel_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_fill), MP_ROM_PTR(&mp_display_fill_obj) },

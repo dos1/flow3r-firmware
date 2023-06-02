@@ -65,3 +65,4 @@ def init():
 
 def foreground():
     adjust_playing_field_to_octave()
+    display_scope_start()
