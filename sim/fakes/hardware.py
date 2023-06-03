@@ -64,9 +64,6 @@ def display_update():
         r, g, b = state
         for i in range(20):
             radius = 26 - i
-            #r = r / (math.sqrt(19-i)+1)
-            #g = g / (math.sqrt(19-i)+1)
-            #b = b / (math.sqrt(19-i)+1)
             r2 = r / (20 - i)
             g2 = g / (20 - i)
             b2 = b / (20 - i)
