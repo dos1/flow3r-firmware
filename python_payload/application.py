@@ -121,7 +121,7 @@ class Application():
             e.set_enabled(enabled)
 
     def on_init(self):
-        print("nothing")
+        print("nothing to init")
         pass
 
     def on_foreground(self):
@@ -137,7 +137,7 @@ class Application():
         pass
 
     def main_foreground(self):
-        print("nothing")
+        #print("nothing")
         pass
     
     def main_always(self):

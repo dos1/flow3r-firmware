@@ -4,6 +4,9 @@ import math
 import time
 from math import sin,cos,pi
 
+import micropython
+import gc
+
 WIDTH = 240
 HEIGHT = 240
 
@@ -76,6 +79,7 @@ class Icon(UIElement):
         super().__init__()
 
     def _draw(self,pos):
+        print("ui.Icon._draw()")
         x = int(pos[0])
         y = int(pos[1])
 
@@ -89,6 +93,8 @@ class Icon(UIElement):
                 y-hs/2,
                 hs,hs,hs//2
             ).fill()
+        
+        print("  arc")
         self.ctx.move_to(x,y).rgb(self.bg_r,self.bg_g,self.bg_b).arc(x,y,self.size/2,-math.pi,math.pi,True).fill()
         #self.ctx.move_to(x,y-self.size/2).rgb(self.bg_r,self.bg_g,self.bg_b).
         #.round_rectangle(
@@ -96,8 +102,17 @@ class Icon(UIElement):
         #    y-self.size/2,
         #    self.size,self.size,self.size//2
         #).fill()
-        self.ctx.rgb(1,1,1).move_to(x,y).text(self.label)
-
+        micropython.mem_info()
+        gc.collect()
+        print(self.label)
+        
+        self.ctx.rgb(1,1,1).move_to(x,y)
+        micropython.mem_info("data")
+        print("  moved")
+        print(" crash here:")
+        self.ctx.text(self.label)
+        
+        print("  text")
 class IconValue(Icon):
     def __init__(self, value=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
