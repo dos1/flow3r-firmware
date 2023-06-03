@@ -27717,7 +27717,7 @@ static int is_in_ctx (void)
 }
 #endif
 
-#if EMSCRIPTEN
+#if CTX_WASM_ORIG // Renamed from upstream, as we don't want this code to be compiled in, even though we're using Emscripten.
 
 CTX_EXPORT Ctx *
 ctx_wasm_get_context (int flags);
@@ -40644,7 +40644,7 @@ Ctx *ctx_new_tft (TFT_eSPI *tft,
 }
 #endif
 
-#ifdef EMSCRIPTEN
+#ifdef CTX_WASM_ORIG // Renamed from upstream, as we don't want this code to be compiled in, even though we're using Emscripten.
 #include "emscripten.h"
 
 #include <unistd.h>

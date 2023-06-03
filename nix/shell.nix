@@ -20,6 +20,9 @@ in with nixpkgs; pkgs.mkShell {
     cmake ninja
 
     ncurses5
+
+    (python3.withPackages (ps: with ps; [ pygame wasmer wasmer-compiler-cranelift ]))
+    emscripten
   ];
   shellHook = ''
     # For esp.py openocd integration.
