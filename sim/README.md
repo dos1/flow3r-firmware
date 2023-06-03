@@ -36,8 +36,6 @@ No support for input of any kind yet (captouch, three-way buttons).
 
 No support for audio yet.
 
-No support for LEDs yet.
-
 Hacking
 ---
 

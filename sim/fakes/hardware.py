@@ -54,7 +54,24 @@ def display_update():
     fb = get_ctx()._get_fb()
 
     full = pygame.Surface((screen_w, screen_h), flags=pygame.SRCALPHA)
+    full.fill((0, 0, 0, 255))
     full.blit(background, (0, 0))
+
+    leds = pygame.Surface((screen_w, screen_h), flags=pygame.SRCALPHA)
+    for pos, state in zip(leds_positions, leds_state):
+        x = pos[0] + 3.0
+        y = pos[1] + 3.0
+        r, g, b = state
+        for i in range(20):
+            radius = 26 - i
+            #r = r / (math.sqrt(19-i)+1)
+            #g = g / (math.sqrt(19-i)+1)
+            #b = b / (math.sqrt(19-i)+1)
+            r2 = r / (20 - i)
+            g2 = g / (20 - i)
+            b2 = b / (20 - i)
+            pygame.draw.circle(leds, (r2, g2, b2), (x, y), radius)
+    full.blit(leds, (0, 0), special_flags=pygame.BLEND_ADD)
 
     center_x = 408
     center_y = 426
@@ -85,14 +102,37 @@ def display_update():
     del oled_buf
     full.blit(oled, (off_x, off_y))
 
+    screen.fill((0, 0, 0, 255))
     screen.blit(full, (0,0))
     pygame.display.flip()
 
-def set_led_rgb(a, b, c, d):
-    pass
+leds_positions = [
+    (660, 455), (608, 490), (631, 554), (648, 618), (659, 690), (655, 770), (571, 746), (502, 711),
+    (452, 677), (401, 639), (352, 680), (299, 713), (241, 745), (151, 771), (147, 682), (160, 607),
+    (176, 549), (197, 491), (147, 453), ( 98, 416), ( 43, 360), (  0, 292), ( 64, 267), (144, 252),
+    (210, 248), (276, 249), (295, 190), (318, 129), (351,  65), (404,   0), (456,  64), (490, 131),
+    (511, 186), (529, 250), (595, 247), (663, 250), (738, 264), (810, 292), (755, 371), (705, 419),
+]
+leds_state_buf = [(0, 0, 0) for _ in leds_positions]
+leds_state = [(0, 0, 0) for _ in leds_positions]
+
+def set_led_rgb(ix, r, g, b):
+    ix = ((39-ix) + 1 + 32)%40;
+
+    r = r << 3
+    g = g << 2
+    b = b << 3
+    if r > 255:
+        r = 255
+    if g > 255:
+        g = 255
+    if b > 255:
+        b = 255
+    leds_state_buf[ix] = (r, g, b)
 
 def update_leds():
-    pass
+    for i, s in enumerate(leds_state_buf):
+        leds_state[i] = s
 
 def set_global_volume_dB(a):
     pass
