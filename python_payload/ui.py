@@ -79,7 +79,7 @@ class Icon(UIElement):
         super().__init__()
 
     def _draw(self,pos):
-        print("ui.Icon._draw()")
+        #print("ui.Icon._draw()")
         x = int(pos[0])
         y = int(pos[1])
 
@@ -94,7 +94,7 @@ class Icon(UIElement):
                 hs,hs,hs//2
             ).fill()
         
-        print("  arc")
+        #print("  arc")
         self.ctx.move_to(x,y).rgb(self.bg_r,self.bg_g,self.bg_b).arc(x,y,self.size/2,-math.pi,math.pi,True).fill()
         #self.ctx.move_to(x,y-self.size/2).rgb(self.bg_r,self.bg_g,self.bg_b).
         #.round_rectangle(
@@ -102,17 +102,14 @@ class Icon(UIElement):
         #    y-self.size/2,
         #    self.size,self.size,self.size//2
         #).fill()
-        micropython.mem_info()
-        gc.collect()
-        print(self.label)
         
-        self.ctx.rgb(1,1,1).move_to(x,y)
-        micropython.mem_info("data")
-        print("  moved")
-        print(" crash here:")
-        self.ctx.text(self.label)
+        #micropython.mem_info()
+        #gc.collect()
+        #print(self.label)
         
-        print("  text")
+        self.ctx.rgb(1,1,1).move_to(x,y).text(self.label)
+        #micropython.mem_info("data")
+  
 class IconValue(Icon):
     def __init__(self, value=0, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -145,12 +142,12 @@ class GroupRing(UIElement):
         pos = (self.origin[0]+offset[0],self.origin[1]+offset[1])
         self._draw(pos)
         for index in range(len(self.children)):
-            print("child",index)
+            #print("child",index)
             child = self.children[index]
             angle = 2*math.pi/len(self.children)*index+self.angle_offset
             x = math.sin(angle)*self.r+pos[0]
             y = -math.cos(angle)*self.r+pos[1]
-            print("pos",(x,y))
+            #print("pos",(x,y))
             child.draw(offset=(x,y))
 
     def _draw(self,pos):

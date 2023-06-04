@@ -27,7 +27,8 @@ class Application():
             condition=lambda e: e["type"]=="button" and e.get("from")==2 and e["change"]
         ))
 
-        #self.ui.add(ui.Icon(label=self.title))
+        self.ui.add(ui.Icon(label=self.title))
+        
     def __repr__(self):
         return "App "+self.title
     def init(self):

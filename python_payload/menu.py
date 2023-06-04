@@ -216,7 +216,6 @@ def render():
         return
     
     ui.the_ctx.rectangle(-120,-120,240,240).rgb(0,0,0).fill()
-    print("before draw")
     active_menu.draw()
     #hardware.display_update()
 
@@ -231,14 +230,11 @@ def menu_disable():
         active_menu=None
 
 def menu_back():
-    print ("back")
     if not menu_stack:
         return
 
     previous = menu_stack.pop()
 
     set_active_menu(previous)
-    #ui.the_ctx = hardware.reset_ctx()
-    print("almost")
     render()
-    print("rendered")
+    
