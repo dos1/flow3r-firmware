@@ -34,8 +34,6 @@ Known Issues
 
 Captouch petal input order is wrong.
 
-No support for three-way buttons yet.
-
 No support for audio yet.
 
 Hacking
