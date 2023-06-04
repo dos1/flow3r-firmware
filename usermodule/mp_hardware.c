@@ -20,7 +20,6 @@
 #include "badge23_hwconfig.h"
 
 mp_obj_t mp_ctx_from_ctx(Ctx *ctx);
-mp_obj_t mp_ctx = NULL;
 
 STATIC mp_obj_t mp_init_done(void) {
     return mp_obj_new_int(hardware_is_initialized());
@@ -190,7 +189,12 @@ STATIC mp_obj_t mp_version(void) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_version_obj, mp_version);
 
 STATIC mp_obj_t mp_get_ctx(size_t n_args, const mp_obj_t *args) {
-    mp_ctx = mp_ctx_from_ctx(the_ctx);
+    // This might be called before the ctx is ready.
+    // HACK: this will go away with the new drawing API.
+    while (the_ctx == NULL) {
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
+    mp_obj_t mp_ctx = mp_ctx_from_ctx(the_ctx);
     return mp_ctx;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_get_ctx_obj, 0, 0, mp_get_ctx);

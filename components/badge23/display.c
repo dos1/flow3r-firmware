@@ -15,7 +15,7 @@
 
 #include "../../usermodule/uctx/uctx/ctx.h"
 
-Ctx *the_ctx = NULL;
+volatile Ctx *the_ctx = NULL;
 
 uint16_t *pixels;
 
