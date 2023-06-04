@@ -122,3 +122,7 @@ class Ctx:
     def fill(self):
         self._emit(f"fill")
         return self
+
+    def arc(self, x, y , radius, arc_from, arc_to, direction):
+        self._emit(f"arc {x} {y} {radius} {arc_from} {arc_to} {direction}")
+        return self

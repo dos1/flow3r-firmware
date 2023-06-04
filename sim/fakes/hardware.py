@@ -396,3 +396,10 @@ def get_captouch(a):
     _sim.process_events()
     _sim.render_gui_lazy()
     return _sim.petals.state()[a]
+
+#TODO(iggy/q3k do proper positional captouch)
+def captouch_get_petal_rad(a):
+    return 0
+
+def captouch_get_petal_phi(a):
+    return 0
