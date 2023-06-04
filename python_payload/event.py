@@ -37,11 +37,22 @@ class Engine():
         self.remove_timed(group_id)
 
     def remove_timed(self,group_id):
+        #print("before:",len(self.events_timed))
         self.events_timed = [event for event in self.events_timed if event.group_id!=group_id]
         self._sort_timed()
+        #print("after",len(self.events_timed))
     
     def remove_input(self,group_id):
         self.events_input = [event for event in self.events_input if event.group_id!=group_id]
+
+    def register_main_loop(self,loop,enable=True):
+        if enable:
+            #print ("new userloop",loop)
+            #loop()
+            self.userloop = loop
+        elif self.userloop == loop:
+            #print ("removed userloop")
+            self.userloop = None
 
     def _sort_timed(self):
         self.events_timed = sorted(self.events_timed, key = lambda event: event.deadline)
@@ -102,7 +113,7 @@ class Engine():
                  entry["change"] = False
 
             #find and trigger the events q
-            triggered_events = list(filter(lambda e: e.condition(entry),self.events_input))
+            triggered_events = list(filter(lambda e: e.enabled and e.condition(entry),self.events_input))
             #print (triggered_events)
             #map(lambda e: e.trigger(d), triggered_events)
             for e in triggered_events:
@@ -111,7 +122,8 @@ class Engine():
         self.last_input_state=input_state        
         
     def _handle_userloop(self):
-        if self.userloop:
+        if not self.userloop is None:
+            #print("userloop",self.userloop)
             self.userloop()
         
     def _eventloop_single(self):
@@ -134,17 +146,21 @@ class Engine():
             time.sleep(0.005)
         
 class Event():
-    def __init__(self,name="unknown",data={},action=None,condition=None,group_id=None):
+    def __init__(self,name="unknown",data={},action=None,condition=None,group_id=None,enabled=False):
         #print (action)
         self.name = name
         self.eventtype = None
         self.data = data
         self.action = action
         self.condition = condition
+        self.enabled = enabled
         if not condition:
             self.condition = lambda x: True
         self.group_id=group_id
-        the_engine.add(self)
+        
+        if enabled:
+            self.set_enabled()
+            
             
         
     def trigger(self,triggerdata={}):
@@ -153,11 +169,22 @@ class Event():
             triggerdata.update(self.data)
             self.action(triggerdata)
     
+    def set_enabled(self,enabled=True):
+        self.enabled=enabled
+        if enabled:
+            the_engine.add(self)
+        else:
+            self.remove()
+
     def remove(self):
-        if self in the_engine.events_input:
+        print ("remove",self)
+        while self in the_engine.events_input:
+            print ("from input")
             the_engine.events_input.remove(self)
-        if self in the_engine.events_timed:
+        while self in the_engine.events_timed:
+            print("from timed")
             the_engine.events_timed.remove(self)
+            the_engine._sort_timed()
 
 class EventTimed(Event):
     def __init__(self,ms,name="timer", *args, **kwargs):
@@ -172,23 +199,48 @@ class EventTimed(Event):
         return ("event on tick {} ({})".format(self.deadline,self.name))
 
 
+#hack, make this oo
+def on_restart(data):
+    print("loop sequence")
+    obj = data["object"]
+    if obj.is_running:
+        obj.start()
+
+
+
 class Sequence():
     def __init__(self,bpm=60,loop=True,steps=16,action=None):
         self.group_id = random.randint(0,100000000)
         self.bpm = bpm
+        self.steps = steps
+        self.repeat_event = None
+        self.loop = loop
+        self.events = []
+        self.is_running = False
+        
         if not action:
             self.action = lambda data: print("step {}".format(data.get("step")))
         else:
             self.action = action
-        stepsize_ms = int(60*1000/bpm)
-        for i in range(steps):
-            EventTimed(stepsize_ms*i,name="seq{}".format(i),action=self.action, data={'step':i}, group_id=self.group_id)
-        
-        if loop:
-            EventTimed(stepsize_ms*steps,name="loop", group_id=self.group_id, action=lambda data: Sequence(bpm=bpm,loop=loop,steps=steps,action=action))
-
-    def remove(self):
-        the_engine.remove_timed(self.group_id)
+    
+    def start(self):
+        if self.is_running: self.stop()
+        stepsize_ms = int(60*1000/self.bpm)
+        for i in range(self.steps):
+            print("adding sequence event ", i)
+            self.events.append(EventTimed(stepsize_ms*i,name="seq{}".format(i),action=self.action, data={'step':i}, group_id=self.group_id,enabled=True))
+        if self.loop:
+            self.repeat_event=EventTimed(stepsize_ms*self.steps,name="loop", group_id=self.group_id, enabled=True, action=on_restart, data={"object":self})
+        self.is_running=True
+    
+    def stop(self):
+        #for e in self.events: e.remove()
+        print("sequence stop")
+        the_engine.remove_timed(group_id=self.group_id)
+        self.events = []
+        if self.repeat_event: self.repeat_event.remove()
+        self.is_running=False
+    
         
 global the_engine
 the_engine = Engine()
