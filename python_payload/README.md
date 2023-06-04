@@ -12,19 +12,10 @@ INSTRUMENT 1, CHORD ORGAN: all LEDs are lit up in the same color. each top petal
 
 INSTRUMENT 2, MELODY PLAYER: the 3 most down-pointing petal LEDs are lit in pink. these 3 petals select between 3 different octaves. depending on octave selection, the remaining petals are lit in blue (low octave), cyan (mid octave) and green (high octave). these "playing petals" provide tones in a major scale. it is a single oscillator system, so pressing more than one "playing petal" results in the oscillator jumping between pitches rapidly, providing a HIDDEN NOISE MODE. the screen is entirely black. author's note: this one didn't turn out well at all and could use a bunch more love. we find it valuable to provide people with a simple instrument to try to play their favorite melodies on, but this ain't it yet.
 
-### current captouch issues
+INSTRUMENT 3, WORMS: worms
 
-the current firmware is built around AD7147 captouch controllers and uses their simplified output, where the controller autocalibrates and guesses whether a pad is being touched or not. since the controller was designed to have several mm of material in between (as for a stovetop), it sometimes is wayyyy to sensitive.
+INSTRUMENT 4, CAP TOUCH DEBUG: shows 10 dots corresponding to the 10 petals. each gets bigger if the captouch threshold is exceeded (i.e., a touch is registered) and moves with the current position on the petal (1d for 2-segment petals, 2d for 3-segment petals). note that on p3/p4 the inner pad of the bottom petal opposed to the usb c port is currently not registered for technical reasons.
 
-the captouch controller can be forced into recalibration by holding the right shoulder button down while in the menu, however it does keep some internal state and sometimes turning the badge off and on again is the only way to get acceptable captouch performance.
+### captouch calibration:
 
-in general, for best performance we recommend the following flow:
-- hold the badge as you would hold it for playing (i.e., give it a reasonable initial calibration baseline), then plug in the USB cable on the other side to power up the badge
-- wait for the menu to show
-- play
-- if issues occur or you switch hand position, do a manual recalibration and hope for the best
-- if hope is lost powercycle
-
-the new captouch driver takes raw data from the captouch controller and processes it on the esp32. it is currently being worked on in the raw_captouch branch, but sadly only for p4 badges.
-
-also some individual pads on some revisions are not responding. the new driver is intended to fix that as well.
+the captouch controller can be recalibrated by pressing the left shoulder button while in the menu. the screen shows the text "CAL" while in calibration. the screen background is teal for 0.5s to give the user time to remove their hands, then turns plum for the actual calibration. calibration is intended to get a baseline for pads that are not being touched at the moment, it is recommeded to lie the badge flat on the able while recalibrating. calibration is also performed at startup. 

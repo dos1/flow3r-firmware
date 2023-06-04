@@ -26,7 +26,7 @@ Please transfer all .py files in python_payload/ for using the demo payload.
 $ cd ~
 $ git clone https://github.com/espressif/esp-idf.git
 $ cd esp-idf
-$ git checkout v4.4
+$ git checkout v4.4.4
 $ git submodule update --init --recursive
 
 $ cd esp-idf
