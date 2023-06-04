@@ -30,16 +30,21 @@ GREY = (0.5,0.5,0.5)
 # The global context (representing the whole screen)
 ctx = None
 
-worms = None
-
+worms = []
 
 class Worm():
-    def __init__(self):
+    def __init__(self,direction=None):
         self.color = randrgb()
-        self.direction = random.random()*math.pi*2
-        self.size = 10
+        
+        if direction:
+            self.direction = direction
+        else:
+            self.direction = random.random()*math.pi*2
+        
+            
+        self.size = 50
         self.speed = self.size/5
-        (x,y) = xy_from_polar(40, self.direction+90)
+        (x,y) = xy_from_polar(100, self.direction)
         self.x = x
         self.y= y
         #(self.dx,self.dy) = xy_from_polar(1,self.direction)
@@ -59,7 +64,12 @@ class Worm():
     
     def move(self):
         dist = math.sqrt(self.x**2+self.y**2)
-        self.size = (120-dist)/3
+        target_size = (130-dist)/3
+        
+        if self.size>target_size: self.size-=1
+        
+        if self.size<target_size: self.size+=1
+        
         self.speed = self.size/5
         
         self.direction += (random.random()-0.5)*math.pi/4
@@ -69,21 +79,23 @@ class Worm():
         self.y+=dy
         
         
-        if dist>110-self.size/2 and dist>self._lastdist:
+        if dist>120-self.size/2 and dist>self._lastdist:
             polar_position=math.atan2(self.y,self.x)
             dx=dx*-abs(math.cos(polar_position))
             dy=dy*-abs(math.sin(polar_position))
             self.direction=-math.atan2(dy,dx)
             self.mutate()
         self._lastdist = dist
+          
+
+def handle_input(data):
+    worms.append(Worm(data.get("index",0)*2*math.pi/10+math.pi ))
+    if len(worms)>10:
+        worms.pop(0)
 
 
-def init():
-    global worms
-    global ctx
-    worms = []
-    for i in range(23):
-        worms.append(Worm())
+def init(data={}):    
+    # Get the global context (representing the whole screen)
     ctx = hardware.get_ctx()
 
 # TODO(q3k): factor out frame limiter
@@ -129,8 +141,27 @@ def foreground():
     ctx.rgb(*BLUE).rectangle(-WIDTH/2,-HEIGHT/2,WIDTH,HEIGHT).fill()
 
     #Write some text
-    ctx.move_to(0,0).rgb(*WHITE).text("Hi :)")
+    ctx.move_to(0,0).rgb(*WHITE).text("touch me :)")
     hardware.display_update()
+    global worms
+    worms = []
+    for i in range(0):
+        worms.append(Worm())
+    
+    event.Event(name="worms_control",action=handle_input, 
+        condition=lambda data: data.get("type","")=="captouch" and data.get("value")==1 and data["change"])
+
+def loop(data={}):
+    for w in worms:
+        w.draw()
+        w.move()
+    
+    hardware.display_update()
+
+def run(data={}):
+    init()
+    event.the_engine.userloop = loop
+    event.the_engine.eventloop()    
 
 #Known problems:
 #ctx.rotate(math.pi) turns the display black until powercycled
