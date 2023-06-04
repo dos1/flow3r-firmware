@@ -1,12 +1,13 @@
-#python
+#python imports
 import random
 import time
 import math
 
-#badge23
+#flow3r imports
 import event
 import application
 import ui
+
 
 # Subclass Application
 class AppWorms(application.Application):
@@ -20,6 +21,13 @@ class AppWorms(application.Application):
         self.target_delta = 1000 / self.target_fps
         self.frame_slack = None
         self.last_report = None
+
+        self.add_event(event.Event(
+            name="worms_control",
+            action=self.handle_input, 
+            condition=lambda data: data.get("type","")=="captouch" and data.get("value")==1 and data["change"],
+            )
+        )
 
         self.worms = []
         for i in range(0):
@@ -64,26 +72,12 @@ class AppWorms(application.Application):
         
         self.last_render = now
 
-app = AppWorms("worms")
+    def handle_input(self,data):
+        worms = app.worms
+        worms.append(Worm(data.get("index",0)*2*math.pi/10+math.pi ))
+        if len(worms)>10:
+            worms.pop(0)
 
-def handle_input(data):
-    worms = app.worms
-    worms.append(Worm(data.get("index",0)*2*math.pi/10+math.pi ))
-    if len(worms)>10:
-        worms.pop(0)
-
-app.add_event(event.Event(
-    name="worms_control",
-    action=handle_input, 
-    condition=lambda data: data.get("type","")=="captouch" and data.get("value")==1 and data["change"],
-    )
-)
-
-app.add_event(event.Event(
-    name="worms_exit",
-    action=app.exit,
-    condition=lambda e: e["type"]=="button" and e.get("from")==2 and e["change"]
-))
 
 class Worm():
     def __init__(self,direction=None):
@@ -138,6 +132,10 @@ class Worm():
             self.direction=-math.atan2(dy,dx)
             self.mutate()
         self._lastdist = dist
+
+
+
+app = AppWorms("worms")
 
 # To run standalone:
 #app.run()
