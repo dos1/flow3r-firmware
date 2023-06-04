@@ -22,16 +22,21 @@
 mp_obj_t mp_ctx_from_ctx(Ctx *ctx);
 mp_obj_t mp_ctx = NULL;
 
-STATIC mp_obj_t mp_init_done(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t mp_init_done(void) {
     return mp_obj_new_int(hardware_is_initialized());
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_init_done_obj, 0, 1, mp_init_done);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_init_done_obj, mp_init_done);
 
-STATIC mp_obj_t mp_display_update(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t mp_captouch_calibration_active(void) {
+    return mp_obj_new_int(captouch_calibration_active());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_captouch_calibration_active_obj, mp_captouch_calibration_active);
+
+STATIC mp_obj_t mp_display_update(void) {
     display_update();
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_display_update_obj, 0, 1, mp_display_update);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_display_update_obj, mp_display_update);
 
 STATIC mp_obj_t mp_display_draw_pixel(size_t n_args, const mp_obj_t *args) {
     uint16_t x = mp_obj_get_int(args[0]);
@@ -65,11 +70,60 @@ STATIC mp_obj_t mp_get_captouch(size_t n_args, const mp_obj_t *args) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_get_captouch_obj, 1, 2, mp_get_captouch);
 
-STATIC mp_obj_t mp_captouch_autocalib(size_t n_args, const mp_obj_t *args) {
+STATIC mp_obj_t mp_captouch_get_petal_pad_raw(mp_obj_t petal_in, mp_obj_t pad_in) {
+    uint8_t petal = mp_obj_get_int(petal_in);
+    uint8_t pad = mp_obj_get_int(pad_in);
+    uint16_t output = captouch_get_petal_pad_raw(petal, pad);
+
+    return mp_obj_new_int(output);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_captouch_get_petal_pad_raw_obj, mp_captouch_get_petal_pad_raw);
+
+STATIC mp_obj_t mp_captouch_get_petal_pad(mp_obj_t petal_in, mp_obj_t pad_in) {
+    uint8_t petal = mp_obj_get_int(petal_in);
+    uint8_t pad = mp_obj_get_int(pad_in);
+    return mp_obj_new_int(captouch_get_petal_pad(petal, pad));
+
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_captouch_get_petal_pad_obj, mp_captouch_get_petal_pad);
+
+STATIC mp_obj_t mp_captouch_get_petal_rad(mp_obj_t petal_in) {
+    uint8_t petal = mp_obj_get_int(petal_in);
+    int32_t ret = captouch_get_petal_rad(petal);
+
+    return mp_obj_new_int(ret);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_captouch_get_petal_rad_obj, mp_captouch_get_petal_rad);
+
+STATIC mp_obj_t mp_captouch_get_petal_phi(mp_obj_t petal_in) {
+    uint8_t petal = mp_obj_get_int(petal_in);
+    int32_t ret = captouch_get_petal_phi(petal);
+
+    return mp_obj_new_int(ret);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_captouch_get_petal_phi_obj, mp_captouch_get_petal_phi);
+
+STATIC mp_obj_t mp_captouch_set_petal_pad_threshold(mp_obj_t petal_in, mp_obj_t pad_in, mp_obj_t thres_in) {
+    uint8_t petal = mp_obj_get_int(petal_in);
+    uint8_t pad = mp_obj_get_int(pad_in);
+    uint16_t thres = mp_obj_get_int(thres_in);
+    captouch_set_petal_pad_threshold(petal, pad, thres);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_captouch_set_petal_pad_threshold_obj, mp_captouch_set_petal_pad_threshold);
+
+STATIC mp_obj_t mp_captouch_autocalib(void) {
     captouch_force_calibration();
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_captouch_autocalib_obj, 0, 2, mp_captouch_autocalib);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_captouch_autocalib_obj, mp_captouch_autocalib);
+
+STATIC mp_obj_t mp_captouch_set_calibration_afe_target(mp_obj_t target_in) {
+    uint16_t target = mp_obj_get_int(target_in);
+    captouch_set_calibration_afe_target(target);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_captouch_set_calibration_afe_target_obj, mp_captouch_set_calibration_afe_target);
 
 STATIC mp_obj_t mp_get_button(size_t n_args, const mp_obj_t *args) {
     uint8_t leftbutton = mp_obj_get_int(args[0]);
@@ -151,8 +205,15 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_reset_ctx_obj, 0, 0, mp_reset_ctx)
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_audio) },
     { MP_ROM_QSTR(MP_QSTR_init_done), MP_ROM_PTR(&mp_init_done_obj) },
+    { MP_ROM_QSTR(MP_QSTR_captouch_calibration_active), MP_ROM_PTR(&mp_captouch_calibration_active_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_captouch), MP_ROM_PTR(&mp_get_captouch_obj) },
+    { MP_ROM_QSTR(MP_QSTR_captouch_get_petal_pad_raw), MP_ROM_PTR(&mp_captouch_get_petal_pad_raw_obj) },
+    { MP_ROM_QSTR(MP_QSTR_captouch_get_petal_pad), MP_ROM_PTR(&mp_captouch_get_petal_pad_obj) },
+    { MP_ROM_QSTR(MP_QSTR_captouch_get_petal_rad), MP_ROM_PTR(&mp_captouch_get_petal_rad_obj) },
+    { MP_ROM_QSTR(MP_QSTR_captouch_get_petal_phi), MP_ROM_PTR(&mp_captouch_get_petal_phi_obj) },
+    { MP_ROM_QSTR(MP_QSTR_captouch_set_petal_pad_threshold), MP_ROM_PTR(&mp_captouch_set_petal_pad_threshold_obj) },
     { MP_ROM_QSTR(MP_QSTR_captouch_autocalib), MP_ROM_PTR(&mp_captouch_autocalib_obj) },
+    { MP_ROM_QSTR(MP_QSTR_captouch_set_calibration_afe_target), MP_ROM_PTR(&mp_captouch_set_calibration_afe_target_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_button), MP_ROM_PTR(&mp_get_button_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_global_volume_dB), MP_ROM_PTR(&mp_set_global_volume_dB_obj) },
     { MP_ROM_QSTR(MP_QSTR_count_sources), MP_ROM_PTR(&mp_count_sources_obj) },

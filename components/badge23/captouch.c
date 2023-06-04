@@ -4,28 +4,60 @@
 #include "driver/i2c.h"
 #include "badge23_hwconfig.h"
 #include <stdint.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/atomic.h>
+
+#define PETAL_PAD_TIP 0
+#define PETAL_PAD_CCW 1
+#define PETAL_PAD_CW 2
+#define PETAL_PAD_BASE 3
+
+#define CIN CDC_NONE    0
+#define CIN_CDC_NEG     1
+#define CIN_CDC_POS     2
+#define CIN_BIAS        3
+
+#define AFE_INCR_CAP 1000
 
 #if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
-static const uint8_t top_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9, 8, 8}; //flipped top and bottom from bootstrap reference
+static const uint8_t top_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4};
 static const uint8_t top_stages = 12;
-static const uint8_t bot_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4}; //idk y :~)
-static const uint8_t bottom_stages = 12;
+static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 7, 7, 9, 9, 8, 8, 8};
+static const uint8_t bot_stages = 12;
+static const uint8_t top_segment_map[] = {1,3,2,2,3,1,1,3,2,1,3,2}; //PETAL_PAD_*
+static const uint8_t bot_segment_map[] = {3,0,3,0,0,0,3,0,3,1,2,3}; //PETAL_PAD_*
+static const uint8_t bot_stage_config[] = {0,1,2,3,5,6,7,8,9,10,11,12};
+#define DEFAULT_THRES_TOP 8000
+#define DEFAULT_THRES_BOT 12000
 
 #elif defined(CONFIG_BADGE23_HW_GEN_P1)
 static const uint8_t top_map[] = {2, 2, 2, 0, 0, 8, 8, 8, 6, 6, 4, 4};
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9};
-static const uint8_t bottom_stages = 10;
+static const uint8_t bot_stages = 10;
+static const uint8_t top_segment_map[] = {1,2,0,1,2,1,2,0,1,2,1,2}; //idk
+static const uint8_t bot_segment_map[] = {3,0,3,0,3,0,0,3,0,3}; //idk
+static const uint8_t bot_stage_config[] = {0,1,2,3,4,5,6,7,8,9,10,11};
+#define DEFAULT_THRES_TOP 2000
+#define DEFAULT_THRES_BOT 12000
+#define AD7147_ADDR_TOP            0b101101
+#define AD7147_ADDR_BOT            0b101100
 
 #else
 #error "captouch not implemented for this badge generation"
 #endif
 
+#if defined(CONFIG_BADGE23_HW_GEN_P4)
+#define AD7147_ADDR_TOP            0b101100
+#define AD7147_ADDR_BOT            0b101101
+#elif defined(CONFIG_BADGE23_HW_GEN_P3)
+#define AD7147_ADDR_TOP            0b101101
+#define AD7147_ADDR_BOT            0b101100
+#endif
+
 static const char *TAG = "captouch";
 
 #define I2C_MASTER_NUM              0                          /*!< I2C master i2c port number, the number of i2c peripheral interfaces available will depend on the chip */
-
-#define AD7147_BASE_ADDR            0x2C
 
 #define AD7147_REG_PWR_CONTROL              0x00
 #define AD7147_REG_STAGE_CAL_EN             0x01
@@ -34,24 +66,36 @@ static const char *TAG = "captouch";
 
 #define TIMEOUT_MS                  1000
 
+#define PETAL_PRESSED_DEBOUNCE 2
+
+static struct ad714x_chip *chip_top;
+static struct ad714x_chip *chip_bot;
+
+typedef struct{
+    uint8_t config_mask;
+    uint16_t amb_values[4]; //ordered according to PETAL_PAD_*
+    uint16_t cdc_values[4]; //ordered according to PETAL_PAD_*
+    uint16_t thres_values[4]; //ordered according to PETAL_PAD_*
+    uint8_t pressed;
+} petal_t;
+
+static petal_t petals[10];
+
 struct ad714x_chip {
     uint8_t addr;
     uint8_t gpio;
-    int afe_offsets[13];
+    int pos_afe_offsets[13];
+    int neg_afe_offsets[13];
+    int neg_afe_offset_swap;
     int stages;
 };
 
-// Captouch sensor chips addresses are swapped on proto3. Whoops.
-#if defined(CONFIG_BADGE23_HW_GEN_P3)
-#define AD7147_BASE_ADDR_TOP (AD7147_BASE_ADDR)
-#define AD7147_BASE_ADDR_BOT (AD7147_BASE_ADDR + 1)
-#else
-#define AD7147_BASE_ADDR_TOP (AD7147_BASE_ADDR + 1)
-#define AD7147_BASE_ADDR_BOT (AD7147_BASE_ADDR)
-#endif
-
-static const struct ad714x_chip chip_top = {.addr = AD7147_BASE_ADDR_TOP, .gpio = 48, .afe_offsets = {24, 12, 16, 33, 30, 28, 31, 27, 22, 24, 18, 19, }, .stages=top_stages};
-static const struct ad714x_chip chip_bot = {.addr = AD7147_BASE_ADDR_BOT, .gpio = 3, .afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3}, .stages=bottom_stages};
+static struct ad714x_chip chip_top_rev5 = {.addr = AD7147_ADDR_TOP, .gpio = 15,
+    .pos_afe_offsets = {4, 2, 2, 2, 2, 3, 4, 2, 2, 2, 2, 0},
+    .stages=top_stages};
+static struct ad714x_chip chip_bot_rev5 = {.addr = AD7147_ADDR_BOT, .gpio = 15,
+    .pos_afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3, 3, 3},
+    .stages=bot_stages};
 
 static esp_err_t ad714x_i2c_write(const struct ad714x_chip *chip, const uint16_t reg, const uint16_t data)
 {
@@ -86,10 +130,6 @@ struct ad7147_stage_config {
     unsigned int pos_peak_detect:3;
 };
 
-#define CIN CDC_NONE    0
-#define CIN_CDC_NEG     1
-#define CIN_CDC_POS     2
-#define CIN_BIAS        3
 
 static const uint16_t bank2 = 0x80;
 
@@ -169,73 +209,41 @@ static struct ad7147_stage_config ad714x_default_config(void)
         };
 }
 
-#define ESP_INTR_FLAG_DEFAULT 0
-
-static QueueHandle_t gpio_evt_queue = NULL;
-
-static void IRAM_ATTR gpio_isr_handler(void* arg)
-{
-    struct ad714x_chip* chip = (struct ad714x_chip *) arg;
-    xQueueSendFromISR(gpio_evt_queue, &chip, NULL);
-}
-
-static uint16_t pressed_top, pressed_bot;
-
-static void captouch_chip_readout(struct ad714x_chip * chip){
-    uint16_t pressed;
-    ad714x_i2c_read(chip, 9, &pressed, 1);
-    ESP_LOGI(TAG, "Addr %x, High interrupt %X", chip->addr, pressed);
-
-    pressed &= ((1 << chip->stages) - 1);
-
-    if(chip == &chip_top) pressed_top = pressed;
-    if(chip == &chip_bot) pressed_bot = pressed;
-}
-
-void manual_captouch_readout(uint8_t top)
-{
-    struct ad714x_chip* chip = top ? (&chip_top) : (&chip_bot);
-    captouch_chip_readout(chip);
-    //xQueueSend(gpio_evt_queue, &chip, NULL);
-}
-
-void gpio_event_handler(void* arg)
-{
-    static unsigned long counter = 0;
-    struct ad714x_chip* chip;
-    while(true) {
-        if(xQueueReceive(gpio_evt_queue, &chip, portMAX_DELAY)) {
-            captouch_chip_readout(chip);
-        }
+static void captouch_configure_stage(struct ad714x_chip * chip, uint8_t stage){
+    struct ad7147_stage_config stage_config;
+    stage_config = ad714x_default_config();
+    if(chip == chip_bot){
+        stage_config.cinX_connection_setup[bot_stage_config[stage]] = CIN_CDC_POS;
+    } else {
+        stage_config.cinX_connection_setup[stage] = CIN_CDC_POS;
     }
+    stage_config.pos_afe_offset=chip->pos_afe_offsets[stage];
+    ad714x_set_stage_config(chip, stage, &stage_config);
 }
 
-uint16_t read_captouch(){
-    uint16_t petals = 0;
-    uint16_t top = pressed_top;
-    uint16_t bot = pressed_bot;
+static int8_t captouch_configure_stage_afe_offset(uint8_t top, uint8_t stage, int8_t delta_afe){
+    int8_t sat = 0;
+    struct ad714x_chip * chip = chip_bot;
+    if(top) chip = chip_top;
+    int8_t afe = chip->pos_afe_offsets[stage] - chip->neg_afe_offsets[stage];
+    if((afe >= 63) && (delta_afe > 0)) sat = 1;
+    if((afe <= 63) && (delta_afe < 0)) sat = -1;
+    afe += delta_afe;
+    if(afe >= 63) afe = 63;
+    if(afe <= -63)afe = -63;
 
-    for(int i=0; i<top_stages; i++) {
-        if(top  & (1 << i)) {
-            petals |= (1<<top_map[i]);
-        }
+    if(afe>0){
+        chip->pos_afe_offsets[stage] = afe;
+        chip->neg_afe_offsets[stage] = 0;
+    } else {
+        chip->pos_afe_offsets[stage] = 0;
+        chip->neg_afe_offsets[stage] = -afe;
     }
-
-    for(int i=0; i<bottom_stages; i++) {
-        if(bot  & (1 << i)) {
-            petals |= (1<<bot_map[i]);
-        }
-    }
-
-    return petals;
+    captouch_configure_stage(chip, stage);
+    return sat;
 }
 
-void captouch_force_calibration(){
-    ad714x_i2c_write(&chip_top, 2, (1 << 14));
-    ad714x_i2c_write(&chip_bot, 2, (1 << 14));
-}
-
-static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad7147_device_config device_config)
+static void captouch_init_chip(struct ad714x_chip* chip, const struct ad7147_device_config device_config)
 {
     uint16_t data;
     ad714x_i2c_read(chip, AD7147_REG_DEVICE_ID, &data, 1);
@@ -244,226 +252,285 @@ static void captouch_init_chip(const struct ad714x_chip* chip, const struct ad71
     ad714x_set_device_config(chip, &device_config);
 
     for(int i=0; i<chip->stages; i++) {
-        struct ad7147_stage_config stage_config;
-        stage_config = ad714x_default_config();
-        stage_config.cinX_connection_setup[i] = CIN_CDC_POS;
-        stage_config.pos_afe_offset=chip->afe_offsets[i];
-        ad714x_set_stage_config(chip, i, &stage_config);
+        captouch_configure_stage(chip, i);
     }
+}
 
-    captouch_force_calibration();
+static void captouch_init_petals(){
+    for(int i = 0; i < 10; i++){
+        for(int j = 0; j < 4; j++){
+            petals[i].amb_values[j] = 0;
+            petals[i].cdc_values[j] = 0;
+            if(i%2){
+                petals[i].thres_values[j] = DEFAULT_THRES_BOT;
+            } else {
+                petals[i].thres_values[j] = DEFAULT_THRES_TOP;
+            }
+        }
+        petals[i].config_mask = 0;
+    }
+    for(int i = 0; i < bot_stages; i++){
+        petals[bot_map[i]].config_mask |= 1 << bot_segment_map[i]; 
+    }
+    for(int i = 0; i < top_stages; i++){
+        petals[top_map[i]].config_mask |= 1 << top_segment_map[i]; 
+    }
+}
 
-    gpio_config_t io_conf = {};
-    io_conf.intr_type = GPIO_INTR_NEGEDGE;
-    io_conf.mode = GPIO_MODE_INPUT;
-    io_conf.pin_bit_mask = (1ULL << chip->gpio);
-    io_conf.pull_up_en = 1;
-    io_conf.pull_down_en = 0;
-    gpio_config(&io_conf);
+int32_t captouch_get_petal_rad(uint8_t petal){
+    if(petal > 9) petal = 9;
+    uint8_t cf = petals[petal].config_mask;
+    if(cf == 0b1110){ //CCW, CW, BASE
+        int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
+        left -= petals[petal].amb_values[PETAL_PAD_CCW];
+        int32_t right = petals[petal].cdc_values[PETAL_PAD_CW];
+        right -= petals[petal].amb_values[PETAL_PAD_CW];
+        int32_t base = petals[petal].cdc_values[PETAL_PAD_BASE];
+        base -= petals[petal].amb_values[PETAL_PAD_BASE];
+        return (left + right)/2 - base;
+    }
+    if(cf == 0b111){ //CCW, CW, TIP
+        int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
+        left -= petals[petal].amb_values[PETAL_PAD_CCW];
+        int32_t right = petals[petal].cdc_values[PETAL_PAD_CW];
+        right -= petals[petal].amb_values[PETAL_PAD_CW];
+        int32_t tip = petals[petal].cdc_values[PETAL_PAD_TIP];
+        tip -= petals[petal].amb_values[PETAL_PAD_TIP];
+        return (-left - right)/2 + tip;
+    }
+    if(cf == 0b1001){ //TIP, BASE
+        int32_t tip = petals[petal].cdc_values[PETAL_PAD_TIP];
+        tip -= petals[petal].amb_values[PETAL_PAD_TIP];
+        int32_t base = petals[petal].cdc_values[PETAL_PAD_BASE];
+        base -= petals[petal].amb_values[PETAL_PAD_BASE];
+        return tip - base;
+    }
+    if(cf == 0b1){ //TIP
+        int32_t tip = petals[petal].cdc_values[PETAL_PAD_TIP];
+        tip -= petals[petal].amb_values[PETAL_PAD_TIP];
+        return tip;
+    }
+    return 0;
+}
 
-    // gpio_isr_handler_add(chip->gpio, gpio_isr_handler, (void *)chip);
-
+int32_t captouch_get_petal_phi(uint8_t petal){
+    if(petal > 9) petal = 9;
+    uint8_t cf = petals[petal].config_mask;
+    if((cf == 0b1110) || (cf == 0b110) || (cf == 0b111)){ //CCW, CW, (BASE)
+        int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
+        left -= petals[petal].amb_values[PETAL_PAD_CCW];
+        int32_t right = petals[petal].cdc_values[PETAL_PAD_CW];
+        right -= petals[petal].amb_values[PETAL_PAD_CW];
+        return left - right;
+    }
+    return 0;
 }
 
 void captouch_init(void)
 {
-    //gpio_install_isr_service(ESP_INTR_FLAG_DEFAULT);
-    captouch_init_chip(&chip_top, (struct ad7147_device_config){.sequence_stage_num = 11,
-                                                 .decimation = 1,
-                                                 .stage0_cal_en = 1,
-                                                 .stage1_cal_en = 1,
-                                                 .stage2_cal_en = 1,
-                                                 .stage3_cal_en = 1,
-                                                 .stage4_cal_en = 1,
-                                                 .stage5_cal_en = 1,
-                                                 .stage6_cal_en = 1,
-                                                 .stage7_cal_en = 1,
-                                                 .stage8_cal_en = 1,
-                                                 .stage9_cal_en = 1,
-                                                 .stage10_cal_en = 1,
-                                                 .stage11_cal_en = 1,
+    captouch_init_petals();
+    chip_top = &chip_top_rev5;
+    chip_bot = &chip_bot_rev5;
 
-                                                 .stage0_high_int_enable = 1,
-                                                 .stage1_high_int_enable = 1,
-                                                 .stage2_high_int_enable = 1,
-                                                 .stage3_high_int_enable = 1,
-                                                 .stage4_high_int_enable = 1,
-                                                 .stage5_high_int_enable = 1,
-                                                 .stage6_high_int_enable = 1,
-                                                 .stage7_high_int_enable = 1,
-                                                 .stage8_high_int_enable = 1,
-                                                 .stage9_high_int_enable = 1,
-                                                 .stage10_high_int_enable = 1,
-                                                 .stage11_high_int_enable = 1,
+    captouch_init_chip(chip_top, (struct ad7147_device_config){.sequence_stage_num = 11,
+                                                 .decimation = 1,
                                                  });
 
-    captouch_init_chip(&chip_bot, (struct ad7147_device_config){.sequence_stage_num = 11,
+    captouch_init_chip(chip_bot, (struct ad7147_device_config){.sequence_stage_num = 11,
                                                  .decimation = 1,
-                                                 .stage0_cal_en = 1,
-                                                 .stage1_cal_en = 1,
-                                                 .stage2_cal_en = 1,
-                                                 .stage3_cal_en = 1,
-                                                 .stage4_cal_en = 1,
-                                                 .stage5_cal_en = 1,
-                                                 .stage6_cal_en = 1,
-                                                 .stage7_cal_en = 1,
-                                                 .stage8_cal_en = 1,
-                                                 .stage9_cal_en = 1,
-
-                                                 .stage0_high_int_enable = 1,
-                                                 .stage1_high_int_enable = 1,
-                                                 .stage2_high_int_enable = 1,
-                                                 .stage3_high_int_enable = 1,
-                                                 .stage4_high_int_enable = 1,
-                                                 .stage5_high_int_enable = 1,
-                                                 .stage6_high_int_enable = 1,
-                                                 .stage7_high_int_enable = 1,
-                                                 .stage8_high_int_enable = 1,
-                                                 .stage9_high_int_enable = 1,
                                                  });
+}
 
-    gpio_evt_queue = xQueueCreate(10, sizeof(const struct ad714x_chip*));
-    //xTaskCreate(gpio_event_handler, "gpio_event_handler", 2048 * 2, NULL, configMAX_PRIORITIES - 2, NULL);
+uint16_t read_captouch(){
+    uint16_t bin_petals = 0;
+    for(int i = 0; i < 10; i++) {
+        if(petals[i].pressed){
+            bin_petals |= (1<<i);
+        }
+    }
+    return bin_petals;
+}
+
+uint16_t cdc_data[2][12] = {0,};
+uint16_t cdc_ambient[2][12] = {0,};
+
+static volatile uint32_t calib_active = 0;
+
+static uint8_t calib_cycles = 0;
+void captouch_force_calibration(){
+    if(!calib_cycles){ //last calib has finished
+        calib_cycles = 16; //goal cycles, can be argument someday
+        Atomic_Increment_u32(&calib_active);
+    }
+}
+
+uint8_t captouch_calibration_active(){
+    return Atomic_CompareAndSwap_u32(&calib_active, 0, 0) == ATOMIC_COMPARE_AND_SWAP_FAILURE;
+}
+
+
+void check_petals_pressed(){
+    for(int i = 0; i < 10; i++){
+        bool pressed = 0;
+        bool prev = petals[i].pressed;
+        for(int j = 0; j < 4; j++){
+            if((petals[i].amb_values[j] +
+                petals[i].thres_values[j]) <
+                petals[i].cdc_values[j]){
+                pressed = 1;
+            }
+        }
+        if(pressed){
+            petals[i].pressed = PETAL_PRESSED_DEBOUNCE;
+        } else if(petals[i].pressed){
+            petals[i].pressed--;
+        }
+
+        if(petals[i].pressed && (!prev)){
+            // TODO: PETAL_PRESS_CALLBACK
+        }
+        if((!petals[i].pressed) && prev){
+            // TODO: PETAL_RELEASE_CALLBACK
+        }
+    }
+}
+
+void cdc_to_petal(bool bot, bool amb, uint16_t cdc_data[], uint8_t cdc_data_length){
+    if(!bot){
+        for(int i = 0; i < cdc_data_length; i++){
+            if(amb){
+                petals[top_map[i]].amb_values[top_segment_map[i]] = cdc_data[i];
+            } else {
+                petals[top_map[i]].cdc_values[top_segment_map[i]] = cdc_data[i];
+            }
+        }
+    } else {
+        for(int i = 0; i < cdc_data_length; i++){
+            if(amb){
+                petals[bot_map[i]].amb_values[bot_segment_map[i]] = cdc_data[i];
+            } else {
+                petals[bot_map[i]].cdc_values[bot_segment_map[i]] = cdc_data[i];
+            }
+        }
+    }
+}
+
+uint16_t captouch_get_petal_pad_raw(uint8_t petal, uint8_t pad){
+    if(petal > 9) petal = 9;
+    if(pad > 3) pad = 3;
+    return petals[petal].cdc_values[pad];
+}
+uint16_t captouch_get_petal_pad_calib_ref(uint8_t petal, uint8_t pad){
+    if(petal > 9) petal = 9;
+    if(pad > 3) pad = 3;
+    return petals[petal].amb_values[pad];
+}
+uint16_t captouch_get_petal_pad(uint8_t petal, uint8_t pad){
+    if(petal > 9) petal = 9;
+    if(pad > 3) pad = 3;
+    if(petals[petal].amb_values[pad] < petals[petal].cdc_values[pad]){
+        return petals[petal].cdc_values[pad] - petals[petal].amb_values[pad];
+    }
+    return 0;
+}
+
+void captouch_set_petal_pad_threshold(uint8_t petal, uint8_t pad, uint16_t thres){
+    if(petal > 9) petal = 9;
+    if(pad > 3) pad = 3;
+    petals[petal].thres_values[pad] = thres;    
+}
+
+static int32_t calib_target = 6000;
+
+void captouch_set_calibration_afe_target(uint16_t target){
+    calib_target = target;
+}
+
+void captouch_read_cycle(){
+        static uint8_t calib_cycle = 0; 
+        static uint8_t calib_div = 1;
+        static uint32_t ambient_acc[2][12] = {{0,}, {0,}};
+        if(calib_cycles){
+            if(calib_cycle == 0){ // last cycle has finished, setup new
+                calib_cycle = calib_cycles;
+                calib_div = calib_cycles;
+                for(int j=0;j<12;j++){
+                    ambient_acc[0][j] = 0;
+                    ambient_acc[1][j] = 0;
+                }
+            }
+
+            ad714x_i2c_read(chip_top, 0xB, cdc_ambient[0], chip_top->stages);
+            ad714x_i2c_read(chip_bot, 0xB, cdc_ambient[1], chip_bot->stages);
+            for(int j=0;j<12;j++){
+                ambient_acc[0][j] += cdc_ambient[0][j];
+                ambient_acc[1][j] += cdc_ambient[1][j];
+            }
+
+            // TODO: use median instead of average
+            calib_cycle--;
+            if(!calib_cycle){ //calib cycle is complete
+                for(int i = 0; i < 12; i++){
+                    cdc_ambient[0][i] = ambient_acc[0][i] / calib_div;
+                    cdc_ambient[1][i] = ambient_acc[1][i] / calib_div;
+                }
+                cdc_to_petal(0, 1, cdc_ambient[0], 12);
+                cdc_to_petal(1, 1, cdc_ambient[1], 12);
+                calib_cycles = 0;
+                
+                uint8_t recalib = 0;
+                for(int i = 0; i < 12; i++){
+                    for(int j = 0; j < 2; j++){
+                        int32_t diff = ((int32_t) cdc_ambient[j][i]) - calib_target;
+                        int8_t steps = diff/(AFE_INCR_CAP);
+                        if((steps > 1) || (steps < -1)){
+                            if(!captouch_configure_stage_afe_offset(1-j, i, steps)){
+                                recalib = 1;
+                            }
+                        }
+                    }
+                }
+                if(recalib){
+                    calib_cycles = 16; // do another round
+                } else {
+                    Atomic_Decrement_u32(&calib_active);
+                }
+            }
+        } else {
+            ad714x_i2c_read(chip_top, 0xB, cdc_data[0], chip_top->stages);
+            cdc_to_petal(0, 0, cdc_data[0], 12);
+
+            ad714x_i2c_read(chip_bot, 0xB, cdc_data[1], chip_bot->stages);
+            cdc_to_petal(1, 0, cdc_data[1], 12);
+
+            check_petals_pressed();
+        }
 }
 
 static void captouch_print_debug_info_chip(const struct ad714x_chip* chip)
 {
-    uint16_t data[12] = {0,};
-    uint16_t ambient[12] = {0,};
+    uint16_t *data;
+    uint16_t *ambient;
     const int stages = chip->stages;
-#if 1
-    for(int stage=0; stage<stages; stage++) {
-        ad714x_i2c_read(chip, 0x0FA + stage * (0x104 - 0xE0), data, 1);
-        ESP_LOGI(TAG, "stage %d threshold: %X", stage, data[0]);
+
+    if(chip == chip_top) {
+        data = cdc_data[0];
+        ambient = cdc_ambient[0];
+    } else {
+        data = cdc_data[1];
+        ambient = cdc_ambient[1];
     }
 
-    ad714x_i2c_read(chip, 0xB, data, stages);
     ESP_LOGI(TAG, "CDC results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
 
     for(int stage=0; stage<stages; stage++) {
-        ad714x_i2c_read(chip, 0x0F1 + stage * (0x104 - 0xE0), &ambient[stage], 1);
         ESP_LOGI(TAG, "stage %d ambient: %X diff: %d", stage, ambient[stage], data[stage] - ambient[stage]);
     }
-
-#endif
-#if 1
-    ad714x_i2c_read(chip, 8, data, 1);
-    ESP_LOGI(TAG, "Low interrupt %X", data[0]);
-    ad714x_i2c_read(chip, 9, data, 1);
-    ESP_LOGI(TAG, "High interrupt %X", data[0]);
-    ad714x_i2c_read(chip, 0x42, data, 1);
-    ESP_LOGI(TAG, "Proximity %X", data[0]);
-    //ESP_LOGI(TAG, "CDC result = %X", data[0]);
-    //if(data[0] > 0xa000) {
-        //ESP_LOGI(TAG, "Touch! %X", data[0]);
-    //}
-#endif
 }
 
 void captouch_print_debug_info(void)
 {
-    captouch_print_debug_info_chip(&chip_top);
-    captouch_print_debug_info_chip(&chip_bot);
+    captouch_print_debug_info_chip(chip_top);
+    captouch_print_debug_info_chip(chip_bot);
 }
 
-void captouch_get_cross(int paddle, int *x, int *y)
-{
-    uint16_t data[12] = {0,};
-    uint16_t ambient[12] = {0,};
-
-    int result[2] = {0, 0};
-    float total = 0;
-
-#if 0
-    if(paddle == 2) {
-        ad714x_i2c_read(&chip_top, 0xB, data, 3);
-        //ESP_LOGI(TAG, "CDC results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
-
-        for(int stage=0; stage<3; stage++) {
-            ad714x_i2c_read(&chip_top, 0x0F1 + stage * (0x104 - 0xE0), &ambient[stage], 1);
-            //ESP_LOGI(TAG, "stage %d ambient: %X diff: %d", stage, ambient[stage], data[stage] - ambient[stage]);
-        }
-
-        int vectors[][2] = {{0, 0}, {0,240}, {240, 120}};
-        total = (data[0] - ambient[0]) + (data[1] - ambient[1]) + (data[2] - ambient[2]);
-
-        result[0] = vectors[0][0] * (data[0] - ambient[0]) + vectors[1][0] * (data[1] - ambient[1]) + vectors[2][0] * (data[2] - ambient[2]);
-        result[1] = vectors[0][1] * (data[0] - ambient[0]) + vectors[1][1] * (data[1] - ambient[1]) + vectors[2][1] * (data[2] - ambient[2]);
-    }
-
-    if(paddle == 8) {
-        ad714x_i2c_read(&chip_top, 0xB + 5, data + 5, 3);
-        //ESP_LOGI(TAG, "CDC results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
-
-        for(int stage=5; stage<8; stage++) {
-            ad714x_i2c_read(&chip_top, 0x0F1 + stage * (0x104 - 0xE0), &ambient[stage], 1);
-            //ESP_LOGI(TAG, "stage %d ambient: %X diff: %d", stage, ambient[stage], data[stage] - ambient[stage]);
-        }
-
-        int vectors[][2] = {{240, 240}, {240, 0}, {0, 120}};
-        total = (data[5] - ambient[5]) + (data[6] - ambient[6]) + (data[7] - ambient[7]);
-
-        result[0] = vectors[0][0] * (data[5] - ambient[5]) + vectors[1][0] * (data[6] - ambient[6]) + vectors[2][0] * (data[7] - ambient[7]);
-        result[1] = vectors[0][1] * (data[5] - ambient[5]) + vectors[1][1] * (data[6] - ambient[6]) + vectors[2][1] * (data[7] - ambient[7]);
-    }
-
-    *x = result[0] / total;
-    *y = result[1] / total;
-
-    //ESP_LOGI(TAG, "x=%d y=%d\n", *x, *y);
-#endif
-
-    const int paddle_info_1[] = {
-        4,
-        0,
-        1,
-        2,
-        11,
-        4,
-        9,
-        7,
-        6,
-        9,
-    };
-    const int paddle_info_2[] = {
-        3,
-        1,
-        0,
-        3,
-        10,
-        5,
-        8,
-        6,
-        5,
-        8,
-    };
-
-    struct ad714x_chip* chip;
-    if (paddle % 2 == 0) {
-        chip = &chip_top;
-    } else {
-        chip = &chip_bot;
-    }
-
-    ad714x_i2c_read(chip, 0xB, data, 12);
-    //ESP_LOGI(TAG, "CDC results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
-
-    for(int stage=0; stage<12; stage++) {
-        ad714x_i2c_read(chip, 0x0F1 + stage * (0x104 - 0xE0), &ambient[stage], 1);
-        //ESP_LOGI(TAG, "stage %d ambient: %X diff: %d", stage, ambient[stage], data[stage] - ambient[stage]);
-    }
-
-    int diff1 = data[paddle_info_1[paddle]] - ambient[paddle_info_1[paddle]];
-    int diff2 = data[paddle_info_2[paddle]] - ambient[paddle_info_2[paddle]];
-
-    ESP_LOGI(TAG, "%10d %10d", diff1, diff2);
-
-    int vectors[][2] = {{240, 240}, {240, 0}, {0, 120}};
-    total = ((diff1) + (diff2));
-
-    result[0] = vectors[0][0] * (diff1) + vectors[1][0] * (diff2);
-    result[1] = vectors[0][1] * (diff1) + vectors[1][1] * (diff2);
-
-    *x = result[0] / total;
-    *y = result[1] / total;
-}

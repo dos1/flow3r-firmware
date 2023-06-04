@@ -4,11 +4,13 @@ import time
 import harmonic_demo
 import melodic_demo
 import demo_worms
+import cap_touch_demo
 
 MODULES = [
     harmonic_demo,
     melodic_demo,
     demo_worms,
+    cap_touch_demo,
 ]
 
 CURRENT_APP_RUN = None
@@ -50,6 +52,7 @@ def foreground_menu():
     utils.highlight_bottom_petal(0,0,55,55);
     utils.highlight_bottom_petal(1,55,0,55);
     utils.highlight_bottom_petal(2,55,55,0);
+    utils.highlight_bottom_petal(3,0,110,0);
     display_fill(BACKGROUND_COLOR)
     display_update()
 
@@ -67,17 +70,35 @@ def set_rel_volume(vol):
         set_global_volume_dB(VOLUME)
     time.sleep_ms(100)
 
+def captouch_cal():
+    global ctx
+    display_fill(0b0000000111100111)
+    ctx.move_to(0,0).rgb(0,255,0).text("cal")
+    display_update()
+    time.sleep_ms(500)
+    display_fill(0b0011100000000111)
+    ctx.move_to(0,0).rgb(0,255,0).text("cal")
+    captouch_autocalib()
+    while(captouch_calibration_active()):
+        pass
+    display_fill(0)
+    display_update()
+
 def main():
     global CURRENT_APP_RUN
     global ctx
     while not init_done():
         pass
 
-    captouch_autocalib()
+    captouch_autocalib() # dry run
+    while(captouch_calibration_active()):
+        pass
 
     ctx = get_ctx()
     ctx.text_align = ctx.CENTER
     ctx.text_baseline = ctx.MIDDLE
+
+    captouch_cal()
 
     for module in MODULES:
         module.init()
@@ -88,7 +109,7 @@ def main():
 
     while True:
         if((get_button(1) == 2) and (CURRENT_APP_RUN == run_menu)):
-            captouch_autocalib()
+            captouch_cal()
             foreground_menu()
         else:
             if(get_button(0) == 2):
