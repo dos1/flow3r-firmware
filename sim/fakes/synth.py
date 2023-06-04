@@ -7,3 +7,9 @@ class tinysynth:
 
     def waveform(self, a):
         pass
+
+    def tone(self, note):
+        pass
+
+    def start(self):
+        pass
