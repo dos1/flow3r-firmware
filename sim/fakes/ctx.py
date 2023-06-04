@@ -38,7 +38,7 @@ class Wasm:
         slen = len(s) + 1
         p = self.malloc(slen)
         mem = self._i.exports.memory.uint8_view(p)
-        mem[0:slen] = s
+        mem[0:slen-1] = s
         mem[slen-1] = 0
         self._i.exports.ctx_parse(ctx, p)
         self.free(p)
