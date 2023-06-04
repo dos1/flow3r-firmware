@@ -65,3 +65,17 @@ def init():
 
 def foreground():
     adjust_playing_field_to_octave()
+
+from application import Application
+
+class MelodicApp(Application):
+    def on_init(self):
+        init()
+    
+    def on_foreground(self):
+        foreground()
+    
+    def main_foreground(self):
+        run()
+
+app=MelodicApp("melodic")

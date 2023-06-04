@@ -58,3 +58,19 @@ def foreground():
     tmp = chord_index
     chord_index = -1
     set_chord(tmp)
+
+from application import Application
+class HarmonicApp(Application):
+    def on_init(self):
+        init()
+        #foreground()
+    
+    def on_foreground(self):
+        #foreground()
+        pass
+    
+    def main_foreground(self):
+        print ("hererer")
+        run()
+
+app=HarmonicApp("harmonic")
