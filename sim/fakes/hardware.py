@@ -285,16 +285,6 @@ class Simulation:
 _sim = Simulation()
 
 
-_deprecated_notified = set()
-def _deprecated(f):
-    def wrapper(*args, **kwargs):
-        if f not in _deprecated_notified:
-            print(f'{f.__name__} is deprecated!')
-            _deprecated_notified.add(f)
-        return f(*args, **kwargs)
-    return wrapper
-
-
 def init_done():
     return True
 
@@ -315,19 +305,6 @@ def get_ctx():
     if _global_ctx is None:
         _global_ctx = ctx.Ctx()
     return _global_ctx
-
-
-@_deprecated
-def display_fill(color):
-    """
-    display_fill is deprecated as it doesn't work well with ctx's framebuffer
-    ownership / state diffing. Instead, callers should use plain ctx functions
-    to fill the screen.
-    """
-    r = (color >> 11) & 0b11111
-    g = (color >> 5 ) & 0b111111
-    b =  color        & 0b11111
-    get_ctx().rgb(r << 2, g << 3, b <<2).rectangle(-120, -120, 240, 240).fill()
 
 
 def display_update():

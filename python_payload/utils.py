@@ -10,17 +10,6 @@ def clear_all_leds():
         set_led_rgb(i, 0, 0, 0)
     update_leds()
 
-def draw_text_big(text, x, y):
-    ypos = 120+int(len(text)) + int(y)
-    xpos = 120+int(len(text[0])) + int(x)
-    for l, line in enumerate(text):
-        for p, pixel in enumerate(line):
-            if(pixel == '#'):
-                display_draw_pixel(xpos - 2*p, ypos - 2*l, RED)
-                display_draw_pixel(xpos - 2*p, ypos - 2*l-1, BLUE)
-                display_draw_pixel(xpos - 2*p-1, ypos - 2*l, BLUE)
-                display_draw_pixel(xpos - 2*p-1, ypos - 2*l-1, RED)
-
 def highlight_bottom_petal(num, RED, GREEN, BLUE):
     start = 4 + 8*num
     for i in range(7):
@@ -33,11 +22,6 @@ def long_bottom_petal_captouch_blocking(num, ms):
         if(get_captouch((num*2) + 1) == 1):
             return True
     return False
-
-def draw_rect(x,y,w,h,col):
-    for j in range(w):
-        for k in range(h):
-            display_draw_pixel(x+j,y+k,col)
 
 def draw_volume_slider(ctx, volume):
     length = 96 + ((volume - 20) * 1.6)
