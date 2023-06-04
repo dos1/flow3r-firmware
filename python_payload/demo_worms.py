@@ -85,13 +85,37 @@ def init():
         worms.append(Worm())
     ctx = hardware.get_ctx()
 
+# TODO(q3k): factor out frame limiter
+last_render = None
+target_fps = 30
+target_delta = 1000 / target_fps
+frame_slack = None
+last_report = None
 def run():
+    global last_render
+    global last_report
+    global frame_slack
+    now = time.ticks_ms()
+
+    if last_render is not None:
+        delta = now - last_render
+        if frame_slack is None:
+            frame_slack = target_delta - delta
+        if delta < target_delta:
+            return
+
+        if last_report is None or (now - last_report) > 1000:
+            fps = 1000/delta
+            print(f'fps: {fps:.3}, frame budget slack: {frame_slack:.3}ms')
+            last_report = now
+
+    # Simulation is currently locked to FPS.
     global worms
     for w in worms:
         w.draw()
         w.move()
     hardware.display_update()
-    time.sleep(0.001)
+    last_render = now
 
 
 def foreground():
