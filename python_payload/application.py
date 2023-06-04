@@ -27,7 +27,7 @@ class Application():
             condition=lambda e: e["type"]=="button" and e.get("from")==2 and e["change"]
         ))
 
-        self.ui.add(ui.Icon(label=self.title))
+        self.ui.add(ui.Icon(label=self.title, size=100))
         
     def __repr__(self):
         return "App "+self.title
@@ -109,7 +109,6 @@ class Application():
     def _to_background(self):
         self.state = STATE_BACKGROUND
         if self._events_foreground:
-            print("baz")
             self._set_events(self._events_foreground,False)
 
         self.engine.register_main_loop(self.main_foreground,False)
@@ -138,7 +137,6 @@ class Application():
         pass
 
     def main_foreground(self):
-        #print("nothing")
         pass
     
     def main_always(self):
