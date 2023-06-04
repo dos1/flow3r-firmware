@@ -14,19 +14,96 @@ bgpath = os.path.join(simpath, 'background.png')
 background = pygame.image.load(bgpath)
 
 
+class Input:
+    """
+    Input implements an input overlay (for petals or buttons) that can be
+    mouse-picked by the user, and in the future also keyboard-controlled.
+    """
+    # Pixels positions of each marker.
+    POSITIONS = []
+    # Pixel size (diameter) of each marker.
+    MARKER_SIZE = 100
+
+    # Colors for various states (RGBA).
+    COLOR_HELD = (0x5b, 0x5b, 0x5b, 0xa0)
+    COLOR_HOVER = (0x6b, 0x6b, 0x6b, 0xa0)
+    COLOR_IDLE = (0x8b, 0x8b, 0x8b, 0x80)
+
+    def __init__(self):
+        self._state = [False for _ in self.POSITIONS]
+        self._mouse_hover = None
+        self._mouse_held = None
+
+    def state(self):
+        s = [ss for ss in self._state]
+        if self._mouse_held is not None:
+            s[self._mouse_held] = True
+        return s
+
+    def _mouse_coords_to_id(self, mouse_x, mouse_y):
+        for i, (x, y) in enumerate(self.POSITIONS):
+            x += self.MARKER_SIZE // 2
+            y += self.MARKER_SIZE // 2
+            dx = mouse_x - x
+            dy = mouse_y - y
+            if math.sqrt(dx**2 + dy**2) < self.MARKER_SIZE // 2:
+                return i
+        return None
+
+    def process_event(self, ev):
+        prev_hover = self._mouse_hover
+        prev_state = self.state()
+
+        if ev.type == pygame.MOUSEMOTION:
+            x, y = ev.pos
+            self._mouse_hover = self._mouse_coords_to_id(x, y)
+        if ev.type == pygame.MOUSEBUTTONDOWN:
+            self._mouse_held = self._mouse_hover
+        if ev.type == pygame.MOUSEBUTTONUP:
+            self._mouse_held = None
+
+        if prev_hover != self._mouse_hover:
+            return True
+        if prev_state != self.state():
+            return True
+        return False
+
+    def render(self, surface):
+        s = self.state()
+        for i, (x, y) in enumerate(self.POSITIONS):
+            x += self.MARKER_SIZE // 2
+            y += self.MARKER_SIZE // 2
+            if s[i]:
+                pygame.draw.circle(surface, self.COLOR_HELD, (x, y), self.MARKER_SIZE//2)
+            elif i == self._mouse_hover:
+                pygame.draw.circle(surface, self.COLOR_HOVER, (x, y), self.MARKER_SIZE//2)
+            else:
+                pygame.draw.circle(surface, self.COLOR_IDLE, (x, y), self.MARKER_SIZE//2)
+
+
+class PetalsInput(Input):
+    # TODO(q3k): document order
+    POSITIONS = [
+        (114, 302), (163, 112), (204, 587), ( 49, 477), (504, 587), (352, 696), (602, 298), (660, 477), (356, 122), (547, 117),
+    ]
+
+
+class ButtonsInput(Input):
+    POSITIONS = [
+        ( 14, 230), ( 46, 230), ( 78, 230),
+        (714, 230), (746, 230), (778, 230),
+    ]
+    MARKER_SIZE = 20
+    COLOR_HELD = (0x80, 0x80, 0x80, 0xff)
+    COLOR_HOVER = (0x40, 0x40, 0x40, 0xff)
+    COLOR_IDLE = (0x20, 0x20, 0x20, 0xff)
+
+
 class Simulation:
     """
     Simulation implements the state and logic of the on-host pygame-based badge
     simulator.
     """
-
-    # Pixel coordinates of each petal 'marker'.
-    # TODO(q3k): document order
-    PETAL_POSITIONS = [
-        (114, 302), (163, 112), (204, 587), ( 49, 477), (504, 587), (352, 696), (602, 298), (660, 477), (356, 122), (547, 117),
-    ]
-    # Size of each petal 'marker' rendered in overlay.
-    PETAL_MARKER_SIZE = 50
 
     # Pixel coordinates of each LED. The order is the same as the hardware
     # WS2812 chain, not the order as expected by the micropython API!
@@ -44,13 +121,8 @@ class Simulation:
         self.led_state_buf = [(0, 0, 0) for _ in self.LED_POSITIONS]
         # Actual LED state as rendered.
         self.led_state = [(0, 0, 0) for _ in self.LED_POSITIONS]
-        # Position of the simulation cursor in window pixel coordinates.
-        self.mouse_x, self.mouse_y = (0, 0)
-        # ID of petal being held (clicked), or None if no petal is being held.
-        self.petal_held = None
-        # ID of petal being hovered over, or None if no petal is being hovered
-        # over.
-        self.petal_hover = None
+        self.petals = PetalsInput()
+        self.buttons = ButtonsInput()
         # Timestamp of last GUI render. Used by the lazy render GUI
         # functionality.
         self.last_gui_render = None
@@ -95,61 +167,19 @@ class Simulation:
 
     def process_events(self):
         """
-        Process pygame events and update mouse_{x,y}, petal_held and
-        petal_hover.
+        Process pygame events and update mouse_{x,y}, {petal,button}_held and
+        {petal,button}_hover.
         """
-        prev_petal_hover = self.petal_hover
         evs = pygame.event.get()
         for ev in evs:
-            if ev.type == pygame.MOUSEMOTION:
-                self.mouse_x, self.mouse_y = ev.pos
-                self.petal_hover = self._mouse_coords_to_petal_id()
-            if ev.type == pygame.MOUSEBUTTONDOWN:
-                self._process_mouse_down()
-            if ev.type == pygame.MOUSEBUTTONUP:
-                self._process_mouse_up()
-
-        if prev_petal_hover != self.petal_hover:
-            self._petal_surface_dirty = True
-
-    def _mouse_coords_to_petal_id(self):
-        if self.mouse_x is None or self.mouse_y is None:
-            return None
-
-        for i, pos in enumerate(self.PETAL_POSITIONS):
-            (px, py) = pos
-            # TODO(q3k): pre-apply to PETAL_POSITIONS.
-            px += 50
-            py += 50
-            dx = self.mouse_x - px
-            dy = self.mouse_y - py
-            if math.sqrt(dx**2 + dy**2) < self.PETAL_MARKER_SIZE:
-                return i
-        return None
-
-    def _process_mouse_up(self):
-        if self.petal_held is not None:
-            self.petal_held = None
-            self._petal_surface_dirty = True
-
-    def _process_mouse_down(self):
-        if self.petal_held != self.petal_hover:
-            self.petal_held = self.petal_hover
-            self._petal_surface_dirty = True
+            if self.petals.process_event(ev):
+                self._petal_surface_dirty = True
+            if self.buttons.process_event(ev):
+                self._petal_surface_dirty = True
 
     def _render_petal_markers(self, surface):
-        for i, pos in enumerate(self.PETAL_POSITIONS):
-            x, y = pos
-            # TODO(q3k): pre-apply to PETAL_POSITIONS
-            x += 50
-            y += 50
-
-            if i == self.petal_held:
-                pygame.draw.circle(surface, (0x8b, 0x8b, 0x8b, 0x80), (x, y), 50)
-            elif i == self.petal_hover:
-                pygame.draw.circle(surface, (0x6b, 0x6b, 0x6b, 0xa0), (x, y), 50)
-            else:
-                pygame.draw.circle(surface, (0x5b, 0x5b, 0x5b, 0xa0), (x, y), 50)
+        self.petals.render(surface)
+        self.buttons.render(surface)
 
     def _render_leds(self, surface):
         for pos, state in zip(self.LED_POSITIONS, self.led_state):
@@ -342,10 +372,27 @@ def set_global_volume_dB(a):
 
 
 def get_button(a):
+    _sim.process_events()
+    _sim.render_gui_lazy()
+
+    state = _sim.buttons.state()
+    if a == 1:
+        sub = state[:3]
+    elif a == 0:
+        sub = state[3:6]
+    else:
+        return 0
+
+    if sub[0]:
+        return -1
+    elif sub[1]:
+        return 2
+    elif sub[2]:
+        return +1
     return 0
 
 
 def get_captouch(a):
     _sim.process_events()
     _sim.render_gui_lazy()
-    return _sim.petal_held == a
+    return _sim.petals.state()[a]
