@@ -1,18 +1,26 @@
-#python
+#python imports
 import random
 import time
 import math
 
-#badge23
+#flow3r imports
 import event
 import application
 import ui
+
 
 # Subclass Application
 class AppWorms(application.Application):
 
     def on_init(self):
         print("on init")
+        self.add_event(event.Event(
+            name="worms_control",
+            action=self.handle_input, 
+            condition=lambda data: data.get("type","")=="captouch" and data.get("value")==1 and data["change"],
+            )
+        )
+
         self.worms = []
         for i in range(0):
             worms.append(Worm())
@@ -39,26 +47,12 @@ class AppWorms(application.Application):
             w.draw()
             w.move()
 
-app = AppWorms("worms")
+    def handle_input(self,data):
+        worms = app.worms
+        worms.append(Worm(data.get("index",0)*2*math.pi/10+math.pi ))
+        if len(worms)>10:
+            worms.pop(0)
 
-def handle_input(data):
-    worms = app.worms
-    worms.append(Worm(data.get("index",0)*2*math.pi/10+math.pi ))
-    if len(worms)>10:
-        worms.pop(0)
-
-app.add_event(event.Event(
-    name="worms_control",
-    action=handle_input, 
-    condition=lambda data: data.get("type","")=="captouch" and data.get("value")==1 and data["change"],
-    )
-)
-
-app.add_event(event.Event(
-    name="worms_exit",
-    action=app.exit,
-    condition=lambda e: e["type"]=="button" and e.get("from")==2 and e["change"]
-))
 
 class Worm():
     def __init__(self,direction=None):
@@ -115,8 +109,8 @@ class Worm():
         self._lastdist = dist
 
 
-#app.run()
-#app.engine.eventloop()
+app = AppWorms("worms")
+
 
 #Known problems:
 #ctx.rotate(math.pi) turns the display black until powercycled
