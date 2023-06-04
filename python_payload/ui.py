@@ -47,11 +47,11 @@ class UIElement():
     def draw(self, offset=(0,0)):
         pos = (self.origin[0]+offset[0],self.origin[1]+offset[1])
 
-        
+        self._draw(pos)
         for child in self.children:
             child.draw(pos)
 
-        self._draw(pos)
+        
 
     def _draw(self,pos):
         pass

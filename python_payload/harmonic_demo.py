@@ -70,7 +70,6 @@ class HarmonicApp(Application):
         pass
     
     def main_foreground(self):
-        print ("hererer")
         run()
 
 app=HarmonicApp("harmonic")
