@@ -48,9 +48,14 @@ class Wasm:
         Call ctx_new_for_framebuffer, but also first allocate the underlying
         framebuffer and return it alongside the Ctx*.
         """
-        fb = self.malloc(width * height * 2)
-        print('fb', hex(fb))
-        return fb, self._i.exports.ctx_new_for_framebuffer(fb, width, height, width * 2, 7)
+        fb = self.malloc(width * height * 4)
+        # Significant difference between on-device Ctx and simulation Ctx: we
+        # render to a BRGA8 (24bpp color + 8bpp alpha) buffer instead of 16bpp
+        # RGB565 like the device does. This allows us to directly blit the ctx
+        # framebuffer into pygame's surfaces, which is a _huge_ speed benefit
+        # (difference between ~10FPS and 500+FPS!).
+        BRGA8 = 5
+        return fb, self._i.exports.ctx_new_for_framebuffer(fb, width, height, width * 4, BRGA8)
 
     def ctx_apply_transform(self, ctx, *args):
         args = [float(a) for a in args]
@@ -91,7 +96,13 @@ class Ctx:
         return self
 
     def rgb(self, r, g, b):
-        self._emit(f"rgb {r/255} {g/255} {b/255}")
+        # TODO(q3k): dispatch by type instead of value, warn on
+        # ambiguous/unexpected values for type.
+        if r > 1.0 or g > 1.0 or b > 1.0:
+            r /= 255.0
+            g /= 255.0
+            b /= 255.0
+        self._emit(f"rgb {r} {g} {b}")
         return self
 
     def text(self, s):

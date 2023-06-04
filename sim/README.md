@@ -32,7 +32,9 @@ python3 sim/run.py
 Known Issues
 ---
 
-No support for input of any kind yet (captouch, three-way buttons).
+Captouch petal input order is wrong.
+
+No support for three-way buttons yet.
 
 No support for audio yet.
 
