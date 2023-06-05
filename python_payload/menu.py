@@ -13,8 +13,9 @@ class Menu():
         self.items=[]
         self.__index = 0
         self.ui = ui.GroupRing(r=80)
-        self.ui.element_center = ui.Text(self.name)
-        self.icon = ui.Icon(label=name)
+        self.icon = ui.IconFlower(label=name,size=80)
+        self.ui.element_center = self.icon
+        
         self.angle = 0
         self.angle_step= 0.2
         if has_back:
@@ -47,6 +48,7 @@ class Menu():
     def rotate_to(self, angle):
         self.angle = angle%(math.pi*2)
         self.ui.angle_offset = self.angle
+        self.icon.phi_offset = self.angle
     
     def rotate_steps(self, steps=1):
         self.rotate_by(self.angle_step*steps)
@@ -90,7 +92,7 @@ class MenuItem():
     def __init__(self,name="item",action=None):
         self.name= name
         self.action= action
-        self.ui = ui.Icon(label=name)
+        self.ui = ui.IconFlower(label=name)
 
     def __repr__(self):
         return "item: {} (action: {})".format(self.name,"?")
