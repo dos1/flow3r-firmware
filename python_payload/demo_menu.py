@@ -32,7 +32,7 @@ testmenu.add(item_foo)
 testmenu.add(item_sub)
 testmenu.add(item_add)
 
-menu_main = menu.Menu("main",has_back=False)
+menu_main = menu.Menu("flow3r",has_back=False)
 menu_main.add(menu.MenuItemSubmenu(testmenu))
 menu_main.add(menu.MenuItemSubmenu(menu_demo))
 menu_main.add(menu.MenuItemSubmenu(menu_settings.get_menu()))

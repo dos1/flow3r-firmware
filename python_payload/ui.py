@@ -22,12 +22,10 @@ PUSH_RED = (251/255,72/255,196/255)
 the_ctx = hardware.get_ctx()
 
 # Utility functions
-def xy_from_polar(r,deg):
-    #rad = deg/180*math.pi
-
+def xy_from_polar(r,phi):
     return (
-        r * math.sin(deg), #x
-        r * math.cos(deg)  #y
+        r * math.sin(phi), #x
+        r * math.cos(phi)  #y
     )
 
 #def ctx_circle(self, x,y, radius, arc_from = -math.pi, arc_to = math.pi):
@@ -84,6 +82,7 @@ class Text(UIElement):
     def _draw(self, pos):
         self.ctx.text_align = self.ctx.CENTER
         self.ctx.text_baseline = self.ctx.MIDDLE
+        self.ctx.font_size = 30
         self.ctx.rgb(1,1,1).move_to(pos[0],pos[1]).text(self.s)
 
 class Icon(UIElement):
@@ -101,6 +100,7 @@ class Icon(UIElement):
 
         self.ctx.text_align = self.ctx.CENTER
         self.ctx.text_baseline = self.ctx.MIDDLE
+        self.ctx.font_size = 30
 
         if self.has_highlight:
             hs = self.size+5;
@@ -118,11 +118,31 @@ class Icon(UIElement):
 class IconFlower(Icon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.petal_size=size/2
-        self.petal_count=5
+        self.petal_count= random.randint(4,8)
+        self.petal_color = (random.random(),random.random(),random.random())
+        self.phi_offset = random.random()
+        self.size_offset = random.randint(0,20)
     
     def _draw(self,pos):
         (x,y)=pos
+        petal_size=2.3*self.size/self.petal_count+self.size_offset
+        self.ctx.font_size=self.size/3
+
+        hs = 3
+            
+        for i in range(self.petal_count):
+            phi = math.pi*2 / self.petal_count * i + self.phi_offset
+            r = self.size/2
+            (x_,y_) = xy_from_polar(r, phi)
+            if self.has_highlight:
+                self.ctx.move_to(x+x_,y+y_).rgb(1,1,1).arc(x+x_,y+y_, petal_size/2+hs,-math.pi,math.pi,True).fill()
+            self.ctx.move_to(x+x_,y+y_).rgb(*self.petal_color).arc(x+x_,y+y_, petal_size/2,-math.pi,math.pi,True).fill()
+        
+        #if self.has_highlight:
+        #    self.ctx.rgb(1,1,1).arc(x,y, self.size/2+hs,-math.pi,math.pi,True).fill()
+        self.ctx.move_to(x,y).rgb(*self.bg).arc(x,y,self.size/2,-math.pi,math.pi,True).fill()
+
+        self.ctx.rgb(*GO_GREEN).move_to(x,y).text(self.label)
 
 
 
@@ -170,24 +190,3 @@ class GroupRing(UIElement):
     def _draw(self,pos):
         if self.element_center:
             self.element_center._draw(pos)
-
-def test():
-    group = UIElement((10,0))
-    group.add(UIElement((10,10)))
-    group.add(UIElement((20,20)))
-    #group.draw()
-
-    ring = GroupRing(r=80)
-    ctx = hardware.get_ctx()
-    for i in range(12):
-        ring.add(Icon(str(i)))
-        hardware.display_update()
-    while True:
-        ctx.rectangle(0,0,240,240).rgb(1,1,1).fill()
-        ring.draw()
-        hardware.display_update()
-        ring.angle_offset+=2*math.pi/60
-        time.sleep(0.01)
-        hardware.display_update()
-
-#test()
