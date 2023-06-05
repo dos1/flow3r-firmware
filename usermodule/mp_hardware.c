@@ -136,10 +136,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_right_button_get_obj, mp_right_button_get);
 
 
 STATIC mp_obj_t mp_set_global_volume_dB(size_t n_args, const mp_obj_t *args) {
-    mp_float_t x = mp_obj_get_float(args[0]);
-    int8_t d = x;
-    set_global_vol_dB(d);
-    mp_float_t l = x;
+    //TODO: DEPRECATE
+    mp_float_t d = mp_obj_get_float(args[0]);
+    audio_set_volume_dB(d);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_set_global_volume_dB_obj, 1, 2, mp_set_global_volume_dB);

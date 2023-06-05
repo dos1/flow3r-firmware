@@ -81,7 +81,7 @@ void slow_system_status_task(void * data){
     while(1){
         xQueueReceive(slow_system_status_queue, &dummy_data, portMAX_DELAY);
         //read out stuff like jack detection, battery status, usb connection etc.
-        audio_lineout_update_jacksense();
+        audio_update_jacksense();
     }
 }
 

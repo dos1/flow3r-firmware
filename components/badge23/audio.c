@@ -24,11 +24,26 @@ static void audio_player_task(void* arg);
 #define DMA_BUFFER_COUNT    2
 #define I2S_PORT 0
 
+#define NAT_LOG_DB 0.1151292546497023
+
 static bool headphones_connected = 0;
 static bool headset_connected = 0;
-static bool speaker_on = 1;
+static bool line_in_connected = 0;
+static int32_t software_volume = 0;
+static float headphones_volume_dB = -90;
+static bool headphones_mute = 2; // 2 is uninitialized
+static float speaker_volume_dB = -90;
+static bool speaker_mute = 2; // 2 is uninitialized
+
+uint8_t audio_headset_is_connected(){ return headset_connected; }
+uint8_t audio_headphones_are_connected(){ return headphones_connected; }
+float audio_headphones_get_volume_dB(){ return headphones_volume_dB; }
+float audio_speaker_get_volume_dB(){ return speaker_volume_dB; }
+uint8_t audio_headphones_get_mute(){ return headphones_mute ? 1 : 0; }
+uint8_t audio_speaker_get_mute(){ return speaker_mute ? 1 : 0; }
 
 #if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
+
 static uint8_t max98091_i2c_read(const uint8_t reg)
 {
     const uint8_t tx[] = {reg};
@@ -159,72 +174,93 @@ static void i2s_init(void){
 
 }
 
-static uint8_t headphones_volume = 0x1A;
-static uint8_t speaker_volume = 0x2C;
+// irregular register value -> vol mapping taken from codec datasheet
+typedef struct {
+    uint8_t register_value;
+    float volume_dB;
+} vol_map_t;
 
-static void codec_set_headphones_volume_dB(float dB){
-    uint8_t reg = 0x1A; // 0dB
-    if(dB > 3.) dB = 3.; //max volume
-    if(dB < -67.) dB = -67.; //min volume (could also trigger false mute someday)
+const uint8_t speaker_map_len = 40;
+const vol_map_t speaker_map[] = {{0x3F, +14}, {0x3E, +13.5}, {0x3D, +13}, {0x3C, +12.5}, {0x3B, +12}, {0x3A, +11.5}, {0x39, +11}, {0x38, +10.5}, {0x37, +10}, {0x36, +9.5}, {0x35, +9}, {0x34, +8}, {0x33, +7}, {0x32, +6}, {0x31, +5}, {0x30, +4}, {0x2F, +3}, {0x2E, +2}, {0x2D, +1}, {0x2C, +0}, {0x2B, -1}, {0x2A, -2}, {0x29, -3}, {0x28, -4}, {0x27, -5}, {0x26, -6}, {0x25, -8}, {0x24, -10}, {0x23, -12}, {0x22, -14}, {0x21, -17}, {0x20, -20}, {0x1F, -23}, {0x1E, -26}, {0x1D, -29}, {0x1C, -32}, {0x1B, -36}, {0x1A, -40}, {0x19, -44}, {0x18, -48}};
 
-    if(dB > 1.){ //0.5dB steps
-        reg += dB*2. - 0.5;
-    } else if(dB > -7.){  //1dB steps
-        reg += dB + 0.5;
-    } else if(dB > -19.){ //2dB steps
-        reg += dB/2. - 2.5;
-    } else if(dB > -43.){ //3dB steps
-        reg += dB/3. - 5.5;
-    } else {              //4dB steps
-        reg += dB/4. - 8.5;
+const uint8_t headphones_map_len = 36;
+const vol_map_t headphones_map[] = {{0x1F, +3}, {0x1E, +2.5}, {0x1D, +2}, {0x1C, +1.5}, {0x1B, +1}, {0x1A, +0}, {0x19, -1}, {0x18, -2}, {0x17, -3}, {0x16, -4}, {0x15, -5}, {0x14, -7}, {0x13, -9}, {0x12, -11}, {0x11, -13}, {0x10, -15}, {0x0F, -17}, {0x0E, -19}, {0x0D, -22}, {0x0C, -25}, {0x0B, -28}, {0x0A, -31}, {0x09, -34}, {0x08, -37}, {0x07, -40}, {0x06, -43}, {0x06, -47}, {0x04, -51}, {0x03, -55}, {0x02, -59}, {0x01, -63}, {0x00, -67}};
+
+static uint8_t headphones_volume_register = 0x1A;
+static uint8_t speaker_volume_register = 0x2C;
+
+float audio_headphones_set_volume_dB(float vol_dB){
+    uint8_t map_index = headphones_map_len - 1;
+    for(; map_index; map_index--){
+        if(headphones_map[map_index].volume_dB > vol_dB) break; 
     }
+    uint8_t reg = headphones_map[map_index].register_value;
+    //headphones_volume_dB = headphones_map[map_index].volume_dB;
 
-    headphones_volume = reg;
-    max98091_i2c_write(0x2C, headphones_volume); //left chan
-    max98091_i2c_write(0x2D, headphones_volume); //right chan
-    //note: didn't check if chan physically mapped to l/r or flipped.
+    headphones_volume_register = reg;
+
+    uint8_t headphones_on = (!headphones_mute) && headphones_connected;
+
+    reg = (headphones_on ?  (1 << 7) : 0) | reg;
+    max98091_i2c_write(0x2C, reg); //left chan
+    max98091_i2c_write(0x2D, reg); //right chan
+    // note: didn't check if chan physically mapped to l/r or flipped.
+
+    // do the fine steps in software
+    // note: synchronizing both hw and software volume changes is somewhat tricky
+    float hardware_volume_dB = headphones_map[map_index].volume_dB;
+    float software_volume_dB = hardware_volume_dB - vol_dB;
+    if(software_volume_dB > 0) software_volume_dB = 0;
+    //if(!software_volume_enabled) software_volume_dB = 0; // breaks p1, might add option once it is retired
+    software_volume = (int32_t) (32768 * exp(software_volume * NAT_LOG_DB));
+    headphones_volume_dB = hardware_volume_dB + software_volume_dB;
+    return speaker_volume_dB;
 }
 
-static void codec_set_spkr_volume_dB(float dB){
-    // could add finer steps in software someday but since
-    // lineout and speakers can be doing stuff at the same
-    // time this needs to be thought through a little more
-    uint8_t reg = 0x2C; // 0dB
-    if(dB > 14.) dB = 14.; //max volume
-    if(dB < -48.) dB = -48.; //min volume (could also trigger false mute someday)
-
-    if(dB > 9.){ //0.5dB steps
-        reg += dB*2 - 8.5;
-    } else if(dB > -6.){  //1dB steps
-        reg += dB + 0.5;
-    } else if(dB > -14.){ //2dB steps
-        reg += dB/2 - 2.5;
-    } else if(dB > -32.){ //3dB steps
-        reg += dB/3 - 4.5;
-    } else {              //4dB steps
-        reg += dB/4 - 7.5;
+float audio_speaker_set_volume_dB(float vol_dB){
+    uint8_t map_index = speaker_map_len - 1;
+    for(; map_index; map_index--){
+        if(speaker_map[map_index].volume_dB > vol_dB) break; 
     }
+    uint8_t reg = speaker_map[map_index].register_value;
+    speaker_volume_dB = speaker_map[map_index].volume_dB;
 
-    speaker_volume = reg;
-    reg = (speaker_on ? 0 : (1 << 7)) | reg;
+    speaker_volume_register = reg;
+
+    uint8_t speaker_on = (!speaker_mute) && (!headphones_connected);
+
+    reg = (speaker_on ?  (1 << 7) : 0) | reg;
     max98091_i2c_write(0x31, reg); //left chan
     max98091_i2c_write(0x32, reg); //right chan
     //note: didn't check if chan physically mapped to l/r or flipped.
+
+    // do the fine steps in software
+    // note: synchronizing both hw and software volume changes is somewhat tricky
+    float hardware_volume_dB = headphones_map[map_index].volume_dB;
+    float software_volume_dB = hardware_volume_dB - vol_dB;
+    if(software_volume_dB > 0) software_volume_dB = 0;
+    //if(!software_volume_enabled) software_volume_dB = 0; // breaks p1, might add option once it is retired
+    software_volume = (int32_t) (32768. * exp(software_volume * NAT_LOG_DB));
+    speaker_volume_dB = hardware_volume_dB + software_volume_dB;
+    return speaker_volume_dB;
 }
 
-static void unmute_speaker(){
-    max98091_i2c_write(0x31, speaker_volume); //left chan
-    max98091_i2c_write(0x32, speaker_volume); //right chan
-    speaker_on = 1;
+void audio_headphones_set_mute(uint8_t mute){
+    headphones_mute = mute;
+    audio_headphones_set_volume_dB(speaker_volume_dB);
 }
 
-static void mute_speaker(){
-    max98091_i2c_write(0x31, (1<<7) | speaker_volume); //left chan
-    max98091_i2c_write(0x32, (1<<7) | speaker_volume); //right chan
-    speaker_on = 0;
+void audio_speaker_set_mute(uint8_t mute){
+    speaker_mute = mute;
+    audio_speaker_set_volume_dB(speaker_volume_dB);
 }
 
 #elif defined(CONFIG_BADGE23_HW_GEN_P1)
+
+#define MAX_VOLUME_DB 20
+#define MIN_VOLUME_DB (-80)
+
+int32_t software_volume_premute; // ugly but this is an old prototype that will be phased out soon
 
 static void i2s_init(void){
     
@@ -252,9 +288,108 @@ static void i2s_init(void){
 
     i2s_set_pin(I2S_PORT, &pin_config);
 }
+
+float audio_speaker_set_volume_dB(float vol_dB){
+    if(vol_dB < (MIN_VOLUME_DB)) vol_dB = MIN_VOLUME_DB;
+    if(vol_dB > (MAX_VOLUME_DB)) vol_dB = MAX_VOLUME_DB;
+
+    int32_t buf =  3000 * exp(vol_dB * NAT_LOG_DB);
+    software_volume_premute = buf;
+    if(speaker_mute){
+        software_volume = 0;
+    } else {
+        software_volume = software_volume_premute;
+    }
+
+    speaker_volume_dB = vol_dB;
+    return speaker_volume_dB;
+}
+
+float audio_headphones_set_volume_dB(float vol_dB){
+    return vol_dB; // no headphones, should never be called ideally
+}
+
+void audio_headphones_set_mute(uint8_t mute){
+    headphones_mute = 1;
+};
+
+void audio_speaker_set_mute(uint8_t mute){
+    speaker_mute = mute;
+    if(speaker_mute){
+        software_volume = 0;
+    } else {
+        software_volume = software_volume_premute;
+    }
+}
+
 #else
 #error "audio not implemented for this badge generation"
 #endif
+
+float audio_set_volume_dB(float vol_dB){
+    if(audio_headphones_are_connected()){
+        return audio_headphones_set_volume_dB(vol_dB);
+    } else {
+        return audio_speaker_set_volume_dB(vol_dB);
+    }
+}
+
+float audio_get_volume_dB(){
+    if(audio_headphones_are_connected()){
+        return audio_headphones_get_volume_dB();
+    } else {
+        return audio_speaker_get_volume_dB();
+    }
+}
+
+void audio_set_mute(uint8_t mute){
+    if(audio_headphones_are_connected()){
+        audio_headphones_set_mute(mute);
+    } else {
+        audio_speaker_set_mute(mute);
+    }
+}
+
+uint8_t audio_get_mute(){
+    if(audio_headphones_are_connected()){
+        return audio_headphones_get_mute();
+    } else {
+        return audio_speaker_get_mute();
+    }
+}
+
+void audio_update_jacksense(){
+#if defined(CONFIG_BADGE23_HW_GEN_P1)
+    line_in_connected = 0;
+#elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
+    line_in_connected = 1;
+#elif defined(CONFIG_BADGE23_HW_GEN_P6)
+    line_in_connected = 0; //TODO: read port expander
+#endif
+
+#if defined(CONFIG_BADGE23_HW_GEN_P1)
+    headphones_connected = 0;
+    headset_connected = 0;
+#elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)  || defined(CONFIG_BADGE23_HW_GEN_P6)
+    uint8_t jck = max98091_i2c_read(0x02);
+    if(jck == 6){
+        headphones_connected = 0;
+        headset_connected = 0;
+        if(speaker_mute == 1) audio_speaker_set_mute(0);
+        if(headphones_mute == 0) audio_headphones_set_mute(1);
+    } else if(jck == 0){
+        headphones_connected = 1;
+        headset_connected = 0;
+        if(speaker_mute == 0) audio_speaker_set_mute(1);
+        if(headphones_mute == 1) audio_headphones_set_mute(0);
+    } else if(jck == 2){
+        headphones_connected = 1;
+        headset_connected = 1;
+        if(speaker_mute == 0) audio_speaker_set_mute(1);
+        if(headphones_mute == 1) audio_headphones_set_mute(0);
+    }
+#endif
+}
 
 typedef struct _audio_source_t{
     void * render_data;
@@ -338,63 +473,14 @@ uint16_t count_audio_sources(){
 }
 
 static void _audio_init(void) {
+    // TODO: this assumes I2C is already initialized
     init_scope(241);
     i2s_init();
+    audio_update_jacksense();
     //ESP_ERROR_CHECK(i2s_channel_enable(tx_chan));
     TaskHandle_t handle;
     xTaskCreate(&audio_player_task, "Audio player", 3000, NULL, configMAX_PRIORITIES - 1, &handle);
 }
-
-#define LR_PHASE 1
-#define NAT_LOG_DB 0.1151292546497023
-
-static uint16_t _global_vol = 3000;
-
-#if defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P3)
-void set_global_vol_dB(int8_t vol_dB){
-    //note: _global_vol could be higher in this mode but we got plans trust us oka :D?
-    if(speaker_on){
-        codec_set_spkr_volume_dB(vol_dB);
-    } else {
-        codec_set_headphones_volume_dB(vol_dB);
-    }
-}
-
-void audio_lineout_update_jacksense(){
-    uint8_t jck = max98091_i2c_read(0x02);
-    if(jck == 6){
-        headphones_connected = 0;
-        headset_connected = 0;
-        if(!speaker_on) unmute_speaker();
-    } else if(jck == 0){
-        headphones_connected = 1;
-        headset_connected = 0;
-        if(speaker_on) mute_speaker();
-    } else if(jck == 2){
-        headphones_connected = 1;
-        headset_connected = 1;
-        if(speaker_on) mute_speaker();
-    }
-}
-#elif defined(CONFIG_BADGE23_HW_GEN_P1)
-
-void set_global_vol_dB(int8_t vol_dB){
-    if(vol_dB < (BADGE_MIN_VOLUME_DB)){
-        _global_vol = 0;
-    } else {
-        if(vol_dB > (BADGE_MAX_VOLUME_DB)) vol_dB = (BADGE_MAX_VOLUME_DB);
-        uint16_t buf =  3000 * exp(vol_dB * NAT_LOG_DB);
-        if(buf > (BADGE_VOLUME_LIMIT)) buf = (BADGE_VOLUME_LIMIT);
-        _global_vol = buf;
-    }
-}
-
-void audio_lineout_update_jacksense(){ }
-#endif
-
-uint8_t audio_speaker_is_on(){ return speaker_on; }
-uint8_t audio_headset_is_connected(){ return headset_connected; }
-uint8_t audio_headphones_are_connected(){ return headphones_connected; }
 
 static void audio_player_task(void* arg) {
     int16_t buffer[DMA_BUFFER_SIZE * 2];
@@ -410,11 +496,11 @@ static void audio_player_task(void* arg) {
                 audio_source = audio_source->next;
             }
             write_to_scope((int16_t) (1600. * sample));
-            sample = _global_vol * sample;
+            sample = software_volume * sample;
             if(sample > 32767) sample = 32767;
             if(sample < -32767) sample = -32767;
             buffer[i] = (int16_t) sample;
-            buffer[i+1] = LR_PHASE * buffer[i];
+            buffer[i+1] = buffer[i];
         }
 
         size_t count = 0;
@@ -427,37 +513,3 @@ static void audio_player_task(void* arg) {
 }
 
 void audio_init() { _audio_init(); }
-
-
-/*
-#define NAT_LOG_SEMITONE 0.05776226504666215
-
-void synth_set_bend(int i, float bend){
-    if(bend != bend) return;
-    if((bend > -0.0001) && (bend < 0.0001)){
-        synths[i].bend = 1;
-    } else {
-        synths[i].bend = exp(bend * NAT_LOG_SEMITONE);
-    }
-}
-*/
-
-/*
-void synth_stop(int i){
-    if(synths[i].env_phase){
-        synths[i].env_phase = 3;
-    }
-}
-
-void synth_fullstop(int i){
-    synths[i].env_phase = 0;
-}
-
-void synth_start(int i){
-    synths[i].env_phase = 1; //put into attack phase;
-}
-
-float synth_get_env(int i){
-    return synths[i].env;
-}
-*/
