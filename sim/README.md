@@ -20,6 +20,17 @@ If not using nix-shell, you'll need Python3 with the following libraries:
 
 All of these should be available in PyPI.
 
+Installing in a venv
+---
+
+```
+python -m venv venv
+source venv/bin/activate
+pip install wasmer wasmer-compiler-cranelift pygame
+```
+
+Note: The simulator currently does no work with python3.11. Make sure to use python ≤3.10.
+
 Running
 ---
 
