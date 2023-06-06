@@ -24,6 +24,10 @@ def long_bottom_petal_captouch_blocking(num, ms):
     return False
 
 def draw_volume_slider(ctx, volume):
+    if(volume > 20):
+        volume = 20
+    if(volume < -60):
+        volume = -60
     length = 96 + ((volume - 20) * 1.6)
     if length > 96:
         length = 96

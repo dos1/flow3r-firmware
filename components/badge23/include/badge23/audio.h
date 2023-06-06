@@ -32,11 +32,17 @@ uint8_t audio_headphones_are_connected();
  */
 uint8_t audio_headset_is_connected();
 
+/* If a sleeve contact mic doesn't pull the detection pin low enough the
+ * codec's built in headphone detection might fail. Calling this function
+ * with 'enable = 1' overrides the detection and assumes there's headphones
+ * plugged in. Call with 'enable = 0' to revert to automatic detection.
+ */
+void audio_headphones_detection_override(uint8_t enable);
+
 /* Attempts to set target volume for the headphone output/onboard speakers
  * respectively, clamps/rounds if necessary and returns the actual volume.
  * Absolute reference arbitrary.
- * Does not unmute, use audio_{headphones/speaker/}_set_mute;
- * as needed.
+ * Does not unmute, use audio_{headphones_/speaker_/}set_mute as needed.
  *
  * Note: This function uses a hardware PGA for the coarse value and software
  * for the fine value. These two methods are as of yet not synced so that there
@@ -46,6 +52,13 @@ uint8_t audio_headset_is_connected();
 float audio_headphones_set_volume_dB(float vol_dB);
 float audio_speaker_set_volume_dB(float vol_dB);
 float audio_set_volume_dB(float vol_dB);
+
+/* Like the audio_{headphones_/speaker_/}set_volume family but changes relative
+ * to last volume value.
+ */
+float audio_headphones_adjust_volume_dB(float vol_dB);
+float audio_speaker_adjust_volume_dB(float vol_dB);
+float audio_adjust_volume_dB(float vol_dB);
 
 /* Returns volume as set with audio_{headphones/speaker}_set_volume_dB.
  * The unspecified variant automatically chooses the adequate channel (**).
