@@ -74,12 +74,17 @@ class Engine():
         input_state = []
 
         #buttons
-        for i in [0,1]:
-            input_state.append({
-                "type" : "button",
-                "index" : i,
-                "value" : hardware.get_button(i)
-            })
+        input_state.append({
+            "type" : "button",
+            "index" : 0,
+            "value" : hardware.menu_button_get()
+        })
+
+        input_state.append({
+            "type" : "button",
+            "index" : 1,
+            "value" : hardware.application_button_get()
+        })
 
         #captouch
         for i in range(0,10):

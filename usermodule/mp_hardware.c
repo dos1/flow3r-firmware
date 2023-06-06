@@ -101,12 +101,39 @@ STATIC mp_obj_t mp_captouch_set_calibration_afe_target(mp_obj_t target_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_captouch_set_calibration_afe_target_obj, mp_captouch_set_calibration_afe_target);
 
-STATIC mp_obj_t mp_get_button(size_t n_args, const mp_obj_t *args) {
-    uint8_t leftbutton = mp_obj_get_int(args[0]);
-    int8_t ret = get_button_state(leftbutton);
-    return mp_obj_new_int(ret);
+
+STATIC mp_obj_t mp_menu_button_set_left(mp_obj_t left) {
+    spio_menu_button_set_left(mp_obj_get_int(left));
+    return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_get_button_obj, 1, 2, mp_get_button);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_menu_button_set_left_obj, mp_menu_button_set_left);
+
+STATIC mp_obj_t mp_menu_button_get_left() {
+    return mp_obj_new_int(spio_menu_button_get_left());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_menu_button_get_left_obj, mp_menu_button_get_left);
+
+STATIC mp_obj_t mp_menu_button_get() {
+    return mp_obj_new_int(spio_menu_button_get());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_menu_button_get_obj, mp_menu_button_get);
+
+STATIC mp_obj_t mp_application_button_get() {
+    return mp_obj_new_int(spio_application_button_get());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_application_button_get_obj, mp_application_button_get);
+
+STATIC mp_obj_t mp_left_button_get() {
+    return mp_obj_new_int(spio_left_button_get());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_left_button_get_obj, mp_left_button_get);
+
+STATIC mp_obj_t mp_right_button_get() {
+    return mp_obj_new_int(spio_right_button_get());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_right_button_get_obj, mp_right_button_get);
+
+
 
 STATIC mp_obj_t mp_set_global_volume_dB(size_t n_args, const mp_obj_t *args) {
     mp_float_t x = mp_obj_get_float(args[0]);
@@ -179,6 +206,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_get_ctx_obj, 0, 0, mp_get_ctx);
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_audio) },
     { MP_ROM_QSTR(MP_QSTR_init_done), MP_ROM_PTR(&mp_init_done_obj) },
+
     { MP_ROM_QSTR(MP_QSTR_captouch_calibration_active), MP_ROM_PTR(&mp_captouch_calibration_active_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_captouch), MP_ROM_PTR(&mp_get_captouch_obj) },
     { MP_ROM_QSTR(MP_QSTR_captouch_get_petal_pad_raw), MP_ROM_PTR(&mp_captouch_get_petal_pad_raw_obj) },
@@ -188,7 +216,14 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_captouch_set_petal_pad_threshold), MP_ROM_PTR(&mp_captouch_set_petal_pad_threshold_obj) },
     { MP_ROM_QSTR(MP_QSTR_captouch_autocalib), MP_ROM_PTR(&mp_captouch_autocalib_obj) },
     { MP_ROM_QSTR(MP_QSTR_captouch_set_calibration_afe_target), MP_ROM_PTR(&mp_captouch_set_calibration_afe_target_obj) },
-    { MP_ROM_QSTR(MP_QSTR_get_button), MP_ROM_PTR(&mp_get_button_obj) },
+
+    { MP_ROM_QSTR(MP_QSTR_menu_button_get), MP_ROM_PTR(&mp_menu_button_get_obj) },
+    { MP_ROM_QSTR(MP_QSTR_application_button_get), MP_ROM_PTR(&mp_application_button_get_obj) },
+    { MP_ROM_QSTR(MP_QSTR_left_button_get), MP_ROM_PTR(&mp_left_button_get_obj) },
+    { MP_ROM_QSTR(MP_QSTR_right_button_get), MP_ROM_PTR(&mp_right_button_get_obj) },
+    { MP_ROM_QSTR(MP_QSTR_menu_button_set_left), MP_ROM_PTR(&mp_menu_button_set_left_obj) },
+    { MP_ROM_QSTR(MP_QSTR_menu_button_get_left), MP_ROM_PTR(&mp_menu_button_get_left_obj) },
+
     { MP_ROM_QSTR(MP_QSTR_set_global_volume_dB), MP_ROM_PTR(&mp_set_global_volume_dB_obj) },
     { MP_ROM_QSTR(MP_QSTR_count_sources), MP_ROM_PTR(&mp_count_sources_obj) },
     { MP_ROM_QSTR(MP_QSTR_dump_all_sources), MP_ROM_PTR(&mp_dump_all_sources_obj) },
@@ -198,6 +233,11 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_display_update), MP_ROM_PTR(&mp_display_update_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&mp_version_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_ctx), MP_ROM_PTR(&mp_get_ctx_obj) },
+
+    { MP_ROM_QSTR(MP_QSTR_BUTTON_PRESSED_LEFT), MP_ROM_INT(BUTTON_PRESSED_LEFT) },
+    { MP_ROM_QSTR(MP_QSTR_BUTTON_PRESSED_RIGHT), MP_ROM_INT(BUTTON_PRESSED_RIGHT) },
+    { MP_ROM_QSTR(MP_QSTR_BUTTON_PRESSED_DOWN), MP_ROM_INT(BUTTON_PRESSED_DOWN) },
+    { MP_ROM_QSTR(MP_QSTR_BUTTON_NOT_PRESSED), MP_ROM_INT(BUTTON_NOT_PRESSED) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_hardware_globals, mp_module_hardware_globals_table);
