@@ -305,7 +305,7 @@ void _audio_speaker_set_volume_dB(float vol_dB, bool mute){
 void _audio_headphones_set_volume_dB(float vol_dB, bool mute){
 }
 
-void_audio_headphones_set_mute(uint8_t mute){
+void audio_headphones_set_mute(uint8_t mute){
     headphones_mute = 1;
 };
 
