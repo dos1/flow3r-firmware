@@ -37,14 +37,14 @@ def get_menu():
 
     control_debug_input=control.ControlSwitch(
         name="show inputs",
-        action=set_controls_overlay,
+        on_set=set_controls_overlay,
         default=False
     )
 
     item_input_overlay = menu.MenuItemControl("input overlay", control_debug_input)
     m.add(item_input_overlay)
 
-    c = control.ControlKnob(name="Volume",default=0.5,action=set_volume)
+    c = control.ControlKnob(name="Volume",default=0.5,on_set=set_volume)
     m.add(menu.MenuItemControl("volume",c))
 
     return m

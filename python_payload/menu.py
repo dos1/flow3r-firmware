@@ -48,6 +48,9 @@ class Menu():
     def rotate_to(self, angle):
         self.angle = angle%(math.pi*2)
         self.ui.angle_offset = self.angle
+        #for child in self.ui.children:
+        #    child.angle_offset = self.angle*2
+
         self.icon.phi_offset = self.angle
     
     def rotate_steps(self, steps=1):
@@ -142,6 +145,9 @@ class MenuItemControl(MenuItem):
     def scroll(self,delta):
         self.control.scroll(delta)
 
+    def touch_1d(self,x,z):
+        self.control.touch_1d(x,z)
+        
 def on_scroll(d):
     if active_menu is None:
         return
@@ -149,6 +155,7 @@ def on_scroll(d):
     if d["index"]==0:#right button
         hovered=active_menu.get_hovered_item()
         if hasattr(hovered, "scroll"):
+            print("has_scroll")
             hovered.scroll(d["value"])
 
     else: #index=1, #left button
@@ -162,8 +169,12 @@ def on_scroll(d):
     render()
 
 def on_scroll_captouch(d):
+    
     if active_menu is None:
         return
+    
+    render()
+    return 
     if abs(d["radius"]) < 10000:
         return
     print(d["angle"])
@@ -177,6 +188,24 @@ def on_release(d):
     active_menu.angle_step = 0.2
     render()
     
+
+def on_touch_1d(d):
+    if active_menu is None:
+        return
+    v = min(1.0,max(0.0,((d["radius"]+25000.0)/50000.0)))
+    z = 0
+    if d["change"]:
+        if d["value"] == 1: z=1
+        else: z=-1
+    
+    print("menu: touch_1d",v,z)
+    hovered=active_menu.get_hovered_item()
+    if hasattr(hovered, "touch_1d"):
+        print("hastouch")
+        hovered.touch_1d(v,z)
+    
+    render()
+
 def on_enter(d):
     if active_menu is None:
         
@@ -199,12 +228,18 @@ event.Event(name="menu rotation button",group_id="menu",
 
 event.Event(name="menu rotation captouch",group_id="menu",
     condition=lambda e: e["type"] =="captouch" and not e["change"] and abs(e["value"])==1 and e["index"]==2,
-    action=on_scroll_captouch, enabled=False
+    action=on_scroll_captouch, enabled=True
 )
+
 
 event.Event(name="menu rotation button release",group_id="menu",
     condition=lambda e: e["type"] =="button" and e["change"] and e["value"] ==0,
     action=on_release, enabled=True
+)
+
+event.Event(name="menu 1d captouch",group_id="menu",
+    condition=lambda e: e["type"] =="captouch" and (e["value"]==1 or e["change"]) and e["index"]==9,
+    action=on_touch_1d, enabled=True
 )
 
 event.Event(name="menu button enter",group_id="menu",
@@ -217,7 +252,7 @@ def render():
     if active_menu is None:
         return
     
-    ui.the_ctx.rectangle(-120,-120,240,240).rgb(0,0,0).fill()
+    ui.the_ctx.rectangle(-120,-120,240,240).rgb(*ui.GO_GREEN).fill()
     active_menu.draw()
     #hardware.display_update()
 
