@@ -2,6 +2,7 @@
 #include "driver/gpio.h"
 #include "badge23_hwconfig.h"
 #include "stdint.h"
+#include "badge23/spio.h"
 
 static int8_t leftbutton = 0;
 static int8_t rightbutton = 0;
@@ -39,23 +40,23 @@ static void _init_buttons(){
 
 void update_button_state(){
     if(!gpio_get_level(RIGHT_BUTTON_LEFT)){
-        rightbutton = -1;
+        rightbutton = BUTTON_PRESSED_LEFT;
     } else if(!gpio_get_level(RIGHT_BUTTON_MID)){
-        rightbutton = 2;
+        rightbutton = BUTTON_PRESSED_DOWN;
     } else if(!gpio_get_level(RIGHT_BUTTON_RIGHT)){
-        rightbutton = 1;
+        rightbutton = BUTTON_PRESSED_RIGHT;
     } else {
-        rightbutton = 0;
+        rightbutton = BUTTON_NOT_PRESSED;
     }
 
     if(!gpio_get_level(LEFT_BUTTON_LEFT)){
-        leftbutton = -1;
+        leftbutton = BUTTON_PRESSED_LEFT;
     } else if(!gpio_get_level(LEFT_BUTTON_MID)){
-        leftbutton = 2;
+        leftbutton = BUTTON_PRESSED_DOWN;
     } else if(!gpio_get_level(LEFT_BUTTON_RIGHT)){
-        leftbutton = 1;
+        leftbutton = BUTTON_PRESSED_RIGHT;
     } else {
-        leftbutton = 0;
+        leftbutton = BUTTON_NOT_PRESSED;
     }
 }
 
@@ -102,23 +103,23 @@ void update_button_state(){
     uint8_t lm = gpio_get_level(LEFT_BUTTON_MID);
 
     if(!rl){
-        rightbutton = -1;
+        rightbutton = BUTTON_PRESSED_LEFT;
     } else if(!rm){
-        rightbutton = 2;
+        rightbutton = BUTTON_PRESSED_DOWN;
     } else if(!rr){
-        rightbutton = 1;
+        rightbutton = BUTTON_PRESSED_RIGHT;
     } else {
-        rightbutton = 0;
+        rightbutton = BUTTON_NOT_PRESSED;
     }
 
     if(!ll){
-        leftbutton = -1;
+        leftbutton = BUTTON_PRESSED_LEFT;
     } else if(!lm){
-        leftbutton = 2;
+        leftbutton = BUTTON_PRESSED_DOWN;
     } else if(!lr){
-        leftbutton = 1;
+        leftbutton = BUTTON_PRESSED_RIGHT;
     } else {
-        leftbutton = 0;
+        leftbutton = BUTTON_NOT_PRESSED;
     }
 }
 
@@ -137,4 +138,30 @@ int8_t get_button_state(bool left){
 #endif
     if(left) return leftbutton;
     return rightbutton;
+}
+
+static bool menu_button_left = 0;
+
+void spio_menu_button_set_left(bool left){
+    menu_button_left = 1;
+}
+
+int8_t spio_menu_button_get(){
+    return get_button_state(menu_button_left);
+}
+
+int8_t spio_application_button_get(){
+    return get_button_state(!menu_button_left);
+}
+
+int8_t spio_left_button_get(){
+    return get_button_state(1);
+}
+
+int8_t spio_right_button_get(){
+    return get_button_state(0);
+}
+
+int8_t spio_menu_button_get_left(){
+    return menu_button_left;
 }
