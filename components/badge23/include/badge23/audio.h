@@ -43,6 +43,8 @@ void audio_headphones_detection_override(uint8_t enable);
  * respectively, clamps/rounds if necessary and returns the actual volume.
  * Absolute reference arbitrary.
  * Does not unmute, use audio_{headphones_/speaker_/}set_mute as needed.
+ * Enters fake mute if requested volume is below the value set by
+ * audio_{headphones/speaker}_set_minimum_volume_user.
  *
  * Note: This function uses a hardware PGA for the coarse value and software
  * for the fine value. These two methods are as of yet not synced so that there
@@ -84,6 +86,34 @@ void audio_set_mute(uint8_t mute);
 uint8_t audio_headphones_get_mute();
 uint8_t audio_speaker_get_mute();
 uint8_t audio_get_mute();
+
+/* Set the minimum and maximum allowed volume levels for speakers and headphones
+ * respectively. Clamps with hardware limitations. Maximum clamps below the minimum
+ * value, minimum clamps above the maximum. Returns clamped value.
+ */
+float audio_headphones_set_minimum_volume_dB(float vol_dB);
+float audio_headphones_set_maximum_volume_dB(float vol_dB);
+float audio_speaker_set_minimum_volume_dB(float vol_dB);
+float audio_speaker_set_maximum_volume_dB(float vol_dB);
+
+/* Returns the minimum and maximum allowed volume levels for speakers and headphones
+ * respectively. Change with audio_{headphones/speaker}_set_{minimum/maximum}_volume_dB.
+ */
+float audio_headphones_get_minimum_volume_dB();
+float audio_headphones_get_maximum_volume_dB();
+float audio_speaker_get_minimum_volume_dB();
+float audio_speaker_get_maximum_volume_dB();
+
+/* Syntactic sugar for drawing UI: Returns channel volume in a 0..1 range,
+ * scaled into a 0.01..1 range according to the values set with
+ * audio_{headphones_/speaker_/}set_{maximum/minimum}_volume_ and 0 if in a 
+ * fake mute condition.
+ *
+ * The unspecified variant automatically chooses the adequate channel (**).
+ */
+float audio_headphones_get_volume_relative();
+float audio_speaker_get_volume_relative();
+float audio_get_volume_relative();
 
 /* (**) if audio_headphones_are_connected returns 1 the "headphone" variant
  *      is chosen, else the "speaker" variant is chosen.

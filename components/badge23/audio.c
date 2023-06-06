@@ -14,32 +14,49 @@
 #include <math.h>
 #include <string.h>
 
-#define TIMEOUT_MS                  1000
+#define TIMEOUT_MS 1000
 
-#define I2C_MASTER_NUM              0                          /*!< I2C master i2c port number, the number of i2c peripheral interfaces available will depend on the chip */
+#define I2C_MASTER_NUM 0 /*!< I2C master i2c port number, the number of i2c peripheral interfaces available will depend on the chip */
 
 static void audio_player_task(void* arg);
 
-#define DMA_BUFFER_SIZE     64
-#define DMA_BUFFER_COUNT    2
+#define DMA_BUFFER_SIZE 64
+#define DMA_BUFFER_COUNT 2
 #define I2S_PORT 0
 
+// used for exp(vol_dB * NAT_LOG_DB)
 #define NAT_LOG_DB 0.1151292546497023
+
+// placeholder for "fake mute" -inf dB (we know floats can do that but we have trust issues when using NAN)
+#define SILLY_LOW_VOLUME_DB (-10000.)
 
 static bool headphones_connected = 0;
 static bool headset_connected = 0;
 static bool line_in_connected = 0;
+static bool headphones_detection_override = 0;
 static int32_t software_volume = 0;
+
+// maybe struct these someday but eh it works
 static float headphones_volume_dB = 0;
 static bool headphones_mute = 0;
+const static float headphones_maximum_volume_system_dB = 3;
+static float headphones_maximum_volume_user_dB = headphones_maximum_volume_system_dB;
+static float headphones_minimum_volume_user_dB = headphones_maximum_volume_system_dB - 70;
+
 static float speaker_volume_dB = 0;
 static bool speaker_mute = 0;
-static bool headphones_detection_override = 0;
+const static float speaker_maximum_volume_system_dB = 14;
+static float speaker_maximum_volume_user_dB = speaker_maximum_volume_system_dB;
+static float speaker_minimum_volume_user_dB = speaker_maximum_volume_system_dB - 60;
 
 uint8_t audio_headset_is_connected(){ return headset_connected; }
 uint8_t audio_headphones_are_connected(){ return headphones_connected || headphones_detection_override; }
 float audio_headphones_get_volume_dB(){ return headphones_volume_dB; }
 float audio_speaker_get_volume_dB(){ return speaker_volume_dB; }
+float audio_headphones_get_minimum_volume_dB(){ return headphones_minimum_volume_user_dB; }
+float audio_speaker_get_minimum_volume_dB(){ return speaker_minimum_volume_user_dB; }
+float audio_headphones_get_maximum_volume_dB(){ return headphones_maximum_volume_user_dB; }
+float audio_speaker_get_maximum_volume_dB(){ return speaker_maximum_volume_user_dB; }
 uint8_t audio_headphones_get_mute(){ return headphones_mute ? 1 : 0; }
 uint8_t audio_speaker_get_mute(){ return speaker_mute ? 1 : 0; }
 
@@ -187,14 +204,13 @@ const vol_map_t speaker_map[] = {{0x3F, +14}, {0x3E, +13.5}, {0x3D, +13}, {0x3C,
 const uint8_t headphones_map_len = 32;
 const vol_map_t headphones_map[] = {{0x1F, +3}, {0x1E, +2.5}, {0x1D, +2}, {0x1C, +1.5}, {0x1B, +1}, {0x1A, +0}, {0x19, -1}, {0x18, -2}, {0x17, -3}, {0x16, -4}, {0x15, -5}, {0x14, -7}, {0x13, -9}, {0x12, -11}, {0x11, -13}, {0x10, -15}, {0x0F, -17}, {0x0E, -19}, {0x0D, -22}, {0x0C, -25}, {0x0B, -28}, {0x0A, -31}, {0x09, -34}, {0x08, -37}, {0x07, -40}, {0x06, -43}, {0x06, -47}, {0x04, -51}, {0x03, -55}, {0x02, -59}, {0x01, -63}, {0x00, -67}};
 
-float audio_headphones_set_volume_dB(float vol_dB){
+void _audio_headphones_set_volume_dB(float vol_dB, bool mute){
     uint8_t map_index = headphones_map_len - 1;
     for(; map_index; map_index--){
         if(headphones_map[map_index].volume_dB >= vol_dB) break; 
     }
     uint8_t reg = headphones_map[map_index].register_value;
-    uint8_t headphones_on = (!headphones_mute) && audio_headphones_are_connected();
-    reg = (headphones_on ?  0 : (1 << 7)) | reg;
+    reg = (mute ? (1 << 7) : 0) | reg;
     max98091_i2c_write(0x2C, reg); //left chan
     max98091_i2c_write(0x2D, reg); //right chan
     // note: didn't check if chan physically mapped to l/r or flipped.
@@ -207,18 +223,16 @@ float audio_headphones_set_volume_dB(float vol_dB){
     //if(!software_volume_enabled) software_volume_dB = 0; // breaks p1, might add option once it is retired
     software_volume = (int32_t) (32768 * exp(software_volume_dB * NAT_LOG_DB));
     headphones_volume_dB = hardware_volume_dB + software_volume_dB;
-    return headphones_volume_dB;
 }
 
-float audio_speaker_set_volume_dB(float vol_dB){
+void _audio_speaker_set_volume_dB(float vol_dB, bool mute){
     uint8_t map_index = speaker_map_len - 1;
     for(; map_index; map_index--){
         if(speaker_map[map_index].volume_dB >= vol_dB) break; 
     }
 
     uint8_t reg = speaker_map[map_index].register_value;
-    uint8_t speaker_on = (!speaker_mute) && (!audio_headphones_are_connected());
-    reg = (speaker_on ?  0 : (1 << 7)) | reg;
+    reg = (mute ?  (1 << 7) : 0) | reg;
     max98091_i2c_write(0x31, reg); //left chan
     max98091_i2c_write(0x32, reg); //right chan
     //note: didn't check if chan physically mapped to l/r or flipped.
@@ -231,7 +245,6 @@ float audio_speaker_set_volume_dB(float vol_dB){
     //if(!software_volume_enabled) software_volume_dB = 0; // breaks p1, might add option once it is retired
     software_volume = (int32_t) (32768. * exp(software_volume_dB * NAT_LOG_DB));
     speaker_volume_dB = hardware_volume_dB + software_volume_dB;
-    return speaker_volume_dB;
 }
 
 void audio_headphones_set_mute(uint8_t mute){
@@ -278,27 +291,21 @@ static void i2s_init(void){
     i2s_set_pin(I2S_PORT, &pin_config);
 }
 
-float audio_speaker_set_volume_dB(float vol_dB){
-    if(vol_dB < (MIN_VOLUME_DB)) vol_dB = MIN_VOLUME_DB;
-    if(vol_dB > (MAX_VOLUME_DB)) vol_dB = MAX_VOLUME_DB;
-
+void _audio_speaker_set_volume_dB(float vol_dB, bool mute){
     int32_t buf =  32767 * exp(vol_dB * NAT_LOG_DB);
     software_volume_premute = buf;
-    if(speaker_mute || headphones_detection_override){
+    if(mute){
         software_volume = 0;
     } else {
         software_volume = software_volume_premute;
     }
-
     speaker_volume_dB = vol_dB;
-    return speaker_volume_dB;
 }
 
-float audio_headphones_set_volume_dB(float vol_dB){
-    return vol_dB; // no headphones, should never be called ideally
+void _audio_headphones_set_volume_dB(float vol_dB, bool mute){
 }
 
-void audio_headphones_set_mute(uint8_t mute){
+void_audio_headphones_set_mute(uint8_t mute){
     headphones_mute = 1;
 };
 
@@ -315,6 +322,28 @@ void audio_speaker_set_mute(uint8_t mute){
 #error "audio not implemented for this badge generation"
 #endif
 
+float audio_speaker_set_volume_dB(float vol_dB){
+    bool mute  = speaker_mute || audio_headphones_are_connected();
+    if(vol_dB > speaker_maximum_volume_user_dB) vol_dB = speaker_maximum_volume_user_dB;
+    if(vol_dB < speaker_minimum_volume_user_dB){
+        vol_dB = SILLY_LOW_VOLUME_DB; // fake mute
+        mute = 1;
+    }
+    _audio_speaker_set_volume_dB(vol_dB, mute);
+    return speaker_volume_dB;
+}
+
+float audio_headphones_set_volume_dB(float vol_dB){
+    bool mute  = headphones_mute || (!audio_headphones_are_connected());
+    if(vol_dB > headphones_maximum_volume_user_dB) vol_dB = headphones_maximum_volume_user_dB;
+    if(vol_dB < headphones_minimum_volume_user_dB){
+        vol_dB = SILLY_LOW_VOLUME_DB; // fake mute
+        mute = 1;
+    }
+    _audio_headphones_set_volume_dB(vol_dB, mute);
+    return headphones_volume_dB;
+}
+
 void audio_headphones_detection_override(uint8_t enable){
     headphones_detection_override = enable;
     audio_headphones_set_volume_dB(headphones_volume_dB);
@@ -322,18 +351,35 @@ void audio_headphones_detection_override(uint8_t enable){
 }
 
 float audio_headphones_adjust_volume_dB(float vol_dB){
-    return audio_headphones_set_volume_dB(headphones_volume_dB + vol_dB);
+    if(audio_headphones_get_volume_dB() < headphones_minimum_volume_user_dB){ //fake mute
+        if(vol_dB > 0){
+            return audio_headphones_set_volume_dB(headphones_minimum_volume_user_dB);
+        } else {
+            return audio_headphones_get_volume_dB();
+        }
+    } else { 
+        return audio_headphones_set_volume_dB(headphones_volume_dB + vol_dB);
+    }
 }
 
 float audio_speaker_adjust_volume_dB(float vol_dB){
-    return audio_speaker_set_volume_dB(speaker_volume_dB + vol_dB);
+    if(audio_speaker_get_volume_dB() < speaker_minimum_volume_user_dB){ //fake mute
+        if(vol_dB > 0){
+            return audio_speaker_set_volume_dB(speaker_minimum_volume_user_dB);
+            printf("hi");
+        } else {
+            return audio_speaker_get_volume_dB();
+        }
+    } else { 
+        return audio_speaker_set_volume_dB(speaker_volume_dB + vol_dB);
+    }
 }
 
 float audio_adjust_volume_dB(float vol_dB){
     if(audio_headphones_are_connected()){
-        return audio_headphones_set_volume_dB(headphones_volume_dB + vol_dB);
+        return audio_headphones_adjust_volume_dB(vol_dB);
     } else {
-        return audio_speaker_set_volume_dB(speaker_volume_dB + vol_dB);
+        return audio_speaker_adjust_volume_dB(vol_dB);
     }
 }
 
@@ -366,6 +412,60 @@ uint8_t audio_get_mute(){
         return audio_headphones_get_mute();
     } else {
         return audio_speaker_get_mute();
+    }
+}
+
+float audio_headphones_set_maximum_volume_dB(float vol_dB){
+    if(vol_dB > headphones_maximum_volume_system_dB) vol_dB = headphones_maximum_volume_system_dB;
+    if(vol_dB < headphones_minimum_volume_user_dB) vol_dB = headphones_minimum_volume_user_dB;
+    headphones_maximum_volume_user_dB = vol_dB;
+    return headphones_maximum_volume_user_dB;
+}
+
+float audio_headphones_set_minimum_volume_dB(float vol_dB){
+    if(vol_dB > headphones_maximum_volume_user_dB) vol_dB = headphones_maximum_volume_user_dB;
+    if((vol_dB + 1) < SILLY_LOW_VOLUME_DB) vol_dB = SILLY_LOW_VOLUME_DB + 1.;
+    headphones_minimum_volume_user_dB = vol_dB;
+    return headphones_minimum_volume_user_dB;
+}
+
+float audio_speaker_set_maximum_volume_dB(float vol_dB){
+    if(vol_dB > speaker_maximum_volume_system_dB) vol_dB = speaker_maximum_volume_system_dB;
+    if(vol_dB < speaker_minimum_volume_user_dB) vol_dB = speaker_minimum_volume_user_dB;
+    speaker_maximum_volume_user_dB = vol_dB;
+    return speaker_maximum_volume_user_dB;
+}
+
+float audio_speaker_set_minimum_volume_dB(float vol_dB){
+    if(vol_dB > speaker_maximum_volume_user_dB) vol_dB = speaker_maximum_volume_user_dB;
+    if((vol_dB + 1) < SILLY_LOW_VOLUME_DB) vol_dB = SILLY_LOW_VOLUME_DB + 1.;
+    speaker_minimum_volume_user_dB = vol_dB;
+    return speaker_minimum_volume_user_dB;
+}
+
+float audio_speaker_get_volume_relative(){
+    float ret = audio_speaker_get_volume_dB();
+    if(ret < speaker_minimum_volume_user_dB) return 0; // fake mute
+    float vol_range = speaker_maximum_volume_user_dB - speaker_minimum_volume_user_dB;
+    ret -= speaker_minimum_volume_user_dB; // shift to above zero
+    ret /= vol_range; // restrict to 0..1 range
+    return (ret*0.99) + 0.01; // shift to 0.01 to 0.99 range to distinguish from fake mute
+}
+
+float audio_headphones_get_volume_relative(){
+    float ret = audio_headphones_get_volume_dB();
+    if(ret < headphones_minimum_volume_user_dB) return 0; // fake mute
+    float vol_range = headphones_maximum_volume_user_dB - headphones_minimum_volume_user_dB;
+    ret -= headphones_minimum_volume_user_dB; // shift to above zero
+    ret /= vol_range; // restrict to 0..1 range
+    return (ret*0.99) + 0.01; // shift to 0.01 to 0.99 range to distinguish from fake mute
+}
+
+float audio_get_volume_relative(){
+    if(audio_headphones_are_connected()){
+        return audio_headphones_get_volume_relative();
+    } else {
+        return audio_speaker_get_volume_relative();
     }
 }
 
