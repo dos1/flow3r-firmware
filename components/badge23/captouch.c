@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/atomic.h>
+#include "badge23/lock.h"
 
 #define PETAL_PAD_TIP 0
 #define PETAL_PAD_CCW 1
@@ -102,7 +103,9 @@ static struct ad714x_chip chip_bot_rev5 = {.addr = AD7147_ADDR_BOT, .gpio = 15,
 static esp_err_t ad714x_i2c_write(const struct ad714x_chip *chip, const uint16_t reg, const uint16_t data)
 {
     const uint8_t tx[] = {reg >> 8, reg & 0xFF, data >> 8, data & 0xFF};
+    xSemaphoreTake(mutex_i2c, portMAX_DELAY);
     ESP_LOGI(TAG, "AD7147 write reg %X-> %X", reg, data);
+    xSemaphoreGive(mutex_i2c);
     return i2c_master_write_to_device(I2C_MASTER_NUM, chip->addr, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
 }
 
@@ -110,7 +113,9 @@ static esp_err_t ad714x_i2c_read(const struct ad714x_chip *chip, const uint16_t 
 {
     const uint8_t tx[] = {reg >> 8, reg & 0xFF};
     uint8_t rx[len * 2];
+    xSemaphoreTake(mutex_i2c, portMAX_DELAY);
     esp_err_t ret = i2c_master_write_read_device(I2C_MASTER_NUM, chip->addr, tx, sizeof(tx), rx, sizeof(rx), TIMEOUT_MS / portTICK_PERIOD_MS);
+    xSemaphoreGive(mutex_i2c);
     for(int i = 0; i < len; i++) {
         data[i] = (rx[i * 2] << 8) | rx[i * 2 + 1];
     }

@@ -1,5 +1,6 @@
 import menu
 import event
+import audio
 import control
 import ui
 import hardware
@@ -28,7 +29,7 @@ def set_controls_overlay(value):
 def set_volume(value):
     db = int(value*60-40)
     print("DB",db)
-    hardware.set_global_volume_dB(db)
+    audio.set_volume_dB(db)
     
 
 def get_menu():

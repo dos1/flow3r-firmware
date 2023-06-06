@@ -6,6 +6,7 @@ add_library(usermod_badge23 INTERFACE)
 
 target_sources(usermod_badge23 INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/mp_hardware.c
+    ${CMAKE_CURRENT_LIST_DIR}/mp_audio.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_synth.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_kernel.c
 )
