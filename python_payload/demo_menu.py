@@ -2,6 +2,7 @@ import menu
 import event
 import hardware
 import control
+import audio
 import application
 
 import demo_worms,demo_sparabo,cap_touch_demo, melodic_demo, harmonic_demo
@@ -10,7 +11,7 @@ import menu_settings,menu_tinysynth
 import time
 
 hardware.captouch_autocalib()
-hardware.set_global_volume_dB(0)
+audio.set_volume_dB(0)
 
 
 menu_demo = menu.Menu("demo")

@@ -5,6 +5,7 @@ import event
 import control
 import ui
 import hardware
+import audio
 
 
 ui_input = ui.Icon("")
@@ -20,7 +21,7 @@ def set_play(value):
 def set_volume(value):
     db = int(value*60-40)
     print("DB",db)
-    hardware.set_global_volume_dB(db)
+    audio.set_volume_dB(db)
 
 def set_frequency(value):
     f = 440+value*440

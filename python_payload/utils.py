@@ -1,5 +1,6 @@
 import time
 from hardware import *
+import audio
 
 RED = 0b1111100000000000
 GREEN = 0b0000011111100000
@@ -24,12 +25,7 @@ def long_bottom_petal_captouch_blocking(num, ms):
     return False
 
 def draw_volume_slider(ctx, volume):
-    length = 96 + ((volume - 20) * 1.6)
-    if length > 96:
-        length = 96
-    if length < 0:
-        length = 0
-    length = int(length)
+    length = int(96*volume)
 
     ctx.rgb(0,0,0)#dummy
     ctx.round_rectangle(-49,41,98,8,3).fill()#dummy idk
