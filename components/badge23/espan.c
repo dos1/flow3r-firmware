@@ -102,7 +102,6 @@ void os_app_main(void)
     captouch_init();
 
     //vTaskDelay(2000 / portTICK_PERIOD_MS);
-    set_global_vol_dB(0);
     captouch_force_calibration();
 
     display_init();

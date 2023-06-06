@@ -8,6 +8,7 @@ from synth import tinysynth
 import application
 import ui
 
+import audio
 
 popcorn = [9,7,9,5,0,5,-3,999]
 
@@ -37,7 +38,7 @@ def on_step(data):
 
 class AppSparabo(application.Application):
     def on_init(self):
-        hardware.set_global_volume_dB(0)
+        audio.set_volume_dB(0)
         
         self.synth = tinysynth(440,1)
         self.synth.decay(25)
