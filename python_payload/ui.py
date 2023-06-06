@@ -118,31 +118,36 @@ class Icon(UIElement):
 class IconFlower(Icon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.petal_count= random.randint(4,8)
+        self.petal_count= 0 #random.randint(4,8)
         self.petal_color = (random.random(),random.random(),random.random())
         self.phi_offset = random.random()
         self.size_offset = random.randint(0,20)
+        #self.bg=PUSH_RED
     
     def _draw(self,pos):
+        self.ctx.text_align = self.ctx.CENTER
+        self.ctx.text_baseline = self.ctx.MIDDLE
         (x,y)=pos
-        petal_size=2.3*self.size/self.petal_count+self.size_offset
+        petal_size=0
+        if self.petal_count:
+            petal_size=2.3*self.size/self.petal_count+self.size_offset
         self.ctx.font_size=self.size/3
-
         hs = 3
             
         for i in range(self.petal_count):
             phi = math.pi*2 / self.petal_count * i + self.phi_offset
             r = self.size/2
             (x_,y_) = xy_from_polar(r, phi)
+            size_rnd = random.randint(-3,3)
             if self.has_highlight:
-                self.ctx.move_to(x+x_,y+y_).rgb(1,1,1).arc(x+x_,y+y_, petal_size/2+hs,-math.pi,math.pi,True).fill()
-            self.ctx.move_to(x+x_,y+y_).rgb(*self.petal_color).arc(x+x_,y+y_, petal_size/2,-math.pi,math.pi,True).fill()
+                self.ctx.move_to(x+x_,y+y_).rgb(1,1,1).arc(x+x_,y+y_, petal_size/2+hs+size_rnd,-math.pi,math.pi,True).fill()
+            self.ctx.move_to(x+x_,y+y_).rgb(*self.petal_color).arc(x+x_,y+y_, petal_size/2+size_rnd,-math.pi,math.pi,True).fill()
         
         #if self.has_highlight:
         #    self.ctx.rgb(1,1,1).arc(x,y, self.size/2+hs,-math.pi,math.pi,True).fill()
         self.ctx.move_to(x,y).rgb(*self.bg).arc(x,y,self.size/2,-math.pi,math.pi,True).fill()
 
-        self.ctx.rgb(*GO_GREEN).move_to(x,y).text(self.label)
+        self.ctx.rgb(*WHITE).move_to(x,y).text(self.label)
 
 
 

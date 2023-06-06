@@ -27,18 +27,27 @@ def set_frequency(value):
     f = 440+value*440
     synth.freq(f)
     
+def set_pitch(value):
+    p = 440
+    print("p:",p)
+    synth.freq(value)
+    
 
 def get_menu():
     m = menu.Menu("tinysynth")
 
-    freq=control.ControlKnob(name="freq",action=set_frequency,default=0.0)
+    freq=control.ControlKnob(name="freq",on_set=set_frequency,default=0.0)
     m.add(menu.MenuItemControl("freq",freq))
 
-    vol = control.ControlKnob(name="vol",action=set_volume,default=0.0)
+    pitch = control.ControlSlide(name="pitch",on_set=set_frequency,default=0)
+    m.add(menu.MenuItemControl("pitch",pitch))
+
+    vol = control.ControlKnob(name="vol",on_set=set_volume,default=0.0)
     m.add(menu.MenuItemControl("volume",vol))
 
-    play = control.ControlSwitch(name="play",action=set_play,default=False)
+    play = control.ControlSwitch(name="play",on_set=set_play,default=False)
     m.add(menu.MenuItemControl("play",play))
+    
     return m
 
 synth = tinysynth(440,0)
