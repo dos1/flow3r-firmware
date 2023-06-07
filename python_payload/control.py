@@ -55,6 +55,11 @@ class ControlSwitch(Control):
     def scroll(self,delta):
         self.enter()
 
+    def touch_1d(self,x,z):
+        if z<0: #Release
+            self.enter()
+
+
 class ControlFloat(Control):
     def __init__(self, min=0.0,max=1.0,step=0.1, *args, **kwargs):
         self.min=min
@@ -85,6 +90,18 @@ class ControlKnob(ControlFloat):
             self.set_value(v_new)
         self.draw()
 
+    def touch_1d(self,x,z):
+        if z>0: #Inital Contact
+            self._x_init = x
+
+        if z==0: #Continous contact
+            diff = self._x_init-x
+            self.scroll(5*diff)
+            
+        if z<0: #Release
+            pass
+
+
 class ControlSlide(ControlFloat):
     def __init__(self, do_reset=True, *args, **kwargs):
         self.do_reset=do_reset
@@ -95,8 +112,9 @@ class ControlSlide(ControlFloat):
             self._saved_value = self.get_value()
 
         if z==0: #Continous contact
-            v = (self.max-self.min)*x
+            v = (self.max-self.min)*x+self.min
             self.set_value(v)
+            print("c",x,v,self.max,self.min)
 
         if z<0: #Release
             if self.do_reset:

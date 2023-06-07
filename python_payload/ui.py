@@ -224,8 +224,11 @@ class GroupRing(UIElement):
         for index in range(len(self.children)):
             #print("child",index)
             child = self.children[index]
+            if not child:
+                continue
             angle = 2*math.pi/len(self.children)*index+self.angle_offset
-            x = math.sin(angle)*self.r+pos[0]
+            #print(angle,self.r,pos[0])
+            x = -math.sin(angle)*self.r+pos[0]
             y = -math.cos(angle)*self.r+pos[1]
             #print("pos",(x,y))
             child.draw(offset=(x,y))
@@ -234,3 +237,8 @@ class GroupRing(UIElement):
         if self.element_center:
             self.element_center.has_highlight = False
             self.element_center._draw(pos)
+
+class GroupPetals(GroupRing):
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.children = [None for i in range(10)]
