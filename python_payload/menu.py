@@ -11,8 +11,10 @@ class Menu():
     def __init__(self,name="menu",has_back=True):
         self.name=name
         self.items=[]
+        self.items_petal=[None for i in range(10)]
         self.__index = 0
         self.ui = ui.GroupRing(r=80)
+        self.ui2 = ui.GroupPetals(r=100) #TODO(iggy) hack, this should be composed together in ui
         self.icon = ui.IconFlower(label=name,size=80)
         self.ui.element_center = self.icon
         
@@ -29,6 +31,10 @@ class Menu():
         self.items.append(item)
         self.ui.add(item.ui)
     
+    def add_petal(self, item, petal_index):
+        self.items_petal[petal_index]=item
+        self.ui2.children[petal_index]=item.ui
+
     def pop(self):
         self.items.pop()
         self.ui.children.pop()
@@ -54,7 +60,7 @@ class Menu():
         self.icon.phi_offset = self.angle
     
     def rotate_steps(self, steps=1):
-        self.rotate_by(self.angle_step*steps)
+        self.rotate_by(-self.angle_step*steps)
         
     def _get_hovered_index(self):
         index = round(-self.angle/(math.pi*2)*len(self.items))
@@ -88,7 +94,10 @@ class Menu():
             else:
                 item.ui.has_highlight=False
             item.ui.size=30+my_extra
+        
+        self.ui2.draw()
         self.ui.draw()
+
     
 
 class MenuItem():
@@ -193,6 +202,7 @@ def on_release(d):
 def on_touch_1d(d):
     if active_menu is None:
         return
+    #print(d["radius"])
     v = min(1.0,max(0.0,((d["radius"]+25000.0)/50000.0)))
     z = 0
     if d["change"]:
@@ -201,6 +211,14 @@ def on_touch_1d(d):
     
     print("menu: touch_1d",v,z)
     hovered=active_menu.get_hovered_item()
+    
+
+    petal_idx = d["index"]
+    petal_item = active_menu.items_petal[petal_idx]
+    if petal_item:
+        petal_item.touch_1d(v,z)
+
+    
     if hasattr(hovered, "touch_1d"):
         print("hastouch")
         hovered.touch_1d(v,z)
@@ -239,7 +257,7 @@ event.Event(name="menu rotation button release",group_id="menu",
 )
 
 event.Event(name="menu 1d captouch",group_id="menu",
-    condition=lambda e: e["type"] =="captouch" and (e["value"]==1 or e["change"]) and e["index"]==9,
+    condition=lambda e: e["type"] =="captouch" and (e["value"]==1 or e["change"]) and e["index"]%2==1,
     action=on_touch_1d, enabled=True
 )
 
