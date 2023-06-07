@@ -127,7 +127,8 @@ class MenuItemSubmenu(MenuItem):
         
 class MenuItemBack(MenuItem):
     def __init__(self):
-        super().__init__(name="<-")
+        super().__init__(name="")
+        self.ui = ui.IconLabel(label="back")
     
     def enter(self,data={}):
         menu_back()
@@ -252,7 +253,7 @@ def render():
     if active_menu is None:
         return
     
-    ui.the_ctx.rectangle(-120,-120,240,240).rgb(*ui.GO_GREEN).fill()
+    ui.the_ctx.rectangle(-120,-120,240,240).rgb(*ui.BLACK).fill()
     active_menu.draw()
     #hardware.display_update()
 

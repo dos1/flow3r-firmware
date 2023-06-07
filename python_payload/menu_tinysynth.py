@@ -42,7 +42,11 @@ def get_menu():
     pitch = control.ControlSlide(name="pitch",on_set=set_frequency,default=0)
     m.add(menu.MenuItemControl("pitch",pitch))
 
-    vol = control.ControlKnob(name="vol",on_set=set_volume,default=0.0)
+    vol = control.ControlKnob(name="vol",
+        #on_set=set_volume
+        on_mod=audio.adjust_volume_dB,
+        on_get=audio.get_volume_relative
+    )
     m.add(menu.MenuItemControl("volume",vol))
 
     play = control.ControlSwitch(name="play",on_set=set_play,default=False)
