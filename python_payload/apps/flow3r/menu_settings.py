@@ -1,9 +1,5 @@
-import menu
-import event
-import audio
-import control
-import ui
-import hardware
+from st3m import menu,event,control,ui
+from st3m.system import audio,hardware
 
 
 ui_input = ui.Icon("")

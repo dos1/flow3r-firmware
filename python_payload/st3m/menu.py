@@ -1,8 +1,9 @@
-import ui
-import time
+from . import ui,event
 import hardware
+
+
+import time
 import math
-import event
 
 menu_stack = []
 active_menu = None

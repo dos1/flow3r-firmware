@@ -4,10 +4,7 @@ import time
 import math
 
 #flow3r imports
-import event
-import application
-import ui
-
+from st3m import event,application,ui
 
 # Subclass Application
 class AppWorms(application.Application):

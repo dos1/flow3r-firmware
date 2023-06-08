@@ -1,19 +1,12 @@
-import menu
-import event
-import hardware
-import control
-import audio
-import application
+from st3m import menu,event,control,application
 
-import demo_worms, cap_touch_demo
-import demo_sparabo, melodic_demo, harmonic_demo
-import menu_settings,menu_tinysynth
+from apps import demo_worms, cap_touch_demo
+from apps import demo_sparabo, melodic_demo, harmonic_demo
+from apps.flow3r import menu_settings,menu_tinysynth
 
 
 import time
 
-hardware.captouch_autocalib()
-audio.set_volume_dB(0)
 
 menu_main = menu.Menu("flow3r",has_back=False)
 menu_badge = menu.Menu("badge")
