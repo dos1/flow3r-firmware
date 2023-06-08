@@ -136,7 +136,8 @@ class IconLabel(Icon):
 class IconFlower(Icon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.petal_count= random.randint(3,5)
+        #self.petal_count= random.randint(3,5)
+        self.petal_count = 0
         self.petal_color = (random.random(),random.random(),random.random())
         self.phi_offset = random.random()
         self.size_offset = random.randint(0,20)
