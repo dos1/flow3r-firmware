@@ -18,7 +18,9 @@ class Engine():
         self.last_input_state = None
         self.userloop = None
         self.is_running = False
-    
+        self.foreground_app = None
+        self.active_menu = None
+
     def add(self,event):
         if isinstance(event,EventTimed):
             self.add_timed(event)
@@ -127,17 +129,25 @@ class Engine():
         self.last_input_state=input_state        
         
     def _handle_userloop(self):
-        if not self.userloop is None:
-            #print("userloop",self.userloop)
-            self.userloop()
-        
+        if self.foreground_app:
+            self.foreground_app.tick()
+
+    
+    def _handle_draw(self):
+        if self.foreground_app:
+            self.foreground_app.draw()
+        if self.active_menu:
+            self.active_menu.draw()
+        hardware.display_update()
+
+
+
     def _eventloop_single(self):
         self._handle_timed()
         self._handle_input()
         self._handle_userloop()
-        hardware.display_update()
         
-            
+        
     def eventloop(self):
         if self.is_running:
             print ("eventloop already running")
@@ -145,10 +155,20 @@ class Engine():
         else:
             print("eventloop started")
         self.is_running=True
+        last_draw = 0
         while self.is_running:
             self._eventloop_single()
+            now = time.ticks_ms()
+            diff = time.ticks_diff(now,last_draw)
+            #print("diff:",diff)
+            if diff>10:
+                #print("eventloop draw")
+                self._handle_draw()
+                last_draw = time.ticks_ms()
 
-            time.sleep(0.005)
+            #self.deadline = time.ticks_add(time.ticks_ms(),ms)
+            
+            time.sleep_ms(1)
         
 class Event():
     def __init__(self,name="unknown",data={},action=None,condition=None,group_id=None,enabled=False):
@@ -165,6 +185,7 @@ class Event():
         
         if enabled:
             self.set_enabled()
+
             
             
         

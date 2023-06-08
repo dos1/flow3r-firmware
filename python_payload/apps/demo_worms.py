@@ -28,7 +28,7 @@ class AppWorms(application.Application):
 
         self.worms = []
         for i in range(0):
-            worms.append(Worm())
+            self.worms.append(Worm())
     
     def on_foreground(self):
         print("on foreground")
@@ -46,6 +46,10 @@ class AppWorms(application.Application):
         #Write some text
         ctx.move_to(0,0).rgb(*ui.WHITE).text("touch me :)")
 
+    def on_draw(self):
+        for w in self.worms:
+            w.draw()
+
     def main_foreground(self):
         now = time.ticks_ms()
 
@@ -62,9 +66,7 @@ class AppWorms(application.Application):
                 self.last_report = now
 
         # Simulation is currently locked to FPS.
-
         for w in self.worms:
-            w.draw()
             w.move()
         
         self.last_render = now

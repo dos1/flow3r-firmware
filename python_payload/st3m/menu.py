@@ -6,7 +6,6 @@ import time
 import math
 
 menu_stack = []
-active_menu = None
 
 class Menu():
     def __init__(self,name="menu",has_back=True):
@@ -21,6 +20,7 @@ class Menu():
         
         self.angle = 0
         self.angle_step= 0.2
+
         if has_back:
             self.add(MenuItemBack())
 
@@ -42,8 +42,7 @@ class Menu():
 
     def start(self):
         print(self)
-        active_menu = self
-        render()
+        set_active_menu(self)
 
     def scroll(self, n=0):
         self.__index= (self.__index+n)%len(self.items)
@@ -83,7 +82,12 @@ class Menu():
     
 
     def draw(self):
-        
+
+        #TODO this is more like a hack...
+        #if not self==active_menu: 
+        #    active_menu.draw()
+        #    return
+        #print("draw",self.name)
         hovered_index = self._get_hovered_index()
         for i in range(len(self.items)):
             item = self.items[i]
@@ -95,6 +99,10 @@ class Menu():
             else:
                 item.ui.has_highlight=False
             item.ui.size=30+my_extra
+        
+        #black background
+        #TODO transparent menu with compositing
+        ui.the_ctx.rectangle(-120,-120,240,240).rgb(*ui.BLACK).fill()
         
         self.ui2.draw()
         self.ui.draw()
@@ -122,6 +130,9 @@ class MenuItemApp(MenuItem):
     
     def enter(self,data={}):
         if self.target:
+            global menu_stack
+            menu_stack.append(get_active_menu())
+            set_active_menu(None)
             self.target.run()
 
 class MenuItemSubmenu(MenuItem):
@@ -132,7 +143,7 @@ class MenuItemSubmenu(MenuItem):
     
     def enter(self,data={}):
         print("Enter Submenu {}".format(self.target.name))
-        menu_stack.append(active_menu)
+        menu_stack.append(get_active_menu())
         set_active_menu(self.target)
         
 class MenuItemBack(MenuItem):
@@ -160,6 +171,7 @@ class MenuItemControl(MenuItem):
         self.control.touch_1d(x,z)
         
 def on_scroll(d):
+    active_menu = get_active_menu()
     if active_menu is None:
         return
 
@@ -177,30 +189,32 @@ def on_scroll(d):
         elif d["value"] == 1:
             active_menu.rotate_steps(1)
 
-    render()
+
 
 def on_scroll_captouch(d):
-    
+    active_menu = get_active_menu()
     if active_menu is None:
         return
     
-    render()
-    return 
+    return
     if abs(d["radius"]) < 10000:
         return
     print(d["angle"])
     active_menu.rotate_to(d["angle"]+math.pi)
-    render()
 
 def on_release(d):
+    active_menu = get_active_menu()
+    
     if active_menu is None:
         return
 
     active_menu.angle_step = 0.2
-    render()
+
     
 
 def on_touch_1d(d):
+    active_menu = get_active_menu()
+    
     if active_menu is None:
         return
     #print(d["radius"])
@@ -224,9 +238,10 @@ def on_touch_1d(d):
         print("hastouch")
         hovered.touch_1d(v,z)
     
-    render()
 
 def on_enter(d):
+    active_menu = get_active_menu()
+    
     if active_menu is None:
         
         #TODO this should not bee needed...
@@ -236,10 +251,7 @@ def on_enter(d):
 
     if active_menu:
         active_menu.get_hovered_item().enter()
-        render()
-    else:
-        return
-
+    
     
 event.Event(name="menu rotation button",group_id="menu",
     condition=lambda e: e["type"] =="button" and not e["change"] and abs(e["value"])==1,
@@ -267,8 +279,10 @@ event.Event(name="menu button enter",group_id="menu",
     action=on_enter, enabled=True
 )
 
-def render():
+def old_render():
+
     print (active_menu)
+    return
     if active_menu is None:
         return
     
@@ -277,21 +291,21 @@ def render():
     #hardware.display_update()
 
 def set_active_menu(menu):
-    global active_menu
-    active_menu = menu
+    event.the_engine.active_menu = menu
 
-def menu_disable():
-    global active_menu
-    if active_menu:
-        menu_stack.append(active_menu)
-        active_menu=None
+def get_active_menu():
+    return event.the_engine.active_menu
+
+#def menu_disable():
+#    global active_menu
+#    if active_menu:
+#        menu_stack.append(active_menu)
+#        active_menu=None
 
 def menu_back():
     if not menu_stack:
         return
 
     previous = menu_stack.pop()
-
     set_active_menu(previous)
-    render()
     
