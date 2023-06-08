@@ -1,7 +1,7 @@
 from st3m import menu,event,control
 
 from apps import demo_worms, cap_touch_demo
-from apps import demo_sparabo, melodic_demo, harmonic_demo
+#from apps import demo_sparabo, melodic_demo, harmonic_demo
 from apps.flow3r import menu_settings,menu_tinysynth
 
 

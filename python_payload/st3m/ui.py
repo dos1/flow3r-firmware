@@ -59,7 +59,8 @@ class UIElement():
 
 class Viewport(UIElement):
     def _draw(self,pos):
-        self.ctx.rgb(0.3,0.3,0.3).rectangle(-WIDTH/2,-HEIGHT/2,WIDTH,HEIGHT).fill()
+        pass
+        #self.ctx.rgb(0.3,0.3,0.3).rectangle(-WIDTH/2,-HEIGHT/2,WIDTH,HEIGHT).fill()
 
 class Circle(UIElement):
     def __init__(self,radius,color=PUSH_RED,arc_from=-math.pi, arc_to=math.pi, *args, **kwargs):
@@ -136,8 +137,8 @@ class IconLabel(Icon):
 class IconFlower(Icon):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        #self.petal_count= random.randint(3,5)
-        self.petal_count = 0
+        self.petal_count= random.randint(3,5)
+        #self.petal_count = 0
         self.petal_color = (random.random(),random.random(),random.random())
         self.phi_offset = random.random()
         self.size_offset = random.randint(0,20)
@@ -159,7 +160,7 @@ class IconFlower(Icon):
             phi = math.pi*2 / self.petal_count * i + self.phi_offset
             r = self.size/2
             (x_,y_) = xy_from_polar(r, phi)
-            size_rnd = random.randint(-3,3)
+            size_rnd = random.randint(-1,1)
             if self.has_highlight:
                 self.ctx.move_to(x+x_,y+y_).rgb(*GO_GREEN).arc(x+x_,y+y_, petal_size/2+hs+size_rnd,-math.pi,math.pi,True).fill()
             self.ctx.move_to(x+x_,y+y_).rgb(*self.petal_color).arc(x+x_,y+y_, petal_size/2+size_rnd,-math.pi,math.pi,True).fill()

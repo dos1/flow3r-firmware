@@ -17,15 +17,15 @@ class Application():
         self._events_background = []
         self._events_foreground = []
         self.ui = ui.Viewport()
+        self.icon = ui.Icon(label=self.title, size=100)
         self.engine = event.the_engine
+        self.menu = None
 
         self.add_event(event.Event(
                 name="exit",
             action=self.exit,
             condition=lambda e: e["type"]=="button" and e.get("from")==2 and e["change"]
         ))
-
-        self.ui.add(ui.Icon(label=self.title, size=100))
         
     def __repr__(self):
         return "App "+self.title
@@ -69,10 +69,18 @@ class Application():
     def kill(self):
         #disable all events
         engine.register_service_loop(self.main_always,False)
-        engine.register_main_loop(self.main_forground,False)
+        
+        engine.foreground_app = None
         self._set_events(self._events_background,False)
         self._set_events(self._events_forground,False)
         self.state = STATE_OFF
+
+    def draw(self):
+        self.ui.draw()
+        self.on_draw()
+    
+    def tick(self):
+        self.main_foreground()
 
     def add_event(self,event,is_background=False):
         if not is_background:
@@ -95,21 +103,17 @@ class Application():
         
         if self._events_foreground:
             self._set_events(self._events_foreground,True)
-        #TODO should this really happen here??
-        menu.menu_disable()
-        if self.ui:
-            self.ui.draw()
         self.on_foreground()
         
-        self.engine.register_main_loop(self.main_foreground,True)
-        
+        #self.engine.register_main_loop(self.main_foreground,True)
+        self.engine.foreground_app = self
           
     def _to_background(self):
         self.state = STATE_BACKGROUND
         if self._events_foreground:
             self._set_events(self._events_foreground,False)
 
-        self.engine.register_main_loop(self.main_foreground,False)
+        self.engine.foreground_app = None
         if self.has_background:
             self.state = STATE_BACKGROUND
         self.on_background()
@@ -132,6 +136,11 @@ class Application():
         pass
 
     def on_kill(self): 
+        pass
+
+    def on_draw(self):
+        #self.ui.ctx.rgb(*ui.RED).rectangle(-120,-120,120,120).fill()
+        #self.icon.draw()
         pass
 
     def main_foreground(self):
