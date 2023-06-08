@@ -1,8 +1,9 @@
-import hardware
-import utils
 import cmath
 import math
 import time
+
+import hardware
+from st3m import utils
 
 ctx = hardware.get_ctx()
 
@@ -29,7 +30,7 @@ def foreground():
     pass
 
 
-from application import Application
+from st3m.application import Application
 
 app = Application("cap touch")
 app.main_foreground = run

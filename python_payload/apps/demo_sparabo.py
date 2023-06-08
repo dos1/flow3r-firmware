@@ -2,13 +2,9 @@
 import math
 
 #badge23
-import event
-import hardware
+from st3m import event,application,ui
+from st3m.system import hardware,audio
 from synth import tinysynth
-import application
-import ui
-
-import audio
 
 popcorn = [9,7,9,5,0,5,-3,999]
 

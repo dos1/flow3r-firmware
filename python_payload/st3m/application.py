@@ -1,6 +1,4 @@
-import ui
-import event
-import menu
+from . import ui,event,menu
 
 STATE_OFF = 0
 STATE_INIT = 10

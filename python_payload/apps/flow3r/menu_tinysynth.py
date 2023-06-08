@@ -1,11 +1,7 @@
 from synth import tinysynth
 
-import menu
-import event
-import control
-import ui
-import hardware
-import audio
+from st3m import menu,event,control,ui
+from st3m.system import hardware,audio
 
 synth = tinysynth(440,0)
 

@@ -66,7 +66,7 @@ def init():
 def foreground():
     adjust_playing_field_to_octave()
 
-from application import Application
+from st3m.application import Application
 
 class MelodicApp(Application):
     def on_init(self):

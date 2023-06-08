@@ -1,4 +1,4 @@
-import ui
+from . import ui
 
 class Control():
     def __init__(self,name, default=0, on_set=None, on_get=None, on_mod=None):
@@ -120,3 +120,9 @@ class ControlSlide(ControlFloat):
             if self.do_reset:
                 self.set_value(self._saved_value)
         self.draw()
+
+class ControlString(Control):
+    pass
+
+class ControlTextField():
+    pass

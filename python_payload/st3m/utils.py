@@ -1,6 +1,6 @@
 import time
 from hardware import *
-import audio
+from st3m.system import audio
 
 RED = 0b1111100000000000
 GREEN = 0b0000011111100000

@@ -59,7 +59,7 @@ def foreground():
     chord_index = -1
     set_chord(tmp)
 
-from application import Application
+from st3m.application import Application
 class HarmonicApp(Application):
     def on_init(self):
         init()
