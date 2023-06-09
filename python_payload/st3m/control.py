@@ -1,3 +1,7 @@
+from st3m import logging
+log = logging.Log(__name__,level=logging.INFO)
+log.info("import")
+
 from . import ui
 
 class Control():
@@ -15,7 +19,6 @@ class Control():
 
     def draw(self):
         self.ui.value = self.get_value()
-        print("draw: value", self.get_value())
         self.ui.draw()
 
     def get_normal_value(self):
@@ -70,10 +73,14 @@ class ControlFloat(Control):
     def get_normal_value(self):
         v = self.get_value()
         n = (v-self.min)/(self.max-self.min)
-        #print("normal:",v,n)
         return n
 
 class ControlKnob(ControlFloat):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._x_init = 0
+        self._touch_started_here = False
+
     def enter(self):
         #repeat action with current value
         self.set_value(self.get_value())
@@ -93,13 +100,16 @@ class ControlKnob(ControlFloat):
     def touch_1d(self,x,z):
         if z>0: #Inital Contact
             self._x_init = x
+            self._touch_started_here=True
 
         if z==0: #Continous contact
+            if not self._touch_started_here: 
+                return
             diff = self._x_init-x
             self.scroll(5*diff)
             
         if z<0: #Release
-            pass
+            self._touch_started_here = False
 
 
 class ControlSlide(ControlFloat):
@@ -114,7 +124,7 @@ class ControlSlide(ControlFloat):
         if z==0: #Continous contact
             v = (self.max-self.min)*x+self.min
             self.set_value(v)
-            print("c",x,v,self.max,self.min)
+            #print("c",x,v,self.max,self.min)
 
         if z<0: #Release
             if self.do_reset:

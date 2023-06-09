@@ -72,7 +72,7 @@ class AppWorms(application.Application):
         self.last_render = now
 
     def handle_input(self,data):
-        worms = app.worms
+        worms = self.worms
         worms.append(Worm(data.get("index",0)*2*math.pi/10+math.pi ))
         if len(worms)>10:
             worms.pop(0)

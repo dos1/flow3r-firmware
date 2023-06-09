@@ -1,3 +1,6 @@
+from st3m import logging
+log = logging.Log(__name__,level=logging.INFO)
+log.info("import")
 from . import ui,event,menu
 
 STATE_OFF = 0
@@ -6,9 +9,10 @@ STATE_BACKGROUND = 200
 STATE_FOREGROUND = 300
 STATE_ERROR = 500
 
-
+log.info("setting up application")
 class Application():
-    def __init__(self,title="badge23 app", author="someone@earth"):
+    def __init__(self,title="badge23 app", author="someone@earth", exit_on_menu_enter=True):
+        log.info(f"__init__ app '{title}'")
         self.title = title
         self.author = author
         self.state = STATE_OFF
@@ -20,21 +24,19 @@ class Application():
         self.icon = ui.Icon(label=self.title, size=100)
         self.engine = event.the_engine
         self.menu = None
-
-        self.add_event(event.Event(
-                name="exit",
-            action=self.exit,
-            condition=lambda e: e["type"]=="button" and e.get("from")==2 and e["change"]
-        ))
+        if exit_on_menu_enter:
+            self.add_event(event.Event(
+                    name="exit",
+                action=self.exit,
+                condition=lambda e: e["type"]=="button" and e.get("from")==2 and e["change"]
+            ))
         
     def __repr__(self):
         return "App "+self.title
     def init(self):
-        print("INIT")
+        log.info(f"init app '{self.title}'")
         self.state = STATE_INIT
-        print("before on_init")
         self.on_init()
-        print("after on_init")
         if self.has_background:
             if self._events_background:
                 self._set_events(self._events_background,True)
@@ -42,25 +44,25 @@ class Application():
 
 
     def run(self):
-        print ("RUN from",self.state)
+        log.info(f"run app '{self.title}' from state {self.state}")
         if self.state == STATE_OFF:
-            print("go init")
+            log.info("from STATE_OFF, doing init()")
             self.init()
-        
         if self.has_foreground:
             self._to_foreground()
         elif self.has_background:
             self._to_background()
-            print ("App {} has no foreground, running in background".format(self.title))
         else:
-            print("App has neither foreground nor background, not doing anything")
+            log.warning(f"App {self.title} has neither foreground nor background, not doing anything")
 
         #start the eventloop if it is not already running
-        event.the_engine.eventloop()
+        if not event.the_engine.is_running:
+            log.info("eventloop not yet running, starting")
+            event.the_engine.eventloop()
 
         
     def exit(self,data={}):
-        print("EXIT")
+        log.info(f"exit app '{self.title}' from state {self.state}")
         self.on_exit()
         if self.state == STATE_FOREGROUND:
             self._to_background()
@@ -68,6 +70,7 @@ class Application():
     
     def kill(self):
         #disable all events
+        log.info(f"kill app '{self.title}' from state {self.state}")
         engine.register_service_loop(self.main_always,False)
         
         engine.foreground_app = None
@@ -92,9 +95,9 @@ class Application():
         return self.state == STATE_FOREGROUND
 
     def _to_foreground(self):
-        print ("to foreground", self)
+        log.info(f"to_foreground app '{self.title}' from state {self.state}")
         if not self.has_foreground:
-            #TODO log
+            log.error(f"app has no foreground!")
             return
         
         if self._events_background:
@@ -105,10 +108,10 @@ class Application():
             self._set_events(self._events_foreground,True)
         self.on_foreground()
         
-        #self.engine.register_main_loop(self.main_foreground,True)
         self.engine.foreground_app = self
           
     def _to_background(self):
+        log.info(f"to_background app '{self.title}' from state {self.state}")
         self.state = STATE_BACKGROUND
         if self._events_foreground:
             self._set_events(self._events_foreground,False)
@@ -123,25 +126,24 @@ class Application():
             e.set_enabled(enabled)
 
     def on_init(self):
-        print("nothing to init")
-        pass
+        log.info(f"app {self.title}: on_init()")
 
     def on_foreground(self):
-        pass
+        log.info(f"app {self.title}: on_foreground()")
 
     def on_background(self):
-        pass
+        log.info(f"app {self.title}: on_background()")
     
     def on_exit(self):
-        pass
+        log.info(f"app {self.title}: on_exit()")
 
     def on_kill(self): 
-        pass
+        log.info(f"app {self.title}: on_kill()")
 
     def on_draw(self):
         #self.ui.ctx.rgb(*ui.RED).rectangle(-120,-120,120,120).fill()
         #self.icon.draw()
-        pass
+        log.debug(f"app {self.title}: on_draw()")
 
     def main_foreground(self):
         pass

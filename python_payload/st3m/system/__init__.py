@@ -26,5 +26,15 @@ except ModuleNotFoundError:
     print("no real audio, using mock module")
     _audio = MockObject("audio")
 
+
+try:
+    import audio as _audio
+except ModuleNotFoundError:
+    print("no real audio, using mock module")
+    _audio = MockObject("audio")
+
+
 hardware = _hardware
 audio = _audio
+
+ctx =hardware.get_ctx()
