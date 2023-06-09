@@ -1,4 +1,9 @@
-import hardware
+from st3m import logging
+log = logging.Log(__name__,level=logging.INFO)
+log.info("import")
+
+from st3m.system import hardware
+
 import time 
 import math
 import random
@@ -46,15 +51,6 @@ class Engine():
     
     def remove_input(self,group_id):
         self.events_input = [event for event in self.events_input if event.group_id!=group_id]
-
-    def register_main_loop(self,loop,enable=True):
-        if enable:
-            #print ("new userloop",loop)
-            #loop()
-            self.userloop = loop
-        elif self.userloop == loop:
-            #print ("removed userloop")
-            self.userloop = None
 
     def _sort_timed(self):
         self.events_timed = sorted(self.events_timed, key = lambda event: event.deadline)
@@ -149,11 +145,10 @@ class Engine():
         
         
     def eventloop(self):
+        log.info("starting eventloop")
         if self.is_running:
-            print ("eventloop already running")
+            log.warning("eventloop already running, doing nothing")
             return
-        else:
-            print("eventloop started")
         self.is_running=True
         last_draw = 0
         while self.is_running:
@@ -190,7 +185,7 @@ class Event():
             
         
     def trigger(self,triggerdata={}):
-        print ("triggered {} (with {})".format(self.name,triggerdata))
+        log.debug("triggered {} (with {})".format(self.name,triggerdata))
         if not self.action is None:
             triggerdata.update(self.data)
             self.action(triggerdata)
@@ -203,12 +198,12 @@ class Event():
             self.remove()
 
     def remove(self):
-        print ("remove",self)
+        log.info(f"remove {self}")
         while self in the_engine.events_input:
-            print ("from input")
+            #print ("from input")
             the_engine.events_input.remove(self)
         while self in the_engine.events_timed:
-            print("from timed")
+            #print("from timed")
             the_engine.events_timed.remove(self)
             the_engine._sort_timed()
 
@@ -245,7 +240,7 @@ class Sequence():
         self.is_running = False
         
         if not action:
-            self.action = lambda data: print("step {}".format(data.get("step")))
+            self.action = lambda data: log.info("step {}".format(data.get("step")))
         else:
             self.action = action
     
@@ -253,7 +248,7 @@ class Sequence():
         if self.is_running: self.stop()
         stepsize_ms = int(60*1000/self.bpm)
         for i in range(self.steps):
-            print("adding sequence event ", i)
+            log.debug("adding sequence event ", i)
             self.events.append(EventTimed(stepsize_ms*i,name="seq{}".format(i),action=self.action, data={'step':i}, group_id=self.group_id,enabled=True))
         if self.loop:
             self.repeat_event=EventTimed(stepsize_ms*self.steps,name="loop", group_id=self.group_id, enabled=True, action=on_restart, data={"object":self})
@@ -261,7 +256,7 @@ class Sequence():
     
     def stop(self):
         #for e in self.events: e.remove()
-        print("sequence stop")
+        log.info("sequence stop")
         the_engine.remove_timed(group_id=self.group_id)
         self.events = []
         if self.repeat_event: self.repeat_event.remove()

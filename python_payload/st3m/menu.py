@@ -1,5 +1,8 @@
+from st3m import logging
+log = logging.Log(__name__,level=logging.INFO)
+log.info("import")
+
 from . import ui,event
-import hardware
 
 
 import time
@@ -41,7 +44,7 @@ class Menu():
         self.ui.children.pop()
 
     def start(self):
-        print(self)
+        log.info(f"starting menu {self.name}")
         set_active_menu(self)
 
     def scroll(self, n=0):
@@ -119,7 +122,7 @@ class MenuItem():
         return "item: {} (action: {})".format(self.name,"?")
 
     def enter(self,data={}):
-        print("Enter MenuItem {}".format(self.name))
+        log.info("enter MenuItem {}".format(self.name))
         if self.action:
             self.action(data)
 
@@ -142,8 +145,9 @@ class MenuItemSubmenu(MenuItem):
         self.target = submenu
     
     def enter(self,data={}):
-        print("Enter Submenu {}".format(self.target.name))
         menu_stack.append(get_active_menu())
+        log.info(f"enter submenu {self.target.name} (Stack: {len(menu_stack)})")
+
         set_active_menu(self.target)
         
 class MenuItemBack(MenuItem):
@@ -161,7 +165,7 @@ class MenuItemControl(MenuItem):
         self.ui=control.ui
 
     def enter(self):
-        print("menu enter")
+        log.info(f"item {self.name} (MenuItemControl): enter")
         self.control.enter()
 
     def scroll(self,delta):
@@ -178,7 +182,6 @@ def on_scroll(d):
     if d["index"]==0:#right button
         hovered=active_menu.get_hovered_item()
         if hasattr(hovered, "scroll"):
-            print("has_scroll")
             hovered.scroll(d["value"])
 
     else: #index=1, #left button
@@ -199,7 +202,6 @@ def on_scroll_captouch(d):
     return
     if abs(d["radius"]) < 10000:
         return
-    print(d["angle"])
     active_menu.rotate_to(d["angle"]+math.pi)
 
 def on_release(d):
@@ -217,14 +219,14 @@ def on_touch_1d(d):
     
     if active_menu is None:
         return
-    #print(d["radius"])
+
     v = min(1.0,max(0.0,((d["radius"]+25000.0)/50000.0)))
     z = 0
     if d["change"]:
         if d["value"] == 1: z=1
         else: z=-1
     
-    print("menu: touch_1d",v,z)
+    log.debug(f"menu: touch_1d ({v},{z})")
     hovered=active_menu.get_hovered_item()
     
 
@@ -235,7 +237,6 @@ def on_touch_1d(d):
 
     
     if hasattr(hovered, "touch_1d"):
-        print("hastouch")
         hovered.touch_1d(v,z)
     
 
@@ -243,13 +244,12 @@ def on_enter(d):
     active_menu = get_active_menu()
     
     if active_menu is None:
-        
-        #TODO this should not bee needed...
-        event.the_engine.userloop=None
+        log.info("menu enter without active menu, opening last menu")
         menu_back()
         return
 
     if active_menu:
+        log.info("menu enter, opening item")
         active_menu.get_hovered_item().enter()
     
     
@@ -279,16 +279,6 @@ event.Event(name="menu button enter",group_id="menu",
     action=on_enter, enabled=True
 )
 
-def old_render():
-
-    print (active_menu)
-    return
-    if active_menu is None:
-        return
-    
-    ui.the_ctx.rectangle(-120,-120,240,240).rgb(*ui.BLACK).fill()
-    active_menu.draw()
-    #hardware.display_update()
 
 def set_active_menu(menu):
     event.the_engine.active_menu = menu
@@ -296,16 +286,9 @@ def set_active_menu(menu):
 def get_active_menu():
     return event.the_engine.active_menu
 
-#def menu_disable():
-#    global active_menu
-#    if active_menu:
-#        menu_stack.append(active_menu)
-#        active_menu=None
-
 def menu_back():
-    if not menu_stack:
-        return
-
     previous = menu_stack.pop()
+    log.info(f"back to previous menu {previous.name} (Stack: {len(menu_stack)})")
+
     set_active_menu(previous)
     

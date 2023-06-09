@@ -1,4 +1,8 @@
-import hardware
+from st3m import logging
+log = logging.Log(__name__,level=logging.INFO)
+log.info("import")
+
+from st3m.system import ctx
 import random
 import math
 import time
@@ -19,7 +23,7 @@ GREY = (0.5,0.5,0.5)
 GO_GREEN = (63/255,255/255,33/53)
 PUSH_RED = (251/255,72/255,196/255)
 
-the_ctx = hardware.get_ctx()
+the_ctx = ctx
 
 # Utility functions
 def xy_from_polar(r,phi):

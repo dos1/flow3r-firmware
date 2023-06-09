@@ -1,3 +1,7 @@
+from st3m import logging
+log = logging.Log(__name__,level=logging.INFO)
+log.info("import")
+
 import time
 from hardware import *
 from st3m.system import audio

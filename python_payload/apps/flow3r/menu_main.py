@@ -13,7 +13,7 @@ def get_menu():
     menu_apps = menu.Menu("apps")
     menu_music = menu.Menu("music")
 
-
+    #Skipping for mem constraints
     #for app_module in [demo_sparabo,melodic_demo,harmonic_demo]:
     #    menu_music.add(menu.MenuItemApp(app_module.app))
 
