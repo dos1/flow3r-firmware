@@ -37,6 +37,13 @@ STATIC mp_obj_t mp_display_update(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_display_update_obj, mp_display_update);
 
+STATIC mp_obj_t mp_display_set_backlight(mp_obj_t percent_in) {
+    uint8_t percent = mp_obj_get_int(percent_in);
+    display_set_backlight(percent);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_display_set_backlight_obj, mp_display_set_backlight);
+
 STATIC mp_obj_t mp_get_captouch(size_t n_args, const mp_obj_t *args) {
     uint16_t captouch = read_captouch();
     uint16_t pad = mp_obj_get_int(args[0]);
@@ -230,6 +237,7 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_set_led_hsv), MP_ROM_PTR(&mp_set_led_hsv_obj) },
     { MP_ROM_QSTR(MP_QSTR_update_leds), MP_ROM_PTR(&mp_update_leds_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_update), MP_ROM_PTR(&mp_display_update_obj) },
+    { MP_ROM_QSTR(MP_QSTR_display_set_backlight), MP_ROM_PTR(&mp_display_set_backlight_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&mp_version_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_ctx), MP_ROM_PTR(&mp_get_ctx_obj) },
 

@@ -46,6 +46,10 @@ void display_fill(uint16_t col){
     GC9A01_FillRect(0, 0, 240, 240, col);
 }
 
+void display_set_backlight(uint8_t percent) {
+    GC9A01_SetBL(percent);
+}
+
 void display_init() {
     GC9A01_Init();
     GC9A01_Update();
