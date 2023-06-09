@@ -204,3 +204,47 @@ $ idf.py  menuconfig
 Then, either save into the temporary sdkconfig by using 'S', or save into a
 defconfig by using 'D'. The resulting `build/defconfig` file can then be copied
 into `sdkconfig.$generation` to change the defaults for a given generation.
+
+### Badge link
+
+Badge link lets you have UART between badges or other devices using a 3.5mm
+audio cable.
+
+Baud rates up to 5mbit are supported in theory, but data corruption is likely
+with higher rates.
+
+Use baud rate 31250 for MIDI.
+
+Note that `badge_link.enable()` will refuse to enable line out if the cable is
+not connected. Connect it first. Connecting headphones with badge link enabled
+is not recommended, especially not when wearing them.
+
+Example usage:
+
+On both badges:
+
+```
+import badge_link
+from machine import UART
+badge_link.enable(badge_link.PIN_MASK_ALL)
+```
+
+On badge 1, connect the cable to line out, and configure uart with tx on tip
+(as an example)
+
+```
+uart = UART(1, baudrate=115200, tx=badge_link.PIN_INDEX_LINE_OUT_TIP, rx=badge_link.PIN_INDEX_LINE_OUT_RING)
+```
+
+On badge 2, connect the cable to line in, and configure uart with tx on ring:
+
+```
+uart = UART(1, baudrate=115200, tx=badge_link.PIN_INDEX_LINE_IN_RING, rx=badge_link.PIN_INDEX_LINE_IN_TIP)
+```
+
+Then write and read from each side:
+
+```
+uart.write("hiiii")
+uart.read(5)
+```

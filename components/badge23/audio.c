@@ -159,7 +159,7 @@ static void init_codec()
     ESP_ERROR_CHECK(max98091_i2c_write_readback(0x41, 0x0));
 
     ESP_ERROR_CHECK(max98091_i2c_write_readback(0x3D, 1<<7)); // jack detect enable
-    printf("4 readbacks failing here is normal dw ^w^");
+    printf("4 readbacks failing here is normal dw ^w^\n");
 }
 
 static void i2s_init(void){

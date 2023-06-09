@@ -6,18 +6,18 @@
 #define BUTTON_PRESSED_RIGHT 1
 #define BUTTON_NOT_PRESSED 0
 
-#define BADGE_LINK_LINE_IN_TIP      0b0001
-#define BADGE_LINK_LINE_IN_RING     0b0010
-#define BADGE_LINK_LINE_OUT_TIP     0b0100
-#define BADGE_LINK_LINE_OUT_RING    0b1000
-#define BADGE_LINK_LINE_IN ((BADGE_LINK_LINE_IN_TIP) | (BADGE_LINK_LINE_IN_RING))
-#define BADGE_LINK_LINE_OUT ((BADGE_LINK_LINE_OUT_TIP) | (BADGE_LINK_LINE_OUT_RING))
-#define BADGE_LINK_ALL ((BADGE_LINK_LINE_IN) | (BADGE_LINK_LINE_OUT))
+#define BADGE_LINK_PIN_MASK_LINE_IN_TIP      0b0001
+#define BADGE_LINK_PIN_MASK_LINE_IN_RING     0b0010
+#define BADGE_LINK_PIN_MASK_LINE_OUT_TIP     0b0100
+#define BADGE_LINK_PIN_MASK_LINE_OUT_RING    0b1000
+#define BADGE_LINK_PIN_MASK_LINE_IN ((BADGE_LINK_PIN_MASK_LINE_IN_TIP) | (BADGE_LINK_PIN_MASK_LINE_IN_RING))
+#define BADGE_LINK_PIN_MASK_LINE_OUT ((BADGE_LINK_PIN_MASK_LINE_OUT_TIP) | (BADGE_LINK_PIN_MASK_LINE_OUT_RING))
+#define BADGE_LINK_PIN_MASK_ALL ((BADGE_LINK_PIN_MASK_LINE_IN) | (BADGE_LINK_PIN_MASK_LINE_OUT))
 
-#define BADGE_LINK_LINE_IN_TIP_PIN 4
-#define BADGE_LINK_LINE_IN_RING_PIN 5
-#define BADGE_LINK_LINE_OUT_TIP_PIN 6
-#define BADGE_LINK_LINE_OUT_RING_PIN 7
+#define BADGE_LINK_PIN_INDEX_LINE_IN_TIP 4
+#define BADGE_LINK_PIN_INDEX_LINE_IN_RING 5
+#define BADGE_LINK_PIN_INDEX_LINE_OUT_TIP 6
+#define BADGE_LINK_PIN_INDEX_LINE_OUT_RING 7
 
 /* Initializes GPIO modes, prefills structs, etc. Call before using library.
  */
@@ -53,19 +53,19 @@ int8_t spio_application_button_get();
 int8_t spio_left_button_get();
 int8_t spio_right_button_get();
 
-/* Gets active badge links ports. Mask with BADGE_LINK_LINE_{IN/OUT}_{TIP/RING}. The corresponding
- * GPIO indices are listed in BADGE_LINK_LINE_{OUT/IN}_{TIP/RING}_PIN.
+/* Gets active badge links ports. Mask with BADGE_LINK_PIN_MASK_LINE_{IN/OUT}_{TIP/RING}. The corresponding
+ * GPIO indices are listed in BADGE_LINK_PIN_INDEX_LINE_{OUT/IN}_{TIP/RING}.
  */
 uint8_t spio_badge_link_get_active(uint8_t pin_mask);
 
-/* Disables badge link ports. Mask with BADGE_LINK_LINE_{IN/OUT}_{TIP/RING}. The corresponding
- * GPIO indices are listed in BADGE_LINK_LINE_{OUT/IN}_{TIP/RING}_PIN.
+/* Disables badge link ports. Mask with BADGE_LINK_PIN_MASK_LINE_{IN/OUT}_{TIP/RING}. The corresponding
+ * GPIO indices are listed in BADGE_LINK_PIN_INDEX_LINE_{OUT/IN}_{TIP/RING}.
  * Returns the output of spio_badge_link_get_active after execution.
  */
 uint8_t spio_badge_link_disable(uint8_t pin_mask);
 
-/* Enables badge link ports. Mask with BADGE_LINK_LINE_{IN/OUT}_{TIP/RING}. The corresponding
- * GPIO indices are listed in BADGE_LINK_LINE_{OUT/IN}_{TIP/RING}_PIN.
+/* Enables badge link ports. Mask with BADGE_LINK_PIN_MASK_LINE_{IN/OUT}_{TIP/RING}. The corresponding
+ * GPIO indices are listed in BADGE_LINK_PIN_INDEX_LINE_{OUT/IN}_{TIP/RING}_PIN.
  * Returns the output of spio_badge_link_get_active after execution.
  *
  * Do NOT connect headphones to a badge link port. You might hear a ringing for a while. Warn user.
