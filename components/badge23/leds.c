@@ -6,14 +6,21 @@
 #include <math.h>
 #include "esp_system.h"
 #include "badge23/leds.h"
+#include "badge23/lock.h"
 #include "badge23_hwconfig.h"
+
+static uint8_t leds_brightness = 69;;
+static uint8_t leds_slew_rate = 255;
+static bool leds_auto_update = 0;
+
+static uint8_t gamma_red[256];
+static uint8_t gamma_green[256];
+static uint8_t gamma_blue[256];
 
 #if defined(CONFIG_BADGE23_HW_GEN_P1)
 #define LED_SPI_PORT
-
-#elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
+#elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P6)
 #define LED_ASYNC_PORT
-
 #else
 #error "leds not implemented for this badge generation"
 #endif
@@ -34,6 +41,10 @@ struct RGB
     unsigned char G;
     unsigned char B;
 };
+
+struct RGB led_target[40] = {0,};
+struct RGB led_target_buffer[40] = {0,};
+struct RGB led_hardware_value[40] = {0,};
 
 struct HSV
 {
@@ -164,7 +175,7 @@ static int setupSPI()
     return ret;
 }
 
-void set_single_led(uint8_t index, uint8_t c[3]){
+static void set_single_led(uint8_t index, uint8_t c[3]){
     setPixel(&leds, index, c);
 }
 
@@ -180,7 +191,7 @@ static void _leds_init() {
     spiTransObject.tx_buffer = leds.LEDs;
 
 
-    TaskHandle_t handle;
+    //TaskHandle_t handle;
     //xTaskCreate(&leds_task, "LEDs player", 4096, NULL, configMAX_PRIORITIES - 2, &handle);
 }
 #endif
@@ -210,12 +221,53 @@ static void renderLEDs(){
 
 #endif
 
+uint8_t led_get_slew(int16_t old, int16_t new, int16_t slew){
+    if(new > old + slew){
+        return old + slew;
+    } else if(new > old) {
+        return new;
+    }
+    if(new < old - slew){
+        return old - slew;
+    } else if(new < old) {
+        return new;
+    }
+    return old;
+}
+
+static void leds_update_target(){
+    for(int i = 0; i < 40; i++){
+        led_target[i].R = led_target_buffer[i].R;
+        led_target[i].G = led_target_buffer[i].G;
+        led_target[i].B = led_target_buffer[i].B;
+    }
+}
+
+void leds_update_hardware(){ 
+    if(leds_auto_update) leds_update_target();
+    xSemaphoreTake(mutex_LED, portMAX_DELAY);
+    for(int i = 0; i < 40; i++){
+        uint8_t c[3];
+        c[0] = led_target[i].R * leds_brightness/255;
+        c[1] = led_target[i].G * leds_brightness/255;
+        c[2] = led_target[i].B * leds_brightness/255;
+        c[0] = led_get_slew(led_hardware_value[i].R, c[0], leds_slew_rate);
+        c[1] = led_get_slew(led_hardware_value[i].G, c[1], leds_slew_rate);
+        c[2] = led_get_slew(led_hardware_value[i].B, c[2], leds_slew_rate);
+        led_hardware_value[i].R = gamma_red[c[0]];
+        led_hardware_value[i].G = gamma_green[c[1]];
+        led_hardware_value[i].B = gamma_blue[c[2]];
+        int8_t index = i + 3 % 40;
+        set_single_led(index, c);
+    }
+    renderLEDs();
+    xSemaphoreGive(mutex_LED);
+}
+
 void leds_set_single_rgb(uint8_t index, uint8_t red, uint8_t green, uint8_t blue){
-    uint8_t c[3];
-    c[0] = red;
-    c[1] = green;
-    c[2] = blue;
-    set_single_led(index, c);
+    led_target_buffer[index].R = red;
+    led_target_buffer[index].G = green;
+    led_target_buffer[index].B = blue;
 }
  
 void leds_set_single_hsv(uint8_t index, float hue, float sat, float val){
@@ -227,17 +279,71 @@ void leds_set_single_hsv(uint8_t index, float hue, float sat, float val){
     
     rgb = HSVToRGB(hsv);
 
-    uint8_t c[3];
-    c[0] = rgb.R;
-    c[1] = rgb.G;
-    c[2] = rgb.B;
-    set_single_led(index, c);
+    led_target_buffer[index].R = rgb.R;
+    led_target_buffer[index].G = rgb.G;
+    led_target_buffer[index].B = rgb.B;
+}
+
+void leds_set_all_rgb(uint8_t red, uint8_t green, uint8_t blue){
+    for(int i = 0; i<40; i++){
+        leds_set_single_rgb(i, red, green, blue);
+    }
+}
+
+void leds_set_all_hsv(float h, float s, float v){
+    for(int i = 0; i<40; i++){
+        leds_set_single_hsv(i, h, s, v);
+    }
 }
 
 void leds_update(){
-    vTaskDelay(10 / portTICK_PERIOD_MS); //do we...
-    renderLEDs();
-    vTaskDelay(10 / portTICK_PERIOD_MS); //...need these?
+    leds_update_target();
+    leds_update_hardware();
 }
 
-void leds_init() { _leds_init(); }
+void leds_init(){
+    for(uint16_t i = 0; i<256; i++){
+        gamma_red[i] = i;
+        gamma_green[i] = i;
+        gamma_blue[i] = i;
+    }
+    _leds_init();
+}
+
+void leds_set_brightness(uint8_t b){
+    leds_brightness = b;
+}
+
+uint8_t leds_get_brightness(){
+    return leds_brightness;
+}
+
+void leds_set_slew_rate(uint8_t s){
+    leds_slew_rate = s;
+}
+
+uint8_t leds_get_slew_rate(){
+    return leds_slew_rate;
+}
+
+void leds_set_auto_update(bool on){
+    leds_auto_update = on;
+}
+
+bool leds_get_auto_update(){
+    return leds_auto_update;
+}
+
+void leds_set_gamma(float red, float green, float blue){
+    for(uint16_t i = 0; i<256; i++){
+        if(i == 0){
+            gamma_red[i] = 0;
+            gamma_green[i] = 0;
+            gamma_blue[i] = 0;
+        }
+        float step = ((float) i) / 255.;
+        gamma_red[i] = (uint8_t) (254.*(pow(step, red))+1);
+        gamma_green[i] = (uint8_t) (254.*(pow(step, green))+1);
+        gamma_blue[i] = (uint8_t) (254.*(pow(step, blue))+1);
+    }
+}

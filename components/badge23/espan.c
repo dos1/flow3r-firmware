@@ -58,7 +58,7 @@ static esp_err_t i2c_master_init(void)
 }
 
 #define CAPTOUCH_POLLING_PERIOD 10
-#define SLOW_SYSTEM_STATUS_PERIOD 200
+#define SLOW_SYSTEM_STATUS_PERIOD 100
 static uint8_t hw_init_done = 0;
 
 void i2c_timer(TimerHandle_t data){
@@ -82,11 +82,13 @@ void slow_system_status_task(void * data){
         xQueueReceive(slow_system_status_queue, &dummy_data, portMAX_DELAY);
         //read out stuff like jack detection, battery status, usb connection etc.
         audio_update_jacksense();
+        leds_update_hardware();
     }
 }
 
 void locks_init(){
     mutex_i2c = xSemaphoreCreateMutex();
+    mutex_LED = xSemaphoreCreateMutex();
 }
 
 void os_app_main(void)
@@ -101,7 +103,6 @@ void os_app_main(void)
     init_buttons();
     captouch_init();
 
-    //vTaskDelay(2000 / portTICK_PERIOD_MS);
     captouch_force_calibration();
 
     display_init();
