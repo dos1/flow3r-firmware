@@ -297,10 +297,10 @@ static uint8_t spio_badge_link_set(uint8_t pin_mask, uint8_t state){
 
 static int8_t spio_badge_link_set(uint8_t pin_mask, bool state){
     if(state) {
-        if((pin_mask & BADGE_LINK_LINE_OUT_RING) || (pin_mask & BADGE_LINK_LINE_OUT_TIP)){
+        if((pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_RING) || (pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_TIP)){
             if(!audio_headphones_are_connected()) {
-                pin_mask &= ~BADGE_LINK_LINE_OUT_RING;
-                pin_mask &= ~BADGE_LINK_LINE_OUT_TIP;
+                pin_mask &= ~BADGE_LINK_PIN_MASK_LINE_OUT_RING;
+                pin_mask &= ~BADGE_LINK_PIN_MASK_LINE_OUT_TIP;
 #ifdef USER_WARNINGS_ENABLED
                 printf("cannot enable line out badge link without cable plugged in for safety reasons\n");
             } else {
@@ -310,15 +310,15 @@ static int8_t spio_badge_link_set(uint8_t pin_mask, bool state){
         }
     }
 
-    if(pin_mask & BADGE_LINK_LINE_IN_RING) max7321s_set_pinmode_output(BADGE_LINK_LINE_IN_RING_ENABLE_PIN, 1);
-    if(pin_mask & BADGE_LINK_LINE_IN_TIP) max7321s_set_pinmode_output(BADGE_LINK_LINE_IN_TIP_ENABLE_PIN, 1);
-    if(pin_mask & BADGE_LINK_LINE_OUT_RING) max7321s_set_pinmode_output(BADGE_LINK_LINE_OUT_RING_ENABLE_PIN, 1);
-    if(pin_mask & BADGE_LINK_LINE_OUT_TIP) max7321s_set_pinmode_output(BADGE_LINK_LINE_OUT_TIP_ENABLE_PIN, 1);
+    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_IN_RING) max7321s_set_pinmode_output(BADGE_LINK_LINE_IN_RING_ENABLE_PIN, 1);
+    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_IN_TIP) max7321s_set_pinmode_output(BADGE_LINK_LINE_IN_TIP_ENABLE_PIN, 1);
+    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_RING) max7321s_set_pinmode_output(BADGE_LINK_LINE_OUT_RING_ENABLE_PIN, 1);
+    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_TIP) max7321s_set_pinmode_output(BADGE_LINK_LINE_OUT_TIP_ENABLE_PIN, 1);
 
-    if(pin_mask & BADGE_LINK_LINE_IN_RING) max7321s_set_pin(BADGE_LINK_LINE_IN_RING_ENABLE_PIN, !state);
-    if(pin_mask & BADGE_LINK_LINE_IN_TIP) max7321s_set_pin(BADGE_LINK_LINE_IN_TIP_ENABLE_PIN, !state);
-    if(pin_mask & BADGE_LINK_LINE_OUT_RING) max7321s_set_pin(BADGE_LINK_LINE_OUT_RING_ENABLE_PIN, !state);
-    if(pin_mask & BADGE_LINK_LINE_OUT_TIP) max7321s_set_pin(BADGE_LINK_LINE_OUT_TIP_ENABLE_PIN, !state);
+    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_IN_RING) max7321s_set_pin(BADGE_LINK_LINE_IN_RING_ENABLE_PIN, !state);
+    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_IN_TIP) max7321s_set_pin(BADGE_LINK_LINE_IN_TIP_ENABLE_PIN, !state);
+    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_RING) max7321s_set_pin(BADGE_LINK_LINE_OUT_RING_ENABLE_PIN, !state);
+    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_TIP) max7321s_set_pin(BADGE_LINK_LINE_OUT_TIP_ENABLE_PIN, !state);
 
     max7321s_update();
 
