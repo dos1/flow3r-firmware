@@ -2,7 +2,8 @@ import math
 import cmath
 import time
 import hardware
-from .demo1 import app
+from .demo1 import app as demo1
+from .demo2 import app as demo2
 
 offsets_rad = [0, 0, 0, 0, 0]
 offsets_phi = [0, 0, 0, 0, 0]
@@ -15,6 +16,7 @@ captouch_deadzone = 3
 cycle = 0
 calibration_cycles = 10
 
+app = demo2
 
 def run():
     global app
