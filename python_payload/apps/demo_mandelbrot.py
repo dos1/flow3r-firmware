@@ -1,4 +1,4 @@
-from application import Application
+from st3m.application import Application
 import ui
 
 class MandelbrotApp(Application):
@@ -25,7 +25,7 @@ class MandelbrotApp(Application):
         
         for x in range(-240,240):
             for y in range(-240,240):
-                
+                pass
 
 app=MandelbrotApp("Mandelbrot")
 app.run()

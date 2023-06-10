@@ -1,4 +1,4 @@
-from application import SimpleApplication
+from st3m.application import SimpleApplication
 
 app = SimpleApplication("flow3rdroids")
 
@@ -17,6 +17,8 @@ def on_draw():
 
 def on_scroll_step(direction):
     #TODO: ship_direction += direction * angle
+    pass
 
-def def on_enter():
+def on_enter():
     #TODO:ship_direction += speed
+    pass
