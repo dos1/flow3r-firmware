@@ -26,7 +26,12 @@ def set_pitch(value):
 
 def get_menu():
     m = menu.Menu("tinysynth")
-
+    m.add(menu.MenuItemControl("mute",control.ControlSwitch(
+        name="mute",
+        on_set=audio.set_mute,
+        on_get=audio.get_mute
+    )))
+    
     freq=control.ControlKnob(
         name="freq",
         on_set=set_frequency,
@@ -58,6 +63,7 @@ def get_menu():
     play = control.ControlSwitch(name="play",on_set=set_play,default=False)
     m.add_petal(menu.MenuItemControl("play",play), petal_index=5)
     
+    m.ui.r = 60
     return m
 
 
