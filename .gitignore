@@ -10,3 +10,6 @@ __pycache__
 # editor crud
 .vscode
 *swp
+
+# Python
+.venv
