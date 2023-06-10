@@ -1,25 +1,26 @@
 from synth import tinysynth
 from hardware import *
 
-chords = [\
-[-4,0,3,8,10],\
-[-3,0,5,7,12],\
-[-1,2,5,7,11],\
-[0,3,7,12,14],\
-[3,7,10,14,15]\
+chords = [
+    [-4, 0, 3, 8, 10],
+    [-3, 0, 5, 7, 12],
+    [-1, 2, 5, 7, 11],
+    [0, 3, 7, 12, 14],
+    [3, 7, 10, 14, 15],
 ]
 
 chord_index = 3
 chord = chords[3]
 synths = []
 
+
 def set_chord(i):
     global chord_index
     global chord
-    if(i != chord_index):
+    if i != chord_index:
         chord_index = i
         for j in range(40):
-            hue = int(72*(i+0.5)) % 360
+            hue = int(72 * (i + 0.5)) % 360
             set_led_hsv(j, hue, 1, 0.2)
         chord = chords[i]
         update_leds()
@@ -30,14 +31,15 @@ def run():
     global chord
     global synths
     for i in range(10):
-        if(get_captouch(i)):
-            if(i%2):
-                k = int((i-1)/2)
+        if get_captouch(i):
+            if i % 2:
+                k = int((i - 1) / 2)
                 set_chord(k)
             else:
-                k = int(i/2)
+                k = int(i / 2)
                 synths[k].tone(chord[k])
                 synths[k].start()
+
 
 def init():
     global chord_index
@@ -45,11 +47,12 @@ def init():
     global synths
 
     for i in range(5):
-        synths += [tinysynth(440,1)]
+        synths += [tinysynth(440, 1)]
 
     for synth in synths:
         synth.decay(100)
         synth.waveform(1)
+
 
 def foreground():
     global chord_index
@@ -59,17 +62,21 @@ def foreground():
     chord_index = -1
     set_chord(tmp)
 
+
 from st3m.application import Application
+
+
 class HarmonicApp(Application):
     def on_init(self):
         init()
-        #foreground()
-    
+        # foreground()
+
     def on_foreground(self):
-        #foreground()
+        # foreground()
         pass
-    
+
     def main_foreground(self):
         run()
 
-app=HarmonicApp("harmonic")
+
+app = HarmonicApp("harmonic")
