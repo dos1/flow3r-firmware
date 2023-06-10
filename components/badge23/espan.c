@@ -102,6 +102,7 @@ void os_app_main(void)
     leds_init();
     init_buttons();
     captouch_init();
+    spio_badge_link_disable(255);
 
     captouch_force_calibration();
 

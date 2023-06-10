@@ -10,14 +10,25 @@
 #define I2C_MASTER_NUM 0
 #define TIMEOUT_MS 1000
 
+#if defined(CONFIG_BADGE23_HW_GEN_P1)
 
-#if defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P3)
+#define BADGE_LINK_LINE_OUT_TIP_ENABLE_PIN 5
+#define BADGE_LINK_LINE_OUT_RING_ENABLE_PIN 6
+#define BADGE_LINK_LINE_IN_TIP_ENABLE_PIN 3
+#define BADGE_LINK_LINE_IN_RING_ENABLE_PIN 4
+
+#elif defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P3)
 
 #define BADGE_LINK_LINE_OUT_TIP_ENABLE_PIN 6
 #define BADGE_LINK_LINE_OUT_RING_ENABLE_PIN 7
 #define BADGE_LINK_LINE_IN_TIP_ENABLE_PIN 5
 #define BADGE_LINK_LINE_IN_RING_ENABLE_PIN 4
 
+//on ESP32
+#define LEFT_BUTTON_LEFT 3
+#define LEFT_BUTTON_MID 0
+
+//on PORTEXPANDER
 #define LEFT_BUTTON_RIGHT (0+8)
 #define RIGHT_BUTTON_LEFT (6+8)
 #define RIGHT_BUTTON_MID (5+8)
@@ -30,9 +41,16 @@
 #define BADGE_LINK_LINE_IN_TIP_ENABLE_PIN 3
 #define BADGE_LINK_LINE_IN_RING_ENABLE_PIN 4
 
+#define ENABLE_INVERTED 
+
+//on ESP32
+#define RIGHT_BUTTON_MID 3
+#define LEFT_BUTTON_MID 0
+
+//on PORTEXPANDER
 #define LEFT_BUTTON_RIGHT (0+8)
 #define RIGHT_BUTTON_LEFT (4+8)
-#define RIGHT_BUTTON_MID (7+8)
+#define LEFT_BUTTON_LEFT (7+8)
 #define RIGHT_BUTTON_RIGHT (5+8)
 
 #endif
@@ -175,13 +193,7 @@ void update_button_state(){
     }
 }
 
-#elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P6)
-
-//on ESP32
-#define LEFT_BUTTON_LEFT 3
-#define LEFT_BUTTON_MID 0
-
-//on PORTEXPANDER
+#elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 
 max7321_t port_expanders[] = {  {0b01101110, 0, 255, 255}, 
                                 {0b01101101, 0, 255, 255}  };
@@ -225,6 +237,63 @@ void update_button_state(){
     uint8_t rl = max7321s_get_pin(RIGHT_BUTTON_LEFT);
     uint8_t lr = max7321s_get_pin(LEFT_BUTTON_RIGHT);
     uint8_t ll = gpio_get_level(LEFT_BUTTON_LEFT);
+    uint8_t lm = gpio_get_level(LEFT_BUTTON_MID);
+
+    int8_t new_rightbutton = process_button_state(rr, rm, rl);
+    int8_t new_leftbutton = process_button_state(lr, lm, ll);
+    if(new_rightbutton != rightbutton){
+        //TODO: CALLBACK button_state_has_changed_to(new_rightbutton)
+        //note: consider menubutton/application button config option
+    }
+    if(new_leftbutton != leftbutton){
+        //TODO: CALLBACK button_state_has_changed_to(new_leftbutton)
+    }
+    rightbutton = new_rightbutton;
+    leftbutton = new_leftbutton;
+}
+#elif defined(CONFIG_BADGE23_HW_GEN_P6)
+max7321_t port_expanders[] = {  {0b01101110, 0, 255, 255}, 
+                                {0b01101101, 0, 255, 255}  };
+
+static void _init_buttons(){
+    //configure all buttons as pullup
+    gpio_config_t cfg = {
+        .pin_bit_mask = 1 << RIGHT_BUTTON_MID,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .pull_down_en = GPIO_PULLDOWN_DISABLE,
+        .intr_type = GPIO_INTR_DISABLE
+    };
+    ESP_ERROR_CHECK(gpio_config(&cfg));
+    cfg.pin_bit_mask = 1;
+    cfg.pull_up_en = GPIO_PULLUP_DISABLE;
+    ESP_ERROR_CHECK(gpio_config(&cfg));
+    
+    max7321s_set_pinmode_output(RIGHT_BUTTON_RIGHT, 0);
+    max7321s_set_pinmode_output(LEFT_BUTTON_LEFT, 0);
+    max7321s_set_pinmode_output(RIGHT_BUTTON_LEFT, 0);
+    max7321s_set_pinmode_output(LEFT_BUTTON_RIGHT, 0);
+}
+
+int8_t process_button_state(bool r, bool m, bool l){
+    if(!l){
+        return BUTTON_PRESSED_LEFT;
+    } else if(!m){
+        return BUTTON_PRESSED_DOWN;
+    } else if(!r){
+        return BUTTON_PRESSED_RIGHT;
+    } else {
+        return BUTTON_NOT_PRESSED;
+    }
+}
+
+void update_button_state(){
+    max7321s_update();
+    uint8_t rr = max7321s_get_pin(RIGHT_BUTTON_RIGHT);
+    uint8_t ll = max7321s_get_pin(LEFT_BUTTON_LEFT);
+    uint8_t rl = max7321s_get_pin(RIGHT_BUTTON_LEFT);
+    uint8_t lr = max7321s_get_pin(LEFT_BUTTON_RIGHT);
+    uint8_t rm = gpio_get_level(RIGHT_BUTTON_MID);
     uint8_t lm = gpio_get_level(LEFT_BUTTON_MID);
 
     int8_t new_rightbutton = process_button_state(rr, rm, rl);
@@ -311,19 +380,23 @@ static int8_t spio_badge_link_set(uint8_t pin_mask, bool state){
         }
     }
 
+#ifdef ENABLE_INVERTED
+    uint8_t hw_state = state;
+#else
+    uint8_t hw_state = !state;
+#endif
     if(pin_mask & BADGE_LINK_PIN_MASK_LINE_IN_RING) max7321s_set_pinmode_output(BADGE_LINK_LINE_IN_RING_ENABLE_PIN, 1);
     if(pin_mask & BADGE_LINK_PIN_MASK_LINE_IN_TIP) max7321s_set_pinmode_output(BADGE_LINK_LINE_IN_TIP_ENABLE_PIN, 1);
     if(pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_RING) max7321s_set_pinmode_output(BADGE_LINK_LINE_OUT_RING_ENABLE_PIN, 1);
     if(pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_TIP) max7321s_set_pinmode_output(BADGE_LINK_LINE_OUT_TIP_ENABLE_PIN, 1);
 
-    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_IN_RING) max7321s_set_pin(BADGE_LINK_LINE_IN_RING_ENABLE_PIN, !state);
-    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_IN_TIP) max7321s_set_pin(BADGE_LINK_LINE_IN_TIP_ENABLE_PIN, !state);
-    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_RING) max7321s_set_pin(BADGE_LINK_LINE_OUT_RING_ENABLE_PIN, !state);
-    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_TIP) max7321s_set_pin(BADGE_LINK_LINE_OUT_TIP_ENABLE_PIN, !state);
+    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_IN_RING) max7321s_set_pin(BADGE_LINK_LINE_IN_RING_ENABLE_PIN, hw_state);
+    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_IN_TIP) max7321s_set_pin(BADGE_LINK_LINE_IN_TIP_ENABLE_PIN, hw_state);
+    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_RING) max7321s_set_pin(BADGE_LINK_LINE_OUT_RING_ENABLE_PIN, hw_state);
+    if(pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_TIP) max7321s_set_pin(BADGE_LINK_LINE_OUT_TIP_ENABLE_PIN, hw_state);
 
     max7321s_update();
-
-    badge_link_enabled = (badge_link_enabled & (~pin_mask)) | (pin_mask & (state ? 255: 0));
+    badge_link_enabled = (badge_link_enabled & (~pin_mask)) | (pin_mask & (hw_state ? 255 : 0));
     return spio_badge_link_get_active(pin_mask);
 }
 #endif
