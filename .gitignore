@@ -29,3 +29,6 @@ tags
 
 sdkconfig.old
 sdkconfig
+
+# Python
+.venv
