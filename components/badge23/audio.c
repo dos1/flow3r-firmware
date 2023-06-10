@@ -60,7 +60,7 @@ float audio_speaker_get_maximum_volume_dB(){ return speaker_maximum_volume_user_
 uint8_t audio_headphones_get_mute(){ return headphones_mute ? 1 : 0; }
 uint8_t audio_speaker_get_mute(){ return speaker_mute ? 1 : 0; }
 
-#if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
+#if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P6)
 
 static uint8_t max98091_i2c_read(const uint8_t reg)
 {

@@ -18,6 +18,7 @@ def action_extensions(base_actions, project_path=os.getcwd()):
         'p3': ['proto3'],
         'p4': ['proto4'],
         'p5': ['adi-less'],
+        'p6': ['proto6'],
     }
 
     def generation_callback(ctx, global_args, tasks):

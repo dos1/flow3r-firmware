@@ -20,7 +20,7 @@
 
 #define AFE_INCR_CAP 1000
 
-#if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
+#if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P6)
 static const uint8_t top_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4};
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 7, 7, 9, 9, 8, 8, 8};
@@ -47,6 +47,11 @@ static const uint8_t bot_stage_config[] = {0,1,2,3,4,5,6,7,8,9,10,11};
 #endif
 
 #if defined(CONFIG_BADGE23_HW_GEN_P4)
+#define AD7147_ADDR_TOP            0b101100
+#define AD7147_ADDR_BOT            0b101101
+static const uint8_t top_segment_map[] = {1,3,2,2,3,1,1,3,2,1,3,2}; //PETAL_PAD_*
+static const uint8_t bot_segment_map[] = {3,0,3,0,0,0,3,0,3,1,2,3}; //PETAL_PAD_*
+#elif defined(CONFIG_BADGE23_HW_GEN_P6)
 #define AD7147_ADDR_TOP            0b101100
 #define AD7147_ADDR_BOT            0b101101
 static const uint8_t top_segment_map[] = {1,3,2,2,3,1,1,3,2,1,3,2}; //PETAL_PAD_*
