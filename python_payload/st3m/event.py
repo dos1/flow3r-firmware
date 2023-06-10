@@ -248,7 +248,7 @@ class Sequence():
         if self.is_running: self.stop()
         stepsize_ms = int(60*1000/self.bpm)
         for i in range(self.steps):
-            log.debug("adding sequence event ", i)
+            log.debug(f"adding sequence event {i}")
             self.events.append(EventTimed(stepsize_ms*i,name="seq{}".format(i),action=self.action, data={'step':i}, group_id=self.group_id,enabled=True))
         if self.loop:
             self.repeat_event=EventTimed(stepsize_ms*self.steps,name="loop", group_id=self.group_id, enabled=True, action=on_restart, data={"object":self})

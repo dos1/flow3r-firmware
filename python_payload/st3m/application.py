@@ -106,6 +106,10 @@ class Application():
         
         if self._events_foreground:
             self._set_events(self._events_foreground,True)
+        
+        self.ui.ctx.rgb(*ui.BLACK).rectangle(-120,-120,240,240).fill()
+        self.icon.draw()
+        
         self.on_foreground()
         
         self.engine.foreground_app = self
@@ -141,8 +145,6 @@ class Application():
         log.info(f"app {self.title}: on_kill()")
 
     def on_draw(self):
-        #self.ui.ctx.rgb(*ui.RED).rectangle(-120,-120,120,120).fill()
-        #self.icon.draw()
         log.debug(f"app {self.title}: on_draw()")
 
     def main_foreground(self):

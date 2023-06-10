@@ -1,4 +1,4 @@
-from st3m import logging
+from st3m import logging,menu
 log = logging.Log(__name__,level=logging.INFO)
 log.info("import")
 
@@ -16,6 +16,8 @@ class Control():
             self._value = default
         self.ui = ui.IconValue(label=self.name,size=60, value=self.get_value())
         self.ui.get_value = self.get_normal_value
+
+        self.menu = menu.MenuControl(self)
 
     def draw(self):
         self.ui.value = self.get_value()
@@ -41,8 +43,8 @@ class Control():
         self._value = self.on_mod(delta)
 
     
-    def enter(self):
-        pass
+    def enter_menu(self):
+        menu.submenu_push(self.menu)
     
     def scroll(self,delta):
         pass
@@ -115,13 +117,18 @@ class ControlKnob(ControlFloat):
 class ControlSlide(ControlFloat):
     def __init__(self, do_reset=True, *args, **kwargs):
         self.do_reset=do_reset
+        self._saved_value = None
         super().__init__(*args, **kwargs)
 
     def touch_1d(self,x,z):
         if z>0: #Inital Contact
             self._saved_value = self.get_value()
 
+        if self._saved_value is None: return
+
+
         if z==0: #Continous contact
+            
             v = (self.max-self.min)*x+self.min
             self.set_value(v)
             #print("c",x,v,self.max,self.min)
@@ -129,6 +136,7 @@ class ControlSlide(ControlFloat):
         if z<0: #Release
             if self.do_reset:
                 self.set_value(self._saved_value)
+            self._saved_value = None
         self.draw()
 
 class ControlString(Control):

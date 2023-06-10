@@ -47,10 +47,34 @@ class Menu():
         log.info(f"starting menu {self.name}")
         set_active_menu(self)
 
-    def scroll(self, n=0):
-        self.__index= (self.__index+n)%len(self.items)
-        return self.items[self.__index]
+    #def scroll(self, n=0):
+    #    self.__index= (self.__index+n)%len(self.items)
+    #    return self.items[self.__index]
     
+    def scroll_app(self, delta):
+        hovered=self.get_hovered_item()
+        if hasattr(hovered, "scroll"):
+            hovered.scroll(delta)
+
+    def scroll_menu(self, delta):
+        if self.angle_step<0.5:
+            self.angle_step+=0.025
+        self.rotate_steps(delta)
+
+    def enter_menu(self,data={}):
+        hovered=self.get_hovered_item()
+        if hasattr(hovered, "enter_menu"):
+            hovered.enter_menu()
+        else:
+            hovered.enter()
+    
+    def enter_app(self,data={}):
+        hovered=self.get_hovered_item()
+        if hasattr(hovered, "enter_app"):
+            hovered.enter_app()
+        else:
+            hovered.enter()
+
     def rotate_by(self,angle):
         self.rotate_to(self.angle+angle)
     
@@ -110,7 +134,25 @@ class Menu():
         self.ui2.draw()
         self.ui.draw()
 
-    
+class MenuControl(Menu):
+    def __init__(self,control,*args,**kwargs):
+        super().__init__(*args,**kwargs)
+        self.control = control
+        self.ui.element_center = self.control.ui
+
+    def scroll_app(self, delta):
+        hovered=self.get_hovered_item()
+        if hasattr(hovered, "scroll"):
+            hovered.scroll(delta)
+        else:
+            self.control.scroll(delta)
+
+    def enter_app(self,data={}):
+        hovered=self.get_hovered_item()
+        if hasattr(hovered, "enter_app"):
+            hovered.enter_app()
+        else:
+            self.control.enter()
 
 class MenuItem():
     def __init__(self,name="item",action=None):
@@ -133,9 +175,7 @@ class MenuItemApp(MenuItem):
     
     def enter(self,data={}):
         if self.target:
-            global menu_stack
-            menu_stack.append(get_active_menu())
-            set_active_menu(None)
+            submenu_push(None)
             self.target.run()
 
 class MenuItemSubmenu(MenuItem):
@@ -144,18 +184,17 @@ class MenuItemSubmenu(MenuItem):
         self.ui = submenu.icon
         self.target = submenu
     
-    def enter(self,data={}):
-        menu_stack.append(get_active_menu())
-        log.info(f"enter submenu {self.target.name} (Stack: {len(menu_stack)})")
-
-        set_active_menu(self.target)
+    def enter_menu(self,data={}):
+        log.info("item submenu enter")
+        submenu_push(self.target)
         
 class MenuItemBack(MenuItem):
     def __init__(self):
         super().__init__(name="")
         self.ui = ui.IconLabel(label="back")
     
-    def enter(self,data={}):
+    def enter_menu(self,data={}):
+        log.info (f"item back selected")
         menu_back()
 
 class MenuItemControl(MenuItem):
@@ -164,9 +203,13 @@ class MenuItemControl(MenuItem):
         self.control=control
         self.ui=control.ui
 
-    def enter(self):
-        log.info(f"item {self.name} (MenuItemControl): enter")
+    def enter_menu(self):
+        log.info(f"item {self.name} (MenuItemControl): enter_menu->enter")
         self.control.enter()
+
+    def enter_app(self):
+        log.info(f"item {self.name} (MenuItemControl): enter->enter menu")
+        self.control.enter_menu()
 
     def scroll(self,delta):
         self.control.scroll(delta)
@@ -180,17 +223,10 @@ def on_scroll(d):
         return
 
     if d["index"]==0:#right button
-        hovered=active_menu.get_hovered_item()
-        if hasattr(hovered, "scroll"):
-            hovered.scroll(d["value"])
+        active_menu.scroll_app(d["value"])
 
     else: #index=1, #left button
-        if active_menu.angle_step<0.5:
-            active_menu.angle_step+=0.025
-        if d["value"] == -1:
-            active_menu.rotate_steps(-1)
-        elif d["value"] == 1:
-            active_menu.rotate_steps(1)
+        active_menu.scroll_menu(d["value"])
 
 
 
@@ -243,14 +279,18 @@ def on_touch_1d(d):
 def on_enter(d):
     active_menu = get_active_menu()
     
-    if active_menu is None:
-        log.info("menu enter without active menu, opening last menu")
-        menu_back()
-        return
-
+    #if active_menu is None:
+    #    log.info("menu enter without active menu, opening last menu")
+    #    menu_back()
+    #    return
     if active_menu:
-        log.info("menu enter, opening item")
-        active_menu.get_hovered_item().enter()
+        if d["index"]==0: #right button
+            log.info("menu enter_app")
+            active_menu.enter_app()
+            
+        else:
+            log.info("menu enter_menu")
+            active_menu.enter_menu()
     
     
 event.Event(name="menu rotation button",group_id="menu",
@@ -258,10 +298,10 @@ event.Event(name="menu rotation button",group_id="menu",
     action=on_scroll, enabled=True
 )
 
-event.Event(name="menu rotation captouch",group_id="menu",
-    condition=lambda e: e["type"] =="captouch" and not e["change"] and abs(e["value"])==1 and e["index"]==2,
-    action=on_scroll_captouch, enabled=True
-)
+#event.Event(name="menu rotation captouch",group_id="menu",
+#    condition=lambda e: e["type"] =="captouch" and not e["change"] and abs(e["value"])==1 and e["index"]==2,
+#    action=on_scroll_captouch, enabled=True
+#)
 
 
 event.Event(name="menu rotation button release",group_id="menu",
@@ -291,4 +331,13 @@ def menu_back():
     log.info(f"back to previous menu {previous.name} (Stack: {len(menu_stack)})")
 
     set_active_menu(previous)
-    
+
+def submenu_push(new_menu):
+    active = get_active_menu()
+    menu_stack.append(active)
+    active.rotate_to(0)
+    if new_menu:
+        log.info(f"enter submenu {new_menu.name} from {active.name} (Stack: {len(menu_stack)})")
+    else:
+        log.info(f"leaving menu from {active.name}")
+    set_active_menu(new_menu)
