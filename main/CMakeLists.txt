@@ -137,6 +137,7 @@ set(IDF_COMPONENTS
     ulp
     vfs
     xtensa
+    tinyusb
 )
 
 set(MICROPY_FROZEN_MANIFEST ${PROJECT_DIR}/manifest.py)
