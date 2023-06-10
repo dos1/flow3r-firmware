@@ -125,6 +125,18 @@ STATIC mp_obj_t machine_sdcard_make_new(const mp_obj_type_t *type, size_t n_args
         ARG_sck,
         ARG_cs,
         ARG_freq,
+        #if CONFIG_IDF_TARGET_ESP32S3
+        ARG_clk,
+        ARG_cmd,
+        ARG_d0,
+        ARG_d1,
+        ARG_d2,
+        ARG_d3,
+        ARG_d4,
+        ARG_d5,
+        ARG_d6,
+        ARG_d7,
+        #endif
     };
     STATIC const mp_arg_t allowed_args[] = {
         { MP_QSTR_slot,     MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 1} },
@@ -138,6 +150,18 @@ STATIC mp_obj_t machine_sdcard_make_new(const mp_obj_type_t *type, size_t n_args
         { MP_QSTR_cs,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
         // freq is valid for both SPI and SDMMC interfaces
         { MP_QSTR_freq,     MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 20000000} },
+        #if CONFIG_IDF_TARGET_ESP32S3
+        { MP_QSTR_clk,      MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_cmd,      MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_d0,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_d1,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_d2,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_d3,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_d4,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_d5,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_d6,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        { MP_QSTR_d7,       MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = mp_const_none} },
+        #endif
     };
     mp_arg_val_t arg_vals[MP_ARRAY_SIZE(allowed_args)];
     mp_map_t kw_args;
@@ -157,6 +181,17 @@ STATIC mp_obj_t machine_sdcard_make_new(const mp_obj_type_t *type, size_t n_args
     DEBUG_printf("  miso=%p, mosi=%p, sck=%p, cs=%p",
         arg_vals[ARG_miso].u_obj, arg_vals[ARG_mosi].u_obj,
         arg_vals[ARG_sck].u_obj, arg_vals[ARG_cs].u_obj);
+
+    #if CONFIG_IDF_TARGET_ESP32S3
+    DEBUG_printf("  clk=%p, cmd=%p",
+        arg_vals[ARG_clk].u_obj, arg_vals[ARG_cmd].u_obj0);
+
+    DEBUG_printf("  d0=%p, d1=%p, d2=%p, d3=%p, d4=%p, d5=%p, d6=%p, d7=%p",
+        arg_vals[ARG_d0].u_obj, arg_vals[ARG_d1].u_obj,
+        arg_vals[ARG_d2].u_obj, arg_vals[ARG_d3].u_obj,
+        arg_vals[ARG_d4].u_obj, arg_vals[ARG_d5].u_obj,
+        arg_vals[ARG_d6].u_obj, arg_vals[ARG_d7].u_obj);
+    #endif
 
     int slot_num = arg_vals[ARG_slot].u_int;
     if (slot_num < 0 || slot_num > 3) {
@@ -253,6 +288,18 @@ STATIC mp_obj_t machine_sdcard_make_new(const mp_obj_type_t *type, size_t n_args
 
         SET_CONFIG_PIN(slot_config, gpio_cd, ARG_cd);
         SET_CONFIG_PIN(slot_config, gpio_wp, ARG_wp);
+        #if CONFIG_IDF_TARGET_ESP32S3
+        SET_CONFIG_PIN(slot_config, clk, ARG_clk);
+        SET_CONFIG_PIN(slot_config, cmd, ARG_cmd);
+        SET_CONFIG_PIN(slot_config, d0, ARG_d0);
+        SET_CONFIG_PIN(slot_config, d1, ARG_d1);
+        SET_CONFIG_PIN(slot_config, d2, ARG_d2);
+        SET_CONFIG_PIN(slot_config, d3, ARG_d3);
+        SET_CONFIG_PIN(slot_config, d4, ARG_d4);
+        SET_CONFIG_PIN(slot_config, d5, ARG_d5);
+        SET_CONFIG_PIN(slot_config, d6, ARG_d6);
+        SET_CONFIG_PIN(slot_config, d7, ARG_d7);
+        #endif
 
         int width = arg_vals[ARG_width].u_int;
         if (width == 1 || width == 4 || (width == 8 && slot_num == 0)) {
