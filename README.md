@@ -248,3 +248,19 @@ Then write and read from each side:
 uart.write("hiiii")
 uart.read(5)
 ```
+
+### Documentation
+
+To build sphinx docs:
+
+```
+cd docs
+make html
+firefox _build/html/index.html
+```
+
+To continuously build on change:
+
+```
+watchexec make html
+```
