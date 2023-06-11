@@ -230,10 +230,10 @@ def on_scroll(d):
         return
 
     if d["index"] == 0:  # right button
-        active_menu.scroll_app(d["value"])
+        active_menu.scroll_app(d["value"] * 10.0 * d["delta"])
 
     else:  # index=1, #left button
-        active_menu.scroll_menu(d["value"])
+        active_menu.scroll_menu(d["value"] * 10.0 * d["delta"])
 
 
 def on_scroll_captouch(d):

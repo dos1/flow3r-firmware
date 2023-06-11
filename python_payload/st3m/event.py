@@ -73,7 +73,7 @@ class Engine:
                 self.next_timed.trigger({"ticks_ms": now, "ticks_delay": -diff})
                 self.next_timed = None
 
-    def _handle_input(self):
+    def _handle_input(self, delta):
         input_state = []
 
         # buttons
@@ -108,6 +108,7 @@ class Engine:
 
             # update for all
             entry["ticks_ms"] = time.ticks_ms()
+            entry["delta"] = delta
 
             if entry["value"] != last_entry["value"]:
                 # update only when value changed
@@ -132,16 +133,16 @@ class Engine:
         if self.foreground_app:
             self.foreground_app.tick()
 
-    def _handle_draw(self):
+    def _handle_draw(self, ctx):
         if self.foreground_app:
-            self.foreground_app.draw()
+            self.foreground_app.draw(ctx)
         if self.active_menu:
-            self.active_menu.draw()
+            self.active_menu.draw(ctx)
         hardware.display_update()
 
-    def _eventloop_single(self):
+    def _eventloop_single(self, delta):
         self._handle_timed()
-        self._handle_input()
+        self._handle_input(delta)
         self._handle_userloop()
 
     def eventloop(self):
@@ -150,15 +151,21 @@ class Engine:
             log.warning("eventloop already running, doing nothing")
             return
         self.is_running = True
+        ctx = hardware.get_ctx()
         last_draw = 0
+        last_eventloop = None
         while self.is_running:
-            self._eventloop_single()
             now = time.ticks_ms()
+            if last_eventloop is not None:
+                delta = now - last_eventloop
+                self._eventloop_single(delta / 1000.0)
+            last_eventloop = now
+
             diff = time.ticks_diff(now, last_draw)
             # print("diff:",diff)
             if diff > 10:
                 # print("eventloop draw")
-                self._handle_draw()
+                self._handle_draw(ctx)
                 last_draw = time.ticks_ms()
 
             # self.deadline = time.ticks_add(time.ticks_ms(),ms)
