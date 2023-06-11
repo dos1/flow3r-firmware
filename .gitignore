@@ -4,6 +4,9 @@ sdkconfig
 dependencies.lock
 build
 
+# micropython
+__pycache__
+
 # editor crud
 .vscode
 *swp
