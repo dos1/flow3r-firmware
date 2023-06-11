@@ -1,7 +1,13 @@
 #pragma once
 #include <stdint.h>
+#include <stdbool.h>
 
-#define SAMPLE_RATE 16000
+#define SAMPLE_RATE 48000
+
+#define AUDIO_INPUT_SOURCE_NONE 0
+#define AUDIO_INPUT_SOURCE_LINE_IN 1
+#define AUDIO_INPUT_SOURCE_HEADSET_MIC 2
+#define AUDIO_INPUT_SOURCE_ONBOARD_MIC 3
 
 /* Initializes I2S bus, the audio task and required data structures.
  * Expects an initialized I2C bus, will fail ungracefully otherwise (TODO).
@@ -118,6 +124,41 @@ float audio_get_volume_relative();
 /* (**) if audio_headphones_are_connected returns 1 the "headphone" variant
  *      is chosen, else the "speaker" variant is chosen.
  */
+
+/* These route whatever is on the line in port directly to the headphones or
+ * speaker respectively (enable = 1), or don't (enable = 0). Is affected by mute
+ * and coarse hardware volume settings, however software fine volume is not applied.
+ *
+ * Good for testing, might deprecate later, idk~
+ */
+void audio_headphones_line_in_set_hardware_thru(bool enable);
+void audio_speaker_line_in_set_hardware_thru(bool enable);
+void audio_line_in_set_hardware_thru(bool enable);
+
+/* The codec can transmit audio data from different sources. This function enables
+ * one or no source as provided by the AUDIO_INPUT_SOURCE_* constants.
+ *
+ * Note: The onboard digital mic turns on an LED on the top board if it receives
+ * a clock signal which is considered a good proxy for its capability of reading data.
+ *
+ * TODO: check if sources are available
+ */
+void audio_input_set_source(uint8_t source);
+
+/* Returns the currently selected input source.
+ */
+uint8_t audio_input_get_source();
+
+/* Hardware preamp gain
+ */
+uint8_t audio_headset_set_gain_dB(uint8_t gain_dB);
+uint8_t audio_headset_get_gain_dB();
+
+float audio_input_thru_set_volume_dB(float vol_dB);
+float audio_input_thru_get_volume_dB();
+void audio_input_thru_set_mute(bool mute);
+bool audio_input_thru_get_mute();
+
 
 /*
 HEADPHONE PORT POLICY

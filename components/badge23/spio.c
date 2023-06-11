@@ -52,10 +52,16 @@
 #define LEFT_BUTTON_LEFT (7+8)
 #define RIGHT_BUTTON_RIGHT (5+8)
 
+#define LINE_IN_JACKSENSE (6+8)
+#define CHARGER_STATE (2+8)
+
 #endif
 
 static int8_t leftbutton = 0;
 static int8_t rightbutton = 0;
+
+static bool line_in_jacksense = 1;
+static bool charger_state;
 
 static bool menu_button_left = 0;
 
@@ -295,6 +301,9 @@ void update_button_state(){
     uint8_t rm = gpio_get_level(RIGHT_BUTTON_MID);
     uint8_t lm = gpio_get_level(LEFT_BUTTON_MID);
 
+    line_in_jacksense = max7321s_get_pin(LINE_IN_JACKSENSE);
+    charger_state = max7321s_get_pin(CHARGER_STATE);
+
     int8_t new_rightbutton = process_button_state(rr, rm, rl);
     int8_t new_leftbutton = process_button_state(lr, lm, ll);
     if(new_rightbutton != rightbutton){
@@ -325,6 +334,19 @@ int8_t get_button_state(bool left){
     return rightbutton;
 }
 
+bool spio_charger_state_get(){
+#ifdef ALWAYS_UPDATE_BUTTON
+    update_button_state();
+#endif
+    return charger_state;
+}
+
+bool spio_line_in_jacksense_get(){
+#ifdef ALWAYS_UPDATE_BUTTON
+    update_button_state();
+#endif
+    return line_in_jacksense;
+}
 
 void spio_menu_button_set_left(bool left){
     menu_button_left = 1;
