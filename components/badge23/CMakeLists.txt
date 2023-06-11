@@ -13,5 +13,6 @@ idf_component_register(
         include
     REQUIRES
         flow3r_bsp
+        st3m
         espressif__led_strip
 )
