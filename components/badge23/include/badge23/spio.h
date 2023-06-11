@@ -16,8 +16,13 @@
 
 #define BADGE_LINK_PIN_INDEX_LINE_IN_TIP 4
 #define BADGE_LINK_PIN_INDEX_LINE_IN_RING 5
+#if defined(CONFIG_BADGE23_HW_GEN_P6)
+#define BADGE_LINK_PIN_INDEX_LINE_OUT_TIP 7
+#define BADGE_LINK_PIN_INDEX_LINE_OUT_RING 6
+#else
 #define BADGE_LINK_PIN_INDEX_LINE_OUT_TIP 6
 #define BADGE_LINK_PIN_INDEX_LINE_OUT_RING 7
+#endif
 
 /* Initializes GPIO modes, prefills structs, etc. Call before using library.
  */
