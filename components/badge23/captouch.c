@@ -2,7 +2,6 @@
 //#include <string.h>
 #include "esp_log.h"
 #include "driver/i2c.h"
-#include "badge23_hwconfig.h"
 #include <stdint.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/atomic.h>

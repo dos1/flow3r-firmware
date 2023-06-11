@@ -12,7 +12,6 @@ idf_component_register(
     INCLUDE_DIRS
         include
     REQUIRES
-        badge23_hwconfig
         flow3r_bsp
         espressif__led_strip
 )

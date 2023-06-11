@@ -104,7 +104,7 @@ set(MICROPY_SOURCE_QSTR
 set(IDF_COMPONENTS
     app_update
     badge23
-    badge23_hwconfig
+    flow3r_bsp
     bootloader_support
     bt
     driver

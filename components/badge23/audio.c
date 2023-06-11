@@ -2,7 +2,6 @@
 #include "badge23/synth.h" 
 #include "badge23/scope.h"
 #include "badge23/lock.h"
-#include "badge23_hwconfig.h"
 
 #include "driver/i2s.h"
 #include "driver/i2c.h"

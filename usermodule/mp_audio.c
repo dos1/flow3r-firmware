@@ -12,7 +12,6 @@
 #include "py/runtime.h"
 
 #include "badge23/audio.h"
-#include "badge23_hwconfig.h"
 
 // documentation: these are all super thin wrappers for the c api in components/badge23/include/badge23/audio.h
 

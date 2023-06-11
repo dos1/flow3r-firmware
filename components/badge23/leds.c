@@ -7,7 +7,6 @@
 #include "esp_system.h"
 #include "badge23/leds.h"
 #include "badge23/lock.h"
-#include "badge23_hwconfig.h"
 
 static uint8_t leds_brightness = 69;;
 static uint8_t leds_slew_rate = 255;

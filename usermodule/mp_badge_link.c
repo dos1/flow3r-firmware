@@ -17,7 +17,6 @@
 #include "badge23/display.h"
 #include "badge23/spio.h"
 #include "badge23/espan.h"
-#include "badge23_hwconfig.h"
 
 mp_obj_t mp_ctx_from_ctx(Ctx *ctx);
 

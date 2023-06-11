@@ -2,6 +2,7 @@ idf_component_register(
     SRCS
 		flow3r_bsp_display.c
 		flow3r_bsp_gc9a01.c
+		flow3r_bsp_hwconfig.c
     INCLUDE_DIRS
 		.
 )

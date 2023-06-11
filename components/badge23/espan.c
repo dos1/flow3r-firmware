@@ -3,8 +3,9 @@
 #include "badge23/leds.h"
 #include "badge23/display.h"
 #include "badge23/spio.h"
-#include "badge23_hwconfig.h"
 #include "badge23/lock.h"
+
+#include "flow3r_bsp.h"
 
 #include "esp_log.h"
 #include "driver/i2c.h"
@@ -97,7 +98,7 @@ void os_app_main(void)
     display_init();
 
     locks_init();
-    ESP_LOGI(TAG, "Starting on %s...", badge23_hw_name);
+    ESP_LOGI(TAG, "Starting on %s...", flow3r_bsp_hw_name);
     ESP_ERROR_CHECK(i2c_master_init());
     ESP_LOGI(TAG, "I2C initialized successfully");
 

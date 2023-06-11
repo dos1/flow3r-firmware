@@ -1,6 +1,5 @@
 //special purpose input outputs
 #include "driver/gpio.h"
-#include "badge23_hwconfig.h"
 #include "stdint.h"
 #include "badge23/spio.h"
 #include "badge23/lock.h"

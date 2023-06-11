@@ -13,7 +13,6 @@
 
 #include "badge23/leds.h"
 #include "badge23/espan.h"
-#include "badge23_hwconfig.h"
 
 STATIC mp_obj_t mp_leds_set_brightness(mp_obj_t b) {
     leds_set_brightness(mp_obj_get_int(b));

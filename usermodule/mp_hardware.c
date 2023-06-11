@@ -16,7 +16,8 @@
 #include "badge23/display.h"
 #include "badge23/spio.h"
 #include "badge23/espan.h"
-#include "badge23_hwconfig.h"
+
+#include "flow3r_bsp.h"
 
 mp_obj_t mp_ctx_from_ctx(Ctx *ctx);
 
@@ -166,7 +167,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_dump_all_sources_obj, 0, 2, mp_dum
 
 
 STATIC mp_obj_t mp_version(void) {
-    mp_obj_t str = mp_obj_new_str(badge23_hw_name, strlen(badge23_hw_name));
+    mp_obj_t str = mp_obj_new_str(flow3r_bsp_hw_name, strlen(flow3r_bsp_hw_name));
     return str;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_version_obj, mp_version);
