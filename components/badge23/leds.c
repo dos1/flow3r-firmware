@@ -251,12 +251,15 @@ void leds_update_hardware(){
         c[0] = led_target[i].R * leds_brightness/255;
         c[1] = led_target[i].G * leds_brightness/255;
         c[2] = led_target[i].B * leds_brightness/255;
+        c[0] = gamma_red[c[0]];
+        c[1] = gamma_green[c[1]];
+        c[2] = gamma_blue[c[2]];
         c[0] = led_get_slew(led_hardware_value[i].R, c[0], leds_slew_rate);
         c[1] = led_get_slew(led_hardware_value[i].G, c[1], leds_slew_rate);
         c[2] = led_get_slew(led_hardware_value[i].B, c[2], leds_slew_rate);
-        led_hardware_value[i].R = gamma_red[c[0]];
-        led_hardware_value[i].G = gamma_green[c[1]];
-        led_hardware_value[i].B = gamma_blue[c[2]];
+        led_hardware_value[i].R = c[0];
+        led_hardware_value[i].G = c[1];
+        led_hardware_value[i].B = c[2];
         int8_t index = i + 3 % 40;
         set_single_led(index, c);
     }
