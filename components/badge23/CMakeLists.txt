@@ -13,6 +13,6 @@ idf_component_register(
         include
     REQUIRES
         badge23_hwconfig
-        gc9a01
+        flow3r_bsp
         espressif__led_strip
 )

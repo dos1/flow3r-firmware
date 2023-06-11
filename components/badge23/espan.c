@@ -93,6 +93,9 @@ void locks_init(){
 
 void os_app_main(void)
 {
+    // Initialize display first as that gives us a nice splash screen.
+    display_init();
+
     locks_init();
     ESP_LOGI(TAG, "Starting on %s...", badge23_hw_name);
     ESP_ERROR_CHECK(i2c_master_init());
@@ -106,7 +109,6 @@ void os_app_main(void)
 
     captouch_force_calibration();
 
-    display_init();
 
     i2c_queue = xQueueCreate(1,1);
 

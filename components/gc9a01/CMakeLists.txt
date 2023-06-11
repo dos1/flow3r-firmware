@@ -1,1 +1,0 @@
-idf_component_register(SRCS "gc9a01.c" REQUIRES driver badge23_hwconfig INCLUDE_DIRS ".")
