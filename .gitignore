@@ -1,2 +1,9 @@
+# esp-idf
 sdkconfig.old
 sdkconfig
+dependencies.lock
+build
+
+# editor crud
+.vscode
+*swp
