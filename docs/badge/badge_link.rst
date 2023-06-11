@@ -15,5 +15,5 @@ isolation, but there are current limiting resistors.
 
 The input protection can handle between +5v and -3v.
 
-For the micropython badge link API, see the :ref:`badge_link<py_badge_link>` API docs
+For the micropython badge link API, see the badge_link API docs
 
