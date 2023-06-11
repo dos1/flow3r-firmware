@@ -109,7 +109,7 @@ class Menu:
         topness = 1 - (dist / math.pi)
         return topness
 
-    def draw(self):
+    def draw(self, ctx):
         # TODO this is more like a hack...
         # if not self==active_menu:
         #    active_menu.draw()
@@ -129,10 +129,10 @@ class Menu:
 
         # black background
         # TODO transparent menu with compositing
-        ui.the_ctx.rectangle(-120, -120, 240, 240).rgb(*ui.BLACK).fill()
+        ctx.rectangle(-120, -120, 240, 240).rgb(*ui.BLACK).fill()
 
-        self.ui2.draw()
-        self.ui.draw()
+        self.ui2.draw(ctx)
+        self.ui.draw(ctx)
 
 
 class MenuControl(Menu):

@@ -37,5 +37,3 @@ except ModuleNotFoundError:
 
 hardware = _hardware
 audio = _audio
-
-ctx = hardware.get_ctx()

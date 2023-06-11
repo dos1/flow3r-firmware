@@ -87,9 +87,9 @@ class Application:
         self._set_events(self._events_forground, False)
         self.state = STATE_OFF
 
-    def draw(self):
-        self.ui.draw()
-        self.on_draw()
+    def draw(self, ctx):
+        self.ui.draw(ctx)
+        self.on_draw(ctx)
 
     def tick(self):
         self.main_foreground()
@@ -116,8 +116,9 @@ class Application:
         if self._events_foreground:
             self._set_events(self._events_foreground, True)
 
-        self.ui.ctx.rgb(*ui.BLACK).rectangle(-120, -120, 240, 240).fill()
-        self.icon.draw()
+        # TODO(q3k): make this pending
+        # self.ui.ctx.rgb(*ui.BLACK).rectangle(-120,-120,240,240).fill()
+        # self.icon.draw()
 
         self.on_foreground()
 
@@ -153,7 +154,7 @@ class Application:
     def on_kill(self):
         log.info(f"app {self.title}: on_kill()")
 
-    def on_draw(self):
+    def on_draw(self, ctx):
         log.debug(f"app {self.title}: on_draw()")
 
     def main_foreground(self):

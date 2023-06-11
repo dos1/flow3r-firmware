@@ -3,7 +3,6 @@ from st3m import logging
 log = logging.Log(__name__, level=logging.INFO)
 log.info("import")
 
-from st3m.system import ctx
 import random
 import math
 import time
@@ -23,8 +22,6 @@ WHITE = (1, 1, 1)
 GREY = (0.5, 0.5, 0.5)
 GO_GREEN = (63 / 255, 255 / 255, 33 / 53)
 PUSH_RED = (251 / 255, 72 / 255, 196 / 255)
-
-the_ctx = ctx
 
 
 # Utility functions
@@ -46,16 +43,15 @@ class UIElement:
     def __init__(self, origin=(0, 0)):
         self.children = []
         self.origin = origin
-        self.ctx = the_ctx
 
-    def draw(self, offset=(0, 0)):
+    def draw(self, ctx, offset=(0, 0)):
         pos = (self.origin[0] + offset[0], self.origin[1] + offset[1])
 
-        self._draw(pos)
+        self._draw(ctx, pos)
         for child in self.children:
-            child.draw(pos)
+            child.draw(ctx, pos)
 
-    def _draw(self, pos):
+    def _draw(self, ctx, pos):
         pass
 
     def add(self, child):
@@ -63,9 +59,8 @@ class UIElement:
 
 
 class Viewport(UIElement):
-    def _draw(self, pos):
+    def _draw(self, ctx, pos):
         pass
-        # self.ctx.rgb(0.3,0.3,0.3).rectangle(-WIDTH/2,-HEIGHT/2,WIDTH,HEIGHT).fill()
 
 
 class Circle(UIElement):
@@ -78,9 +73,9 @@ class Circle(UIElement):
         self.arc_to = arc_to
         super().__init__()
 
-    def _draw(self, pos):
+    def _draw(self, ctx, pos):
         (x, y) = pos
-        self.ctx.move_to(x, y).rgb(*self.color).arc(
+        ctx.move_to(x, y).rgb(*self.color).arc(
             x, y, self.radius, self.arc_from, self.arc_to, True
         ).fill()
 
@@ -90,11 +85,11 @@ class Text(UIElement):
         self.s = s
         super().__init__()
 
-    def _draw(self, pos):
-        self.ctx.text_align = self.ctx.CENTER
-        self.ctx.text_baseline = self.ctx.MIDDLE
-        self.ctx.font_size = 30
-        self.ctx.rgb(1, 1, 1).move_to(pos[0], pos[1]).text(self.s)
+    def _draw(self, ctx, pos):
+        ctx.text_align = ctx.CENTER
+        ctx.text_baseline = ctx.MIDDLE
+        ctx.font_size = 30
+        ctx.rgb(1, 1, 1).move_to(pos[0], pos[1]).text(self.s)
 
 
 class Icon(UIElement):
@@ -106,57 +101,57 @@ class Icon(UIElement):
         self.has_highlight = False
         super().__init__()
 
-    def _draw(self, pos):
-        self.ctx.text_align = self.ctx.CENTER
-        self.ctx.text_baseline = self.ctx.MIDDLE
-        self.ctx.font_size = self.size / 3
+    def _draw(self, ctx, pos):
+        ctx.text_align = ctx.CENTER
+        ctx.text_baseline = ctx.MIDDLE
+        ctx.font_size = self.size / 3
 
         (x, y) = pos
         hs = 5
 
         if self.has_highlight:
-            self.ctx.rgb(*GO_GREEN).arc(
+            ctx.rgb(*GO_GREEN).arc(
                 x, y, self.size / 2 + hs, -math.pi, math.pi, True
             ).fill()
-        self.ctx.move_to(x, y).rgb(*self.bg).arc(
+        ctx.move_to(x, y).rgb(*self.bg).arc(
             x, y, self.size / 2, -math.pi, math.pi, True
         ).fill()
 
         y += self.size / 3
-        width = max(self.size - 10, self.ctx.text_width(self.label)) + 10
+        width = max(self.size - 10, ctx.text_width(self.label)) + 10
         height = self.size / 3 + 8
         if self.has_highlight:
-            self.ctx.rgb(*BLACK).move_to(x, y - height / 2).round_rectangle(
+            ctx.rgb(*BLACK).move_to(x, y - height / 2).round_rectangle(
                 x - width / 2, y - height / 2, width, height, width // 2
             ).fill()
-            self.ctx.rgb(*GO_GREEN).move_to(x, y).text(self.label)
+            ctx.rgb(*GO_GREEN).move_to(x, y).text(self.label)
         else:
-            self.ctx.rgb(*PUSH_RED).move_to(x, y - height / 2).round_rectangle(
+            ctx.rgb(*PUSH_RED).move_to(x, y - height / 2).round_rectangle(
                 x - width / 2, y - height / 2, width, height, width // 2
             ).fill()
-            self.ctx.rgb(*BLACK).move_to(x, y).text(self.label)
+            ctx.rgb(*BLACK).move_to(x, y).text(self.label)
 
 
 class IconLabel(Icon):
-    def _draw(self, pos):
-        self.ctx.text_align = self.ctx.CENTER
-        self.ctx.text_baseline = self.ctx.MIDDLE
-        self.ctx.font_size = self.size / 2
+    def _draw(self, ctx, pos):
+        ctx.text_align = ctx.CENTER
+        ctx.text_baseline = ctx.MIDDLE
+        ctx.font_size = self.size / 2
 
         (x, y) = pos
         hs = 5
-        width = self.ctx.text_width(self.label) + 10
+        width = ctx.text_width(self.label) + 10
         height = self.size / 2
         if self.has_highlight:
-            self.ctx.rgb(*GO_GREEN).move_to(x, y - height / 2).round_rectangle(
+            ctx.rgb(*GO_GREEN).move_to(x, y - height / 2).round_rectangle(
                 x - width / 2, y - height / 2, width, height, width // 2
             ).fill()
-            self.ctx.rgb(*BLACK).move_to(x, y).text(self.label)
+            ctx.rgb(*BLACK).move_to(x, y).text(self.label)
         else:
-            self.ctx.rgb(*PUSH_RED).move_to(x, y - height / 2).round_rectangle(
+            ctx.rgb(*PUSH_RED).move_to(x, y - height / 2).round_rectangle(
                 x - width / 2, y - height / 2, width, height, width // 2
             ).fill()
-            self.ctx.rgb(*BLACK).move_to(x, y).text(self.label)
+            ctx.rgb(*BLACK).move_to(x, y).text(self.label)
 
 
 class IconFlower(Icon):
@@ -169,10 +164,10 @@ class IconFlower(Icon):
         self.size_offset = random.randint(0, 20)
         # self.bg=PUSH_RED
 
-    def _draw(self, pos):
-        self.ctx.text_align = self.ctx.CENTER
-        self.ctx.text_baseline = self.ctx.MIDDLE
-        self.ctx.font_size = self.size / 3
+    def _draw(self, ctx, pos):
+        ctx.text_align = ctx.CENTER
+        ctx.text_baseline = ctx.MIDDLE
+        ctx.font_size = self.size / 3
 
         (x, y) = pos
         petal_size = 0
@@ -187,7 +182,7 @@ class IconFlower(Icon):
             (x_, y_) = xy_from_polar(r, phi)
             size_rnd = random.randint(-1, 1)
             if self.has_highlight:
-                self.ctx.move_to(x + x_, y + y_).rgb(*GO_GREEN).arc(
+                ctx.move_to(x + x_, y + y_).rgb(*GO_GREEN).arc(
                     x + x_,
                     y + y_,
                     petal_size / 2 + hs + size_rnd,
@@ -195,31 +190,31 @@ class IconFlower(Icon):
                     math.pi,
                     True,
                 ).fill()
-            self.ctx.move_to(x + x_, y + y_).rgb(*self.petal_color).arc(
+            ctx.move_to(x + x_, y + y_).rgb(*self.petal_color).arc(
                 x + x_, y + y_, petal_size / 2 + size_rnd, -math.pi, math.pi, True
             ).fill()
 
         if self.has_highlight:
-            self.ctx.rgb(*GO_GREEN).arc(
+            ctx.rgb(*GO_GREEN).arc(
                 x, y, self.size / 2 + hs, -math.pi, math.pi, True
             ).fill()
-        self.ctx.move_to(x, y).rgb(*self.bg).arc(
+        ctx.move_to(x, y).rgb(*self.bg).arc(
             x, y, self.size / 2, -math.pi, math.pi, True
         ).fill()
 
         y += self.size / 3
-        width = max(self.size, self.ctx.text_width(self.label) + 10)
+        width = max(self.size, ctx.text_width(self.label) + 10)
         height = self.size / 3 + 8
         if self.has_highlight:
-            self.ctx.rgb(*BLACK).move_to(x, y - height / 2).round_rectangle(
+            ctx.rgb(*BLACK).move_to(x, y - height / 2).round_rectangle(
                 x - width / 2, y - height / 2, width, height, width // 2
             ).fill()
-            self.ctx.rgb(*GO_GREEN).move_to(x, y).text(self.label)
+            ctx.rgb(*GO_GREEN).move_to(x, y).text(self.label)
         else:
-            self.ctx.rgb(*PUSH_RED).move_to(x, y - height / 2).round_rectangle(
+            ctx.rgb(*PUSH_RED).move_to(x, y - height / 2).round_rectangle(
                 x - width / 2, y - height / 2, width, height, width // 2
             ).fill()
-            self.ctx.rgb(*BLACK).move_to(x, y).text(self.label)
+            ctx.rgb(*BLACK).move_to(x, y).text(self.label)
 
 
 class IconValue(Icon):
@@ -228,7 +223,7 @@ class IconValue(Icon):
         self.value = value
         self.get_value = None
 
-    def _draw(self, pos):
+    def _draw(self, ctx, pos):
         (x, y) = pos
 
         v = self.value
@@ -236,14 +231,20 @@ class IconValue(Icon):
             v = self.get_value()
             self.value = v
 
-        self.ctx.text_align = self.ctx.CENTER
-        self.ctx.text_baseline = self.ctx.MIDDLE
-        self.ctx.font_size = self.size / 3
+        ctx.text_align = ctx.CENTER
+        ctx.text_baseline = ctx.MIDDLE
+        ctx.font_size = self.size / 3
 
         if self.has_highlight:
-            self.ctx.move_to(x, y).rgb(*WHITE).arc(
+            ctx.move_to(x, y).rgb(*WHITE).arc(
                 x, y, self.size / 2 + 5, -pi, pi, True
             ).fill()
+
+        ctx.move_to(x, y).rgb(*PUSH_RED).arc(x, y, self.size / 2, -pi, pi, True).fill()
+        ctx.move_to(x, y).rgb(*GO_GREEN).arc(
+            x, y, self.size / 2 - 5, v * 2 * pi, 0, 1
+        ).fill()
+        ctx.rgb(0, 0, 0).move_to(x, y).text(self.label)
 
         self.ctx.move_to(x, y).rgb(*PUSH_RED).arc(
             x, y, self.size / 2, -pi, pi, True
@@ -265,9 +266,9 @@ class GroupRing(UIElement):
         self.element_center = element_center
         super().__init__(origin)
 
-    def draw(self, offset=(0, 0)):
+    def draw(self, ctx, offset=(0, 0)):
         pos = (self.origin[0] + offset[0], self.origin[1] + offset[1])
-        self._draw(pos)
+        self._draw(ctx, pos)
         for index in range(len(self.children)):
             # print("child",index)
             child = self.children[index]
@@ -278,12 +279,12 @@ class GroupRing(UIElement):
             x = -math.sin(angle) * self.r + pos[0]
             y = -math.cos(angle) * self.r + pos[1]
             # print("pos",(x,y))
-            child.draw(offset=(x, y))
+            child.draw(ctx, offset=(x, y))
 
-    def _draw(self, pos):
+    def _draw(self, ctx, pos):
         if self.element_center:
             self.element_center.has_highlight = False
-            self.element_center._draw(pos)
+            self.element_center._draw(ctx, pos)
 
 
 class GroupPetals(GroupRing):

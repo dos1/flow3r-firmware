@@ -33,27 +33,24 @@ class AppWorms(application.Application):
         for i in range(0):
             self.worms.append(Worm())
 
+        self.just_shown = True
+
     def on_foreground(self):
         print("on foreground")
-        ctx = app.ui.ctx
+        self.just_shown = True
 
-        # center the text horizontally and vertically
+    def on_draw(self, ctx):
+        if self.just_shown:
+            ctx.rgb(*ui.BLUE).rectangle(
+                -ui.WIDTH / 2, -ui.HEIGHT / 2, ui.WIDTH, ui.HEIGHT
+            ).fill()
+            ctx.move_to(0, 0).rgb(*ui.WHITE).text("touch me :)")
+            self.just_shown = False
+
         ctx.text_align = ctx.CENTER
         ctx.text_baseline = ctx.MIDDLE
-
-        # ctx.rgb() expects individual values for the channels, so unpack a list/tuple with *
-        # operations on ctx can be chained
-        # create a blue background
-        ctx.rgb(*ui.BLUE).rectangle(
-            -ui.WIDTH / 2, -ui.HEIGHT / 2, ui.WIDTH, ui.HEIGHT
-        ).fill()
-
-        # Write some text
-        ctx.move_to(0, 0).rgb(*ui.WHITE).text("touch me :)")
-
-    def on_draw(self):
         for w in self.worms:
-            w.draw()
+            w.draw(ctx)
 
     def main_foreground(self):
         now = time.ticks_ms()
@@ -100,9 +97,9 @@ class Worm:
         # (self.dx,self.dy) = xy_from_polar(1,self.direction)
         self._lastdist = 0.0
 
-    def draw(self):
-        app.ui.ctx.rgb(*self.color)
-        app.ui.ctx.round_rectangle(
+    def draw(self, ctx):
+        ctx.rgb(*self.color)
+        ctx.round_rectangle(
             self.x - self.size / 2,
             self.y - self.size / 2,
             self.size,
