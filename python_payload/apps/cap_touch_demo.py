@@ -15,7 +15,7 @@ class Dot:
     def draw(self, i, ctx):
         imag = self.imag
         real = self.real
-        size = self.szie
+        size = self.size
 
         col = (1.0, 0.0, 1.0)
         if i % 2:

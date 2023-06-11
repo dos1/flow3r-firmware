@@ -401,3 +401,6 @@ def captouch_get_petal_rad(a):
 
 def captouch_get_petal_phi(a):
     return 0
+
+def captouch_get_petal_pad(i, x):
+    return 0
