@@ -51,7 +51,7 @@ Standard ESP-IDF project machinery present and working. You can run `idf.py` fro
 Prepare submodules:
 
 ```
-$ make -C micropython/ports/esp32 submodules
+git submodule update --init --recursive
 ```
 
 Build normally with idf.py:
