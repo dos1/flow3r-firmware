@@ -347,15 +347,14 @@ def update_leds():
 def set_global_volume_dB(a):
     pass
 
-
-def get_button(a):
+def get_button_state(left):
     _sim.process_events()
     _sim.render_gui_lazy()
 
     state = _sim.buttons.state()
-    if a == 1:
+    if left == 1:
         sub = state[:3]
-    elif a == 0:
+    elif left == 0:
         sub = state[3:6]
     else:
         return 0
@@ -367,6 +366,28 @@ def get_button(a):
     elif sub[2]:
         return +1
     return 0
+
+
+menu_button_left = 0
+
+def menu_button_get():
+    return get_button_state(menu_button_left)
+
+def application_button_get():
+    return get_button_state(1 - menu_button_left)
+
+def left_button_get():
+    return get_button_state(1)
+
+def right_button_get():
+    return get_button_state(0)
+
+def menu_button_set_left(_broken):
+    global menu_button_left
+    menu_button_left = 1
+
+def menu_button_get_left():
+    return menu_button_left
 
 
 def get_captouch(a):

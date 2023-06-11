@@ -61,6 +61,17 @@ class Wasm:
         args = [float(a) for a in args]
         return self._i.exports.ctx_apply_transform(ctx, *args)
 
+    def ctx_text_width(self, ctx, text):
+        s = text.encode('utf-8')
+        slen = len(s) + 1
+        p = self.malloc(slen)
+        mem = self._i.exports.memory.uint8_view(p)
+        mem[0:slen-1] = s
+        mem[slen-1] = 0
+        res = self._i.exports.ctx_text_width(ctx, p)
+        self.free(p)
+        return res
+
 _wasm = Wasm()
 
 class Ctx:
@@ -84,6 +95,7 @@ class Ctx:
 
         self.text_align = 'start'
         self.text_baseline = 'alphabetic'
+        self.font_size = 10.0
 
     def _get_fb(self):
         return _wasm._i.exports.memory.uint8_view(self._fb)
@@ -92,7 +104,7 @@ class Ctx:
         _wasm.ctx_parse(self._ctx, text)
 
     def move_to(self, x, y):
-        self._emit(f"moveTo {x} {x}")
+        self._emit(f"moveTo {int(x)} {int(y)}")
         return self
 
     def rgb(self, r, g, b):
@@ -102,17 +114,18 @@ class Ctx:
             r /= 255.0
             g /= 255.0
             b /= 255.0
-        self._emit(f"rgb {r} {g} {b}")
+        self._emit(f"rgb {r:.3f} {g:.3f} {b:.3f}")
         return self
 
     def text(self, s):
         self._emit(f"textAlign {self.text_align}")
         self._emit(f"textBaseline {self.text_baseline}")
+        self._emit(f"fontSize {self.font_size}")
         self._emit(f"text \"{s}\"")
         return self
 
     def round_rectangle(self, x, y, width, height, radius):
-        self._emit(f"roundRectangle {x} {y} {width} {height} {radius}")
+        self._emit(f"roundRectangle {int(x)} {int(y)} {int(width)} {int(height)} {radius}")
         return self
 
     def rectangle(self, x, y, width, height):
@@ -124,5 +137,9 @@ class Ctx:
         return self
 
     def arc(self, x, y , radius, arc_from, arc_to, direction):
-        self._emit(f"arc {x} {y} {radius} {arc_from} {arc_to} {direction}")
+        self._emit(f"arc {int(x)} {int(y)} {int(radius)} {arc_from:.4f} {arc_to:.4f} {1 if direction else 0}")
         return self
+
+    def text_width(self, text):
+        self._emit(f"fontSize {self.font_size}")
+        return _wasm.ctx_text_width(self._ctx, text)

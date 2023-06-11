@@ -17,7 +17,7 @@ fi
 emcc ctx.c \
     -I ../../usermodule/uctx/uctx/ \
     -I ../../usermodule/uctx/fonts/ \
-    -s EXPORTED_FUNCTIONS=_ctx_new_for_framebuffer,_ctx_parse,_ctx_apply_transform,_malloc,_free \
+    -s EXPORTED_FUNCTIONS=_ctx_new_for_framebuffer,_ctx_parse,_ctx_apply_transform,_ctx_text_width,_malloc,_free \
     --no-entry -flto -O3 \
     -o ctx.wasm
 
