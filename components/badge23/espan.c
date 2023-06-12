@@ -1,16 +1,16 @@
 #include "badge23/captouch.h"
 #include "badge23/audio.h"
 #include "badge23/leds.h"
-#include "badge23/display.h"
 #include "badge23/spio.h"
 #include "badge23/lock.h"
 
 #include "flow3r_bsp.h"
+#include "st3m_gfx.h"
 
 #include "esp_log.h"
 #include "driver/i2c.h"
 #include "driver/spi_master.h"
-#include <freertos/timers.h>
+#include "freertos/timers.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -92,11 +92,13 @@ void locks_init(){
     mutex_LED = xSemaphoreCreateMutex();
 }
 
+void os_app_early_init(void) {
+    // Initialize display first as that gives us a nice splash screen.
+    st3m_gfx_init();
+}
+
 void os_app_main(void)
 {
-    // Initialize display first as that gives us a nice splash screen.
-    display_init();
-
     locks_init();
     ESP_LOGI(TAG, "Starting on %s...", flow3r_bsp_hw_name);
     ESP_ERROR_CHECK(i2c_master_init());

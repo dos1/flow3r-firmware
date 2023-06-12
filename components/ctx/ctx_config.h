@@ -1,6 +1,6 @@
 #pragma once
 
-// Keep in sync with defines in usermodule/uctx/uctx.c.
+#include <stdint.h>
 
 #define CTX_TINYVG    1
 #define CTX_TVG_STDIO 0
@@ -13,10 +13,10 @@
 #define CTX_ENABLE_FLOAT              0
 #define CTX_32BIT_SEGMENTS            0
 #define CTX_ENABLE_RGBA8              1
-#define CTX_ENABLE_RGB332             1
-#define CTX_ENABLE_GRAY1              1
-#define CTX_ENABLE_GRAY2              1
-#define CTX_ENABLE_GRAY4              1
+#define CTX_ENABLE_RGB332             0
+#define CTX_ENABLE_GRAY1              0
+#define CTX_ENABLE_GRAY2              0
+#define CTX_ENABLE_GRAY4              0
 #define CTX_ENABLE_RGB565             1
 #define CTX_ENABLE_RGB565_BYTESWAPPED 1
 #define CTX_ENABLE_CBRLE              0
@@ -35,8 +35,8 @@
 #define CTX_MAX_DASHES          10
 #define CTX_MAX_GRADIENT_STOPS  10
 #define CTX_CM                  0
-#define CTX_SHAPE_CACHE         0
-#define CTX_SHAPE_CACHE_DEFAULT 0
+#define CTX_SHAPE_CACHE         1
+#define CTX_SHAPE_CACHE_DEFAULT 1
 #define CTX_RASTERIZER_MAX_CIRCLE_SEGMENTS 128
 #define CTX_NATIVE_GRAYA8       0
 #define CTX_ENABLE_SHADOW_BLUR  0
@@ -64,7 +64,7 @@
 
 #define CTX_BAREMETAL              1
 
-#define CTX_EVENTS                 1
+#define CTX_EVENTS                 0
 #define CTX_MAX_DEVICES            1
 #define CTX_MAX_KEYBINDINGS       16
 #define CTX_RASTERIZER             1

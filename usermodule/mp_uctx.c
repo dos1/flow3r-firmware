@@ -6,193 +6,12 @@
 #include "py/objarray.h"
 #include "py/runtime.h"
 
-#define CTX_TINYVG    1
-#define CTX_TVG_STDIO 0
-#define CTX_DITHER    1
-
-#define CTX_PDF                       0
-#define CTX_PROTOCOL_U8_COLOR         1
-#define CTX_AVOID_CLIPPED_SUBDIVISION 0
-#define CTX_LIMIT_FORMATS             1
-#define CTX_ENABLE_FLOAT              0
-#define CTX_32BIT_SEGMENTS            0
-#define CTX_ENABLE_RGBA8              1
-#define CTX_ENABLE_RGB332             1
-#define CTX_ENABLE_GRAY1              1
-#define CTX_ENABLE_GRAY2              1
-#define CTX_ENABLE_GRAY4              1
-#define CTX_ENABLE_RGB565             1
-#define CTX_ENABLE_RGB565_BYTESWAPPED 1
-#define CTX_ENABLE_CBRLE              0
-#define CTX_BITPACK_PACKER            0
-#define CTX_COMPOSITING_GROUPS        0
-#define CTX_RENDERSTREAM_STATIC       0
-#define CTX_GRADIENT_CACHE            1
-#define CTX_ENABLE_CLIP               1
-#define CTX_MIN_JOURNAL_SIZE        512  // grows dynamically
-#define CTX_MIN_EDGE_LIST_SIZE      512  // is also max and limits complexity
-                                         // of paths that can be filled
-#define CTX_STATIC_OPAQUE       1
-#define CTX_MAX_SCANLINE_LENGTH 512
-#define CTX_1BIT_CLIP           1
-
-#define CTX_MAX_DASHES          10
-#define CTX_MAX_GRADIENT_STOPS  10
-#define CTX_CM                  0
-#define CTX_SHAPE_CACHE         0
-#define CTX_SHAPE_CACHE_DEFAULT 0
-#define CTX_RASTERIZER_MAX_CIRCLE_SEGMENTS 128
-#define CTX_NATIVE_GRAYA8       0
-#define CTX_ENABLE_SHADOW_BLUR  0
-#define CTX_FONTS_FROM_FILE     0
-#define CTX_MAX_KEYDB          16
-#define CTX_FRAGMENT_SPECIALIZE 1
-#define CTX_FAST_FILL_RECT      1
-#define CTX_MAX_TEXTURES        1
-#define CTX_PARSER_MAXLEN       512
-#define CTX_PARSER_FIXED_TEMP   1
-#define CTX_CURRENT_PATH        1
-#define CTX_BLENDING_AND_COMPOSITING 1
-#define CTX_STRINGPOOL_SIZE        256
-#define CTX_AUDIO                    0
-#define CTX_CLIENTS                  0
-
-#ifdef MICROPY_UNIX_MACHINE_IDLE
-
-  // we enable more for the unix port
-
-#include <threads.h>
-#define CTX_FB                     1
-#define CTX_THREADS                1
-#define CTX_TERMINAL_EVENTS        1 
-#define CTX_TILED                  1
-#define CTX_FORMATTER              1
-#define CTX_PARSER                 1
-#define CTX_MATH                   1
-#define CTX_RAW_KB_EVENTS          1
-#define CTX_BRAILLE_TEXT           0
-#else
-#define CTX_RAW_KB_EVENTS          0
-#define CTX_MATH                   0
-#define CTX_TERMINAL_EVENTS        0 // gets rid of posix bits and bobs
-#define CTX_THREADS                0
-#define CTX_TILED                  0
-#define CTX_FORMATTER              0  // we want these eventually
-#define CTX_PARSER                 0  // enabled
-#define CTX_BRAILLE_TEXT           0
-
-#define CTX_BAREMETAL              1
-#endif
-
-
-#define CTX_EVENTS                 1
-#define CTX_MAX_DEVICES            1
-#define CTX_MAX_KEYBINDINGS       16
-#define CTX_RASTERIZER             1
-#define CTX_MAX_STATES             5
-#define CTX_MAX_EDGES            127
-#define CTX_MAX_PENDING           64
-#define CTX_MAX_CBS                8
-#define CTX_MAX_LISTEN_FDS         1
-
-#define CTX_ONE_FONT_ENGINE        1
-/* we keep the ctx implementation here, this compilation taget changes less
- * than the micropython target
- */
-
-#define CTX_STATIC_FONT(font) \
-  ctx_load_font_ctx(ctx_font_##font##_name, \
-                    ctx_font_##font,       \
-                    sizeof (ctx_font_##font))
-
-
-
-#define CTX_MAX_FONTS 10
-
-#if 0
-#include "Roboto-Regular.h"
-#include "Roboto-Bold.h"
-#include "Roboto-Italic.h"
-#include "Roboto-BoldItalic.h"
-#define CTX_FONT_0 CTX_STATIC_FONT(Roboto_Regular)
-#define CTX_FONT_1 CTX_STATIC_FONT(Roboto_Bold)
-#define CTX_FONT_2 CTX_STATIC_FONT(Roboto_Italic)
-//#define CTX_FONT_3 CTX_STATIC_FONT(Roboto_BoldItalic)
-#endif
-
-
-#if 1
-#include "Arimo-Regular.h"
-#include "Arimo-Bold.h"
-#include "Arimo-Italic.h"
-#include "Arimo-BoldItalic.h"
-#define CTX_FONT_0 CTX_STATIC_FONT(Arimo_Regular)
-#define CTX_FONT_1 CTX_STATIC_FONT(Arimo_Bold)
-#define CTX_FONT_2 CTX_STATIC_FONT(Arimo_Italic)
-#define CTX_FONT_3 CTX_STATIC_FONT(Arimo_BoldItalic)
-#endif
-
-#if 0
-#define CTX_FONT_4 CTX_STATIC_FONT(Roboto_Thin)
-#include "Roboto-Thin.h"
-#endif
-
-#if 0
-#include "Carlito-Regular.h"
-#include "Carlito-Bold.h"
-#include "Carlito-Italic.h"
-#include "Carlito-BoldItalic.h"
-#define CTX_FONT_5  CTX_STATIC_FONT(Carlito_Regular)
-#define CTX_FONT_6  CTX_STATIC_FONT(Carlito_Bold)
-#define CTX_FONT_7  CTX_STATIC_FONT(Carlito_Italic)
-#define CTX_FONT_8  CTX_STATIC_FONT(Carlito_BoldItalic)
-#endif
-
-
-#include "Tinos-Regular.h"
-#define CTX_FONT_13 CTX_STATIC_FONT(Tinos_Regular)
-//#include "Tinos-Bold.h"
-//#define CTX_FONT_14 CTX_STATIC_FONT(Tinos_Bold)
-
-#if 0
-#include "Tinos-Italic.h"
-#include "Tinos-BoldItalic.h"
-#define CTX_FONT_15 CTX_STATIC_FONT(Tinos_Italic)
-#define CTX_FONT_16 CTX_STATIC_FONT(Tinos_BoldItalic)
-#endif
-
-#if 0
-#include "Caladea-Regular.h"
-#include "Caladea-Bold.h"
-#include "Caladea-Italic.h"
-#define CTX_FONT_17 CTX_STATIC_FONT(Caladea_Regular)
-#define CTX_FONT_18 CTX_STATIC_FONT(Caladea_Bold)
-#define CTX_FONT_19 CTX_STATIC_FONT(Caladea_Italic)
-#if 0
-#include "Caladea-BoldItalic.h"
-#define CTX_FONT_20 CTX_STATIC_FONT(Caladea_BoldItalic)
-#endif
-#endif
-
-#if 1
-#include "Cousine-Regular.h"
-#include "Cousine-Bold.h"
-#define CTX_FONT_21 CTX_STATIC_FONT(Cousine_Regular)
-#define CTX_FONT_22 CTX_STATIC_FONT(Cousine_Bold)
-//#include "Cousine-Italic.h"
-//#include "Cousine-BoldItalic.h"
-//#define CTX_FONT_23 CTX_STATIC_FONT(Cousine_Italic)
-//#define CTX_FONT_24 CTX_STATIC_FONT(Cousine_BoldItalic)
-#endif
-
-#define CTX_IMPLEMENTATION
+#include "ctx_config.h"
 #include "ctx.h"
 
-typedef struct _mp_ctx_event_obj_t mp_ctx_event_obj_t;
 typedef struct _mp_ctx_obj_t {
 	mp_obj_base_t base;
 	Ctx *ctx;
-	//mp_ctx_event_obj_t *ctx_event;
 	mp_obj_t            user_data;
 } mp_ctx_obj_t;
 
@@ -216,18 +35,6 @@ void gc_collect(void);
 	{                                                                      \
 		mp_ctx_obj_t *self = MP_OBJ_TO_PTR(self_in);                   \
 		ctx_##name(self->ctx);                                         \
-		return self_in;                                                \
-	}                                                                      \
-	MP_DEFINE_CONST_FUN_OBJ_1(mp_ctx_##name##_obj, mp_ctx_##name);
-
-#define MP_CTX_COMMON_FUN_0_idle(name)                                         \
-	static mp_obj_t mp_ctx_##name(mp_obj_t self_in)                        \
-	{                                                                      \
-		mp_ctx_obj_t *self = MP_OBJ_TO_PTR(self_in);                   \
-                gc_collect();\
-		ctx_##name(self->ctx);                                         \
-                mp_idle(0);\
-                while(ctx_get_event(self->ctx)){};\
 		return self_in;                                                \
 	}                                                                      \
 	MP_DEFINE_CONST_FUN_OBJ_1(mp_ctx_##name##_obj, mp_ctx_##name);
@@ -425,9 +232,8 @@ MP_CTX_COMMON_FUN_0(begin_path);
 MP_CTX_COMMON_FUN_0(save);
 MP_CTX_COMMON_FUN_0(restore);
 
-MP_CTX_COMMON_FUN_0(consume_events);
 MP_CTX_COMMON_FUN_0(start_frame);
-MP_CTX_COMMON_FUN_0_idle(end_frame);
+MP_CTX_COMMON_FUN_0(end_frame);
 
 MP_CTX_COMMON_FUN_0(start_group);
 MP_CTX_COMMON_FUN_0(end_group);
@@ -737,252 +543,7 @@ STATIC void generic_method_lookup(mp_obj_t obj, qstr attr, mp_obj_t *dest) {
     }
 }
 
-extern const mp_obj_type_t mp_ctx_event_type;
-struct _mp_ctx_event_obj_t {
-	mp_obj_base_t base;
-	CtxEvent  event;
-        mp_obj_t  user_data;
-	mp_obj_t  mp_ev;
-};
-
-
-static mp_obj_t mp_ctx_event_new (void)
-{
-	mp_ctx_event_obj_t *o = m_new_obj(mp_ctx_event_obj_t);
-	o->base.type    = &mp_ctx_event_type;
-	return MP_OBJ_FROM_PTR(o);
-}
 extern const mp_obj_type_t mp_ctx_type;
-
-/** CtxEvent **/
-
-STATIC mp_obj_t
-mp_ctx_event_attr_op (mp_obj_t self_in, qstr attr, mp_obj_t set_val)
-{
-  mp_ctx_event_obj_t *self = MP_OBJ_TO_PTR(self_in);       
-  if (set_val == MP_OBJ_NULL) {
-    switch (attr)
-    {
-      case MP_QSTR_ctx:     
-        {
-	mp_ctx_obj_t *o = m_new_obj(mp_ctx_obj_t);
-	o->base.type    = &mp_ctx_type;
-        o->ctx = self->event.ctx;
-	return MP_OBJ_FROM_PTR(o);
-        }
-      case MP_QSTR_x:         return mp_obj_new_float(self->event.x);
-      case MP_QSTR_y:         return mp_obj_new_float(self->event.y);
-      case MP_QSTR_device_x:  return mp_obj_new_float(self->event.device_x);
-      case MP_QSTR_device_y:  return mp_obj_new_float(self->event.device_y);
-      case MP_QSTR_start_x:   return mp_obj_new_float(self->event.start_x);
-      case MP_QSTR_start_y:   return mp_obj_new_float(self->event.start_y);
-      case MP_QSTR_prev_x:    return mp_obj_new_float(self->event.prev_x);
-      case MP_QSTR_prev_y:    return mp_obj_new_float(self->event.prev_y);
-      case MP_QSTR_delta_x:   return mp_obj_new_float(self->event.delta_x);
-      case MP_QSTR_delta_y:   return mp_obj_new_float(self->event.delta_y);
-      case MP_QSTR_device_no: return mp_obj_new_int(self->event.device_no);
-      case MP_QSTR_unicode:   return mp_obj_new_int(self->event.unicode);
-      case MP_QSTR_user_data: return self->user_data;
-      case MP_QSTR_scroll_direction:  return mp_obj_new_int(self->event.scroll_direction);
-      case MP_QSTR_time:      return mp_obj_new_int(self->event.time);
-      case MP_QSTR_modifier_state:   return mp_obj_new_int(self->event.state);
-      case MP_QSTR_string:    if (self->event.string)
-                                 // gambling on validity
-                                 return mp_obj_new_str(self->event.string, strlen(self->event.string));
-                              else
-                                 return mp_obj_new_str("", 0);
-    }
-  }
-  else
-  {
-     return set_val;
-  }
-  return self_in;
-}
-
-STATIC void mp_ctx_event_attr(mp_obj_t obj, qstr attr, mp_obj_t *dest) {
-
-    if(attr == MP_QSTR_x
-     ||attr == MP_QSTR_y
-     ||attr == MP_QSTR_ctx
-     ||attr == MP_QSTR_start_x
-     ||attr == MP_QSTR_start_y
-     ||attr == MP_QSTR_prev_x
-     ||attr == MP_QSTR_prev_y
-     ||attr == MP_QSTR_delta_x
-     ||attr == MP_QSTR_delta_y
-     ||attr == MP_QSTR_device_no
-     ||attr == MP_QSTR_unicode
-     ||attr == MP_QSTR_user_data
-     ||attr == MP_QSTR_scroll_direction
-     ||attr == MP_QSTR_time
-     ||attr == MP_QSTR_modifier_state
-     ||attr == MP_QSTR_string
-     ||attr == MP_QSTR_device_x
-     ||attr == MP_QSTR_device_y)
-    {
-        if (dest[0] == MP_OBJ_NULL) {
-            // load attribute
-            mp_obj_t val = mp_ctx_event_attr_op(obj, attr, MP_OBJ_NULL);
-            dest[0] = val;
-        } else {
-            // delete/store attribute
-            if (mp_ctx_event_attr_op(obj, attr, dest[1]) != MP_OBJ_NULL)
-                dest[0] = MP_OBJ_NULL; // indicate success
-        }
-    }
-    else {
-        // A method call
-        generic_method_lookup(obj, attr, dest);
-    }
-}
-
-static const mp_rom_map_elem_t mp_ctx_event_locals_dict_table[] = {
-       MP_CTX_ATTR(x),
-       MP_CTX_ATTR(y),
-       MP_CTX_ATTR(ctx),
-       MP_CTX_ATTR(device_x),
-       MP_CTX_ATTR(device_y),
-       MP_CTX_ATTR(start_x),
-       MP_CTX_ATTR(start_y),
-       MP_CTX_ATTR(prev_x),
-       MP_CTX_ATTR(prev_y),
-       MP_CTX_ATTR(delta_x),
-       MP_CTX_ATTR(delta_y),
-       MP_CTX_ATTR(device_no),
-       MP_CTX_ATTR(unicode),
-       MP_CTX_ATTR(user_data),
-       MP_CTX_ATTR(scroll_direction),
-       MP_CTX_ATTR(time),
-       MP_CTX_ATTR(modifier_state),
-       MP_CTX_ATTR(string)
-};
-static MP_DEFINE_CONST_DICT(mp_ctx_event_locals_dict, mp_ctx_event_locals_dict_table);
-
-static mp_obj_t mp_ctx_event_make_new(
-	const mp_obj_type_t *type,
-	size_t n_args,
-	size_t n_kw,
-	const mp_obj_t *args
-) {
-	mp_ctx_event_obj_t *o = m_new_obj(mp_ctx_event_obj_t);
-	o->base.type    = type;
-	return MP_OBJ_FROM_PTR(o);
-}
-
-MP_DEFINE_CONST_OBJ_TYPE(
-    mp_ctx_event_type,
-    MP_QSTR_ctx_event_type,
-    MP_TYPE_FLAG_NONE,
-    //print, array_print,
-    make_new, mp_ctx_event_make_new,
-    attr, mp_ctx_event_attr,
-    locals_dict, &mp_ctx_event_locals_dict
-);
-
-/*
-const mp_obj_type_t mp_ctx_event_type = {
-	.base        = { &mp_type_type },
-	.name        = MP_QSTR_CtxEvent,
-	.make_new    = mp_ctx_event_make_new,
-	.locals_dict = (mp_obj_t)&mp_ctx_event_locals_dict,
-        .attr = mp_ctx_event_attr
-};
-*/
-
-static void mp_ctx_listen_cb_handler (CtxEvent *event, void *data1, void*data2)
-{
-  mp_obj_t event_in = data2;
-  mp_ctx_event_obj_t *mp_ctx_event = MP_OBJ_TO_PTR(event_in);
-  mp_ctx_event->event = *event; // XXX todo stop copying, make stop_propagate work
-  mp_call_function_1(data1, event_in);
-}
-
-static void mp_ctx_listen_cb_handler_stop_propagate (CtxEvent *event, void *data1, void*data2)
-{
-  mp_obj_t event_in = data2;
-  mp_ctx_event_obj_t *mp_ctx_event = MP_OBJ_TO_PTR(event_in);
-  mp_ctx_event->event = *event;
-  mp_call_function_1(data1, event_in);
-  event->stop_propagate = 1;
-}
-
-static mp_obj_t mp_ctx_listen (size_t n_args, const mp_obj_t *args)
-{
-  mp_obj_t self_in = args[0];
-  mp_obj_t event_mask = args[1];
-  mp_obj_t cb_in = args[2];
-  mp_obj_t user_data_in = n_args==4?args[3]:mp_const_none;
-  mp_ctx_obj_t *self = MP_OBJ_TO_PTR(self_in);
-  if (cb_in != mp_const_none &&
-      !mp_obj_is_callable(cb_in))
-          mp_raise_ValueError(MP_ERROR_TEXT("invalid handler"));
-  mp_ctx_event_obj_t *ctx_event = mp_ctx_event_new ();
-  ctx_event->user_data = user_data_in;
-  ctx_listen (self->ctx,
-              mp_obj_get_int(event_mask),
-              mp_ctx_listen_cb_handler,
-              (cb_in), ctx_event);
-  return MP_OBJ_FROM_PTR(self);
-}
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_ctx_listen_obj, 3, 4, mp_ctx_listen);
-
-static void mp_ctx_key_binding_cb_handler (CtxEvent *event, void *data1, void*data2)
-{
-  mp_ctx_event_obj_t *ctx_event = mp_ctx_event_new ();
-  //mp_ctx_event_obj_t *mp_ctx_event = MP_OBJ_TO_PTR(event_in);
-  ctx_event->event = *event;
-#if 0
-  mp_sched_schedule (data1, event_in);
-#else
-  mp_call_function_1(data1, ctx_event);
-#endif
-}
-
-static mp_obj_t mp_ctx_add_key_binding (size_t n_args, const mp_obj_t *args)
-{
-  mp_obj_t self_in    = args[0];
-  mp_obj_t key_in     = args[1];
-  mp_obj_t action_in  = args[2];
-  mp_obj_t label_in   = args[3];
-  mp_obj_t cb_in      = args[4];
-  //mp_obj_t user_data_in = args[5];
-  mp_ctx_obj_t *self = MP_OBJ_TO_PTR(self_in);
-  if (cb_in != mp_const_none &&
-      !mp_obj_is_callable(cb_in))
-          mp_raise_ValueError(MP_ERROR_TEXT("invalid handler"));
-  ctx_add_key_binding (self->ctx,
-              mp_obj_str_get_str(key_in),
-              mp_obj_str_get_str(action_in),
-              mp_obj_str_get_str(label_in),
-              mp_ctx_key_binding_cb_handler,
-              (cb_in));//, ctx_event);
-  return MP_OBJ_FROM_PTR(self);
-}
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_ctx_add_key_binding_obj, 5, 5, mp_ctx_add_key_binding);
-
-
-static mp_obj_t mp_ctx_listen_stop_propagate (size_t n_args, const mp_obj_t *args)
-{
-  mp_obj_t self_in = args[0];
-  mp_obj_t event_mask = args[1];
-  mp_obj_t cb_in = args[2];
-  mp_obj_t user_data_in = n_args==4?args[3]:mp_const_none;
-  mp_ctx_obj_t *self = MP_OBJ_TO_PTR(self_in);
-  if (cb_in != mp_const_none &&
-      !mp_obj_is_callable(cb_in))
-          mp_raise_ValueError(MP_ERROR_TEXT("invalid handler"));
-  mp_ctx_event_obj_t *ctx_event = mp_ctx_event_new ();
-  ctx_event->user_data = user_data_in;
-  ctx_listen (self->ctx,
-              mp_obj_get_int(event_mask),
-              mp_ctx_listen_cb_handler_stop_propagate,
-              (cb_in), ctx_event);
-  return MP_OBJ_FROM_PTR(self);
-}
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_ctx_listen_stop_propagate_obj, 3, 4, mp_ctx_listen_stop_propagate);
-
-
 
 #if CTX_TINYVG
 static mp_obj_t mp_ctx_tinyvg_get_size (mp_obj_t self_in, mp_obj_t buffer_in)
@@ -1145,9 +706,6 @@ mp_ctx_attr_op (mp_obj_t self_in, qstr attr, mp_obj_t set_val)
        case MP_QSTR_flags:
             return mp_obj_new_int(ctx_cb_get_flags (self->ctx));
 
-       case MP_QSTR_need_redraw:
-            return mp_obj_new_bool(ctx_need_redraw (self->ctx));
-
        case MP_QSTR_line_cap:
             return mp_obj_new_int(ctx_get_line_cap (self->ctx));
        case MP_QSTR_line_join:
@@ -1196,8 +754,6 @@ mp_ctx_attr_op (mp_obj_t self_in, qstr attr, mp_obj_t set_val)
          ctx_line_cap (self->ctx, mp_obj_get_int (set_val)); break;
        case MP_QSTR_flags:
          ctx_cb_set_flags (self->ctx, mp_obj_get_int (set_val)); break;
-       case MP_QSTR_need_redraw:
-         ctx_queue_draw (self->ctx); break;
        case MP_QSTR_line_join:
          ctx_line_join (self->ctx, mp_obj_get_int (set_val)); break;
        case MP_QSTR_text_align:
@@ -1244,7 +800,6 @@ STATIC void mp_ctx_attr(mp_obj_t obj, qstr attr, mp_obj_t *dest) {
      ||attr == MP_QSTR_compositing_mode
 #endif
      ||attr == MP_QSTR_flags
-     ||attr == MP_QSTR_need_redraw
      ||attr == MP_QSTR_line_cap
      ||attr == MP_QSTR_line_join
      ||attr == MP_QSTR_text_align
@@ -1320,11 +875,7 @@ static const mp_rom_map_elem_t mp_ctx_locals_dict_table[] = {
 	MP_CTX_METHOD(save),
 	MP_CTX_METHOD(restore),
 	MP_CTX_METHOD(start_frame),
-	//MP_CTX_METHOD(consume_events),
 	MP_CTX_METHOD(end_frame),
-	MP_CTX_METHOD(add_key_binding),
-	MP_CTX_METHOD(listen),
-	MP_CTX_METHOD(listen_stop_propagate),
 	MP_CTX_METHOD(get_font_name),
 
         MP_CTX_METHOD(gray),
@@ -1341,16 +892,6 @@ static const mp_rom_map_elem_t mp_ctx_locals_dict_table[] = {
 #endif
 	MP_CTX_METHOD(logo),
 
-        MP_CTX_METHOD(pointer_motion),
-        MP_CTX_METHOD(pointer_release),
-        MP_CTX_METHOD(pointer_press),
-        MP_CTX_METHOD(scrolled),
-        MP_CTX_METHOD(key_press),
-        MP_CTX_METHOD(key_up),
-        MP_CTX_METHOD(key_down),
-        MP_CTX_METHOD(incoming_message),
-
-
         // Instance attributes
         MP_CTX_ATTR(x),
         MP_CTX_ATTR(y),
@@ -1362,7 +903,6 @@ static const mp_rom_map_elem_t mp_ctx_locals_dict_table[] = {
         MP_CTX_ATTR(compositing_mode),
         MP_CTX_ATTR(blend_mode),
 #endif
-        MP_CTX_ATTR(need_redraw),
         MP_CTX_ATTR(flags),
         MP_CTX_ATTR(line_cap),
         MP_CTX_ATTR(line_join),
@@ -1506,7 +1046,6 @@ const mp_obj_type_t mp_ctx_type = {
 static const mp_rom_map_elem_t mp_ctx_module_globals_table[] = {
 	{ MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_ctx_module) },
 	{ MP_ROM_QSTR(MP_QSTR_Context), MP_ROM_PTR(&mp_ctx_type) },
-	{ MP_ROM_QSTR(MP_QSTR_CtxEvent), MP_ROM_PTR(&mp_ctx_event_type) },
 
 	MP_CTX_INT_CONSTANT(FORMAT,GRAY8),
 	MP_CTX_INT_CONSTANT(FORMAT,GRAYA8),

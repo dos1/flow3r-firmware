@@ -13,11 +13,14 @@
 
 #include "badge23/audio.h"
 #include "badge23/captouch.h"
-#include "badge23/display.h"
 #include "badge23/spio.h"
 #include "badge23/espan.h"
 
 #include "flow3r_bsp.h"
+#include "st3m_gfx.h"
+
+#include "ctx_config.h"
+#include "ctx.h"
 
 mp_obj_t mp_ctx_from_ctx(Ctx *ctx);
 
@@ -31,15 +34,9 @@ STATIC mp_obj_t mp_captouch_calibration_active(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_captouch_calibration_active_obj, mp_captouch_calibration_active);
 
-STATIC mp_obj_t mp_display_update(void) {
-    display_update();
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_display_update_obj, mp_display_update);
-
 STATIC mp_obj_t mp_display_set_backlight(mp_obj_t percent_in) {
     uint8_t percent = mp_obj_get_int(percent_in);
-    display_set_backlight(percent);
+    flow3r_bsp_display_set_backlight(percent);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_display_set_backlight_obj, mp_display_set_backlight);
@@ -172,14 +169,16 @@ STATIC mp_obj_t mp_version(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_version_obj, mp_version);
 
-STATIC mp_obj_t mp_get_ctx(size_t n_args, const mp_obj_t *args) {
-    Ctx *ctx = NULL;
-    // This might be called before the ctx is ready.
-    // HACK: this will go away with the new drawing API.
-    while ((ctx = display_global_ctx()) == NULL) {
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+static st3m_ctx_desc_t *gfx_last_desc = NULL;
+
+STATIC mp_obj_t mp_get_ctx(void) {
+    if (gfx_last_desc == NULL) {
+        gfx_last_desc = st3m_gfx_drawctx_free_get(0);
+        if (gfx_last_desc == NULL) {
+            return mp_const_none;
+        }
     }
-    mp_obj_t mp_ctx = mp_ctx_from_ctx(ctx);
+    mp_obj_t mp_ctx = mp_ctx_from_ctx(gfx_last_desc->ctx);
     return mp_ctx;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_ctx_obj, mp_get_ctx);
@@ -192,6 +191,31 @@ STATIC mp_obj_t mp_freertos_sleep(mp_obj_t ms_in) {
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_freertos_sleep_obj, mp_freertos_sleep);
+
+STATIC mp_obj_t mp_display_update(mp_obj_t in_ctx) {
+    // TODO(q3k): check in_ctx? Or just drop from API?
+
+    if (gfx_last_desc != NULL) {
+        st3m_gfx_drawctx_pipe_put(gfx_last_desc);
+	    gfx_last_desc = NULL;
+    }
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_display_update_obj, mp_display_update);
+
+STATIC mp_obj_t mp_display_pipe_full(void) {
+    if (st3m_gfx_drawctx_pipe_full()) {
+        return mp_const_true;
+    }
+    return mp_const_false;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_display_pipe_full_obj, mp_display_pipe_full);
+
+STATIC mp_obj_t mp_display_pipe_flush(void) {
+    st3m_gfx_flush();
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_display_pipe_flush_obj, mp_display_pipe_flush);
 
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_audio) },
@@ -219,6 +243,8 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_dump_all_sources), MP_ROM_PTR(&mp_dump_all_sources_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_update), MP_ROM_PTR(&mp_display_update_obj) },
     { MP_ROM_QSTR(MP_QSTR_freertos_sleep), MP_ROM_PTR(&mp_freertos_sleep_obj) },
+    { MP_ROM_QSTR(MP_QSTR_display_pipe_full), MP_ROM_PTR(&mp_display_pipe_full_obj) },
+    { MP_ROM_QSTR(MP_QSTR_display_pipe_flush), MP_ROM_PTR(&mp_display_pipe_flush_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_set_backlight), MP_ROM_PTR(&mp_display_set_backlight_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&mp_version_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_ctx), MP_ROM_PTR(&mp_get_ctx_obj) },

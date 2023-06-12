@@ -69,7 +69,7 @@
 #endif
 
 // MicroPython runs as a task under FreeRTOS
-#define MP_TASK_PRIORITY        (ESP_TASK_PRIO_MIN + 1)
+#define MP_TASK_PRIORITY        (ESP_TASK_PRIO_MIN + 2)
 #define MP_TASK_STACK_SIZE      (16 * 1024)
 
 // Set the margin for detecting stack overflow, depending on the CPU architecture.
@@ -240,6 +240,8 @@ void app_main(void) {
     MICROPY_BOARD_STARTUP();
 
     // Create and transfer control to the MicroPython task.
+
+    os_app_early_init();
     xTaskCreatePinnedToCore(mp_task, "mp_task", MP_TASK_STACK_SIZE / sizeof(StackType_t), NULL, MP_TASK_PRIORITY, &mp_main_task_handle, MP_TASK_COREID);
     os_app_main(); // ./badge23/ entry point
 }

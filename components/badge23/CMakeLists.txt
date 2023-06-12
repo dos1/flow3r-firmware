@@ -3,7 +3,6 @@ idf_component_register(
         apa102LEDStrip.c
         audio.c
         captouch.c
-        display.c
         espan.c
         leds.c
         scope.c

@@ -80,6 +80,8 @@
 #define MADCTL_BGR       0x08
 #define MADCTL_MH        0x04
 
+static const char *TAG = "flow3r-bsp-gc9a01";
+
 // Transaction 'user' structure as used by SPI transactions to the display.
 // Provides enough data for the pre-transaction callback to be able to set the
 // DC pin as needed.
@@ -551,7 +553,13 @@ static esp_err_t flow3r_bsp_gc9a01_blit_next(flow3r_bsp_gc9a01_blit_t *blit) {
 	blit->left -= size;
 	blit->fb += size;
 
-	return spi_device_queue_trans(blit->gc9a01->spi, &blit->spi_tx, portMAX_DELAY);
+	esp_err_t res = spi_device_queue_trans(blit->gc9a01->spi, &blit->spi_tx, portMAX_DELAY);
+	if (res != ESP_OK) {
+
+		ESP_LOGE(TAG, "spi_device_queue_trans (size %d, buf %p, dma capab: %d, largest block: %d): %s",
+			size, blit->fb, esp_ptr_dma_capable(blit->fb), heap_caps_get_largest_free_block(MALLOC_CAP_DMA), esp_err_to_name(res));
+	}
+	return res;
 }
 
 static esp_err_t flow3r_bsp_gc9a01_blit_start(flow3r_bsp_gc9a01_t *gc9a01, flow3r_bsp_gc9a01_blit_t *blit, const uint16_t *fb) {
