@@ -10,6 +10,7 @@ build-p1:
   artifacts:
     expose_as: 'Proto 1 ELF'
     paths: ['build/badge23.elf']
+    expire_in: 5 hours
 
 build-p3:
   stage: build
@@ -20,6 +21,7 @@ build-p3:
   artifacts:
     expose_as: 'Proto 3 ELF'
     paths: ['build/badge23.elf']
+    expire_in: 5 hours
 
 build-p4:
   stage: build
@@ -30,6 +32,7 @@ build-p4:
   artifacts:
     expose_as: 'Proto 4 ELF'
     paths: ['build/badge23.elf']
+    expire_in: 5 hours
 
 build-p6:
   stage: build
@@ -40,3 +43,4 @@ build-p6:
   artifacts:
     expose_as: 'Proto 6 ELF'
     paths: ['build/badge23.elf']
+    expire_in: 5 hours
