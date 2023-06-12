@@ -36,10 +36,6 @@ static const char *TAG = "espan";
 #error "i2c not implemented for this badge generation"
 #endif
 
-static QueueHandle_t i2c_queue = NULL;
-static QueueHandle_t slow_system_status_queue = NULL;
-static uint8_t dummy_data;
-
 static esp_err_t i2c_master_init(void)
 {
     int i2c_master_port = I2C_MASTER_NUM;
@@ -58,30 +54,22 @@ static esp_err_t i2c_master_init(void)
     return i2c_driver_install(i2c_master_port, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
 }
 
-#define CAPTOUCH_POLLING_PERIOD 10
-#define SLOW_SYSTEM_STATUS_PERIOD 100
 static uint8_t hw_init_done = 0;
 
-void i2c_timer(TimerHandle_t data){
-    xQueueSend(i2c_queue, &dummy_data, 0);
-}
-
-void i2c_task(void * data){
-    while(1){
-        xQueueReceive(i2c_queue, &dummy_data, portMAX_DELAY);
+static void io_fast_task(void * data){
+    TickType_t last_wake = xTaskGetTickCount();
+    while(1) {
+        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(10)); // 100 Hz
         captouch_read_cycle();
         update_button_state();
     }
 }
 
-void slow_system_status_timer(TimerHandle_t data){
-    xQueueSend(slow_system_status_queue, &dummy_data, 0);
-}
-
-void slow_system_status_task(void * data){
-    while(1){
-        xQueueReceive(slow_system_status_queue, &dummy_data, portMAX_DELAY);
-        //read out stuff like jack detection, battery status, usb connection etc.
+// read out stuff like jack detection, battery status, usb connection etc.
+static void io_slow_task(void * data){
+    TickType_t last_wake = xTaskGetTickCount();
+    while(1) {
+        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(100)); // 10 Hz
         audio_update_jacksense();
         leds_update_hardware();
     }
@@ -119,22 +107,8 @@ void os_app_main(void)
 
     captouch_force_calibration();
 
-
-    i2c_queue = xQueueCreate(1,1);
-
-    TaskHandle_t i2c_task_handle;
-    xTaskCreatePinnedToCore(&i2c_task, "I2C task", 4096, NULL, configMAX_PRIORITIES-1, &i2c_task_handle, 0);
-
-    TimerHandle_t i2c_timer_handle = xTimerCreate("I2C timer", pdMS_TO_TICKS(CAPTOUCH_POLLING_PERIOD), pdTRUE, (void *) 0, *i2c_timer);
-    if( xTimerStart(i2c_timer_handle, 0 ) != pdPASS) ESP_LOGI(TAG, "I2C timer initialization failed");
-
-    slow_system_status_queue = xQueueCreate(1,1);
-
-    TaskHandle_t slow_system_status_task_handle;
-    xTaskCreatePinnedToCore(&slow_system_status_task, "slow system status task", 4096, NULL, configMAX_PRIORITIES-2, &slow_system_status_task_handle, 0);
-
-    TimerHandle_t slow_system_status_timer_handle = xTimerCreate("slow system status timer", pdMS_TO_TICKS(SLOW_SYSTEM_STATUS_PERIOD), pdTRUE, (void *) 0, *slow_system_status_timer);
-    if( xTimerStart(slow_system_status_timer_handle, 0 ) != pdPASS) ESP_LOGI(TAG, "I2C task initialization failed");
+    xTaskCreatePinnedToCore(&io_fast_task, "iofast", 4096, NULL, configMAX_PRIORITIES-1, NULL, 0);
+    xTaskCreatePinnedToCore(&io_slow_task, "ioslow", 4096, NULL, configMAX_PRIORITIES-2, NULL, 0);
 
     hw_init_done = 1;
 }
