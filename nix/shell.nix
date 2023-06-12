@@ -1,13 +1,17 @@
 let
-  sources = import ./sources.nix;
+  sources = import ./niv/sources.nix;
   nixpkgs = import sources.nixpkgs {
     overlays = [
-      (import "${sources.nixpkgs-esp-dev}/overlay.nix")
+      (self: super: {
+        gcc-xtensa-esp32s3-elf-bin = super.callPackage ./esp32s3-toolchain-bin.nix {};
+        openocd-esp32-bin = super.callPackage ./openocd-esp32-bin.nix {};
+        esp-idf = super.callPackage ./esp-idf {};
+      })
     ];
   };
 
 in with nixpkgs; pkgs.mkShell {
-  name = "badg23-shell";
+  name = "flow3r-shell";
   buildInputs = with pkgs; [
     gcc-xtensa-esp32s3-elf-bin
     openocd-esp32-bin
