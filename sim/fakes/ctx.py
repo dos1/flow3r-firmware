@@ -57,6 +57,9 @@ class Wasm:
         BRGA8 = 5
         return fb, self._i.exports.ctx_new_for_framebuffer(fb, width, height, width * 4, BRGA8)
 
+    def ctx_new_drawlist(self, width, height):
+        return self._i.exports.ctx_new_drawlist(width, height)
+
     def ctx_apply_transform(self, ctx, *args):
         args = [float(a) for a in args]
         return self._i.exports.ctx_apply_transform(ctx, *args)
@@ -71,6 +74,12 @@ class Wasm:
         res = self._i.exports.ctx_text_width(ctx, p)
         self.free(p)
         return res
+
+    def ctx_destroy(self, ctx):
+        return self._i.exports.ctx_destroy(ctx)
+
+    def ctx_render_ctx(self, ctx, dctx):
+        return self._i.exports.ctx_render_ctx(ctx, dctx)
 
 _wasm = Wasm()
 
@@ -87,18 +96,12 @@ class Ctx:
     END = 'end'
     MIDDLE = 'middle'
 
-    def __init__(self):
-        self._fb, self._ctx = _wasm.ctx_new_for_framebuffer(240, 240)
-        # Place (0, 0) in the center of the screen, mathing what the real badge
-        # software does.
-        _wasm.ctx_apply_transform(self._ctx, 1, 0, 120, 0, 1, 120, 0, 0, 1)
+    def __init__(self, _ctx):
+        self._ctx = _ctx
 
         self.text_align = 'start'
         self.text_baseline = 'alphabetic'
         self.font_size = 10.0
-
-    def _get_fb(self):
-        return _wasm._i.exports.memory.uint8_view(self._fb)
 
     def _emit(self, text):
         _wasm.ctx_parse(self._ctx, text)

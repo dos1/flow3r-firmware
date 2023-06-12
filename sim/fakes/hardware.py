@@ -194,11 +194,10 @@ class Simulation:
                 b2 = b / (20 - i)
                 pygame.draw.circle(surface, (r2, g2, b2), (x, y), radius)
 
-    def _render_oled(self, surface):
+    def _render_oled(self, surface, fb):
         surface.fill((0, 0, 0, 0))
         buf = surface.get_buffer()
 
-        fb = get_ctx()._get_fb()
         fb = fb[:240*240*4]
         for y in range(240):
             # Use precalculated row offset to turn OLED disc into square
@@ -263,14 +262,14 @@ class Simulation:
         elif time.time() - self.last_gui_render > d:
             self.render_gui_now()
 
-    def render_display(self):
+    def render_display(self, fb):
         """
         Render the OLED surface from Ctx state.
 
         Afterwards, render_gui_{lazy,now} should still be called to actually
         present the new OLED surface state to the user.
         """
-        self._render_oled(self._oled_surface)
+        self._render_oled(self._oled_surface, fb)
 
     def set_led_rgb(self, ix, r, g, b):
         self.led_state_buf[ix] = (r, g, b)
@@ -297,21 +296,52 @@ def captouch_calibration_active():
     return False
 
 
-_global_ctx = None
+import ctx
+
+class FramebufferManager:
+    def __init__(self):
+        self._free = []
+        for _ in range(2):
+            fb, c = ctx._wasm.ctx_new_for_framebuffer(240, 240)
+            ctx._wasm.ctx_apply_transform(c, 1, 0, 120, 0, 1, 120, 0, 0, 1)
+            self._free.append((fb, c))
+    
+    def get(self):
+        if len(self._free) == 0:
+            return None, None
+        fb, ctx = self._free[0]
+        self._free = self._free[1:]
+
+        return fb, ctx
+
+    def put(self, fb, ctx):
+        self._free.append((fb, ctx))
+
+fbm = FramebufferManager()
+
 def get_ctx():
-    global _global_ctx
-    import ctx
-
-    if _global_ctx is None:
-        _global_ctx = ctx.Ctx()
-    return _global_ctx
+    dctx = ctx._wasm.ctx_new_drawlist(240, 240)
+    return ctx.Ctx(dctx)
 
 
-def display_update():
+def display_update(subctx):
     _sim.process_events()
-    _sim.render_display()
+    fbp, c = fbm.get()
+    if fbp is None:
+        return
+
+    ctx._wasm.ctx_render_ctx(subctx._ctx, c)
+    ctx._wasm.ctx_destroy(subctx._ctx)
+
+    fb = ctx._wasm._i.exports.memory.uint8_view(fbp)
+    _sim.render_display(fb)
     _sim.render_gui_now()
 
+    fbm.put(fbp, c)
+
+
+def display_pipe_full():
+    return False
 
 def set_led_rgb(ix, r, g, b):
     ix = ((39-ix) + 1 + 32)%40;
@@ -404,3 +434,7 @@ def captouch_get_petal_phi(a):
 
 def captouch_get_petal_pad(i, x):
     return 0
+
+def freertos_sleep(ms):
+    import _time
+    _time.sleep(ms / 1000.0)
