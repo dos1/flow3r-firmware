@@ -14,11 +14,8 @@
 #include "badge23/audio.h"
 #include "badge23/leds.h"
 #include "badge23/captouch.h"
-#include "badge23/display.h"
 #include "badge23/spio.h"
 #include "badge23/espan.h"
-
-mp_obj_t mp_ctx_from_ctx(Ctx *ctx);
 
 STATIC mp_obj_t mp_get_active(mp_obj_t pin_mask) {
     return mp_obj_new_int(spio_badge_link_get_active(mp_obj_get_int(pin_mask)));
