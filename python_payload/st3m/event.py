@@ -5,6 +5,7 @@ log.info("import")
 
 from st3m.system import hardware
 
+import kernel
 import time
 import math
 import random
@@ -27,6 +28,37 @@ class Engine:
         self.is_running = False
         self.foreground_app = None
         self.active_menu = None
+
+        self._draw_started = None
+        self._draw_ended = None
+
+        self._think_started = None
+        self._think_ended = None
+
+        self._last_report = None
+
+    def _report_heap(self):
+        st = kernel.heap_stats()
+        g = st.general
+        d = st.dma
+        log.info(f"Heap: General: {g.total_free_bytes:d}B free, {g.total_allocated_bytes:d}B allocated, {g.largest_free_block:d}B largest free block")
+        log.info(f"Heap: DMA: {d.total_free_bytes:d}B free, {d.total_allocated_bytes:d}B allocated, {d.largest_free_block:d}B largest free block")
+
+    def _report(self):
+        now = time.ticks_ms()
+        if self._last_report is not None and (now - self._last_report) < 1000:
+            return
+
+        if self._draw_started is not None and self._draw_ended is not None:
+            draw_time = self._draw_ended - self._draw_started
+            log.info(f"EventLoop Draw time: {draw_time:.3f}ms")
+
+        if self._think_started is not None and self._think_ended is not None:
+            think_time = self._think_ended - self._think_started
+            log.info(f"EventLoop Think time: {think_time:.3f}ms")
+
+        self._report_heap()
+        self._last_report = now
 
     def add(self, event):
         if isinstance(event, EventTimed):
@@ -134,16 +166,23 @@ class Engine:
             self.foreground_app.tick()
 
     def _handle_draw(self, ctx):
+        self._draw_started = time.ticks_ms()
+
         if self.foreground_app:
             self.foreground_app.draw(ctx)
         if self.active_menu:
             self.active_menu.draw(ctx)
-        hardware.display_update()
+
+        self._draw_ended = time.ticks_ms()
 
     def _eventloop_single(self, delta):
+        self._think_started = time.ticks_ms()
+
         self._handle_timed()
         self._handle_input(delta)
         self._handle_userloop()
+
+        self._think_ended = time.ticks_ms()
 
     def eventloop(self):
         log.info("starting eventloop")
@@ -151,27 +190,43 @@ class Engine:
             log.warning("eventloop already running, doing nothing")
             return
         self.is_running = True
-        ctx = hardware.get_ctx()
-        last_draw = 0
+
         last_eventloop = None
+
+        ctx = None
         while self.is_running:
-            now = time.ticks_ms()
+            start = time.ticks_ms()
+            deadline = start + 20
+            self._report()
+
             if last_eventloop is not None:
-                delta = now - last_eventloop
-                self._eventloop_single(delta / 1000.0)
-            last_eventloop = now
+                delta = (start - last_eventloop) / 1000.0
+                if delta >= 0.01:
+                    last_eventloop = start
+                    self._eventloop_single(delta)
+            else:
+                last_eventloop = start
 
-            diff = time.ticks_diff(now, last_draw)
-            # print("diff:",diff)
-            if diff > 10:
-                # print("eventloop draw")
-                self._handle_draw(ctx)
-                last_draw = time.ticks_ms()
+            post_think = time.ticks_ms()
 
-            # self.deadline = time.ticks_add(time.ticks_ms(),ms)
+            if ctx is None:
+                ctx = hardware.get_ctx()
+                if ctx is not None:
+                    self._handle_draw(ctx)
 
-            time.sleep_ms(1)
+            post_draw = time.ticks_ms()
 
+            if ctx is not None and not hardware.display_pipe_full():
+                hardware.display_update(ctx)
+                ctx = None
+
+            post_submit = time.ticks_ms()
+
+            wait = deadline - time.ticks_ms()
+            if wait > 0:
+                hardware.freertos_sleep(wait)
+            else:
+                print('out of time', wait, post_think-start, post_draw-post_think, post_submit-post_draw)
 
 class Event:
     def __init__(
