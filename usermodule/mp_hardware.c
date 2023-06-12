@@ -182,7 +182,16 @@ STATIC mp_obj_t mp_get_ctx(size_t n_args, const mp_obj_t *args) {
     mp_obj_t mp_ctx = mp_ctx_from_ctx(ctx);
     return mp_ctx;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_get_ctx_obj, 0, 0, mp_get_ctx);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_ctx_obj, mp_get_ctx);
+
+STATIC mp_obj_t mp_freertos_sleep(mp_obj_t ms_in) {
+    uint32_t ms = mp_obj_get_int(ms_in);
+    MP_THREAD_GIL_EXIT();
+    vTaskDelay(ms / portTICK_PERIOD_MS);
+    MP_THREAD_GIL_ENTER();
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_freertos_sleep_obj, mp_freertos_sleep);
 
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_audio) },
@@ -209,6 +218,7 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_count_sources), MP_ROM_PTR(&mp_count_sources_obj) },
     { MP_ROM_QSTR(MP_QSTR_dump_all_sources), MP_ROM_PTR(&mp_dump_all_sources_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_update), MP_ROM_PTR(&mp_display_update_obj) },
+    { MP_ROM_QSTR(MP_QSTR_freertos_sleep), MP_ROM_PTR(&mp_freertos_sleep_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_set_backlight), MP_ROM_PTR(&mp_display_set_backlight_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&mp_version_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_ctx), MP_ROM_PTR(&mp_get_ctx_obj) },
