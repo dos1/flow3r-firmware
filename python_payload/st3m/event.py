@@ -226,7 +226,8 @@ class Engine:
             if wait > 0:
                 hardware.freertos_sleep(wait)
             else:
-                print('out of time', wait, post_think-start, post_draw-post_think, post_submit-post_draw)
+                log.warning(f'Application took too long too process! Slack {wait}ms.')
+                log.warning(f'Think: {post_think-start}ms, Draw: {post_draw-post_think}ms, Submit: {post_submit-post_draw}ms')
 
 class Event:
     def __init__(
