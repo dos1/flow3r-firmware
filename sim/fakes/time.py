@@ -9,3 +9,6 @@ def ticks_ms():
 
 def ticks_diff(a, b):
     return a - b
+
+def ticks_add(a, b):
+    return a + b
