@@ -178,8 +178,101 @@ STATIC mp_obj_t mp_scheduler_snapshot(void) {
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_scheduler_snapshot_obj, mp_scheduler_snapshot);
 
+typedef struct _heap_kind_stats_obj_t {
+    mp_obj_base_t base;
+
+	qstr kind;
+    multi_heap_info_t info;
+} heap_kind_stats_obj_t;
+
+const mp_obj_type_t heap_kind_stats_type;
+
+STATIC void heap_kind_stats_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+    (void)kind;
+    heap_kind_stats_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    mp_printf(print, "HeapKindStats(kind=%s,total_free_bytes=%d,total_allocated_bytes=%d,largest_free_block=%d)",
+        qstr_str(self->kind), self->info.total_free_bytes, self->info.total_allocated_bytes, self->info.largest_free_block);
+}
+
+STATIC void heap_kind_stats_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+    heap_kind_stats_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    if (dest[0] != MP_OBJ_NULL) {
+        return;
+    }
+    switch (attr) {
+    case MP_QSTR_total_free_bytes: dest[0] = mp_obj_new_int_from_uint(self->info.total_free_bytes); break;
+    case MP_QSTR_total_allocated_bytes: dest[0] = mp_obj_new_int_from_uint(self->info.total_allocated_bytes); break;
+    case MP_QSTR_largest_free_block: dest[0] = mp_obj_new_int_from_uint(self->info.largest_free_block); break;
+    }
+}
+
+MP_DEFINE_CONST_OBJ_TYPE(
+    heap_kind_stats_type,
+    MP_QSTR_heap_kind_stats,
+    MP_TYPE_FLAG_NONE,
+    print, heap_kind_stats_print,
+    attr, heap_kind_stats_attr
+);
+
+STATIC mp_obj_t heap_kind_stats_from_caps(qstr kind, uint32_t caps) {
+    heap_kind_stats_obj_t *stats = m_new_obj(heap_kind_stats_obj_t);
+    stats->base.type = &heap_kind_stats_type;
+    stats->kind = kind;
+
+    heap_caps_get_info(&stats->info, caps);
+    return MP_OBJ_FROM_PTR(stats);
+}
+
+typedef struct _heap_stats_obj_t {
+    mp_obj_base_t base;
+
+    mp_obj_t general;
+    mp_obj_t dma;
+} heap_stats_obj_t;
+
+const mp_obj_type_t heap_stats_type;
+
+STATIC void heap_stats_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+    (void)kind;
+    mp_printf(print, "HeapStats(general=[...],dma=[...])");
+}
+
+STATIC void heap_stats_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
+    heap_stats_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    if (dest[0] != MP_OBJ_NULL) {
+        return;
+    }
+    switch (attr) {
+    case MP_QSTR_general: dest[0] = self->general; break;
+    case MP_QSTR_dma: dest[0] = self->dma; break;
+    }
+}
+
+MP_DEFINE_CONST_OBJ_TYPE(
+    heap_stats_type,
+    MP_QSTR_heap_stats,
+    MP_TYPE_FLAG_NONE,
+    print, heap_stats_print,
+    attr, heap_stats_attr
+);
+
+STATIC mp_obj_t mp_heap_stats(void) {
+    mp_obj_t general = heap_kind_stats_from_caps(MP_QSTR_general, MALLOC_CAP_DEFAULT);
+    mp_obj_t dma = heap_kind_stats_from_caps(MP_QSTR_general, MALLOC_CAP_DMA);
+
+    heap_stats_obj_t *stats = m_new_obj(heap_stats_obj_t);
+    stats->base.type = &heap_stats_type;
+    stats->general = general;
+    stats->dma = dma;
+
+    return MP_OBJ_FROM_PTR(stats);
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_heap_stats_obj, mp_heap_stats);
+
 STATIC const mp_rom_map_elem_t globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_scheduler_snapshot), MP_ROM_PTR(&mp_scheduler_snapshot_obj) },
+    { MP_ROM_QSTR(MP_QSTR_heap_stats), MP_ROM_PTR(&mp_heap_stats_obj)},
 
     { MP_ROM_QSTR(MP_QSTR_RUNNING), MP_ROM_INT(eRunning) },
     { MP_ROM_QSTR(MP_QSTR_READY), MP_ROM_INT(eReady) },
