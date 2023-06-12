@@ -12,12 +12,20 @@ class AppWorms(application.Application):
     def on_init(self):
         print("on init")
 
-        # TODO(q3k): factor out frame limiter
-        self.last_render = None
-        self.target_fps = 30
-        self.target_delta = 1000 / self.target_fps
-        self.frame_slack = None
-        self.last_report = None
+        # HACK: we work against double buffering by keeping note of how many
+        # times on_draw got called.
+        #
+        # We know there's two buffers, so if we render the same state twice in a
+        # row we'll be effectively able to keep a persistent framebuffer, like
+        # with the old API.
+        #
+        # When bufn is in [0, 1] we render the background image.
+        # When bufn is in [2, ...) we render the worms.
+        # When bufn is > 3, we enable updating the worm state.
+        #
+        # TODO(q3k): allow apps to request single-buffered graphics for
+        # persistent framebuffers.
+        self.bufn = 0
 
         self.add_event(
             event.Event(
@@ -40,36 +48,28 @@ class AppWorms(application.Application):
         self.just_shown = True
 
     def on_draw(self, ctx):
-        if self.just_shown:
+        if self.bufn == 0 or self.bufn == 1:
             ctx.rgb(*ui.BLUE).rectangle(
                 -ui.WIDTH / 2, -ui.HEIGHT / 2, ui.WIDTH, ui.HEIGHT
             ).fill()
+            ctx.text_align = ctx.CENTER
+            ctx.text_baseline = ctx.MIDDLE
             ctx.move_to(0, 0).rgb(*ui.WHITE).text("touch me :)")
-            self.just_shown = False
+            self.bufn += 1
+            return
 
-        ctx.text_align = ctx.CENTER
-        ctx.text_baseline = ctx.MIDDLE
         for w in self.worms:
             w.draw(ctx)
+        self.bufn += 1
 
     def main_foreground(self):
         now = time.ticks_ms()
 
-        if self.last_render is not None:
-            delta = now - self.last_render
-            if self.frame_slack is None:
-                self.frame_slack = self.target_delta - delta
-            if delta < self.target_delta:
-                return
-
-            if self.last_report is None or (now - self.last_report) > 1000:
-                fps = 1000 / delta
-                print(f"fps: {fps:.3}, frame budget slack: {self.frame_slack:.3}ms")
-                self.last_report = now
-
         # Simulation is currently locked to FPS.
-        for w in self.worms:
-            w.move()
+        if self.bufn > 3:
+            for w in self.worms:
+                w.move()
+            self.bufn = 2
 
         self.last_render = now
 
