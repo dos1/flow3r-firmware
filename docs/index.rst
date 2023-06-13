@@ -12,6 +12,7 @@ Welcome to flow3r's documentation!
 
    badge/hardware_specs.rst
    badge/badge_link.rst
+   badge/sdcard.rst
 
 .. toctree::
    :maxdepth: 1
