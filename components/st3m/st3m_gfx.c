@@ -57,6 +57,21 @@ static st3m_counter_timer_t rast_write_time;
 static TaskHandle_t crtc_task;
 static TaskHandle_t rast_task;
 
+// Attempt to receive from a queue forever, but log an error if it takes longer
+// than two seconds to get something.
+static void xQueueReceiveNotifyStarved(QueueHandle_t q, void *dst, const char *desc) {
+    uint8_t starved = 0;
+    for (;;) {
+	    if (xQueueReceive(q, dst, pdMS_TO_TICKS(2000)) == pdTRUE) {
+            return;
+        }
+        if (!starved) {
+            ESP_LOGE(TAG, "%s", desc);
+            starved = 1;
+        }
+    }
+}
+
 static void st3m_gfx_crtc_task(void *_arg) {
 	(void)_arg;
 
@@ -64,7 +79,7 @@ static void st3m_gfx_crtc_task(void *_arg) {
 		int descno;
 
 		int64_t start = esp_timer_get_time();
-		xQueueReceive(framebuffer_blitq, &descno, portMAX_DELAY);
+        xQueueReceiveNotifyStarved(framebuffer_blitq, &descno, "crtc task starved!");
 		int64_t end = esp_timer_get_time();
 		st3m_counter_timer_sample(&blit_read_time, end-start);
 
@@ -96,12 +111,12 @@ static void st3m_gfx_rast_task(void *_arg) {
 	while (true) {
 		int fb_descno, dctx_descno;
 		int64_t start = esp_timer_get_time();
-		xQueueReceive(framebuffer_freeq, &fb_descno, portMAX_DELAY);
+        xQueueReceiveNotifyStarved(framebuffer_freeq, &fb_descno, "rast task starved (freeq)!");
 		int64_t end = esp_timer_get_time();
 		st3m_counter_timer_sample(&rast_read_fb_time, end-start);
 
 		start = esp_timer_get_time();
-		xQueueReceive(dctx_rastq, &dctx_descno, portMAX_DELAY);
+		xQueueReceiveNotifyStarved(dctx_rastq, &dctx_descno, "rast task starved (dctx)!");
 		end = esp_timer_get_time();
 		st3m_counter_timer_sample(&rast_read_dctx_time, end-start);
 
