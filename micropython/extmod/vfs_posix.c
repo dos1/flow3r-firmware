@@ -1,9 +1,12 @@
 /*
  * This file is part of the MicroPython project, http://micropython.org/
  *
+ * Modified to use the ESP32 VFS layer.
+ *
  * The MIT License (MIT)
  *
  * Copyright (c) 2017-2018 Damien P. George
+ * Copyright (c) 2023 Serge 'q3k' Bazanski
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,9 +46,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
-#ifdef _MSC_VER
-#include <direct.h> // For mkdir etc.
-#endif
 
 typedef struct _mp_obj_vfs_posix_t {
     mp_obj_base_t base;
@@ -311,72 +311,6 @@ STATIC mp_obj_t vfs_posix_rmdir(mp_obj_t self_in, mp_obj_t path_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(vfs_posix_rmdir_obj, vfs_posix_rmdir);
 
-STATIC mp_obj_t vfs_posix_stat(mp_obj_t self_in, mp_obj_t path_in) {
-    mp_obj_vfs_posix_t *self = MP_OBJ_TO_PTR(self_in);
-    struct stat sb;
-    const char *path = vfs_posix_get_path_str(self, path_in);
-    int ret;
-    MP_HAL_RETRY_SYSCALL(ret, stat(path, &sb), mp_raise_OSError(err));
-    mp_obj_tuple_t *t = MP_OBJ_TO_PTR(mp_obj_new_tuple(10, NULL));
-    t->items[0] = MP_OBJ_NEW_SMALL_INT(sb.st_mode);
-    t->items[1] = mp_obj_new_int_from_uint(sb.st_ino);
-    t->items[2] = mp_obj_new_int_from_uint(sb.st_dev);
-    t->items[3] = mp_obj_new_int_from_uint(sb.st_nlink);
-    t->items[4] = mp_obj_new_int_from_uint(sb.st_uid);
-    t->items[5] = mp_obj_new_int_from_uint(sb.st_gid);
-    t->items[6] = mp_obj_new_int_from_uint(sb.st_size);
-    t->items[7] = mp_obj_new_int_from_uint(sb.st_atime);
-    t->items[8] = mp_obj_new_int_from_uint(sb.st_mtime);
-    t->items[9] = mp_obj_new_int_from_uint(sb.st_ctime);
-    return MP_OBJ_FROM_PTR(t);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(vfs_posix_stat_obj, vfs_posix_stat);
-
-#if MICROPY_PY_UOS_STATVFS
-
-#ifdef __ANDROID__
-#define USE_STATFS 1
-#endif
-
-#if USE_STATFS
-#include <sys/vfs.h>
-#define STRUCT_STATVFS struct statfs
-#define STATVFS statfs
-#define F_FAVAIL sb.f_ffree
-#define F_NAMEMAX sb.f_namelen
-#define F_FLAG sb.f_flags
-#else
-#include <sys/statvfs.h>
-#define STRUCT_STATVFS struct statvfs
-#define STATVFS statvfs
-#define F_FAVAIL sb.f_favail
-#define F_NAMEMAX sb.f_namemax
-#define F_FLAG sb.f_flag
-#endif
-
-STATIC mp_obj_t vfs_posix_statvfs(mp_obj_t self_in, mp_obj_t path_in) {
-    mp_obj_vfs_posix_t *self = MP_OBJ_TO_PTR(self_in);
-    STRUCT_STATVFS sb;
-    const char *path = vfs_posix_get_path_str(self, path_in);
-    int ret;
-    MP_HAL_RETRY_SYSCALL(ret, STATVFS(path, &sb), mp_raise_OSError(err));
-    mp_obj_tuple_t *t = MP_OBJ_TO_PTR(mp_obj_new_tuple(10, NULL));
-    t->items[0] = MP_OBJ_NEW_SMALL_INT(sb.f_bsize);
-    t->items[1] = MP_OBJ_NEW_SMALL_INT(sb.f_frsize);
-    t->items[2] = MP_OBJ_NEW_SMALL_INT(sb.f_blocks);
-    t->items[3] = MP_OBJ_NEW_SMALL_INT(sb.f_bfree);
-    t->items[4] = MP_OBJ_NEW_SMALL_INT(sb.f_bavail);
-    t->items[5] = MP_OBJ_NEW_SMALL_INT(sb.f_files);
-    t->items[6] = MP_OBJ_NEW_SMALL_INT(sb.f_ffree);
-    t->items[7] = MP_OBJ_NEW_SMALL_INT(F_FAVAIL);
-    t->items[8] = MP_OBJ_NEW_SMALL_INT(F_FLAG);
-    t->items[9] = MP_OBJ_NEW_SMALL_INT(F_NAMEMAX);
-    return MP_OBJ_FROM_PTR(t);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(vfs_posix_statvfs_obj, vfs_posix_statvfs);
-
-#endif
-
 STATIC const mp_rom_map_elem_t vfs_posix_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_mount), MP_ROM_PTR(&vfs_posix_mount_obj) },
     { MP_ROM_QSTR(MP_QSTR_umount), MP_ROM_PTR(&vfs_posix_umount_obj) },
@@ -389,10 +323,6 @@ STATIC const mp_rom_map_elem_t vfs_posix_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_remove), MP_ROM_PTR(&vfs_posix_remove_obj) },
     { MP_ROM_QSTR(MP_QSTR_rename), MP_ROM_PTR(&vfs_posix_rename_obj) },
     { MP_ROM_QSTR(MP_QSTR_rmdir), MP_ROM_PTR(&vfs_posix_rmdir_obj) },
-    { MP_ROM_QSTR(MP_QSTR_stat), MP_ROM_PTR(&vfs_posix_stat_obj) },
-    #if MICROPY_PY_UOS_STATVFS
-    { MP_ROM_QSTR(MP_QSTR_statvfs), MP_ROM_PTR(&vfs_posix_statvfs_obj) },
-    #endif
 };
 STATIC MP_DEFINE_CONST_DICT(vfs_posix_locals_dict, vfs_posix_locals_dict_table);
 

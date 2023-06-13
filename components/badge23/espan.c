@@ -6,6 +6,7 @@
 
 #include "flow3r_bsp.h"
 #include "st3m_gfx.h"
+#include "st3m_fs.h"
 
 #include "esp_log.h"
 #include "driver/i2c.h"
@@ -90,6 +91,8 @@ void os_app_early_init(void) {
         st3m_gfx_splash("st3m loading...");
     }
     flow3r_bsp_display_set_backlight(100);
+
+    st3m_fs_init();
 }
 
 void os_app_main(void)

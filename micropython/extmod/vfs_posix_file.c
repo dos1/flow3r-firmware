@@ -35,26 +35,26 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#ifdef _WIN32
-#define fsync _commit
-#else
-#include <poll.h>
-#endif
+#define MP_HAL_RETRY_SYSCALL(ret, syscall, raise) do { \
+        MP_THREAD_GIL_EXIT(); \
+        ret = syscall; \
+        MP_THREAD_GIL_ENTER(); \
+        if (ret == -1) { \
+            int err = errno; \
+            raise; \
+        } \
+    } while(0)
 
 typedef struct _mp_obj_vfs_posix_file_t {
     mp_obj_base_t base;
     int fd;
 } mp_obj_vfs_posix_file_t;
 
-#if MICROPY_CPYTHON_COMPAT
 STATIC void check_fd_is_open(const mp_obj_vfs_posix_file_t *o) {
     if (o->fd < 0) {
         mp_raise_ValueError(MP_ERROR_TEXT("I/O operation on closed file"));
     }
 }
-#else
-#define check_fd_is_open(o)
-#endif
 
 STATIC void vfs_posix_file_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     (void)kind;
@@ -194,32 +194,6 @@ STATIC mp_uint_t vfs_posix_file_ioctl(mp_obj_t o_in, mp_uint_t request, uintptr_
             return 0;
         case MP_STREAM_GET_FILENO:
             return o->fd;
-        #if MICROPY_PY_USELECT
-        case MP_STREAM_POLL: {
-            #ifdef _WIN32
-            mp_raise_NotImplementedError(MP_ERROR_TEXT("poll on file not available on win32"));
-            #else
-            mp_uint_t ret = 0;
-            uint8_t pollevents = 0;
-            if (arg & MP_STREAM_POLL_RD) {
-                pollevents |= POLLIN;
-            }
-            if (arg & MP_STREAM_POLL_WR) {
-                pollevents |= POLLOUT;
-            }
-            struct pollfd pfd = { .fd = o->fd, .events = pollevents };
-            if (poll(&pfd, 1, 0) > 0) {
-                if (pfd.revents & POLLIN) {
-                    ret |= MP_STREAM_POLL_RD;
-                }
-                if (pfd.revents & POLLOUT) {
-                    ret |= MP_STREAM_POLL_WR;
-                }
-            }
-            return ret;
-            #endif
-        }
-        #endif
         default:
             *errcode = EINVAL;
             return MP_STREAM_ERROR;

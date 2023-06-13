@@ -2,9 +2,11 @@ idf_component_register(
     SRCS
         st3m_gfx.c
         st3m_counter.c
+        st3m_fs.c
     INCLUDE_DIRS
         .
     REQUIRES
         flow3r_bsp
         ctx
+        fatfs
 )
