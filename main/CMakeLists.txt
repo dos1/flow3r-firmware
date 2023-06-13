@@ -194,3 +194,6 @@ target_compile_definitions(${COMPONENT_TARGET} PUBLIC
 )
 
 include("${MICROPY_DIR}/py/mkrules.cmake")
+
+include("${PROJECT_DIR}/third_party/fatfsgen/project_include.cmake")
+fatfs_create_spiflash_image(vfs ${PROJECT_DIR}/python_payload FLASH_IN_PROJECT)

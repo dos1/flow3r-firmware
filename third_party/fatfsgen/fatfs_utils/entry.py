@@ -210,8 +210,8 @@ class Entry:
         exceeds_short_name: bool = len(object_name) > MAX_NAME_SIZE or len(object_extension) > MAX_EXT_SIZE
         if not self.fatfs_state.long_names_enabled and exceeds_short_name:
             raise TooLongNameException(
-                'Maximal length of the object name is {} characters and {} characters for extension!'.format(
-                    MAX_NAME_SIZE, MAX_EXT_SIZE
+                'Maximal length of the object name ({}) is {} characters and {} characters for extension!'.format(
+                    object_name, MAX_NAME_SIZE, MAX_EXT_SIZE
                 )
             )
 

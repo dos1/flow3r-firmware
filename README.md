@@ -2,16 +2,16 @@
 
 See python_payload/README.md for a demo application.
 
-Files can be transferred with mpremote, such as:
+Files can be transferred either by performing an `idf.py flash` or with mpremote, such as:
 
 ```
-mpremote fs cp python_payload/boot.py :boot.py
+mpremote fs cp python_payload/main.py :main.py
 ```
 
 Alternatively, adafruit-ampy may work more reliably sometimes:
 
 ```
-ampy -p /dev/ttyACM0 -d3 put boot.py
+ampy -p /dev/ttyACM0 -d3 put main.py
 ```
 
 Please transfer all .py files in python_payload/ for using the demo payload.
@@ -62,7 +62,8 @@ $ idf.py build
 
 By default, code for the fourth generation prototype will be built. To select a different generation, either set `-g`/`--generation` during an `idf.py build` (which will get cached for subsequent builds) or set the BADGE_GENERATION environment variable to one of the following values:
 
-^ `-g` / `BADGE_GENERATION` value ^ Badge Generation                   ^ 
+| `-g` / `BADGE_GENERATION` value | Badge Generation                   | 
+|---------------------------------|------------------------------------|
 | `p1` or `proto1`                | Prototype 1                        |
 | `p3` or `proto3`                | Prototype 3 (B3xx)                 |
 | `p4` or `proto4`                | Prototype 4 (B4xx)                 |
@@ -76,6 +77,14 @@ Put badge into bootloader mode by holding left should button down during boot.
 ```
 $ idf.py -p /dev/ttyACM0 flash
 ```
+
+The following targets are available for flashing:
+
+| Target             | Flashes                                         |
+|--------------------|-------------------------------------------------|
+| `idf.py flash`     | Bootloader, C code, Python Code / FAT partition |
+| `idf.py app-flash` | C code                                          |
+| `idf.py vfs-flash` | Python Code / FAT partition                     |
 
 You can skip `-p /dev/ttyACM0` if you set the environment variable `ESPPORT=/dev/ttyACM0`. This environment variable is also set by default when using Nix.
 
