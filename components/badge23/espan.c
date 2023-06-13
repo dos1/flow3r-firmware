@@ -95,6 +95,13 @@ void locks_init(){
 void os_app_early_init(void) {
     // Initialize display first as that gives us a nice splash screen.
     st3m_gfx_init();
+    // Submit splash a couple of times to make sure we've fully flushed out the
+    // initial framebuffer (both on-ESP and in-screen) noise before we turn on
+    // the backlight.
+    for (int i = 0; i < 4; i++) {
+        st3m_gfx_splash("st3m loading...");
+    }
+    flow3r_bsp_display_set_backlight(100);
 }
 
 void os_app_main(void)

@@ -52,3 +52,12 @@ uint8_t st3m_gfx_drawctx_pipe_full(void);
 // This causes a graphical disturbance and shouldn't be called during normal
 // operation.
 void st3m_gfx_flush(void);
+
+// Display some text as a splash message. This should be used early on in the
+// badge boot process to provide feedback on the rest of the software stack
+// coming up
+//
+// The splash screen is rendered the same way as if submitted by the normal
+// drawctx pipe, which means they will get overwritten the moment a proper
+// rendering loop starts.
+void st3m_gfx_splash(const char *text);

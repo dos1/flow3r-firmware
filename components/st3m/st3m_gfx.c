@@ -150,6 +150,22 @@ static void st3m_gfx_rast_task(void *_arg) {
     }
 }
 
+void st3m_gfx_splash(const char *text) {
+    st3m_ctx_desc_t *target = st3m_gfx_drawctx_free_get(portMAX_DELAY);
+    ctx_rgb(target->ctx, 0.157, 0.129, 0.167);
+    ctx_rectangle(target->ctx, -120, -120, 240, 240);
+    ctx_fill(target->ctx);
+
+    ctx_move_to(target->ctx, 0, 0);
+    ctx_rgb(target->ctx, 0.9, 0.9, 0.9);
+    ctx_text_align(target->ctx, CTX_TEXT_ALIGN_CENTER);
+    ctx_text_baseline(target->ctx, CTX_TEXT_BASELINE_ALPHABETIC);
+    ctx_font_size(target->ctx, 15.0);
+    ctx_text(target->ctx, text);
+
+    st3m_gfx_drawctx_pipe_put(target);
+}
+
 void st3m_gfx_init(void) {
     // Make sure we're not being re-initialized.
     assert(framebuffer_freeq == NULL);
@@ -166,7 +182,6 @@ void st3m_gfx_init(void) {
     st3m_counter_timer_init(&rast_write_time);
 
     flow3r_bsp_display_init();
-    flow3r_bsp_display_set_backlight(100);
 
     // Create framebuffer queues.
     framebuffer_freeq = xQueueCreate(ST3M_GFX_NBUFFERS+1, sizeof(int));
