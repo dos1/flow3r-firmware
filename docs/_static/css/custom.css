@@ -1,0 +1,33 @@
+/* this is included in conf.py
+.wy-side-nav-search {
+    background-color: #FB48C4;
+}
+*/
+
+.wy-menu-vertical header,
+.wy-menu-vertical p.caption {
+    color: #FB48C4;
+}
+
+.wy-nav-side {
+    background: black;
+}
+
+.wy-side-nav-search input[type="text"] {
+    border-color: black;
+    border-radius: 5px;
+}
+
+html.writer-html4 .rst-content dl:not(.docutils)>dt,
+html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple)>dt {
+    border-top-color: #FB48C4;
+    background: #FB48C410;
+}
+
+html.writer-html4 .rst-content dl:not(.docutils) > dt, html.writer-html5 .rst-content dl[class]:not(.option-list):not(.field-list):not(.footnote):not(.citation):not(.glossary):not(.simple) > dt {
+    color: #cd3ba0;
+}
+
+.rst-content code.literal, .rst-content tt.literal {
+    color: #cd3ba0;
+}

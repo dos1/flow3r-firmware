@@ -1,0 +1,41 @@
+.. py:module:: audio
+
+``audio`` module
+================
+
+(placeholder docs, to be replaced with autodocs when that's a thing)
+
+.. py:function:: headset_is_connected() -> bool
+
+   Returns 1 if headphones with microphone were connected to the headphone
+   jack at the last call of audio_update_jacksense.
+
+.. py:function:: headphones_are_connected() -> bool
+
+   Returns 1 if headphones with or without microphone were connected to the
+   headphone jack at the last call of audio_update_jacksense.
+
+.. py:function:: headphones_detection_override(enable : bool)
+
+   If a sleeve contact mic doesn't pull the detection pin low enough the
+   codec's built in headphone detection might fail. Calling this function
+   with 'enable = 1' overrides the detection and assumes there's headphones
+   plugged in. Call with 'enable = 0' to revert to automatic detection.
+
+.. py:function:: headphones_set_volume_dB(vol_dB : float) -> float
+.. py:function:: speaker_set_volume_dB(vol_dB : float) -> float
+.. py:function:: set_volume_dB(vol_dB : float) -> float
+
+   Attempts to set target volume for the headphone output/onboard speakers
+   respectively, clamps/rounds if necessary and returns the actual volume.
+   Absolute reference arbitrary.
+   Does not unmute, use :code:`audio_{headphones_/speaker_/}set_mute` as
+   needed.
+   Enters fake mute if requested volume is below the value set by
+   :code:`audio_{headphones/speaker}_set_minimum_volume_user`.
+
+   Note: This function uses a hardware PGA for the coarse value and software
+   for the fine value. These two methods are as of yet not synced so that
+   there may be a transient volume "hiccup". "p1" badges only use software
+   volume. The unspecified variant automatically chooses the adequate channel
+   (**).

@@ -249,6 +249,22 @@ uart.write("hiiii")
 uart.read(5)
 ```
 
+### Documentation
+
+To build sphinx docs:
+
+```
+cd docs
+make html
+firefox _build/html/index.html
+```
+
+To continuously build on change:
+
+```
+watchexec make html
+```
+
 ## License
 All original source code in this reporitory is Copyright (C) 2023 Flow3r Badge Contributors. This source code is licensed under the GNU General Public License Version 3.0 as described in the file COPYING.
 
