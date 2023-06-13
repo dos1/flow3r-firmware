@@ -246,13 +246,11 @@ class IconValue(Icon):
         ).fill()
         ctx.rgb(0, 0, 0).move_to(x, y).text(self.label)
 
-        self.ctx.move_to(x, y).rgb(*PUSH_RED).arc(
-            x, y, self.size / 2, -pi, pi, True
-        ).fill()
-        self.ctx.move_to(x, y).rgb(*GO_GREEN).arc(
+        ctx.move_to(x, y).rgb(*PUSH_RED).arc(x, y, self.size / 2, -pi, pi, True).fill()
+        ctx.move_to(x, y).rgb(*GO_GREEN).arc(
             x, y, self.size / 2 - 5, v * 2 * pi, 0, 1
         ).fill()
-        self.ctx.rgb(0, 0, 0).move_to(x, y).text(self.label)
+        ctx.rgb(0, 0, 0).move_to(x, y).text(self.label)
 
 
 class GroupStackedVertical(UIElement):

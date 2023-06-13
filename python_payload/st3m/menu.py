@@ -1,4 +1,5 @@
 from st3m import logging
+import math
 
 log = logging.Log(__name__, level=logging.INFO)
 log.info("import")
@@ -236,15 +237,41 @@ def on_scroll(d):
         active_menu.scroll_menu(d["value"] * 10.0 * d["delta"])
 
 
+menu_offset = None
+last = time.ticks_ms()
 def on_scroll_captouch(d):
     active_menu = get_active_menu()
     if active_menu is None:
         return
+    global menu_offset
+    global last
+    #if abs(d["radius"]) < 10000:
+    #    return
 
-    return
-    if abs(d["radius"]) < 10000:
-        return
-    active_menu.rotate_to(d["angle"] + math.pi)
+    a = math.atan2(-d["radius"]/600,d["angle"]/600)
+
+    z = 0
+    if d["change"]:
+        if d["value"] == 1:
+            z = 1
+        else:
+            z = -1
+
+    if z==1:
+        menu_offset = active_menu.angle-a
+        last = time.ticks_ms()
+    if z==0:
+        active_menu.rotate_to(menu_offset+a)
+
+    if z==-1:
+        diff = time.ticks_diff(time.ticks_ms(),last)
+        print(diff)
+        if diff<300:
+            active_menu.enter_menu()
+
+
+
+    #active_menu.rotate_to(a)
 
 
 def on_release(d):
@@ -309,10 +336,11 @@ event.Event(
     enabled=True,
 )
 
-# event.Event(name="menu rotation captouch",group_id="menu",
-#    condition=lambda e: e["type"] =="captouch" and not e["change"] and abs(e["value"])==1 and e["index"]==2,
-#    action=on_scroll_captouch, enabled=True
-# )
+event.Event(name="menu rotation captouch",group_id="menu",
+    condition=lambda e: e["type"] =="captouch" and (e["value"] == 1 or e["change"]) and e["index"]==2,
+    action=on_scroll_captouch,
+     enabled=True
+)
 
 
 event.Event(
@@ -330,7 +358,7 @@ event.Event(
     and (e["value"] == 1 or e["change"])
     and e["index"] % 2 == 1,
     action=on_touch_1d,
-    enabled=True,
+    enabled=False,
 )
 
 event.Event(

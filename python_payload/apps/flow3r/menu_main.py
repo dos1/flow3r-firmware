@@ -8,7 +8,8 @@ from apps.flow3r import menu_settings, menu_tinysynth, menu_crazysynth
 import time
 
 
-def get_menu():
+
+def get_menu(app):
     menu_main = menu.Menu("flow3r", has_back=False)
     menu_badge = menu.Menu("badge")
     menu_apps = menu.Menu("apps")
@@ -42,7 +43,7 @@ def get_menu():
     menu_main.add(menu.MenuItemSubmenu(menu_badge))
     menu_main.add(menu.MenuItemSubmenu(menu_apps))
     menu_main.add(menu.MenuItemSubmenu(menu_music))
-    menu_main.add(menu.MenuItemSubmenu(menu_settings.get_menu()))
+    menu_main.add(menu.MenuItemSubmenu(menu_settings.get_menu(app)))
     menu_music.add(menu.MenuItemSubmenu(menu_tinysynth.get_menu()))
     menu_music.add(menu.MenuItemSubmenu(menu_crazysynth.get_menu()))
 

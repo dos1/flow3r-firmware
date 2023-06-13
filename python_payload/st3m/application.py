@@ -131,6 +131,7 @@ class Application:
             self._set_events(self._events_foreground, False)
 
         self.engine.foreground_app = None
+        menu.menu_back()
         if self.has_background:
             self.state = STATE_BACKGROUND
         self.on_background()

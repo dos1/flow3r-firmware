@@ -57,7 +57,6 @@ class Control:
 class ControlSwitch(Control):
     def enter(self):
         self.set_value(not self.get_value())
-        self.draw()
 
     def scroll(self, delta):
         self.enter()

@@ -28,6 +28,7 @@ class Engine:
         self.is_running = False
         self.foreground_app = None
         self.active_menu = None
+        self.overlay = None
 
         self._draw_started = None
         self._draw_ended = None
@@ -41,8 +42,12 @@ class Engine:
         st = kernel.heap_stats()
         g = st.general
         d = st.dma
-        log.info(f"Heap: General: {g.total_free_bytes:d}B free, {g.total_allocated_bytes:d}B allocated, {g.largest_free_block:d}B largest free block")
-        log.info(f"Heap: DMA: {d.total_free_bytes:d}B free, {d.total_allocated_bytes:d}B allocated, {d.largest_free_block:d}B largest free block")
+        log.info(
+            f"Heap: General: {g.total_free_bytes:d}B free, {g.total_allocated_bytes:d}B allocated, {g.largest_free_block:d}B largest free block"
+        )
+        log.info(
+            f"Heap: DMA: {d.total_free_bytes:d}B free, {d.total_allocated_bytes:d}B allocated, {d.largest_free_block:d}B largest free block"
+        )
 
     def _report(self):
         now = time.ticks_ms()
@@ -106,6 +111,7 @@ class Engine:
                 self.next_timed = None
 
     def _handle_input(self, delta):
+        # log.info("input {delta}")
         input_state = []
 
         # buttons
@@ -125,13 +131,12 @@ class Engine:
                     "index": i,
                     "value": hardware.get_captouch(i),
                     "radius": hardware.captouch_get_petal_rad(i),
-                    "angle": hardware.captouch_get_petal_phi(i) / 10000,
+                    "angle": hardware.captouch_get_petal_phi(i),
                 }
             )
 
         if not self.last_input_state:
             self.last_input_state = input_state
-            # tprint (input_state)
             return
 
         for i in range(len(input_state)):
@@ -154,7 +159,7 @@ class Engine:
             triggered_events = list(
                 filter(lambda e: e.enabled and e.condition(entry), self.events_input)
             )
-            # print (triggered_events)
+            # log.info(triggered_events)
             # map(lambda e: e.trigger(d), triggered_events)
             for e in triggered_events:
                 e.trigger(entry)
@@ -172,6 +177,8 @@ class Engine:
             self.foreground_app.draw(ctx)
         if self.active_menu:
             self.active_menu.draw(ctx)
+        if self.overlay:
+            self.overlay.draw(ctx)
 
         self._draw_ended = time.ticks_ms()
 
@@ -196,7 +203,7 @@ class Engine:
         ctx = None
         while self.is_running:
             start = time.ticks_ms()
-            deadline = start + 20
+            deadline = start + 100
             self._report()
 
             if last_eventloop is not None:
@@ -218,6 +225,7 @@ class Engine:
 
             if ctx is not None and not hardware.display_pipe_full():
                 hardware.display_update(ctx)
+                # log.info("update")
                 ctx = None
 
             post_submit = time.ticks_ms()
@@ -226,8 +234,12 @@ class Engine:
             if wait > 0:
                 hardware.freertos_sleep(wait)
             else:
-                log.warning(f'Application took too long too process! Slack {wait}ms.')
-                log.warning(f'Think: {post_think-start}ms, Draw: {post_draw-post_think}ms, Submit: {post_submit-post_draw}ms')
+                log.warning(f"Application took too long too process! Slack {wait}ms.")
+                log.warning(
+                    f"Think: {post_think-start}ms, Draw: {post_draw-post_think}ms, Submit: {post_submit-post_draw}ms"
+                )
+                hardware.freertos_sleep(1)
+
 
 class Event:
     def __init__(
