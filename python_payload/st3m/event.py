@@ -203,7 +203,7 @@ class Engine:
         ctx = None
         while self.is_running:
             start = time.ticks_ms()
-            deadline = start + 100
+            deadline = start + 20
             self._report()
 
             if last_eventloop is not None:
