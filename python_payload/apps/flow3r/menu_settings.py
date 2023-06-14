@@ -1,12 +1,15 @@
 from st3m import menu, event, control, ui
 from st3m.system import audio, hardware
 
+from apps import captouch_calibrator, captouch_test
+
 
 def get_menu(app):
     m = menu.Menu("settings")
+    m_captouch = menu.Menu("captouch")
 
     control_debug_input = control.ControlSwitch(
-        name="show inputs",
+        name="debug",
         # TODO (iggy) think about a better way to get our app
         on_set=app.set_input_overlay,
         on_get=app.get_input_overlay,
@@ -14,7 +17,10 @@ def get_menu(app):
     )
 
     item_input_overlay = menu.MenuItemControl("input overlay", control_debug_input)
-    m.add(item_input_overlay)
+    m_captouch.add(item_input_overlay)
+
+    m_captouch.add(menu.MenuItemApp(captouch_calibrator.app))
+    m_captouch.add(menu.MenuItemApp(captouch_test.app))
 
     m_audio = menu.Menu("audio")
     m_speaker = menu.Menu("speaker")
@@ -143,6 +149,7 @@ def get_menu(app):
     )
 
     m.add(menu.MenuItemSubmenu(m_audio))
+    m.add(menu.MenuItemSubmenu(m_captouch))
     m_audio.add(menu.MenuItemSubmenu(m_speaker))
     m_audio.add(menu.MenuItemSubmenu(m_head))
 

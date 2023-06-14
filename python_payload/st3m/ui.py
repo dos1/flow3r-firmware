@@ -59,8 +59,13 @@ class UIElement:
 
 
 class Viewport(UIElement):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.background = False
+
     def _draw(self, ctx, pos):
-        pass
+        if self.background:
+            ctx.rgb(*BLACK).rectangle(-120, -120, 240, 240).fill()
 
 
 class Circle(UIElement):
