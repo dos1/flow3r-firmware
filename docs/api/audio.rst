@@ -39,3 +39,33 @@
    there may be a transient volume "hiccup". "p1" badges only use software
    volume. The unspecified variant automatically chooses the adequate channel
    (**).
+
+.. py:function:: headphones_adjust_volume_dB
+.. py:function:: speaker_adjust_volume_dB
+.. py:function:: adjust_volume_dB
+
+.. py:function:: headphones_get_volume_dB
+.. py:function:: speaker_get_volume_dB
+.. py:function:: get_volume_dB
+
+.. py:function:: headphones_get_mute
+.. py:function:: speaker_get_mute
+.. py:function:: get_mute
+
+.. py:function:: headphones_set_mute
+.. py:function:: speaker_set_mute
+.. py:function:: set_mute
+
+.. py:function:: headphones_set_minimum_volume_dB
+.. py:function:: speaker_set_minimum_volume_dB
+.. py:function:: headphones_set_maximum_volume_dB
+.. py:function:: speaker_set_maximum_volume_dB
+
+.. py:function:: headphones_get_minimum_volume_dB
+.. py:function:: speaker_get_minimum_volume_dB
+.. py:function:: headphones_get_maximum_volume_dB
+.. py:function:: speaker_get_maximum_volume_dB
+
+.. py:function:: headphones_get_volume_relative
+.. py:function:: speaker_get_volume_relative
+.. py:function:: get_volume_relative
