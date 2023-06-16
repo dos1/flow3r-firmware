@@ -389,7 +389,7 @@ void audio_headphones_line_in_set_hardware_thru(bool enable){}
 void audio_speaker_line_in_set_hardware_thru(bool enable){}
 void audio_line_in_set_hardware_thru(bool enable){}
 void audio_input_set_source(uint8_t source){}
-uint8_t audio_headset_set_gain_dB(uint8_t gain_dB){}
+uint8_t audio_headset_set_gain_dB(uint8_t gain_dB){ return 0;}
 
 #else
 #error "audio not implemented for this badge generation"

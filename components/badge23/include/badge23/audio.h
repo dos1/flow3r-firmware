@@ -149,11 +149,15 @@ void audio_input_set_source(uint8_t source);
  */
 uint8_t audio_input_get_source();
 
-/* Hardware preamp gain
+/* Hardware preamp gain, 0dB-50dB. TODO: figure out if int/float inconsistency
+ * is a good thing here compared to all other _dB functions.
  */
 uint8_t audio_headset_set_gain_dB(uint8_t gain_dB);
 uint8_t audio_headset_get_gain_dB();
 
+/* You can route whatever source is selected with audio_input_set_source to the
+ * audio output. Use these to control volume and mute.
+ */
 float audio_input_thru_set_volume_dB(float vol_dB);
 float audio_input_thru_get_volume_dB();
 void audio_input_thru_set_mute(bool mute);
