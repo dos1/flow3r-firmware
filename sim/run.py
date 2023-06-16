@@ -15,16 +15,24 @@ import wasmer
 import wasmer_compiler_cranelift
 
 
+sys_path_orig = sys.path
+
+
 class UnderscoreFinder(importlib.abc.MetaPathFinder):
-    def __init__(self, builtin):
+    def __init__(self, builtin, pathfinder):
         self.builtin = builtin
+        self.pathfinder = pathfinder
 
     def find_spec(self, fullname, path, target=None):
         if fullname == '_time':
             return self.builtin.find_spec('time', path, target)
-        if fullname in ['random']:
-            print(fullname, path, target)
+        if fullname in ['random', 'math']:
             return self.builtin.find_spec(fullname, path, target)
+        if fullname in ['json']:
+            sys_path_saved = sys.path
+            sys.path = sys_path_orig
+            return self.pathfinder.find_spec(fullname, path, target)
+            sys.path = sys_path_saved
 
 
 #sys.meta_path.insert(0, Hook())
@@ -36,7 +44,7 @@ sys.path = [
 
 builtin = BuiltinImporter()
 pathfinder = PathFinder()
-underscore = UnderscoreFinder(builtin)
+underscore = UnderscoreFinder(builtin, pathfinder)
 sys.meta_path = [pathfinder, underscore]
 
 # Clean up whatever might have already been imported as `time`.
