@@ -409,3 +409,18 @@ def captouch_get_petal_pad(i, x):
 def freertos_sleep(ms):
     import _time
     _time.sleep(ms / 1000.0)
+
+
+def scope_draw(ctx):
+    import math
+
+    x = -120
+    ctx.move_to(x, 0)
+    for i in range(240):
+        x2 = x + i
+        y2 = math.sin(i/10) * 80
+        ctx.line_to(x2, y2)
+    ctx.line_to(130, 0)
+    ctx.line_to(130, 130)
+    ctx.line_to(-130, 130)
+    ctx.line_to(-130, 0)
