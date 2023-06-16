@@ -27,26 +27,11 @@ typedef struct {
     int8_t      overflow_event; //set to -1 when counter underflows (below -1),
                                 //set to +1 when counter overflows (above 1)
                                 //not reset or used by anything so far
+    uint8_t     undersampling_counter;
     uint16_t    noise_reg;
 } trad_osc_t;
 
-//#define KS_BUFFER_SIZE (SAMPLE_RATE)/20
-#define KS_BUFFER_SIZE 800
-
-typedef struct {
-    //user variables
-    float freq;                 //frequency in hertz, negative frequencies are rectified,
-                                //minimum freq determined by KS_BUFFER_SIZE
-    float feedback;             //feedback value, will be compensated with frequency
-                                //for equal decay across spectrum, [-1..1] without
-    
-    //internal data storage, not for user access
-    float tape[KS_BUFFER_SIZE]; //the delay chain
-    float real_feedback;        //compensated feedback value
-} ks_osc_t; //karplus strong
-
 float run_trad_osc(trad_osc_t * osc);
-
 void trad_osc_set_freq_semitone(trad_osc_t * osc, float bend);
 void trad_osc_set_freq_Hz(trad_osc_t * osc, float freq);
 void trad_osc_set_waveform(trad_osc_t * osc, uint8_t waveform);

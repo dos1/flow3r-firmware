@@ -2,17 +2,8 @@
 #include "badge23/audio.h"
 #include <math.h>
 
-float ks_osc(ks_osc_t * ks, float input){
-    //TODO: FIX THIS
-    ks->real_feedback = ks->feedback;
-
-    float delay_time = ((float) (SAMPLE_RATE))/ks->freq;
-    if(delay_time >= (KS_BUFFER_SIZE)) delay_time = (KS_BUFFER_SIZE) - 1;
-
-
-    //ks->tape[0] = input + real_feedback * ks->tape[delay_time];    
-    return ks->tape[0];
-}
+#define SYNTH_UNDERSAMPLING 3
+#define SYNTH_SAMPLE_RATE ((SAMPLE_RATE)/(SYNTH_UNDERSAMPLING))
 
 float waveshaper(uint8_t shape, float in);
 float nes_noise(uint16_t * reg, uint8_t mode, uint8_t run);
@@ -64,16 +55,19 @@ void run_trad_env(trad_osc_t * osc){
 }
 
 float run_trad_osc(trad_osc_t * osc){
+    static float ret = 0;
+    osc->undersampling_counter = (osc->undersampling_counter+1) % SYNTH_UNDERSAMPLING;
+    if(osc->undersampling_counter) return ret;
+
     run_trad_env(osc);
     if(!osc->env_phase) return 0;
-    float ret = 0;
 
     //run core sawtooth
     float freq = osc->freq * osc->bend;
     if(freq > 10000) freq = 10000;
     if(freq < -10000) freq = -10000;
     if(freq != freq) freq = 0;
-    osc->counter += 2. * freq / ((float)(SAMPLE_RATE));
+    osc->counter += 2. * freq / ((float)(SYNTH_SAMPLE_RATE));
     if(osc->counter != osc->counter){
         printf("trad_osc counter is NaN");
         abort();
