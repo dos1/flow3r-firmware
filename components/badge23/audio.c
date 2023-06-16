@@ -1,7 +1,8 @@
 #include "badge23/audio.h"
 #include "badge23/synth.h" 
-#include "badge23/scope.h"
 #include "badge23/lock.h"
+
+#include "st3m_scope.h"
 
 #include "driver/i2s.h"
 #include "driver/i2c.h"
@@ -584,8 +585,9 @@ uint16_t count_audio_sources(){
 }
 
 static void _audio_init(void) {
+    st3m_scope_init();
+
     // TODO: this assumes I2C is already initialized
-    init_scope(241);
     i2s_init();
     audio_update_jacksense();
     //ESP_ERROR_CHECK(i2s_channel_enable(tx_chan));
@@ -606,7 +608,7 @@ static void audio_player_task(void* arg) {
                 sample += (*(audio_source->render_function))(audio_source->render_data);
                 audio_source = audio_source->next;
             }
-            write_to_scope((int16_t) (1600. * sample));
+            st3m_scope_write((int16_t) (1600. * sample));
             sample = software_volume * (sample/10);
             if(sample > 32767) sample = 32767;
             if(sample < -32767) sample = -32767;

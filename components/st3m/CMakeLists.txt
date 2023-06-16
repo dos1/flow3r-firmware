@@ -3,6 +3,7 @@ idf_component_register(
         st3m_gfx.c
         st3m_counter.c
         st3m_fs.c
+        st3m_scope.c
     INCLUDE_DIRS
         .
     REQUIRES

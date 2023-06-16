@@ -5,7 +5,6 @@ idf_component_register(
         captouch.c
         espan.c
         leds.c
-        scope.c
         synth.c
         spio.c
     INCLUDE_DIRS
