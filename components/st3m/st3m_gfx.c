@@ -239,7 +239,7 @@ void st3m_gfx_init(void) {
     assert(res == pdPASS);
 
     // Start rast.
-    res = xTaskCreate(st3m_gfx_rast_task, "rast", 4096, NULL, ESP_TASK_PRIO_MIN+1, &rast_task);
+    res = xTaskCreate(st3m_gfx_rast_task, "rast", 8192, NULL, ESP_TASK_PRIO_MIN+1, &rast_task);
     assert(res == pdPASS);
 }
 
