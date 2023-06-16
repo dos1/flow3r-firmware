@@ -81,6 +81,12 @@ class MelodicApp(Application):
     def on_init(self):
         init()
 
+    def on_draw(self, ctx):
+        ctx.rgb(1, 1, 1).rectangle(-120, -120, 240, 240).fill()
+        ctx.rgb(0, 0, 0)
+        scope_draw(ctx)
+        ctx.fill()
+
     def on_foreground(self):
         foreground()
 

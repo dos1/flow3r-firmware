@@ -44,6 +44,10 @@ class HarmonicApp(Application):
         i = self.color_intensity
         ctx.rgb(i, i, i).rectangle(-120, -120, 240, 240).fill()
 
+        ctx.rgb(0, 0, 0)
+        scope_draw(ctx)
+        ctx.fill()
+
     def main_foreground(self):
         if self.color_intensity > 0:
             self.color_intensity -= self.color_intensity / 20
