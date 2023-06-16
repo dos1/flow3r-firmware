@@ -22,7 +22,7 @@ void st3m_scope_init(void){
     scope.exchange_buffer = malloc(sizeof(int16_t) * scope.buffer_size);
     scope.read_buffer = malloc(sizeof(int16_t) * scope.buffer_size);
 
-    if (scope.write_buffer == NULL || scope.exchange_buffer == NULL || scope.read_bufer == NULL) {
+    if (scope.write_buffer == NULL || scope.exchange_buffer == NULL || scope.read_buffer == NULL) {
         if (scope.write_buffer != NULL) {
             free(scope.write_buffer);
             scope.write_buffer = NULL;
