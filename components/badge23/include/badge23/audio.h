@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define SAMPLE_RATE 48000
+#define SAMPLE_RATE 16000
 
 #define AUDIO_INPUT_SOURCE_NONE 0
 #define AUDIO_INPUT_SOURCE_LINE_IN 1

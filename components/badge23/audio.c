@@ -20,7 +20,7 @@
 
 static void audio_player_task(void* arg);
 
-#define DMA_BUFFER_SIZE 64*3
+#define DMA_BUFFER_SIZE 64
 #define DMA_BUFFER_COUNT 4
 #define I2S_PORT 0
 
@@ -696,6 +696,8 @@ static void audio_player_task(void* arg) {
                 audio_source = audio_source->next;
             }
             st3m_scope_write((int16_t) (1600. * acc));
+
+            acc /= 10;
 
             sample += 32767 * acc;
             sample = (sample * software_volume) >> 15;

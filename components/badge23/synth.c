@@ -2,7 +2,7 @@
 #include "badge23/audio.h"
 #include <math.h>
 
-#define SYNTH_UNDERSAMPLING 3
+#define SYNTH_UNDERSAMPLING 1
 #define SYNTH_SAMPLE_RATE ((SAMPLE_RATE)/(SYNTH_UNDERSAMPLING))
 
 float waveshaper(uint8_t shape, float in);
@@ -56,8 +56,8 @@ void run_trad_env(trad_osc_t * osc){
 
 float run_trad_osc(trad_osc_t * osc){
     static float ret = 0;
-    osc->undersampling_counter = (osc->undersampling_counter+1) % SYNTH_UNDERSAMPLING;
-    if(osc->undersampling_counter) return ret;
+    //osc->undersampling_counter = (osc->undersampling_counter+1) % SYNTH_UNDERSAMPLING;
+    //if(osc->undersampling_counter) return ret;
 
     run_trad_env(osc);
     if(!osc->env_phase) return 0;
