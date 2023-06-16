@@ -25,7 +25,10 @@ in with nixpkgs; pkgs.mkShell {
 
     ncurses5
 
-    (python3.withPackages (ps: with ps; [ pygame wasmer wasmer-compiler-cranelift ]))
+    (python3.withPackages (ps: with ps; [
+      pygame wasmer wasmer-compiler-cranelift
+      sphinx sphinx_rtd_theme
+    ]))
     emscripten
   ];
   shellHook = ''
