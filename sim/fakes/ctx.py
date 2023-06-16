@@ -95,6 +95,7 @@ class Ctx:
     CENTER = 'center'
     END = 'end'
     MIDDLE = 'middle'
+    BEVEL = 'bevel'
 
     def __init__(self, _ctx):
         self._ctx = _ctx
@@ -102,12 +103,17 @@ class Ctx:
         self.text_align = 'start'
         self.text_baseline = 'alphabetic'
         self.font_size = 10.0
+        self.line_join = 'bevel'
 
     def _emit(self, text):
         _wasm.ctx_parse(self._ctx, text)
 
     def move_to(self, x, y):
         self._emit(f"moveTo {int(x)} {int(y)}")
+        return self
+
+    def line_to(self, x, y):
+        self._emit(f"lineTo {int(x)} {int(y)}")
         return self
 
     def rgb(self, r, g, b):
@@ -133,6 +139,11 @@ class Ctx:
 
     def rectangle(self, x, y, width, height):
         self._emit(f"rectangle {x} {y} {width} {height}")
+        return self
+
+    def stroke(self):
+        self._emit(f"lineJoin {self.line_join}")
+        self._emit(f"stroke")
         return self
 
     def fill(self):
