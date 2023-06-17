@@ -28,4 +28,18 @@ menu "Badge23 Config"
                   - Sticker with B6xx (xx being arbitrary digits) on the back
             bool "Prototype 6"
     endchoice
+
+    choice BADGE23_TOP_BOARD_STYLE
+        prompt "Badge23 top board style (mainly for proto6)"
+        default BADGE23_TOP_BOARD_SPIKES
+        config BADGE23_TOP_BOARD_SPIKES
+            help
+                Spikes between captouch pads
+            bool "Spikes"
+        config BADGE23_TOP_BOARD_SPIRALS
+            help
+                Spirals between captouch pads
+            bool "Spirals"
+    endchoice
+
 endmenu

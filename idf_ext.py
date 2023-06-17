@@ -18,6 +18,7 @@ def action_extensions(base_actions, project_path=os.getcwd()):
         'p3': ['proto3'],
         'p4': ['proto4'],
         'p6': ['proto6'],
+        'p6spiral': ['proto6-spiral'],
     }
 
     def generation_callback(ctx, global_args, tasks):
@@ -60,7 +61,7 @@ def action_extensions(base_actions, project_path=os.getcwd()):
     extensions = {
         'global_options': [{
             'names': ['-g', '--generation'],
-            'help': 'Specify badge generation to build for (one of: proto1, proto3, proto4). Defaults to proto4.',
+            'help': 'Specify badge generation to build for (one of: proto1, proto3, proto4, proto6, proto6-spiral). Defaults to proto4.',
             'scope': 'shared',
             'multiple': False,
         }],

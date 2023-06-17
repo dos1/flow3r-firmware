@@ -291,6 +291,7 @@ static void captouch_init_petals(){
 int32_t captouch_get_petal_rad(uint8_t petal){
     if(petal > 9) petal = 9;
     uint8_t cf = petals[petal].config_mask;
+    #if defined(CONFIG_BADGE23_TOP_BOARD_SPIKES)
     if(cf == 0b1110){ //CCW, CW, BASE
         int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
         left -= petals[petal].amb_values[PETAL_PAD_CCW];
@@ -300,6 +301,9 @@ int32_t captouch_get_petal_rad(uint8_t petal){
         base -= petals[petal].amb_values[PETAL_PAD_BASE];
         return (left + right)/2 - base;
     }
+    #elif defined(CONFIG_BADGE23_TOP_BOARD_SPIRALS)
+        #error captouch_get_petal_rad not implemented for spirals
+    #endif
     if(cf == 0b111){ //CCW, CW, TIP
         int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
         left -= petals[petal].amb_values[PETAL_PAD_CCW];
@@ -327,6 +331,7 @@ int32_t captouch_get_petal_rad(uint8_t petal){
 int32_t captouch_get_petal_phi(uint8_t petal){
     if(petal > 9) petal = 9;
     uint8_t cf = petals[petal].config_mask;
+    #if defined(CONFIG_BADGE23_TOP_BOARD_SPIKES)
     if((cf == 0b1110) || (cf == 0b110) || (cf == 0b111)){ //CCW, CW, (BASE)
         int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
         left -= petals[petal].amb_values[PETAL_PAD_CCW];
@@ -334,6 +339,9 @@ int32_t captouch_get_petal_phi(uint8_t petal){
         right -= petals[petal].amb_values[PETAL_PAD_CW];
         return left - right;
     }
+    #elif defined(CONFIG_BADGE23_TOP_BOARD_SPIRALS)
+        #error captouch_get_petal_phi not implemented for spirals
+    #endif
     return 0;
 }
 
