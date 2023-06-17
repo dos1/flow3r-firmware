@@ -22,16 +22,10 @@ menu "Badge23 Config"
                 Visual identifiers:
                   - Sticker with B4xx (xx being arbitrary digits) on the back
             bool "Prototype 4"
-        config BADGE23_HW_GEN_ADILESS
-            help
-                Prototype version 5, a.k.a. adi-less
-                Visual identifiers:
-                  - Sticker with B5xx (xx being arbitrary digits) on the back
-            bool "Prototype 5 / ADI-less"
         config BADGE23_HW_GEN_P6
             help
                 Prototype version 6, a.k.a. proto6
                   - Sticker with B6xx (xx being arbitrary digits) on the back
-            bool "Prototype 5 / ADI-less"
+            bool "Prototype 6"
     endchoice
 endmenu
