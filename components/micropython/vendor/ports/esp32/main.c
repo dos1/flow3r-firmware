@@ -62,7 +62,6 @@
 #include "modmachine.h"
 #include "modnetwork.h"
 #include "mpthreadport.h"
-#include "badge23/espan.h"
 
 #if MICROPY_BLUETOOTH_NIMBLE
 #include "extmod/modbluetooth.h"
@@ -236,14 +235,10 @@ void boardctrl_startup(void) {
 void app_main(void) {
     // Hook for a board to run code at start up.
     // This defaults to initialising NVS.
-    
     MICROPY_BOARD_STARTUP();
 
     // Create and transfer control to the MicroPython task.
-
-    os_app_early_init();
     xTaskCreatePinnedToCore(mp_task, "mp_task", MP_TASK_STACK_SIZE / sizeof(StackType_t), NULL, MP_TASK_PRIORITY, &mp_main_task_handle, MP_TASK_COREID);
-    os_app_main(); // ./badge23/ entry point
 }
 
 void nlr_jump_fail(void *val) {

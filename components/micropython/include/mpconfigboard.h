@@ -8,3 +8,6 @@
 
 #define MICROPY_ESP_IDF_4 1
 #define MICROPY_VFS_POSIX 1
+
+void st3m_board_startup(void);
+#define MICROPY_BOARD_STARTUP st3m_board_startup
