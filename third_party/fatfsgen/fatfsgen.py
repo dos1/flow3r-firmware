@@ -158,6 +158,12 @@ class FATFS:
         split_path = normal_path.split(os.sep)
         object_timestamp = datetime.fromtimestamp(os.path.getctime(real_path))
 
+        if '__pycache__' in real_path:
+            return
+
+        if '.mypy_cache' in real_path:
+            return
+
         if os.path.isfile(real_path):
             with open(real_path, 'rb') as file:
                 content = file.read()
