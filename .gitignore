@@ -4,6 +4,8 @@ sdkconfig
 dependencies.lock
 build
 
+.sdkconfig.defaults.generated
+
 # micropython
 __pycache__
 

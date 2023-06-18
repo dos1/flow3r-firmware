@@ -9,7 +9,7 @@ import shutil
 def action_extensions(base_actions, project_path=os.getcwd()):
     """
     Implementes -g/--generation and BADGE_GENERATION in idf.py, allowing
-    switching between badge generations and sdkconfig default files.
+    switching between badge generations.
     """
 
     # Map from canonical name to user-supported names.
@@ -46,16 +46,24 @@ def action_extensions(base_actions, project_path=os.getcwd()):
             supported = sorted(supported)
             raise Exception(f'Invalid generation: want one of {", ".join(supported)}')
 
-        sdkconfig_name = 'sdkconfig.' + name
-        sdkconfig_path = os.path.join(project_path, sdkconfig_name)
-        if not os.path.exists(sdkconfig_path):
-            raise Exception(f'Missing sdkconfig file {sdkconfig_name}')
-        cache_entries = {
-            'SDKCONFIG_DEFAULTS': sdkconfig_path,
-        }
-        print(cache_entries)
-        global_args.define_cache_entry = list(global_args.define_cache_entry)
-        global_args.define_cache_entry.extend(['%s=%s' % (k, v) for k, v in cache_entries.items()])
+
+        # Generate .sdkconfig.defaults.generated that contains BADGE23_*
+        # options.
+        sdkconfig_defaults_path = os.path.join(project_path, 'sdkconfig.defaults')
+        sdkconfig_generated_path = os.path.join(project_path, '.sdkconfig.defaults.generated')
+        with open(sdkconfig_generated_path, 'w') as f:
+            if name == 'p6spiral':
+                f.write('CONFIG_BADGE23_HW_GEN_P6=y\n')
+                f.write('CONFIG_BADGE23_TOP_BOARD_SPIRALS=y\n')
+            else:
+                f.write(f'CONFIG_BADGE23_HW_GEN_{name.upper()}=y\n')
+            with open(sdkconfig_defaults_path) as f2:
+                f.write(f2.read())
+
+        global_args.define_cache_entry += [
+            'SDKCONFIG_DEFAULTS=' + sdkconfig_generated_path,
+        ]
+        print(global_args.define_cache_entry)
 
     # Add global options
     extensions = {
