@@ -31,7 +31,7 @@ menu "Badge23 Config"
 
     choice BADGE23_TOP_BOARD_STYLE
         prompt "Badge23 top board style (mainly for proto6)"
-        default BADGE23_TOP_BOARD_SPIKES
+        default BADGE23_TOP_BOARD_SPIRALS
         config BADGE23_TOP_BOARD_SPIKES
             help
                 Spikes between captouch pads
