@@ -249,8 +249,4 @@ MP_DEFINE_CONST_OBJ_TYPE(
     locals_dict, &vfs_posix_rawfile_locals_dict
     );
 
-const mp_obj_vfs_posix_file_t mp_sys_stdin_obj = {{&mp_type_vfs_posix_textio}, STDIN_FILENO};
-const mp_obj_vfs_posix_file_t mp_sys_stdout_obj = {{&mp_type_vfs_posix_textio}, STDOUT_FILENO};
-const mp_obj_vfs_posix_file_t mp_sys_stderr_obj = {{&mp_type_vfs_posix_textio}, STDERR_FILENO};
-
 #endif // MICROPY_VFS_POSIX
