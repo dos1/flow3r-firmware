@@ -163,6 +163,8 @@ float audio_input_thru_get_volume_dB();
 void audio_input_thru_set_mute(bool mute);
 bool audio_input_thru_get_mute();
 
+/* For when you need to add violence */
+void audio_codec_i2c_write(const uint8_t reg, const uint8_t data);
 
 /*
 HEADPHONE PORT POLICY

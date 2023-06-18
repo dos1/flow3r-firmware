@@ -250,6 +250,15 @@ STATIC mp_obj_t mp_input_thru_get_mute() {
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_input_thru_get_mute_obj, mp_input_thru_get_mute);
 
 
+STATIC mp_obj_t mp_codec_i2c_write(mp_obj_t reg_in, mp_obj_t data_in) {
+    uint8_t reg = mp_obj_get_int(reg_in);
+    uint8_t data = mp_obj_get_int(data_in);
+    audio_codec_i2c_write(reg, data);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_codec_i2c_write_obj, mp_codec_i2c_write);
+
+
 
 STATIC const mp_rom_map_elem_t mp_module_audio_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_audio) },
@@ -305,6 +314,8 @@ STATIC const mp_rom_map_elem_t mp_module_audio_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_input_thru_get_volume_dB), MP_ROM_PTR(&mp_input_thru_get_volume_dB_obj) },
     { MP_ROM_QSTR(MP_QSTR_input_thru_set_mute), MP_ROM_PTR(&mp_input_thru_set_mute_obj) },
     { MP_ROM_QSTR(MP_QSTR_input_thru_get_mute), MP_ROM_PTR(&mp_input_thru_get_mute_obj) },
+
+    { MP_ROM_QSTR(MP_QSTR_codec_i2c_write), MP_ROM_PTR(&mp_codec_i2c_write_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_INPUT_SOURCE_NONE), MP_ROM_INT(AUDIO_INPUT_SOURCE_NONE) },
     { MP_ROM_QSTR(MP_QSTR_INPUT_SOURCE_LINE_IN), MP_ROM_INT(AUDIO_INPUT_SOURCE_LINE_IN) },

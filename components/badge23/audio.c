@@ -100,6 +100,10 @@ static esp_err_t max98091_i2c_write_readback(const uint8_t reg, const uint8_t da
     return ret;
 }
 
+void audio_codec_i2c_write(const uint8_t reg, const uint8_t data) {
+    max98091_i2c_write_readback(reg, data);
+}
+
 void audio_headphones_line_in_set_hardware_thru(bool enable){
     max98091_i2c_write_readback(0x2B, (1<<5) | (1<<4)); // Enable Headphone Mixer
     uint8_t trust_issue = enable ? 1 : 0;
