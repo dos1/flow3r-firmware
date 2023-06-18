@@ -21,9 +21,9 @@ class Control:
 
         self.menu = menu.MenuControl(self)
 
-    def draw(self):
+    def draw(self, ctx):
         self.ui.value = self.get_value()
-        self.ui.draw()
+        self.ui.draw(ctx)
 
     def get_normal_value(self):
         v = self.get_value()
@@ -88,7 +88,6 @@ class ControlKnob(ControlFloat):
     def enter(self):
         # repeat action with current value
         self.set_value(self.get_value())
-        self.draw()
 
     def scroll(self, delta):
         if self.on_mod:
@@ -99,7 +98,6 @@ class ControlKnob(ControlFloat):
             v = self.get_value()
             v_new = max(self.min, min(self.max, v + delta * self.step))
             self.set_value(v_new)
-        self.draw()
 
     def touch_1d(self, x, z):
         if z > 0:  # Inital Contact
@@ -138,7 +136,6 @@ class ControlSlide(ControlFloat):
             if self.do_reset:
                 self.set_value(self._saved_value)
             self._saved_value = None
-        self.draw()
 
 
 class ControlString(Control):

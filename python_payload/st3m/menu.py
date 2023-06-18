@@ -239,16 +239,18 @@ def on_scroll(d):
 
 menu_offset = None
 last = time.ticks_ms()
+
+
 def on_scroll_captouch(d):
     active_menu = get_active_menu()
     if active_menu is None:
         return
     global menu_offset
     global last
-    #if abs(d["radius"]) < 10000:
+    # if abs(d["radius"]) < 10000:
     #    return
 
-    a = math.atan2(-d["radius"]/600,d["angle"]/600)
+    a = math.atan2(-d["radius"] / 600, d["angle"] / 600)
 
     z = 0
     if d["change"]:
@@ -257,21 +259,19 @@ def on_scroll_captouch(d):
         else:
             z = -1
 
-    if z==1:
-        menu_offset = active_menu.angle-a
+    if z == 1:
+        menu_offset = active_menu.angle - a
         last = time.ticks_ms()
-    if z==0:
-        active_menu.rotate_to(menu_offset+a)
+    if z == 0:
+        active_menu.rotate_to(menu_offset + a)
 
-    if z==-1:
-        diff = time.ticks_diff(time.ticks_ms(),last)
+    if z == -1:
+        diff = time.ticks_diff(time.ticks_ms(), last)
         print(diff)
-        if diff<300:
+        if diff < 300:
             active_menu.enter_menu()
 
-
-
-    #active_menu.rotate_to(a)
+    # active_menu.rotate_to(a)
 
 
 def on_release(d):
@@ -298,15 +298,16 @@ def on_touch_1d(d):
             z = -1
 
     log.debug(f"menu: touch_1d ({v},{z})")
-    hovered = active_menu.get_hovered_item()
 
     petal_idx = d["index"]
     petal_item = active_menu.items_petal[petal_idx]
     if petal_item:
         petal_item.touch_1d(v, z)
 
-    if hasattr(hovered, "touch_1d"):
-        hovered.touch_1d(v, z)
+    if d["index"] == 8:
+        hovered = active_menu.get_hovered_item()
+        if hasattr(hovered, "touch_1d"):
+            hovered.touch_1d(v, z)
 
 
 def on_enter(d):
@@ -336,10 +337,14 @@ event.Event(
     enabled=True,
 )
 
-event.Event(name="menu rotation captouch",group_id="menu",
-    condition=lambda e: e["type"] =="captouch" and (e["value"] == 1 or e["change"]) and e["index"]==2,
+event.Event(
+    name="menu rotation captouch",
+    group_id="menu",
+    condition=lambda e: e["type"] == "captouch"
+    and (e["value"] == 1 or e["change"])
+    and e["index"] == 2,
     action=on_scroll_captouch,
-     enabled=True
+    enabled=True,
 )
 
 
@@ -354,11 +359,9 @@ event.Event(
 event.Event(
     name="menu 1d captouch",
     group_id="menu",
-    condition=lambda e: e["type"] == "captouch"
-    and (e["value"] == 1 or e["change"])
-    and e["index"] % 2 == 1,
+    condition=lambda e: e["type"] == "captouch" and (e["value"] == 1 or e["change"]),
     action=on_touch_1d,
-    enabled=False,
+    enabled=True,
 )
 
 event.Event(

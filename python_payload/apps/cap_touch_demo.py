@@ -1,9 +1,14 @@
+from st3m import logging
+
+log = logging.Log(__name__, level=logging.INFO)
+log.info("import")
+
 import cmath
 import math
 import time
 
 import hardware
-from st3m import utils, application
+from st3m import utils, application, ui, event
 
 
 class Dot:
@@ -28,6 +33,20 @@ class Dot:
 class CapTouchDemo(application.Application):
     def on_init(self):
         self.dots = []
+        self.last_calib = None
+        self.ui_autocalib = ui.IconLabel("Autocalib done", size=30)
+
+        self.add_event(
+            event.Event(
+                name="captouch_autocalib",
+                action=self.do_autocalib,
+                condition=lambda data: data["type"] == "button"
+                and data["index"] == 0
+                and data["change"]
+                and data["from"] == 2,
+                enabled=True,
+            )
+        )
 
     def main_foreground(self):
         self.dots = []
@@ -36,7 +55,9 @@ class CapTouchDemo(application.Application):
             size += int(
                 max(
                     0,
-                    sum([hardware.captouch_get_petal_pad(i, x) for x in range(0, 3 + 1)])
+                    sum(
+                        [hardware.captouch_get_petal_pad(i, x) for x in range(0, 3 + 1)]
+                    )
                     / 8000,
                 )
             )
@@ -48,9 +69,18 @@ class CapTouchDemo(application.Application):
             self.dots.append(Dot(size, x.imag, x.real))
 
     def on_draw(self, ctx):
+        print(self.last_calib)
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
         for i, dot in enumerate(self.dots):
             dot.draw(i, ctx)
+        if not self.last_calib is None and self.last_calib > 0:
+            self.last_calib -= 1
+            self.ui_autocalib.draw(ctx)
+
+    def do_autocalib(self, data):
+        log.info("Performing captouch autocalibration")
+        hardware.captouch_autocalib()
+        self.last_calib = 50
 
 
 app = CapTouchDemo("cap touch")

@@ -35,6 +35,7 @@ class Application:
                     name="exit",
                     action=self.exit,
                     condition=lambda e: e["type"] == "button"
+                    and e["index"] == 1
                     and e.get("from") == 2
                     and e["change"],
                 )
