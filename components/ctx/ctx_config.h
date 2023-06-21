@@ -94,11 +94,9 @@
 #define CTX_FONT_2 CTX_STATIC_FONT(Arimo_Italic)
 #define CTX_FONT_3 CTX_STATIC_FONT(Arimo_BoldItalic)
 
-#include "Tinos-Regular.h"
-#define CTX_FONT_4 CTX_STATIC_FONT(Tinos_Regular)
-
-#include "Cousine-Regular.h"
-#include "Cousine-Bold.h"
-#define CTX_FONT_5 CTX_STATIC_FONT(Cousine_Regular)
-#define CTX_FONT_6 CTX_STATIC_FONT(Cousine_Bold)
-
+#include "CampFont1/CampFont1.h"
+#include "CampFont2/CampFont2.h"
+#include "CampFont3/CampFont3.h"
+#define CTX_FONT_4 CTX_STATIC_FONT(CampFont1)
+#define CTX_FONT_5 CTX_STATIC_FONT(CampFont2)
+#define CTX_FONT_6 CTX_STATIC_FONT(CampFont3)
