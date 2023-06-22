@@ -177,7 +177,7 @@ static void init_codec()
 
     ESP_ERROR_CHECK(max98091_i2c_write_readback(0x1b, 1 << 4)); // pclk = mclk / 1
 
-    ESP_ERROR_CHECK(max98091_i2c_write_readback(0x26,  (1 << 7) | (1 << 6) | (1<<5))); // music, dc filter in record and playback
+    ESP_ERROR_CHECK(max98091_i2c_write_readback(0x26,  (1 << 7) | (1 << 6) | (1 << 5) | (1 << 2))); // music, dc filter in record and playback
 
     ESP_ERROR_CHECK(max98091_i2c_write_readback(0x06, 1 << 2)); // Sets up DAI for left-justified slave mode operation.
     ESP_ERROR_CHECK(max98091_i2c_write_readback(0x07, 1 << 5)); // Sets up the DAC to speaker path
