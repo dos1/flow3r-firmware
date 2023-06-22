@@ -1,9 +1,11 @@
-from synth import tinysynth
+from bl00mbox import tinysynth
 
 from st3m import menu, event, control, ui
 from st3m.system import hardware, audio
 
-synths = [tinysynth(440, 0), tinysynth(440, 0), tinysynth(440, 0)]
+synths = [tinysynth(440), tinysynth(440), tinysynth(440)]
+for s in synths:
+    s.sustain(1)
 # synth = tinysynth(440,0)
 
 

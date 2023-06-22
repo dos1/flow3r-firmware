@@ -1,4 +1,4 @@
-from synth import tinysynth
+from bl00mbox import tinysynth
 from hardware import *
 import leds
 
@@ -64,10 +64,9 @@ def run():
 def init():
     global synths
     for i in range(1):
-        synths += [tinysynth(440, 1)]
+        synths += [tinysynth(440)]
     for synth in synths:
-        synth.decay(100)
-        synth.waveform(1)
+        synth.decay_ms(100)
 
 
 def foreground():

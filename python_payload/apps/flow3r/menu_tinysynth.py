@@ -1,10 +1,10 @@
-from synth import tinysynth
+from bl00mbox import tinysynth
 
 from st3m import menu, event, control, ui
 from st3m.system import hardware, audio
 
-synth = tinysynth(440, 0)
-
+synth = tinysynth(440)
+synth.sustain(1)
 
 def set_play(value):
     print("set_controls_overlay")

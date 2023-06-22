@@ -2,22 +2,30 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define SAMPLE_RATE 16000
+#define SAMPLE_RATE 48000
 
 #define AUDIO_INPUT_SOURCE_NONE 0
 #define AUDIO_INPUT_SOURCE_LINE_IN 1
 #define AUDIO_INPUT_SOURCE_HEADSET_MIC 2
 #define AUDIO_INPUT_SOURCE_ONBOARD_MIC 3
 
+typedef void (* audio_player_function_type)(int16_t * tx, int16_t * rx, uint16_t len);
+
+/* The default audio task takes a function of prototype &audio_player_function_type,
+ * loops it and sets software volume/adds software thru. tx is the stereo zipped l/r
+ *output, rx is the stereo zipped input, each buffer the size of len.
+ */
+void audio_set_player_function(audio_player_function_type fun);
+
+/* Dummy for audio_set_player_function that just writes zeros to the output. Default state.
+ */
+void audio_player_function_dummy(int16_t * rx, int16_t * tx, uint16_t len);
+
 /* Initializes I2S bus, the audio task and required data structures.
  * Expects an initialized I2C bus, will fail ungracefully otherwise (TODO).
  * Requires the I2C lock.
  */
 void audio_init();
-
-uint16_t count_audio_sources();
-uint16_t add_audio_source(void * render_data, void * render_function);
-void remove_audio_source(uint16_t index);
 
 /* Polls hardware to check if headphones, headset or line in are plugged
  * into the 3.5mm jacks. If it detects a plug in the headphone jack, speakers

@@ -1,0 +1,10 @@
+idf_component_register(
+    SRCS
+        bl00mbox.c
+        buds/tinysynth/tinysynth.c
+    INCLUDE_DIRS
+        include
+        buds/tinysynth
+    REQUIRES
+        badge23
+)

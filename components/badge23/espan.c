@@ -8,6 +8,8 @@
 #include "st3m_gfx.h"
 #include "st3m_fs.h"
 
+#include "bl00mbox.h"
+
 #include "esp_log.h"
 #include "driver/i2c.h"
 #include "driver/spi_master.h"
@@ -93,6 +95,7 @@ void badge23_main(void)
     init_buttons();
     captouch_init();
     spio_badge_link_disable(255);
+    audio_set_player_function(bl00mbox_player_function);
 
     captouch_force_calibration();
 

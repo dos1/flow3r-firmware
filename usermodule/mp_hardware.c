@@ -140,30 +140,6 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_right_button_get_obj, mp_right_button_get);
 
 
 
-STATIC mp_obj_t mp_set_global_volume_dB(size_t n_args, const mp_obj_t *args) {
-    //TODO: DEPRECATE
-    mp_float_t d = mp_obj_get_float(args[0]);
-    audio_set_volume_dB(d);
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_set_global_volume_dB_obj, 1, 2, mp_set_global_volume_dB);
-
-STATIC mp_obj_t mp_count_sources(size_t n_args, const mp_obj_t *args) {
-    uint16_t d = count_audio_sources();
-    return mp_obj_new_int(d);
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_count_sources_obj, 0, 2, mp_count_sources);
-
-STATIC mp_obj_t mp_dump_all_sources(size_t n_args, const mp_obj_t *args) {
-    uint16_t d = count_audio_sources();
-    for(uint16_t i = 0; i < d; i++){
-        remove_audio_source(i);
-    }
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_dump_all_sources_obj, 0, 2, mp_dump_all_sources);
-
-
 STATIC mp_obj_t mp_version(void) {
     mp_obj_t str = mp_obj_new_str(flow3r_bsp_hw_name, strlen(flow3r_bsp_hw_name));
     return str;
@@ -249,9 +225,6 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_menu_button_set_left), MP_ROM_PTR(&mp_menu_button_set_left_obj) },
     { MP_ROM_QSTR(MP_QSTR_menu_button_get_left), MP_ROM_PTR(&mp_menu_button_get_left_obj) },
 
-    { MP_ROM_QSTR(MP_QSTR_set_global_volume_dB), MP_ROM_PTR(&mp_set_global_volume_dB_obj) },
-    { MP_ROM_QSTR(MP_QSTR_count_sources), MP_ROM_PTR(&mp_count_sources_obj) },
-    { MP_ROM_QSTR(MP_QSTR_dump_all_sources), MP_ROM_PTR(&mp_dump_all_sources_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_update), MP_ROM_PTR(&mp_display_update_obj) },
     { MP_ROM_QSTR(MP_QSTR_freertos_sleep), MP_ROM_PTR(&mp_freertos_sleep_obj) },
     { MP_ROM_QSTR(MP_QSTR_display_pipe_full), MP_ROM_PTR(&mp_display_pipe_full_obj) },

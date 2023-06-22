@@ -144,8 +144,6 @@ C entry point, called by^: `os_app_main()` in components/badge23/espan.c
 
 Register new C files for compilation: add to components/badge23/CMakelists.txt
 
-Change output volume in the `set_global_vol_dB(int8_t)` call; -90 for mute
-
 ### Debugging
 
 The badge is currently configured to run in HW USB UART/JTAG mode (vs. using TinyUSB and 'software' CDC/whatever using the generic OTG peripheral).

@@ -5,7 +5,6 @@ idf_component_register(
         captouch.c
         espan.c
         leds.c
-        synth.c
         spio.c
     INCLUDE_DIRS
         include
@@ -13,4 +12,5 @@ idf_component_register(
         flow3r_bsp
         st3m
         espressif__led_strip
+        bl00mbox
 )

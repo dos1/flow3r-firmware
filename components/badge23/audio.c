@@ -1,5 +1,4 @@
 #include "badge23/audio.h"
-#include "badge23/synth.h" 
 #include "badge23/lock.h"
 
 #include "st3m_scope.h"
@@ -580,85 +579,18 @@ void audio_update_jacksense(){
 #endif
 }
 
-typedef struct _audio_source_t{
-    void * render_data;
-    float (* render_function)(void *);
-    uint16_t index;
-    struct _audio_source_t * next;
-} audio_source_t;
 
-static audio_source_t * _audio_sources = NULL;
-
-uint16_t add_audio_source(void * render_data, void * render_function){
-    //construct audio source struct
-    audio_source_t * src = malloc(sizeof(audio_source_t));
-    if(src == NULL) return;
-    src->render_data = render_data;
-    src->render_function = render_function;
-    src->next = NULL;
-    src->index = 0;
-
-    //handle empty list special case
-    if(_audio_sources == NULL){
-        _audio_sources = src;
-        return 0; //only nonempty lists from here on out!
-    }
-
-    //searching for lowest unused index
-    audio_source_t * index_source = _audio_sources;
-    while(1){
-        if(src->index == (index_source->index)){
-            src->index++; //someone else has index already, try next
-            index_source = _audio_sources; //start whole list for new index
-        } else {
-            index_source = index_source->next;
-        }
-        if(index_source == NULL){ //traversed the entire list
-            break;
-        }
-    }
-
-    audio_source_t * audio_source = _audio_sources;
-    //append new source to linked list
-    while(audio_source != NULL){
-        if(audio_source->next == NULL){
-            audio_source->next = src;
-            break;
-        } else {
-        audio_source = audio_source->next;
-        }
-    }
-    return src->index;
-}
-
-void remove_audio_source(uint16_t index){
-    audio_source_t * audio_source = _audio_sources;
-    audio_source_t * start_gap = NULL;
-
-    while(audio_source != NULL){
-        if(index == audio_source->index){
-            if(start_gap == NULL){
-                _audio_sources = audio_source->next;
-            } else {
-                start_gap->next = audio_source->next;
-            }
-            vTaskDelay(20 / portTICK_PERIOD_MS); //give other tasks time to stop using
-            free(audio_source); //terrible hack tbh
-            break;
-        }
-        start_gap = audio_source;
-        audio_source = audio_source->next;
+void audio_player_function_dummy(int16_t * rx, int16_t * tx, uint16_t len){
+    for(uint16_t i = 0; i < len; i++){
+        tx[i] = 0;
     }
 }
 
-uint16_t count_audio_sources(){
-    uint16_t ret = 0;
-    audio_source_t * audio_source = _audio_sources;
-    while(audio_source != NULL){
-        audio_source = audio_source->next;
-        ret++;
-    }
-    return ret;
+static audio_player_function_type audio_player_function = audio_player_function_dummy;
+
+void audio_set_player_function(audio_player_function_type fun){
+    // ...wonder how unsafe this is
+    audio_player_function = fun;
 }
 
 static void _audio_init(void) {
@@ -669,6 +601,10 @@ static void _audio_init(void) {
     audio_update_jacksense();
     TaskHandle_t handle;
     xTaskCreate(&audio_player_task, "Audio player", 3000, NULL, configMAX_PRIORITIES - 1, &handle);
+    audio_player_function = audio_player_function_dummy;
+}
+
+static void _audio_deinit(void){
 }
 
 float audio_input_thru_set_volume_dB(float vol_dB){
@@ -690,38 +626,7 @@ static void audio_player_task(void* arg) {
     size_t count;
 
     while(true) {
-
-        for(int i = 0; i < (DMA_BUFFER_SIZE * 2); i += 2){
-            float acc = 0;
-            int32_t sample = 0;
-            audio_source_t * audio_source = _audio_sources;
-            while(audio_source != NULL){
-                acc += (*(audio_source->render_function))(audio_source->render_data);
-                audio_source = audio_source->next;
-            }
-            st3m_scope_write((int16_t) (1600. * acc));
-
-            acc /= 10;
-
-            sample += 32767 * acc;
-            sample = (sample * software_volume) >> 15;
-
-            if(sample > 32767) sample = 32767;
-            if(sample < -32767) sample = -32767;
-            buffer_tx[i] = sample;
-            buffer_tx[i+1] = sample;
-            if(!input_thru_mute){
-                buffer_tx[i] += (((int32_t) buffer_rx[i]) * input_thru_vol_int) >> 15;
-                buffer_tx[i+1] += (((int32_t) buffer_rx[i+1]) * input_thru_vol_int) >> 15;
-            }
-        }
-
         count = 0;
-        i2s_write(I2S_PORT, buffer_tx, sizeof(buffer_tx), &count, 1000);
-        if (count != sizeof(buffer_tx)) {
-            printf("i2s_write_bytes: count (%d) != length (%d)\n", count, sizeof(buffer_tx));
-            abort();
-        }
 
 #if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P6)
         count = 0;
@@ -731,6 +636,26 @@ static void audio_player_task(void* arg) {
             abort();
         }
 #endif
+
+        (* audio_player_function)(buffer_rx, buffer_tx, DMA_BUFFER_SIZE*2);
+
+        for(int i = 0; i < (DMA_BUFFER_SIZE * 2); i += 2){
+            int32_t acc = buffer_tx[i];
+
+            acc = (acc * software_volume) >> 15;
+
+            if(!input_thru_mute){
+                acc += (((int32_t) buffer_rx[i]) * input_thru_vol_int) >> 15;
+            }
+            buffer_tx[i] = acc;
+        }
+
+        i2s_write(I2S_PORT, buffer_tx, sizeof(buffer_tx), &count, 1000);
+        if (count != sizeof(buffer_tx)) {
+            printf("i2s_write_bytes: count (%d) != length (%d)\n", count, sizeof(buffer_tx));
+            abort();
+        }
+
     }
 }
 

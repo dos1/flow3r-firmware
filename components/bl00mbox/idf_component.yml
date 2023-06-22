@@ -1,0 +1,7 @@
+version: "0.0.0"
+description: synth/sampler/sequencer for flow3r project
+
+dependencies:
+  # Required IDF version
+  idf:
+    version: ">=4.4"

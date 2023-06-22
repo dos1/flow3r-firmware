@@ -9,6 +9,7 @@ idf_component_register(
         .
     REQUIRES
         flow3r_bsp
+        bl00mbox
         ctx
         fatfs
 )
