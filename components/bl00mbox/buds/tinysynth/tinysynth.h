@@ -25,6 +25,8 @@
 
 
 typedef struct {
+    // current 'level' of the envelope:
+    // 0 for off, ~((uint32_t) 0) for max volume
     uint32_t    env_counter;
     uint32_t    attack;
     uint32_t    decay;
