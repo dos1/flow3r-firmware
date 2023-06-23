@@ -79,7 +79,6 @@ static void io_slow_task(void * data){
 }
 
 void locks_init(){
-    mutex_i2c = xSemaphoreCreateMutex();
     mutex_LED = xSemaphoreCreateMutex();
 }
 

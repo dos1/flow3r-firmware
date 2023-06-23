@@ -1,10 +1,9 @@
 #include "badge23/audio.h"
-#include "badge23/lock.h"
 
 #include "st3m_scope.h"
 
 #include "driver/i2s.h"
-#include "driver/i2c.h"
+#include "flow3r_bsp_i2c.h"
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -14,8 +13,6 @@
 #include <string.h>
 
 #define TIMEOUT_MS 1000
-
-#define I2C_MASTER_NUM 0 /*!< I2C master i2c port number, the number of i2c peripheral interfaces available will depend on the chip */
 
 static void audio_player_task(void* arg);
 
@@ -74,29 +71,27 @@ static uint8_t max98091_i2c_read(const uint8_t reg)
 {
     const uint8_t tx[] = {reg};
     uint8_t rx[1];
-    xSemaphoreTake(mutex_i2c, portMAX_DELAY);
-    esp_err_t ret = i2c_master_write_read_device(I2C_MASTER_NUM, 0x10, tx, sizeof(tx), rx, sizeof(rx), TIMEOUT_MS / portTICK_PERIOD_MS);
-    xSemaphoreGive(mutex_i2c);
+    flow3r_bsp_i2c_write_read_device(flow3r_i2c_addresses.codec, tx, sizeof(tx), rx, sizeof(rx), TIMEOUT_MS / portTICK_PERIOD_MS);
+    // TODO(q3k): handle error
     return rx[0];
 }
 
 static esp_err_t max98091_i2c_write(const uint8_t reg, const uint8_t data)
 {
     const uint8_t tx[] = {reg, data};
-    xSemaphoreTake(mutex_i2c, portMAX_DELAY);
-    esp_err_t ret = i2c_master_write_to_device(I2C_MASTER_NUM, 0x10, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
-    xSemaphoreGive(mutex_i2c);
-    return ret;
+    return flow3r_bsp_i2c_write_to_device(flow3r_i2c_addresses.codec, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
 }
 
 static esp_err_t max98091_i2c_write_readback(const uint8_t reg, const uint8_t data)
 {
-    const uint8_t tx[] = {reg, data};
-    xSemaphoreTake(mutex_i2c, portMAX_DELAY);
-    esp_err_t ret = i2c_master_write_to_device(I2C_MASTER_NUM, 0x10, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
-    xSemaphoreGive(mutex_i2c);
-    if(max98091_i2c_read(reg) != data) printf("readback of %04X to %02X write failed\n", data, reg);
-    return ret;
+    esp_err_t ret = max98091_i2c_write(reg, data);
+    if (ret != ESP_OK) {
+        return ret;
+    }
+    if (max98091_i2c_read(reg) != data) {
+        printf("readback of %04X to %02X write failed\n", data, reg);
+    }
+    return ESP_OK;
 }
 
 void audio_codec_i2c_write(const uint8_t reg, const uint8_t data) {

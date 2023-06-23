@@ -5,8 +5,9 @@
 #include "badge23/lock.h"
 #include "badge23/audio.h"
 
+#include "flow3r_bsp_i2c.h"
+
 #include "driver/i2c.h"
-#define I2C_MASTER_NUM 0
 #define TIMEOUT_MS 1000
 
 #if defined(CONFIG_BADGE23_HW_GEN_P1)
@@ -77,7 +78,7 @@ static uint8_t badge_link_enabled = 0;
  * if there's an outside shunt.
  */
 typedef struct{
-    uint8_t address;
+    flow3r_i2c_address *addr;
     uint8_t is_output_pin;  // mask for pins we wish to use as outputs
     uint8_t read_state;     //
     uint8_t output_state;   // goal output state
@@ -89,10 +90,8 @@ void _max7321_update(max7321_t *max){
     uint8_t rx = 0;
     uint8_t tx = (~(max->is_output_pin)) | max->output_state;
 
-    xSemaphoreTake(mutex_i2c, portMAX_DELAY);
-    esp_err_t tx_error = i2c_master_write_to_device(I2C_MASTER_NUM, max->address, &tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
-    esp_err_t rx_error = i2c_master_read_from_device(I2C_MASTER_NUM, max->address, &rx, sizeof(rx), TIMEOUT_MS / portTICK_PERIOD_MS);
-    xSemaphoreGive(mutex_i2c);
+	flow3r_bsp_i2c_write_read_device(*max->addr, &tx, sizeof(tx), &rx, sizeof(rx), TIMEOUT_MS / portTICK_PERIOD_MS);
+    // TODO(q3k): handle error
     max->read_state = rx;
 }
 
@@ -200,8 +199,8 @@ void update_button_state(){
 
 #elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4)
 
-max7321_t port_expanders[] = {  {0b01101110, 0, 255, 255}, 
-                                {0b01101101, 0, 255, 255}  };
+max7321_t port_expanders[] = {  {&flow3r_i2c_addresses.portexp[0], 0, 255, 255}, 
+                                {&flow3r_i2c_addresses.portexp[1], 0, 255, 255}  };
 
 static void _init_buttons(){
     //configure all buttons as pullup
@@ -257,8 +256,8 @@ void update_button_state(){
     leftbutton = new_leftbutton;
 }
 #elif defined(CONFIG_BADGE23_HW_GEN_P6)
-max7321_t port_expanders[] = {  {0b01101110, 0, 255, 255}, 
-                                {0b01101101, 0, 255, 255}  };
+max7321_t port_expanders[] = {  {&flow3r_i2c_addresses.portexp[0], 0, 255, 255}, 
+                                {&flow3r_i2c_addresses.portexp[1], 0, 255, 255}  };
 
 static void _init_buttons(){
     //configure all buttons as pullup

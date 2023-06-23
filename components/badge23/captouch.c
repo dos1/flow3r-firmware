@@ -1,11 +1,10 @@
 //#include <stdio.h>
 //#include <string.h>
 #include "esp_log.h"
-#include "driver/i2c.h"
 #include <stdint.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/atomic.h>
-#include "badge23/lock.h"
+#include "flow3r_bsp_i2c.h"
 
 #define PETAL_PAD_TIP 0
 #define PETAL_PAD_CCW 1
@@ -38,33 +37,24 @@ static const uint8_t bot_segment_map[] = {3,0,3,0,3,0,0,3,0,3}; //idk
 static const uint8_t bot_stage_config[] = {0,1,2,3,4,5,6,7,8,9,10,11};
 #define DEFAULT_THRES_TOP 2000
 #define DEFAULT_THRES_BOT 12000
-#define AD7147_ADDR_TOP            0b101101
-#define AD7147_ADDR_BOT            0b101100
 
 #else
 #error "captouch not implemented for this badge generation"
 #endif
 
 #if defined(CONFIG_BADGE23_HW_GEN_P4)
-#define AD7147_ADDR_TOP            0b101100
-#define AD7147_ADDR_BOT            0b101101
 static const uint8_t top_segment_map[] = {1,3,2,2,3,1,1,3,2,1,3,2}; //PETAL_PAD_*
 static const uint8_t bot_segment_map[] = {3,0,3,0,0,0,3,0,3,1,2,3}; //PETAL_PAD_*
 #elif defined(CONFIG_BADGE23_HW_GEN_P6)
-#define AD7147_ADDR_TOP            0b101100
-#define AD7147_ADDR_BOT            0b101101
 static const uint8_t top_segment_map[] = {1,3,2,2,3,1,1,3,2,1,3,2}; //PETAL_PAD_*
 static const uint8_t bot_segment_map[] = {3,0,3,0,0,0,3,0,3,1,2,3}; //PETAL_PAD_*
 #elif defined(CONFIG_BADGE23_HW_GEN_P3)
-#define AD7147_ADDR_TOP            0b101101
-#define AD7147_ADDR_BOT            0b101100
 static const uint8_t top_segment_map[] = {0,1,2, 2,1,0, 0,1,2, 2,1,0}; //PETAL_PAD_*
 static const uint8_t bot_segment_map[] = {3,0,3,0,0,0,3,0,3, 0,2,1}; //PETAL_PAD_*
 #endif
 
 static const char *TAG = "captouch";
 
-#define I2C_MASTER_NUM              0                          /*!< I2C master i2c port number, the number of i2c peripheral interfaces available will depend on the chip */
 
 #define AD7147_REG_PWR_CONTROL              0x00
 #define AD7147_REG_STAGE_CAL_EN             0x01
@@ -89,7 +79,7 @@ typedef struct{
 static petal_t petals[10];
 
 struct ad714x_chip {
-    uint8_t addr;
+    flow3r_i2c_address *addr;
     uint8_t gpio;
     int pos_afe_offsets[13];
     int neg_afe_offsets[13];
@@ -97,29 +87,32 @@ struct ad714x_chip {
     int stages;
 };
 
-static struct ad714x_chip chip_top_rev5 = {.addr = AD7147_ADDR_TOP, .gpio = 15,
+static struct ad714x_chip chip_top_rev5 = {
+    .addr = &flow3r_i2c_addresses.touch_top,
+    .gpio = 15,
     .pos_afe_offsets = {4, 2, 2, 2, 2, 3, 4, 2, 2, 2, 2, 0},
-    .stages=top_stages};
-static struct ad714x_chip chip_bot_rev5 = {.addr = AD7147_ADDR_BOT, .gpio = 15,
+    .stages = top_stages,
+};
+
+static struct ad714x_chip chip_bot_rev5 = {
+    .addr = &flow3r_i2c_addresses.touch_bottom,
+    .gpio = 15,
     .pos_afe_offsets = {3, 2, 1, 1 ,1, 1, 1, 1, 2, 3, 3, 3},
-    .stages=bot_stages};
+    .stages = bot_stages,
+};
 
 static esp_err_t ad714x_i2c_write(const struct ad714x_chip *chip, const uint16_t reg, const uint16_t data)
 {
     const uint8_t tx[] = {reg >> 8, reg & 0xFF, data >> 8, data & 0xFF};
-    xSemaphoreTake(mutex_i2c, portMAX_DELAY);
     ESP_LOGI(TAG, "AD7147 write reg %X-> %X", reg, data);
-    xSemaphoreGive(mutex_i2c);
-    return i2c_master_write_to_device(I2C_MASTER_NUM, chip->addr, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
+    return flow3r_bsp_i2c_write_to_device(*chip->addr, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
 }
 
 static esp_err_t ad714x_i2c_read(const struct ad714x_chip *chip, const uint16_t reg, uint16_t *data, const size_t len)
 {
     const uint8_t tx[] = {reg >> 8, reg & 0xFF};
     uint8_t rx[len * 2];
-    xSemaphoreTake(mutex_i2c, portMAX_DELAY);
-    esp_err_t ret = i2c_master_write_read_device(I2C_MASTER_NUM, chip->addr, tx, sizeof(tx), rx, sizeof(rx), TIMEOUT_MS / portTICK_PERIOD_MS);
-    xSemaphoreGive(mutex_i2c);
+    esp_err_t ret = flow3r_bsp_i2c_write_read_device(*chip->addr, tx, sizeof(tx), rx, sizeof(rx), TIMEOUT_MS / portTICK_PERIOD_MS);
     for(int i = 0; i < len; i++) {
         data[i] = (rx[i * 2] << 8) | rx[i * 2 + 1];
     }

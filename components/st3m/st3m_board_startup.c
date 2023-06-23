@@ -17,8 +17,9 @@ void st3m_board_startup(void) {
     }
     flow3r_bsp_display_set_backlight(100);
 
+    flow3r_bsp_i2c_init();
     st3m_fs_init();
 
-	// Handoff to badge23.
-	badge23_main();
+    // Handoff to badge23.
+    badge23_main();
 }
