@@ -7,9 +7,6 @@
 
 #define SAMPLE_RATE 48000
 
-#define TRAD_OSC_DECAY_STEP          0.01
-#define TRAD_OSC_ATTACK_POP_BLOCK          16
-
 #define TRAD_ENV_PHASE_OFF 0
 #define TRAD_ENV_PHASE_ATTACK 1
 #define TRAD_ENV_PHASE_DECAY 2
@@ -23,6 +20,8 @@
 #define TRAD_OSC_WAVE_SQUARE 4
 #define TRAD_OSC_WAVE_PULSE 5
 #define TRAD_OSC_WAVE_BLIP 6
+#define TRAD_OSC_WAVE_NES_LONG 7
+#define TRAD_OSC_WAVE_NES_SHORT 8
 
 
 typedef struct {

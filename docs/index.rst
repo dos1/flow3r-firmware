@@ -22,7 +22,7 @@ Welcome to flow3r's documentation!
    api/badge_link.rst
    api/hardware.rst
    api/kernel.rst
-   api/synth.rst
+   api/bl00mbox.rst
    api/ctx.rst
 
 
