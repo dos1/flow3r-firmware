@@ -62,9 +62,9 @@ void st3m_board_startup(void) {
     st3m_mode_update_display(NULL);
     st3m_scope_init();
     st3m_audio_init();
-    st3m_audio_set_player_function(bl00mbox_player_function);
     st3m_mode_set(st3m_mode_kind_starting, "io");
     st3m_mode_update_display(NULL);
+    bl00mbox_init();
     st3m_leds_init();
     st3m_io_init();
 

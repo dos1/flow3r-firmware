@@ -66,10 +66,22 @@ class HarmonicApp(Application):
         if self.color_intensity > 0:
             self.color_intensity -= self.color_intensity / 20
         for i in range(10):
-            if get_captouch(i):
-                if i % 2:
-                    k = int((i - 1) / 2)
-                    self._set_chord(k)
+            cap = get_captouch(i)
+            if cap != self.prev_captouch[i]:
+                self.prev_captouch[i] = cap
+                if cap:
+                    if i % 2:
+                        k = int((i - 1) / 2)
+                        self._set_chord(k)
+                    else:
+                        k = int(i / 2)
+                        self.synths[k].tone(self.chord[k])
+                        self.synths[k+5].tone(12+self.chord[k])
+                        self.synths[k+10].tone(7+self.chord[k])
+                        self.synths[k].start()
+                        self.synths[k+5].start()
+                        self.synths[k+10].start()
+                        self.color_intensity = 1.0
                 else:
                     k = int(i / 2)
                     self.synths[k].tone(self.chord[k])

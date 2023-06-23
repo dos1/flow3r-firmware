@@ -276,7 +276,7 @@ void st3m_audio_init(void) {
     _output_apply(&state.speaker);
     _output_apply(&state.headphones);
 
-    xTaskCreate(&_audio_player_task, "audio", 3000, NULL,
+    xTaskCreate(&_audio_player_task, "audio", 10000, NULL,
                 configMAX_PRIORITIES - 1, NULL);
     xTaskCreate(&_jacksense_update_task, "jacksense", 2048, NULL,
                 configMAX_PRIORITIES - 2, NULL);
