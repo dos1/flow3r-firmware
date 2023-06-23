@@ -3,6 +3,7 @@ idf_component_register(
 		flow3r_bsp_display.c
 		flow3r_bsp_gc9a01.c
 		flow3r_bsp_hwconfig.c
+		flow3r_bsp_i2c.c
     INCLUDE_DIRS
 		.
 )

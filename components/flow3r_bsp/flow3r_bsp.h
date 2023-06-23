@@ -1,5 +1,7 @@
 #pragma once
 
+#include "flow3r_bsp_i2c.h"
+
 #include <stdint.h>
 
 // Initialize badge display. An error will be reported if the initialization
