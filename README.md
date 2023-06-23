@@ -18,6 +18,8 @@ Please transfer all .py files in python_payload/ for using the demo payload.
 
 ## How to install dependencies
 
+Pay attention to install version 4.4. Other versions (specifically 5.x) did not work. To be sure follow the generic instructions below.
+
 ### Generic
 
 1. install esp-idf v4.4:
@@ -108,7 +110,11 @@ $ # or
 $ screen /dev/ttyACM0
 $ # or (will eat newlines in REPL, though)
 $ idf.py -p /dev/ttyACM0 monitor
+$ # or
+$ mpremote repl /dev/ttyACM0
 ```
+
+and press Ctrl-C (potentially twice) to exit the debug output.
 
 ### Use CMake
 
