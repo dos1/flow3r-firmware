@@ -18,17 +18,17 @@ Please transfer all .py files in python_payload/ for using the demo payload.
 
 ## How to install dependencies
 
-Pay attention to install version 4.4. Other versions (specifically 5.x) did not work. To be sure follow the generic instructions below.
+Pay attention to install version 4.4.5. Other versions (specifically 5.x) did not work. To be sure follow the generic instructions below.
 
 ### Generic
 
-1. install esp-idf v4.4:
+1. install esp-idf v4.4.5:
 (copied from https://www.wemos.cc/en/latest/tutorials/others/build\_micropython\_esp32.html)
 ```
 $ cd ~
 $ git clone https://github.com/espressif/esp-idf.git
 $ cd esp-idf
-$ git checkout v4.4.4
+$ git checkout v4.4.5
 $ git submodule update --init --recursive
 
 $ cd esp-idf
