@@ -104,4 +104,7 @@
 #define CTX_FONT_5 CTX_STATIC_FONT(CampFont2)
 #define CTX_FONT_6 CTX_STATIC_FONT(CampFont3)
 
+#include "MaterialIcons.h"
+#define CTX_FONT_7 CTX_STATIC_FONT(MaterialIcons)
+
 #endif
