@@ -31,11 +31,12 @@ class ScrollController(st4m.Responder):
         "_velocity",
     )
 
-    def __init__(self) -> None:
+    def __init__(self, wrap=False) -> None:
         self._nitems = 0
         self._target_position = 0
         self._current_position = 0.0
         self._velocity: float = 0.0
+        self.wrap = wrap
 
     def set_item_count(self, count: int) -> None:
         """
@@ -72,10 +73,13 @@ class ScrollController(st4m.Responder):
             self._velocity = 0
             return
 
-        if self._target_position < 0:
-            self._target_position = 0
-        if self._target_position >= self._nitems:
-            self._target_position = self._nitems - 1
+        if self.wrap:
+            self._target_position = self._target_position % self._nitems
+        else:
+            if self._target_position < 0:
+                self._target_position = 0
+            if self._target_position >= self._nitems:
+                self._target_position = self._nitems - 1
 
         self._physics_step(delta_ms / 1000.0)
 
@@ -118,11 +122,19 @@ class ScrollController(st4m.Responder):
         return self._target_position >= self._nitems - 1
 
     def _physics_step(self, delta: float) -> None:
-        diff = float(self._target_position) - self._current_position
+        diff = self._nitems
+        for i in [0, 1, -1]:
+            d = (
+                float(self._target_position) + self._nitems * i
+            ) - self._current_position
+            if abs(d) < abs(diff):
+                diff = d
+        # diff =
+        # print(diff)
         max_velocity = 500
         velocity = self._velocity
 
-        if abs(diff) > 0.1:
+        if abs(diff) > 0.2:
             # Apply force to reach target position.
             if diff > 0:
                 velocity += 80 * delta
@@ -139,7 +151,7 @@ class ScrollController(st4m.Responder):
             # Try to snap to target position.
             pos = self._velocity > 0 and diff > 0
             neg = self._velocity < 0 and diff < 0
-            if pos or neg:
+            if self.wrap or pos or neg:
                 self._current_position = self._target_position
                 self._velocity = 0
 
@@ -147,4 +159,6 @@ class ScrollController(st4m.Responder):
 
     def _physics_integrate(self, delta: float) -> None:
         self._velocity -= self._velocity * delta * 10
-        self._current_position += self._velocity * delta
+        self._current_position = (
+            self._current_position + self._velocity * delta
+        ) % self._nitems
