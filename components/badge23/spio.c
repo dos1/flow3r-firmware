@@ -3,8 +3,8 @@
 #include "stdint.h"
 #include "badge23/spio.h"
 #include "badge23/lock.h"
-#include "badge23/audio.h"
 
+#include "st3m_audio.h"
 #include "flow3r_bsp_i2c.h"
 
 #include "driver/i2c.h"
@@ -388,7 +388,7 @@ static uint8_t spio_badge_link_set(uint8_t pin_mask, uint8_t state){
 static int8_t spio_badge_link_set(uint8_t pin_mask, bool state){
     if(state) {
         if((pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_RING) || (pin_mask & BADGE_LINK_PIN_MASK_LINE_OUT_TIP)){
-            if(!audio_headphones_are_connected()) {
+            if(!st3m_audio_headphones_are_connected()) {
                 pin_mask &= ~BADGE_LINK_PIN_MASK_LINE_OUT_RING;
                 pin_mask &= ~BADGE_LINK_PIN_MASK_LINE_OUT_TIP;
 #ifdef USER_WARNINGS_ENABLED

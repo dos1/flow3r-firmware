@@ -11,7 +11,6 @@
 #include "py/builtin.h"
 #include "py/runtime.h"
 
-#include "badge23/audio.h"
 #include "badge23/captouch.h"
 #include "badge23/spio.h"
 #include "badge23/espan.h"
@@ -205,7 +204,7 @@ STATIC mp_obj_t mp_scope_draw(mp_obj_t ctx_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_scope_draw_obj, mp_scope_draw);
 
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_audio) },
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_hardware) },
     { MP_ROM_QSTR(MP_QSTR_init_done), MP_ROM_PTR(&mp_init_done_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_captouch_calibration_active), MP_ROM_PTR(&mp_captouch_calibration_active_obj) },

@@ -1,5 +1,6 @@
 idf_component_register(
     SRCS
+        st3m_audio.c
         st3m_board_startup.c
         st3m_gfx.c
         st3m_counter.c

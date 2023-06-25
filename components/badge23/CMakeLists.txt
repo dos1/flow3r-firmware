@@ -1,7 +1,6 @@
 idf_component_register(
     SRCS
         apa102LEDStrip.c
-        audio.c
         captouch.c
         espan.c
         leds.c

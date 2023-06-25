@@ -1,4 +1,4 @@
-#include "badge23/audio.h"
+#include "st3m_audio.h"
 #include "st3m_scope.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -114,5 +114,5 @@ void bl00mbox_player_function(int16_t * rx, int16_t * tx, uint16_t len){
 }
 
 void bl00mbox_init(){
-    audio_set_player_function(bl00mbox_player_function);
+    st3m_audio_set_player_function(bl00mbox_player_function);
 }

@@ -1,5 +1,7 @@
 #include "st3m_gfx.h"
 #include "st3m_fs.h"
+#include "st3m_audio.h"
+#include "st3m_scope.h"
 #include "flow3r_bsp.h"
 
 // Declared by badge23 codebase. To be removed and slurped up into st3m.
@@ -19,6 +21,8 @@ void st3m_board_startup(void) {
 
     flow3r_bsp_i2c_init();
     st3m_fs_init();
+    st3m_scope_init();
+    st3m_audio_init();
 
     // Handoff to badge23.
     badge23_main();

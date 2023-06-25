@@ -1,5 +1,4 @@
 #include "badge23/captouch.h"
-#include "badge23/audio.h"
 #include "badge23/leds.h"
 #include "badge23/spio.h"
 #include "badge23/lock.h"
@@ -7,6 +6,7 @@
 #include "flow3r_bsp.h"
 #include "st3m_gfx.h"
 #include "st3m_fs.h"
+#include "st3m_audio.h"
 
 #include "bl00mbox.h"
 
@@ -38,7 +38,7 @@ static void io_slow_task(void * data){
     TickType_t last_wake = xTaskGetTickCount();
     while(1) {
         vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(100)); // 10 Hz
-        audio_update_jacksense();
+        st3m_audio_update_jacksense();
         leds_update_hardware();
     }
 }
@@ -52,12 +52,11 @@ void badge23_main(void)
     locks_init();
     ESP_LOGI(TAG, "Starting on %s...", flow3r_bsp_hw_name);
 
-    audio_init();
     leds_init();
     init_buttons();
     captouch_init();
     spio_badge_link_disable(255);
-    audio_set_player_function(bl00mbox_player_function);
+    st3m_audio_set_player_function(bl00mbox_player_function);
 
     captouch_force_calibration();
 
