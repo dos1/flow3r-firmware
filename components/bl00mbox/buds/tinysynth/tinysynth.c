@@ -18,7 +18,6 @@ int16_t run_trad_env(trad_env_t * env){
             if(tmp < env->env_counter){ // overflow
                 tmp = ~((uint32_t) 0); // max out
                 env->env_phase = TRAD_ENV_PHASE_DECAY;
-                printf("decay \n");
             }
             env->env_counter = tmp;
             break;
@@ -32,7 +31,6 @@ int16_t run_trad_env(trad_env_t * env){
             if(env->env_counter <= env->sustain){
                 env->env_counter = env->sustain;
                 env->env_phase = TRAD_ENV_PHASE_SUSTAIN;
-                printf("sustain \n");
             }
             break;
         case TRAD_ENV_PHASE_SUSTAIN:
@@ -165,7 +163,6 @@ void trad_osc_set_freq_semitone(trad_osc_t * osc, float tone){
 
 void trad_osc_set_freq_Hz(trad_osc_t * osc, float freq){
     osc->freq = (freq/(SYNTH_SAMPLE_RATE)) * (~((uint64_t) 0));
-    printf("freq: %llu \n" , osc->freq);
 }
 
 void trad_osc_set_waveform(trad_osc_t * osc, uint8_t waveform){
@@ -174,7 +171,6 @@ void trad_osc_set_waveform(trad_osc_t * osc, uint8_t waveform){
 
 void trad_osc_set_attack_ms(trad_osc_t * osc, float ms){
     osc->env.attack = (1000./ms/(SYNTH_SAMPLE_RATE)) * (~((uint32_t) 0)) ;
-    printf("atk: %u \n" , osc->env.attack);
 }
 
 void trad_osc_set_decay_ms(trad_osc_t * osc, float ms){
