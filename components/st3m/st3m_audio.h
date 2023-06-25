@@ -30,7 +30,7 @@ void st3m_audio_player_function_dummy(int16_t * rx, int16_t * tx, uint16_t len);
 /* Initializes I2S bus, the audio task and required data structures.
  * Expects an initialized I2C bus, will fail ungracefully otherwise (TODO).
  */
-void st3m_audio_init();
+void st3m_audio_init(void);
 
 /* Polls hardware to check if headphones, headset or line in are plugged
  * into the 3.5mm jacks. If it detects a plug in the headphone jack, speakers
@@ -41,22 +41,22 @@ void st3m_audio_init();
  */
 void st3m_audio_update_jacksense(void);
 
-/* Returns 1 if headphones with or without microphone were connected to the
+/* Returns true if headphones with or without microphone were connected to the
  * headphone jack at the last call of st3m_audio_update_jacksense.
  */
-uint8_t st3m_audio_headphones_are_connected();
+bool st3m_audio_headphones_are_connected(void);
 
-/* Returns 1 if headphones with microphone were connected to the headphone jack
- * at the last call of audio_update_jacksense.
+/* Returns true if headphones with microphone were connected to the headphone
+ * jack at the last call of audio_update_jacksense.
  */
-uint8_t st3m_audio_headset_is_connected();
+bool st3m_audio_headset_is_connected(void);
 
 /* If a sleeve contact mic doesn't pull the detection pin low enough the
  * codec's built in headphone detection might fail. Calling this function
  * with 'enable = 1' overrides the detection and assumes there's headphones
  * plugged in. Call with 'enable = 0' to revert to automatic detection.
  */
-void st3m_audio_headphones_detection_override(uint8_t enable);
+void st3m_audio_headphones_detection_override(bool enable);
 
 /* Attempts to set target volume for the headphone output/onboard speakers
  * respectively, clamps/rounds if necessary and returns the actual volume.
@@ -84,9 +84,9 @@ float st3m_audio_adjust_volume_dB(float vol_dB);
 /* Returns volume as set with st3m_audio_{headphones/speaker}_set_volume_dB.  The
  * unspecified variant automatically chooses the adequate channel (**).
  */
-float st3m_audio_headphones_get_volume_dB();
-float st3m_audio_speaker_get_volume_dB();
-float st3m_audio_get_volume_dB();
+float st3m_audio_headphones_get_volume_dB(void);
+float st3m_audio_speaker_get_volume_dB(void);
+float st3m_audio_get_volume_dB(void);
 
 /* Mutes (mute = 1) or unmutes (mute = 0) the specified channel.
  * The unspecified variant automatically chooses the adequate channel (**).
@@ -95,16 +95,16 @@ float st3m_audio_get_volume_dB();
  * the return value of st3m_audio_headphone_are_connected. There is no override
  * for this (see HEADPHONE PORT POLICY below).
  */
-void st3m_audio_headphones_set_mute(uint8_t mute);
-void st3m_audio_speaker_set_mute(uint8_t mute);
-void st3m_audio_set_mute(uint8_t mute);
+void st3m_audio_headphones_set_mute(bool mute);
+void st3m_audio_speaker_set_mute(bool mute);
+void st3m_audio_set_mute(bool mute);
 
-/* Returns 1 if channel is muted, 0 if channel is unmuted.
+/* Returns true if channel is muted, false otherwise.
  * The unspecified variant automatically chooses the adequate channel (**).
  */
-uint8_t st3m_audio_headphones_get_mute();
-uint8_t st3m_audio_speaker_get_mute();
-uint8_t st3m_audio_get_mute();
+bool st3m_audio_headphones_get_mute(void);
+bool st3m_audio_speaker_get_mute(void);
+bool st3m_audio_get_mute(void);
 
 /* Set the minimum and maximum allowed volume levels for speakers and headphones
  * respectively. Clamps with hardware limitations. Maximum clamps below the minimum
@@ -119,10 +119,10 @@ float st3m_audio_speaker_set_maximum_volume_dB(float vol_dB);
  * respectively. Change with
  * st3m_audio_{headphones/speaker}_set_{minimum/maximum}_volume_dB.
  */
-float st3m_audio_headphones_get_minimum_volume_dB();
-float st3m_audio_headphones_get_maximum_volume_dB();
-float st3m_audio_speaker_get_minimum_volume_dB();
-float st3m_audio_speaker_get_maximum_volume_dB();
+float st3m_audio_headphones_get_minimum_volume_dB(void);
+float st3m_audio_headphones_get_maximum_volume_dB(void);
+float st3m_audio_speaker_get_minimum_volume_dB(void);
+float st3m_audio_speaker_get_maximum_volume_dB(void);
 
 /* Syntactic sugar for drawing UI: Returns channel volume in a 0..1 range,
  * scaled into a 0.01..1 range according to the values set with
@@ -131,9 +131,9 @@ float st3m_audio_speaker_get_maximum_volume_dB();
  *
  * The unspecified variant automatically chooses the adequate channel (**).
  */
-float st3m_audio_headphones_get_volume_relative();
-float st3m_audio_speaker_get_volume_relative();
-float st3m_audio_get_volume_relative();
+float st3m_audio_headphones_get_volume_relative(void);
+float st3m_audio_speaker_get_volume_relative(void);
+float st3m_audio_get_volume_relative(void);
 
 /* (**) if st3m_audio_headphones_are_connected returns 1 the "headphone" variant
  *      is chosen, else the "speaker" variant is chosen.
@@ -161,21 +161,21 @@ void st3m_audio_input_set_source(st3m_audio_input_source_t source);
 
 /* Returns the currently selected input source.
  */
-uint8_t st3m_audio_input_get_source();
+st3m_audio_input_source_t st3m_audio_input_get_source(void);
 
 /* Hardware preamp gain, 0dB-50dB. TODO: figure out if int/float inconsistency
  * is a good thing here compared to all other _dB functions.
  */
 uint8_t st3m_audio_headset_set_gain_dB(uint8_t gain_dB);
-uint8_t st3m_audio_headset_get_gain_dB();
+uint8_t st3m_audio_headset_get_gain_dB(void);
 
 /* You can route whatever source is selected with st3m_audio_input_set_source to
  * the audio output. Use these to control volume and mute.
  */
 float st3m_audio_input_thru_set_volume_dB(float vol_dB);
-float st3m_audio_input_thru_get_volume_dB();
+float st3m_audio_input_thru_get_volume_dB(void);
 void st3m_audio_input_thru_set_mute(bool mute);
-bool st3m_audio_input_thru_get_mute();
+bool st3m_audio_input_thru_get_mute(void);
 
 /*
 HEADPHONE PORT POLICY
