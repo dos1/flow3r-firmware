@@ -104,7 +104,7 @@ static struct ad714x_chip chip_bot_rev5 = {
 static esp_err_t ad714x_i2c_write(const struct ad714x_chip *chip, const uint16_t reg, const uint16_t data)
 {
     const uint8_t tx[] = {reg >> 8, reg & 0xFF, data >> 8, data & 0xFF};
-    ESP_LOGI(TAG, "AD7147 write reg %X-> %X", reg, data);
+    ESP_LOGD(TAG, "AD7147 write reg %X-> %X", reg, data);
     return flow3r_bsp_i2c_write_to_device(*chip->addr, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
 }
 
