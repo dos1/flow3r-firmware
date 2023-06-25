@@ -8,7 +8,7 @@
 static const char *TAG = "flow3r-bsp-audio";
 
 esp_err_t flow3r_bsp_audio_write(const void *src, size_t size, size_t *bytes_written, TickType_t ticks_to_wait) {
-	return i2s_write(0, src, size, bytes_written, ticks_to_wait);
+    return i2s_write(0, src, size, bytes_written, ticks_to_wait);
 }
 
 #if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P6)
@@ -72,15 +72,15 @@ void flow3r_bsp_audio_line_in_set_hardware_thru(bool enable) {
 }
 
 bool flow3r_bsp_audio_has_hardware_mute(void) {
-	return true;
+    return true;
 }
 
 void flow3r_bsp_audio_register_poke(uint8_t reg, uint8_t data) {
-	flow3r_bsp_max98091_register_poke(reg, data);
+    flow3r_bsp_max98091_register_poke(reg, data);
 }
 
 esp_err_t flow3r_bsp_audio_read(void *dest, size_t size, size_t *bytes_read, TickType_t ticks_to_wait) {
-	return i2s_read(0, dest, size, bytes_read, ticks_to_wait);
+    return i2s_read(0, dest, size, bytes_read, ticks_to_wait);
 }
 
 #elif defined(CONFIG_BADGE23_HW_GEN_P1)
@@ -107,57 +107,57 @@ void flow3r_bsp_audio_init(void) {
     ESP_ERROR_CHECK(i2s_driver_install(0, &i2s_config, 0, NULL));
     i2s_set_pin(0, &pin_config);
 
-	ESP_LOGE(TAG, "Prototype1 has a very limited audio codec, most features will not work! Get a newer hardware revision.");
+    ESP_LOGE(TAG, "Prototype1 has a very limited audio codec, most features will not work! Get a newer hardware revision.");
 }
 
 float flow3r_bsp_audio_headphones_set_volume(bool mute, float dB) {
-	// Not supported in this generation.
-	return 0.0;
+    // Not supported in this generation.
+    return 0.0;
 }
 
 float flow3r_bsp_audio_speaker_set_volume(bool mute, float dB) {
-	return 0.0;
+    return 0.0;
 }
 
 void flow3r_bsp_audio_headset_set_gain_dB(uint8_t gain_dB) {
-	// Not supported in this generation.
+    // Not supported in this generation.
 }
 
 void flow3r_bsp_audio_read_jacksense(flow3r_bsp_audio_jacksense_state_t *st) {
-	// Not supported in this generation.
-	st->headphones = false;
-	st->headset = false;
+    // Not supported in this generation.
+    st->headphones = false;
+    st->headset = false;
 }
 
 void flow3r_bsp_audio_input_set_source(flow3r_bsp_audio_input_source_t source) {
-	// Not supported in this generation.
+    // Not supported in this generation.
 }
 
 void flow3r_bsp_audio_headphones_line_in_set_hardware_thru(bool enable) {
-	// Not supported in this generation.
+    // Not supported in this generation.
 }
 
 void flow3r_bsp_audio_speaker_line_in_set_hardware_thru(bool enable) {
-	// Not supported in this generation.
+    // Not supported in this generation.
 }
 
 void flow3r_bsp_audio_line_in_set_hardware_thru(bool enable) {
-	// Not supported in this generation.
+    // Not supported in this generation.
 }
 
 bool flow3r_bsp_audio_has_hardware_mute(void) {
-	return false;
+    return false;
 }
 
 void flow3r_bsp_audio_register_poke(uint8_t reg, uint8_t data) {
-	// Not supported in this generation.
+    // Not supported in this generation.
 }
 
 esp_err_t flow3r_bsp_audio_read(void *dest, size_t size, size_t *bytes_read, TickType_t ticks_to_wait) {
-	// Not supported in this generation. But pretend we've read silence.
-	memset(dest, 0, size);
-	*bytes_read = size;
-	return ESP_OK;
+    // Not supported in this generation. But pretend we've read silence.
+    memset(dest, 0, size);
+    *bytes_read = size;
+    return ESP_OK;
 }
 
 

@@ -32,51 +32,51 @@ static esp_err_t max98091_check(const uint8_t reg, const uint8_t data)
     if (ret != ESP_OK) {
         return ret;
     }
-	
-	switch (reg) {
-	// Do not attempt to read back registers that are write-only.
-	case MAX98091_SOFTWARE_RESET:
-	case MAX98091_DAI_INTERFACE:
-	case MAX98091_DAC_PATH:
-	case MAX98091_LINE_TO_ADC:
-		return ESP_OK;
-	}
-	uint8_t readback = max98091_read(reg);
-	if (readback != data) {
+    
+    switch (reg) {
+    // Do not attempt to read back registers that are write-only.
+    case MAX98091_SOFTWARE_RESET:
+    case MAX98091_DAI_INTERFACE:
+    case MAX98091_DAC_PATH:
+    case MAX98091_LINE_TO_ADC:
+        return ESP_OK;
+    }
+    uint8_t readback = max98091_read(reg);
+    if (readback != data) {
         ESP_LOGE(TAG, "Write of %02X failed: wanted %02x, got %02x", reg, data, readback);
     }
     return ESP_OK;
 }
 
 void flow3r_bsp_max98091_register_poke(uint8_t reg, uint8_t data) {
-	max98091_check(reg, data);
+    max98091_check(reg, data);
 }
 
 void flow3r_bsp_max98091_headphones_line_in_set_hardware_thru(bool enable) {
-	// Enable headphone mixer.
+    // Enable headphone mixer.
     max98091_check(MAX98091_HPCONTROL,
-		MAX98091_ON(HPCONTROL_MIXHP_RSEL) |
-		MAX98091_ON(HPCONTROL_MIXHP_LSEL));
-	// Line A + DAC_L -> Left HP
+        MAX98091_ON(HPCONTROL_MIXHP_RSEL) |
+        MAX98091_ON(HPCONTROL_MIXHP_LSEL));
+    // Line A + DAC_L -> Left HP
     max98091_check(MAX98091_LEFT_HP_MIXER,
-		MAX98091_BOOL(LEFT_HP_MIXER_LINE_A, enable) |
-		MAX98091_ON(LEFT_HP_MIXER_LEFT_DAC));
-	// Line B + DAC_R -> Right HP
+        MAX98091_BOOL(LEFT_HP_MIXER_LINE_A, enable) |
+        MAX98091_ON(LEFT_HP_MIXER_LEFT_DAC));
+    // Line B + DAC_R -> Right HP
     max98091_check(MAX98091_RIGHT_HP_MIXER,
-		MAX98091_BOOL(RIGHT_HP_MIXER_LINE_B, enable) |
-		MAX98091_ON(RIGHT_HP_MIXER_RIGHT_DAC));
+        MAX98091_BOOL(RIGHT_HP_MIXER_LINE_B, enable) |
+        MAX98091_ON(RIGHT_HP_MIXER_RIGHT_DAC));
 }
 
 void flow3r_bsp_max98091_speaker_line_in_set_hardware_thru(bool enable) {
-	// TODO(q3k): left/right DAC seem to have been swapped before, double-check.
-	// Line A -> Left Speaker
+    // TODO(q3k): left/right DAC seem to have been swapped before, double-check.
+    // Line A -> Left Speaker
     max98091_check(MAX98091_LEFT_SPK_MIXER,
-		MAX98091_BOOL(LEFT_SPK_MIXER_LINE_A, enable) |
-		MAX98091_ON(LEFT_SPK_MIXER_LEFT_DAC));
-	// Line B -> Right Speaker
+        MAX98091_BOOL(LEFT_SPK_MIXER_LINE_A, enable) |
+        MAX98091_ON(LEFT_SPK_MIXER_LEFT_DAC));
+    // Line B -> Right Speaker
     max98091_check(MAX98091_RIGHT_SPK_MIXER,
-		MAX98091_BOOL(RIGHT_SPK_MIXER_LINE_B, enable) |
-		MAX98091_ON(RIGHT_SPK_MIXER_RIGHT_DAC));
+        MAX98091_BOOL(RIGHT_SPK_MIXER_LINE_B, enable) |
+        MAX98091_ON(RIGHT_SPK_MIXER_RIGHT_DAC));
 }
 
 void flow3r_bsp_max98091_line_in_set_hardware_thru(bool enable) {
@@ -85,36 +85,36 @@ void flow3r_bsp_max98091_line_in_set_hardware_thru(bool enable) {
 }
 
 static void onboard_mic_set_power(bool enable) {
-	// DMICCLK = 3 => f_DMC = f_PCLK / 5
+    // DMICCLK = 3 => f_DMC = f_PCLK / 5
     max98091_check(MAX98091_DIGITAL_MIC_ENABLE,
-		MAX98091_BITS(DIGITAL_MIC_ENABLE_DMICCLK, 3) |
-		MAX98091_BOOL(DIGITAL_MIC_ENABLE_DIGMIC1L, enable) |
-		MAX98091_BOOL(DIGITAL_MIC_ENABLE_DIGMIC1R, enable));
+        MAX98091_BITS(DIGITAL_MIC_ENABLE_DMICCLK, 3) |
+        MAX98091_BOOL(DIGITAL_MIC_ENABLE_DIGMIC1L, enable) |
+        MAX98091_BOOL(DIGITAL_MIC_ENABLE_DIGMIC1R, enable));
 }
 
 void flow3r_bsp_max98091_input_set_source(flow3r_bsp_audio_input_source_t source){
-	switch (source) {
-	case flow3r_bsp_audio_input_source_none:
+    switch (source) {
+    case flow3r_bsp_audio_input_source_none:
         onboard_mic_set_power(false);
-		max98091_check(MAX98091_LEFT_ADC_MIXER, 0);
-		max98091_check(MAX98091_RIGHT_ADC_MIXER, 0);
-		break;
-	case flow3r_bsp_audio_input_source_line_in:
+        max98091_check(MAX98091_LEFT_ADC_MIXER, 0);
+        max98091_check(MAX98091_RIGHT_ADC_MIXER, 0);
+        break;
+    case flow3r_bsp_audio_input_source_line_in:
         onboard_mic_set_power(false);
-		max98091_check(MAX98091_LEFT_ADC_MIXER, MAX98091_ON(LEFT_ADC_MIXER_LINE_IN_A));
-		max98091_check(MAX98091_RIGHT_ADC_MIXER, MAX98091_ON(RIGHT_ADC_MIXER_LINE_IN_B));
-		break;
-	case flow3r_bsp_audio_input_source_headset_mic:
+        max98091_check(MAX98091_LEFT_ADC_MIXER, MAX98091_ON(LEFT_ADC_MIXER_LINE_IN_A));
+        max98091_check(MAX98091_RIGHT_ADC_MIXER, MAX98091_ON(RIGHT_ADC_MIXER_LINE_IN_B));
+        break;
+    case flow3r_bsp_audio_input_source_headset_mic:
         onboard_mic_set_power(false);
-		max98091_check(MAX98091_LEFT_ADC_MIXER, MAX98091_ON(LEFT_ADC_MIXER_MICROPHONE_1));
-		max98091_check(MAX98091_RIGHT_ADC_MIXER, MAX98091_ON(RIGHT_ADC_MIXER_MICROPHONE_1));
-		break;
-	case flow3r_bsp_audio_input_source_onboard_mic:
+        max98091_check(MAX98091_LEFT_ADC_MIXER, MAX98091_ON(LEFT_ADC_MIXER_MICROPHONE_1));
+        max98091_check(MAX98091_RIGHT_ADC_MIXER, MAX98091_ON(RIGHT_ADC_MIXER_MICROPHONE_1));
+        break;
+    case flow3r_bsp_audio_input_source_onboard_mic:
         onboard_mic_set_power(true);
-		max98091_check(MAX98091_LEFT_ADC_MIXER, 0);
-		max98091_check(MAX98091_RIGHT_ADC_MIXER, 0);
-		break;
-	}
+        max98091_check(MAX98091_LEFT_ADC_MIXER, 0);
+        max98091_check(MAX98091_RIGHT_ADC_MIXER, 0);
+        break;
+    }
 }
 
 void flow3r_bsp_max98091_headset_set_gain_dB(uint8_t gain_dB){
@@ -128,34 +128,34 @@ void flow3r_bsp_max98091_headset_set_gain_dB(uint8_t gain_dB){
         gain_dB -= 20;
         pa1en = 0b10;
     }
-	max98091_check(MAX98091_MIC1_INPUT_LEVEL,
-		MAX98091_BITS(MIC1_INPUT_LEVEL_PGAM1, 0x14 - gain_dB) |
-		MAX98091_BITS(MIC1_INPUT_LEVEL_PA1EN, pa1en));
+    max98091_check(MAX98091_MIC1_INPUT_LEVEL,
+        MAX98091_BITS(MIC1_INPUT_LEVEL_PGAM1, 0x14 - gain_dB) |
+        MAX98091_BITS(MIC1_INPUT_LEVEL_PA1EN, pa1en));
 }
 
 void flow3r_bsp_max98091_read_jacksense(flow3r_bsp_audio_jacksense_state_t *st) {
-	// TODO: read port expander
+    // TODO: read port expander
     st->line_in = false;
 
     uint8_t jck = max98091_read(MAX98091_JACK_STATUS);
-	switch (jck) {
-	case 6:
-		st->headphones = false;
-		st->headset = false;
-		return;
-	case 0:
-		st->headphones = true;
-		st->headset = false;
-		return;
-	case 2:
-		st->headphones = true;
-		st->headset = true;
-	}
+    switch (jck) {
+    case 6:
+        st->headphones = false;
+        st->headset = false;
+        return;
+    case 0:
+        st->headphones = true;
+        st->headset = false;
+        return;
+    case 2:
+        st->headphones = true;
+        st->headset = true;
+    }
 }
 
 typedef struct {
-	uint8_t raw_value;
-	float volume_dB;
+    uint8_t raw_value;
+    float volume_dB;
 } volume_step_t;
 
 static const uint8_t speaker_map_len = 40;
@@ -165,9 +165,9 @@ static const volume_step_t *find_speaker_volume(float vol_dB) {
     uint8_t map_index = speaker_map_len - 1;
     for(; map_index; map_index--){
         if(speaker_map[map_index].volume_dB >= vol_dB)
-			return &speaker_map[map_index];
+            return &speaker_map[map_index];
     }
-	return &speaker_map[0];
+    return &speaker_map[0];
 }
 
 static const uint8_t headphones_map_len = 32;
@@ -177,90 +177,90 @@ static const volume_step_t *find_headphones_volume(float vol_dB) {
     uint8_t map_index = headphones_map_len - 1;
     for(; map_index; map_index--){
         if(headphones_map[map_index].volume_dB >= vol_dB)
-			return &headphones_map[map_index];
+            return &headphones_map[map_index];
     }
-	return &headphones_map[0];
+    return &headphones_map[0];
 }
 
 float flow3r_bsp_max98091_headphones_set_volume(bool mute, float dB) {
-	const volume_step_t *step = find_headphones_volume(dB);
-	ESP_LOGI(TAG, "Setting headphones volume: %d/%02x", mute, step->raw_value);
-	max98091_check(MAX98091_LEFT_HP_VOLUME,
-		MAX98091_BOOL(LEFT_HP_VOLUME_HPLM, mute) |
-		MAX98091_BITS(LEFT_HP_VOLUME_HPVOLL, step->raw_value));
-	max98091_check(MAX98091_RIGHT_HP_VOLUME,
-		MAX98091_BOOL(RIGHT_HP_VOLUME_HPRM, mute) |
-		MAX98091_BITS(RIGHT_HP_VOLUME_HPVOLR, step->raw_value));
-	return step->volume_dB;
+    const volume_step_t *step = find_headphones_volume(dB);
+    ESP_LOGI(TAG, "Setting headphones volume: %d/%02x", mute, step->raw_value);
+    max98091_check(MAX98091_LEFT_HP_VOLUME,
+        MAX98091_BOOL(LEFT_HP_VOLUME_HPLM, mute) |
+        MAX98091_BITS(LEFT_HP_VOLUME_HPVOLL, step->raw_value));
+    max98091_check(MAX98091_RIGHT_HP_VOLUME,
+        MAX98091_BOOL(RIGHT_HP_VOLUME_HPRM, mute) |
+        MAX98091_BITS(RIGHT_HP_VOLUME_HPVOLR, step->raw_value));
+    return step->volume_dB;
 }
 
 float flow3r_bsp_max98091_speaker_set_volume(bool mute, float dB) {
-	const volume_step_t *step = find_speaker_volume(dB);
-	ESP_LOGI(TAG, "Setting speakers volume: %d/%02x", mute, step->raw_value);
-	max98091_check(MAX98091_LEFT_SPK_VOLUME,
-		MAX98091_BOOL(LEFT_SPK_VOLUME_SPLM, mute) |
-		MAX98091_BITS(LEFT_SPK_VOLUME_SPVOLL, step->raw_value));
-	max98091_check(MAX98091_RIGHT_SPK_VOLUME,
-		MAX98091_BOOL(RIGHT_SPK_VOLUME_SPRM, mute) |
-		MAX98091_BITS(RIGHT_SPK_VOLUME_SPVOLR, step->raw_value));
-	return step->volume_dB;
+    const volume_step_t *step = find_speaker_volume(dB);
+    ESP_LOGI(TAG, "Setting speakers volume: %d/%02x", mute, step->raw_value);
+    max98091_check(MAX98091_LEFT_SPK_VOLUME,
+        MAX98091_BOOL(LEFT_SPK_VOLUME_SPLM, mute) |
+        MAX98091_BITS(LEFT_SPK_VOLUME_SPVOLL, step->raw_value));
+    max98091_check(MAX98091_RIGHT_SPK_VOLUME,
+        MAX98091_BOOL(RIGHT_SPK_VOLUME_SPRM, mute) |
+        MAX98091_BITS(RIGHT_SPK_VOLUME_SPVOLR, step->raw_value));
+    return step->volume_dB;
 }
 void flow3r_bsp_max98091_init(void) {
 #define POKE(n, v) ESP_ERROR_CHECK(max98091_check(MAX98091_##n, v))
-	ESP_LOGI(TAG, "Codec initializing...");
+    ESP_LOGI(TAG, "Codec initializing...");
     vTaskDelay(10 / portTICK_PERIOD_MS);
-	POKE(SOFTWARE_RESET, 0x80);
+    POKE(SOFTWARE_RESET, 0x80);
     vTaskDelay(10 / portTICK_PERIOD_MS);
 
-	POKE(DEVICE_SHUTDOWN, 0);
-	// pclk = mclk / 1
-	POKE(SYSTEM_CLOCK, MAX98091_BITS(SYSTEM_CLOCK_PSCLK, 1));
-	// music, dc filter in record and playback
+    POKE(DEVICE_SHUTDOWN, 0);
+    // pclk = mclk / 1
+    POKE(SYSTEM_CLOCK, MAX98091_BITS(SYSTEM_CLOCK_PSCLK, 1));
+    // music, dc filter in record and playback
     POKE(FILTER_CONFIGURATION,  (1 << 7) | (1 << 6) | (1 << 5) | (1 << 2));
-	// Sets up DAI for left-justified slave mode operation.
+    // Sets up DAI for left-justified slave mode operation.
     POKE(DAI_INTERFACE, 1 << 2);
-	// Sets up the DAC to speaker path
+    // Sets up the DAC to speaker path
     POKE(DAC_PATH, 1 << 5);
 
     // Somehow this was needed to get an input signal to the ADC, even though
     // all other registers should be taken care of later. Don't know why.
-	// Sets up the line in to adc path
+    // Sets up the line in to adc path
     POKE(LINE_TO_ADC, 1 << 6);
 
-	// SDOUT, SDIN enabled
+    // SDOUT, SDIN enabled
     POKE(IO_CONFIGURATION, (1 << 1) | (1 << 0));
-	// bandgap bias
+    // bandgap bias
     POKE(BIAS_CONTROL, 1 << 0);
-	// high performane mode
+    // high performane mode
     POKE(DAC_CONTROL, 1 << 0);
 
-	// enable micbias, line input amps, ADCs
+    // enable micbias, line input amps, ADCs
     POKE(INPUT_ENABLE, (1<<4) |(1<<3) | (1<<2) | (1<<1) | (1<<0));
-	// IN3 SE -> Line A, IN4 SE -> Line B
+    // IN3 SE -> Line A, IN4 SE -> Line B
     POKE(LINE_INPUT_CONFIG, (1<<3) | (1<<2));
-	// 64x oversampling, dithering, high performance ADC
+    // 64x oversampling, dithering, high performance ADC
     POKE(ADC_CONTROL, (1<<1) | (1<<0));
 
     POKE(DIGITAL_MIC_ENABLE, 0);
-	// IN5/IN6 to MIC1
+    // IN5/IN6 to MIC1
     POKE(INPUT_MODE, (1<<0));
 
     flow3r_bsp_max98091_line_in_set_hardware_thru(0);
     flow3r_bsp_max98091_headset_set_gain_dB(0);
     flow3r_bsp_max98091_input_set_source(flow3r_bsp_audio_input_source_none);
 
-	// output enable: enable dacs
+    // output enable: enable dacs
     POKE(OUTPUT_ENABLE, (1<<1) | (1<<0));
-	// power up
-	POKE(DEVICE_SHUTDOWN, 1<<7);
-	// enable outputs, dacs
+    // power up
+    POKE(DEVICE_SHUTDOWN, 1<<7);
+    // enable outputs, dacs
     POKE(OUTPUT_ENABLE, (1<<7) | (1<<6) | (1<<5) | (1<<4) | (1<<1) | (1<<0));
-	// disable all digital filters except for dc blocking
+    // disable all digital filters except for dc blocking
     POKE(DSP_FILTER_ENABLE, 0x0);
-	// jack detect enable
+    // jack detect enable
     POKE(JACK_DETECT, 1<<7);
 
-	// TODO(q3k): mute this
+    // TODO(q3k): mute this
     ESP_LOGI(TAG, "Codec initilialied! Don't worry about the readback errors above.");
 #undef POKE
 }
