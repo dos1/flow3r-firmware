@@ -1,9 +1,10 @@
 #include <stdio.h>
+
 #include "py/runtime.h"
 #include "py/obj.h"
-// sorry ;w;
-#include "badge23/../../../bl00mbox/include/bl00mbox.h"
-#include "badge23/../../../bl00mbox/buds/tinysynth/tinysynth.h"
+
+#include "bl00mbox.h"
+#include "tinysynth.h"
 
 #if !MICROPY_ENABLE_FINALISER
 #error "BADGE23_SYNTH requires MICROPY_ENABLE_FINALISER"

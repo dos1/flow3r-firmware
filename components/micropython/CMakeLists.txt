@@ -106,6 +106,7 @@ set(IDF_COMPONENTS
     flow3r_bsp
     st3m
     ctx
+    bl00mbox
 
     app_update
     bootloader_support
