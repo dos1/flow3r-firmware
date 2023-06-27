@@ -1,4 +1,5 @@
 from st4m.ui.view import ViewWithInputState, ViewTransitionSwipeRight
+from st4m.input import InputState
 
 
 class Application(ViewWithInputState):
