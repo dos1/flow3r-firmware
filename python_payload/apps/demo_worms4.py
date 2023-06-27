@@ -40,6 +40,7 @@ class AppWorms(application.Application):
 
     def on_enter(self):
         # print("on foreground")
+        super().on_enter()
         self.just_shown = True
 
     def draw(self, ctx):
