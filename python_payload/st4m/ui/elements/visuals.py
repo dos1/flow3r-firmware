@@ -84,7 +84,6 @@ class GroupRing(Responder):
             ctx.rotate(-angle).translate(0, self.r).rotate(math.pi)
             item.draw(ctx)
             ctx.restore()
-        # ctx.restore()
 
 
 class FlowerIcon(Responder):
@@ -103,7 +102,7 @@ class FlowerIcon(Responder):
         self.highlighted = False
         self.rotation_time = 0.0
 
-        self.petal_count = random.randint(2, 3)
+        self.petal_count = random.randint(3, 5)
         self.petal_color = (random.random(), random.random(), random.random())
         self.phi_offset = random.random()
         self.size_offset = random.randint(0, 20)
@@ -127,11 +126,13 @@ class FlowerIcon(Responder):
         ctx.text_baseline = ctx.MIDDLE
         ctx.font_size = self.size / 3
         ctx.line_width = 5
+        ctx.font = ctx.get_font_name(6)
         if self.rotation_time:
             phi_rotate = tau * ((self.ts % self.rotation_time) / self.rotation_time)
         else:
             phi_rotate = 0
         for i in range(self.petal_count):
+            # continue
             # ctx.save()
 
             phi = (tau / self.petal_count * i + self.phi_offset + phi_rotate) % tau
@@ -158,21 +159,20 @@ class FlowerIcon(Responder):
 
         # label
         # y += self.size / 3
+
         w = max(self.size, ctx.text_width(self.label) + 10)
         h = self.size / 3 + 8
-        if False and self.highlighted:
-            ctx.rgb(*BLACK).move_to(x, y - height / 2).round_rectangle(
-                x - width / 2, y - height / 2, width, height, width // 2
-            ).fill()
-            ctx.rgb(*GO_GREEN).move_to(x, y).text(self.label)
-        else:
-            ctx.save()
-            ctx.translate(0, self.size / 3)
-            ctx.rgb(*PUSH_RED).round_rectangle(
-                x - w / 2, y - h / 2, w, h, w // 2
-            ).fill()
+        # ctx.save()
+        ctx.translate(0, self.size / 3)
 
-            ctx.rgb(*BLACK).move_to(x, y).text(self.label)
-            ctx.restore()
+        if self.highlighted:
+            bg = BLACK
+            fg = GO_GREEN
+        else:
+            bg = PUSH_RED
+            fg = BLACK
+
+        ctx.rgb(*bg).round_rectangle(x - w / 2, y - h / 2, w, h, w // 2).fill()
+        ctx.rgb(*fg).move_to(x, y).text(self.label)
 
         ctx.restore()

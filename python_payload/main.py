@@ -46,11 +46,14 @@ menu_music = SimpleMenu(
     vm,
 )
 
+from apps.demo_worms4 import app as worms
+
+worms._view_manager = vm
 menu_apps = SimpleMenu(
     [
         MenuItemBack(),
         MenuItemNoop("captouch"),
-        MenuItemNoop("worms"),
+        MenuItemForeground("worms", worms),
     ],
     vm,
 )
@@ -58,7 +61,7 @@ menu_apps = SimpleMenu(
 
 menu_main = FlowerMenu(
     [
-        MenuItemForeground("MUsic", menu_music),
+        MenuItemForeground("Music", menu_music),
         MenuItemForeground("Apps", menu_apps),
         MenuItemNoop("Settings"),
     ],
