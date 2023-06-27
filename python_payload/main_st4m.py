@@ -22,17 +22,30 @@ from st4m import Responder, InputState, Ctx
 
 import math, hardware
 
+from st4m.ui.elements.menus import SunMenu, SimpleMenu
 
 vm = ViewManager(ViewTransitionBlend())
 
+menu_music = SimpleMenu(
+    [
+        MenuItemBack(),
+        MenuItemNoop("Harmonic"),
+        MenuItemNoop("Melodic"),
+        MenuItemNoop("TinySynth"),
+        MenuItemNoop("CrazySynth"),
+        MenuItemNoop("Sequencer"),
+    ],
+    vm,
+)
 
-def lerp(a: float, b: float, v: float) -> float:
-    if v <= 0:
-        return a
-    if v >= 1.0:
-        return b
-    return a + (b - a) * v
-
+menu_apps = SimpleMenu(
+    [
+        MenuItemBack(),
+        MenuItemNoop("captouch"),
+        MenuItemNoop("worms"),
+    ],
+    vm,
+)
 
 class USBIcon(Responder):
     """
@@ -205,7 +218,7 @@ menu_apps = SimpleMenu(
     vm,
 )
 
-menu_main = MainMenu(
+menu_main = SunMenu(
     [
         MenuItemForeground("Music", menu_music),
         MenuItemForeground("Apps", menu_apps),
