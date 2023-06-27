@@ -4,6 +4,8 @@
 #include "st3m_scope.h"
 #include "st3m_leds.h"
 
+#include "bl00mbox.h"
+
 #include "flow3r_bsp.h"
 
 // Declared by badge23 codebase. To be removed and slurped up into st3m.
@@ -25,6 +27,7 @@ void st3m_board_startup(void) {
     st3m_fs_init();
     st3m_scope_init();
     st3m_audio_init();
+    st3m_audio_set_player_function(bl00mbox_player_function);
     st3m_leds_init();
 
     // Handoff to badge23.

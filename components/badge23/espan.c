@@ -1,8 +1,6 @@
 #include "badge23/captouch.h"
 #include "badge23/spio.h"
 #include "flow3r_bsp.h"
-#include "st3m_audio.h"
-#include "bl00mbox.h"
 
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -28,8 +26,6 @@ void badge23_main(void)
     init_buttons();
     captouch_init();
     spio_badge_link_disable(255);
-    st3m_audio_set_player_function(bl00mbox_player_function);
-
     captouch_force_calibration();
 
     xTaskCreatePinnedToCore(&io_fast_task, "iofast", 4096, NULL, configMAX_PRIORITIES-1, NULL, 0);
