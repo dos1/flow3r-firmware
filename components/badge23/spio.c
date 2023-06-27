@@ -2,7 +2,6 @@
 #include "driver/gpio.h"
 #include "stdint.h"
 #include "badge23/spio.h"
-#include "badge23/lock.h"
 
 #include "st3m_audio.h"
 #include "flow3r_bsp_i2c.h"

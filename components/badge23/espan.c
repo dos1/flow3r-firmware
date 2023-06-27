@@ -1,6 +1,5 @@
 #include "badge23/captouch.h"
 #include "badge23/spio.h"
-#include "badge23/lock.h"
 
 #include "flow3r_bsp.h"
 #include "st3m_gfx.h"
@@ -42,13 +41,8 @@ static void io_slow_task(void * data){
     }
 }
 
-void locks_init(){
-    mutex_LED = xSemaphoreCreateMutex();
-}
-
 void badge23_main(void)
 {
-    locks_init();
     ESP_LOGI(TAG, "Starting on %s...", flow3r_bsp_hw_name);
 
     init_buttons();
