@@ -3,7 +3,6 @@ idf_component_register(
         captouch.c
         espan.c
         spio.c
-        leds.c
     INCLUDE_DIRS
         include
     REQUIRES

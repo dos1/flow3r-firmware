@@ -6,6 +6,7 @@ idf_component_register(
         st3m_counter.c
         st3m_fs.c
         st3m_scope.c
+        st3m_leds.c
     INCLUDE_DIRS
         .
     REQUIRES

@@ -1,17 +1,17 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#include <freertos/queue.h>
+#include <freertos/semphr.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "esp_system.h"
-#include "badge23/leds.h"
-#include "badge23/lock.h"
 
 #include "flow3r_bsp.h"
+#include "st3m_leds.h"
+
 #include "esp_log.h"
 
-static const char *TAG = "badge23-leds";
+static const char *TAG = "st3m-leds";
 
 static uint8_t leds_brightness = 69;;
 static uint8_t leds_slew_rate = 255;
@@ -38,9 +38,13 @@ struct RGB
     unsigned char B;
 };
 
-struct RGB led_target[40] = {0,};
-struct RGB led_target_buffer[40] = {0,};
-struct RGB led_hardware_value[40] = {0,};
+static struct RGB led_target[40] = {0,};
+static struct RGB led_target_buffer[40] = {0,};
+static struct RGB led_hardware_value[40] = {0,};
+
+SemaphoreHandle_t mutex;
+#define LOCK xSemaphoreTake(mutex, portMAX_DELAY)
+#define UNLOCK xSemaphoreGive(mutex)
 
 struct HSV
 {
@@ -49,7 +53,7 @@ struct HSV
     double V;
 };
 
-struct RGB HSVToRGB(struct HSV hsv) {
+static struct RGB HSVToRGB(struct HSV hsv) {
     double r = 0, g = 0, b = 0;
 
     if (hsv.S == 0)
@@ -124,7 +128,7 @@ struct RGB HSVToRGB(struct HSV hsv) {
     return rgb;
 }
 
-void set_single_led(uint8_t index, uint8_t c[3]){
+static void set_single_led(uint8_t index, uint8_t c[3]){
     index = ((39-index) + 1 + 32)%40;
     flow3r_bsp_leds_set_pixel(index, c[0], c[1], c[2]);
 }
@@ -158,9 +162,9 @@ static void leds_update_target(){
     }
 }
 
-void leds_update_hardware(){ 
+void st3m_leds_update_hardware(){ 
     if(leds_auto_update) leds_update_target();
-    xSemaphoreTake(mutex_LED, portMAX_DELAY);
+    LOCK;
     for(int i = 0; i < 40; i++){
         uint8_t c[3];
         c[0] = led_target[i].R * leds_brightness/255;
@@ -179,16 +183,16 @@ void leds_update_hardware(){
         set_single_led(index, c);
     }
     renderLEDs();
-    xSemaphoreGive(mutex_LED);
+    UNLOCK;
 }
 
-void leds_set_single_rgb(uint8_t index, uint8_t red, uint8_t green, uint8_t blue){
+void st3m_leds_set_single_rgb(uint8_t index, uint8_t red, uint8_t green, uint8_t blue){
     led_target_buffer[index].R = red;
     led_target_buffer[index].G = green;
     led_target_buffer[index].B = blue;
 }
  
-void leds_set_single_hsv(uint8_t index, float hue, float sat, float val){
+void st3m_leds_set_single_hsv(uint8_t index, float hue, float sat, float val){
     struct RGB rgb;
     struct HSV hsv;
     hsv.H = hue;
@@ -202,24 +206,27 @@ void leds_set_single_hsv(uint8_t index, float hue, float sat, float val){
     led_target_buffer[index].B = rgb.B;
 }
 
-void leds_set_all_rgb(uint8_t red, uint8_t green, uint8_t blue){
+void st3m_leds_set_all_rgb(uint8_t red, uint8_t green, uint8_t blue){
     for(int i = 0; i<40; i++){
-        leds_set_single_rgb(i, red, green, blue);
+        st3m_leds_set_single_rgb(i, red, green, blue);
     }
 }
 
-void leds_set_all_hsv(float h, float s, float v){
+void st3m_leds_set_all_hsv(float h, float s, float v){
     for(int i = 0; i<40; i++){
-        leds_set_single_hsv(i, h, s, v);
+        st3m_leds_set_single_hsv(i, h, s, v);
     }
 }
 
-void leds_update(){
+void st3m_leds_update(){
     leds_update_target();
-    leds_update_hardware();
+    st3m_leds_update_hardware();
 }
 
-void leds_init(){
+void st3m_leds_init(){
+    mutex = xSemaphoreCreateMutex();
+    assert(mutex != NULL);
+
     for(uint16_t i = 0; i<256; i++){
         gamma_red[i] = i;
         gamma_green[i] = i;
@@ -235,31 +242,31 @@ void leds_init(){
     ESP_LOGI(TAG, "LEDs initialized");
 }
 
-void leds_set_brightness(uint8_t b){
+void st3m_leds_set_brightness(uint8_t b){
     leds_brightness = b;
 }
 
-uint8_t leds_get_brightness(){
+uint8_t st3m_leds_get_brightness(){
     return leds_brightness;
 }
 
-void leds_set_slew_rate(uint8_t s){
+void st3m_leds_set_slew_rate(uint8_t s){
     leds_slew_rate = s;
 }
 
-uint8_t leds_get_slew_rate(){
+uint8_t st3m_leds_get_slew_rate(){
     return leds_slew_rate;
 }
 
-void leds_set_auto_update(bool on){
+void st3m_leds_set_auto_update(bool on){
     leds_auto_update = on;
 }
 
-bool leds_get_auto_update(){
+bool st3m_leds_get_auto_update(){
     return leds_auto_update;
 }
 
-void leds_set_gamma(float red, float green, float blue){
+void st3m_leds_set_gamma(float red, float green, float blue){
     for(uint16_t i = 0; i<256; i++){
         if(i == 0){
             gamma_red[i] = 0;

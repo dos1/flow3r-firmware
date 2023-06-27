@@ -1,5 +1,7 @@
 #pragma once
+
 #include <stdint.h>
+#include <stdbool.h>
 
 #define BUTTON_PRESSED_DOWN 2
 #define BUTTON_PRESSED_LEFT -1
