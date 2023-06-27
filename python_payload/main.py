@@ -85,16 +85,20 @@ class GroupRing(Responder):
         if self.item_center:
             self.item_center.has_highlight = False
             self.item_center.draw(ctx)
+            # self.items_ring[0].draw(ctx)
 
+        # ctx.save()
         for index, item in enumerate(self.items_ring):
             if item is None:
                 continue
             angle = tau / len(self.items_ring) * index + self.angle_offset
             (x, y) = xy_from_polar(self.r, angle)
             ctx.save()
-            ctx.translate(self.x + x, self.y + y)
+            # ctx.translate(self.x + x, self.y + y)
+            ctx.rotate(-angle).translate(0, self.r).rotate(math.pi)
             item.draw(ctx)
             ctx.restore()
+        # ctx.restore()
 
 
 class FlowerIcon(Responder):
@@ -136,20 +140,20 @@ class FlowerIcon(Responder):
         ctx.text_align = ctx.CENTER
         ctx.text_baseline = ctx.MIDDLE
         ctx.font_size = self.size / 3
-        ctx.line_width = 10
+        ctx.line_width = 5
         if self.rotation_time:
             phi_rotate = tau * ((self.ts % self.rotation_time) / self.rotation_time)
         else:
             phi_rotate = 0
         for i in range(self.petal_count):
-            ctx.save()
+            # ctx.save()
 
             phi = (tau / self.petal_count * i + self.phi_offset + phi_rotate) % tau
             r = self.size / 2
             (x_, y_) = xy_from_polar(r, phi)
 
             size_offset = abs(math.pi - (phi + math.pi) % tau) * 5
-            ctx.move_to(x + x_ + petal_size / 2 + size_offset + 5, y + y_)
+            ctx.move_to(x + x_, y + y_)
             if self.highlighted:
                 # ctx.move_to(x + x_ - petal_size / 2 - size_offset - 5, y + y_)
                 ctx.arc(x + x_, y + y_, petal_size / 2 + size_offset + 1, 0, tau, 0)
@@ -157,9 +161,10 @@ class FlowerIcon(Responder):
 
             ctx.arc(x + x_, y + y_, petal_size / 2 + size_offset, 0, tau, 0)
             ctx.rgb(*self.petal_color).fill()
-            ctx.restore()
+            # ctx.restore()
+        ctx.move_to(x, y)
         if self.highlighted:
-            ctx.arc(x, y, self.size / 2 + 5, 0, tau, 1)
+            ctx.arc(x, y, self.size / 2, 0, tau, 1)
             ctx.rgb(*GO_GREEN).stroke()
 
         ctx.arc(x, y, self.size / 2, 0, tau, 0)
@@ -223,7 +228,7 @@ class FlowerMenu(MenuController):
         ctx.rectangle(-120, -120, 240, 240).fill()
         for item in self.ui.items_ring:
             item.highlighted = False
-            item.rotation_time = 0
+            item.rotation_time = 10000
         current = self._scroll_controller.current_position()
         self.ui.items_ring[int(current)].highlighted = True
         self.ui.items_ring[int(current)].rotation_time = 3000
