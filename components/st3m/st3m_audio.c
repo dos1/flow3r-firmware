@@ -15,7 +15,8 @@ static const char *TAG = "st3m-audio";
 
 #define TIMEOUT_MS 1000
 
-static void _audio_player_task(void* arg);
+static void _audio_player_task(void *data);
+static void _jacksense_update_task(void *data);
 static bool _headphones_connected(void);
 
 // used for exp(vol_dB * NAT_LOG_DB)
@@ -230,7 +231,7 @@ static bool _headphones_connected(void) {
     return state.jacksense.headphones || state.headphones_detection_override;
 }
 
-void st3m_audio_update_jacksense() {
+static void _update_jacksense() {
     flow3r_bsp_audio_jacksense_state_t st;
     flow3r_bsp_audio_read_jacksense(&st);
 
@@ -259,16 +260,18 @@ void st3m_audio_init(void) {
     flow3r_bsp_audio_init();
 
     st3m_audio_input_thru_set_volume_dB(-20);
-    st3m_audio_update_jacksense();
+    _update_jacksense();
     _output_apply(&state.speaker);
     _output_apply(&state.headphones);
 
-    TaskHandle_t handle;
-    xTaskCreate(&_audio_player_task, "audio", 3000, NULL, configMAX_PRIORITIES - 1, &handle);
+    xTaskCreate(&_audio_player_task, "audio", 3000, NULL, configMAX_PRIORITIES - 1, NULL);
+    xTaskCreate(&_jacksense_update_task, "jacksense", 2048, NULL, configMAX_PRIORITIES - 2, NULL);
     ESP_LOGI(TAG, "Audio task started");
 }
 
-static void _audio_player_task(void *arg) {
+static void _audio_player_task(void *data) {
+    (void)data;
+
     int16_t buffer_tx[FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2];
     int16_t buffer_rx[FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2];
     memset(buffer_tx, 0, sizeof(buffer_tx));
@@ -322,6 +325,17 @@ static void _audio_player_task(void *arg) {
 
     }
 }
+
+static void _jacksense_update_task(void * data) {
+    (void)data;
+
+    TickType_t last_wake = xTaskGetTickCount();
+    while(1) {
+        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(100)); // 10 Hz
+        _update_jacksense();
+    }
+}
+
 
 // BSP wrappers that don't need locking.
 

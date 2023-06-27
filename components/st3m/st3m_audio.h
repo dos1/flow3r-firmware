@@ -32,15 +32,6 @@ void st3m_audio_player_function_dummy(int16_t * rx, int16_t * tx, uint16_t len);
  */
 void st3m_audio_init(void);
 
-/* Polls hardware to check if headphones, headset or line in are plugged
- * into the 3.5mm jacks. If it detects a plug in the headphone jack, speakers
- * are automatically muted. There is no override for this at this moment.
- * 
- * Should be called periodically (100ms ish?) by a low priority task. Requires
- * the I2C lock.
- */
-void st3m_audio_update_jacksense(void);
-
 /* Returns true if headphones with or without microphone were connected to the
  * headphone jack at the last call of st3m_audio_update_jacksense.
  */
