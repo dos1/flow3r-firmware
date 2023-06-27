@@ -39,7 +39,6 @@ static void io_slow_task(void * data){
     while(1) {
         vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(100)); // 10 Hz
         st3m_audio_update_jacksense();
-        st3m_leds_update_hardware();
     }
 }
 
