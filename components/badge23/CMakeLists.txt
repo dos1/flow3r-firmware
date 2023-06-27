@@ -1,15 +1,13 @@
 idf_component_register(
     SRCS
-        apa102LEDStrip.c
         captouch.c
         espan.c
-        leds.c
         spio.c
+        leds.c
     INCLUDE_DIRS
         include
     REQUIRES
         flow3r_bsp
         st3m
-        espressif__led_strip
         bl00mbox
 )

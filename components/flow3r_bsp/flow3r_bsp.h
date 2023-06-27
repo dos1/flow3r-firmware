@@ -122,3 +122,19 @@ esp_err_t flow3r_bsp_audio_write(const void *src, size_t size, size_t *bytes_wri
 
 // Write audio codec register. Obviously very unsafe. Have fun.
 void flow3r_bsp_audio_register_poke(uint8_t reg, uint8_t data);
+
+#define FLOW3R_BSP_LED_COUNT 40
+
+// Initialize LEDs.
+esp_err_t flow3r_bsp_leds_init(void);
+
+// Set internal buffer for given LED to an RGB value.
+//
+// Index is a value in [0, FLOW3R_BSP_LED_COUNT).
+//
+// RGB values are in [0, 0xff].
+void flow3r_bsp_leds_set_pixel(uint32_t index, uint32_t red, uint32_t green, uint32_t blue);
+
+// Transmit from internal buffer into LEDs. This will block in case there
+// already is a previous transmission happening.
+esp_err_t flow3r_bsp_leds_refresh(TickType_t timeout_ms);

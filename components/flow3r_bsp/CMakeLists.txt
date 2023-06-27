@@ -6,6 +6,9 @@ idf_component_register(
 		flow3r_bsp_hwconfig.c
 		flow3r_bsp_i2c.c
 		flow3r_bsp_max98091.c
+		flow3r_bsp_leds.c
+		flow3r_bsp_rmtled.c
+		flow3r_bsp_spiled.c
     INCLUDE_DIRS
 		.
 )

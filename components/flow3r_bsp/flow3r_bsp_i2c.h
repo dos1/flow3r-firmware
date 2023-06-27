@@ -36,3 +36,5 @@ esp_err_t flow3r_bsp_i2c_write_to_device(flow3r_i2c_address address, const uint8
 //
 // This can be called concurrently from different tassks.
 esp_err_t flow3r_bsp_i2c_write_read_device(flow3r_i2c_address address, const uint8_t *write_buffer, size_t write_size, uint8_t *read_buffer, size_t read_size, TickType_t ticks_to_wait);
+
+void flow3r_bsp_i2c_scan(void);
