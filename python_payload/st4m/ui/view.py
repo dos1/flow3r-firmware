@@ -30,9 +30,8 @@ class ViewWithInputState(View):
 
     Remember to call super().think() in think()!
     """
-    __slots__ = (
-        'input',
-    )
+
+    __slots__ = ("input",)
 
     def __init__(self) -> None:
         self.input = InputController()
@@ -50,8 +49,11 @@ class ViewTransition(ABCBase):
 
     Can be implemented by the user to provide transition animations.
     """
+
     @abstractmethod
-    def draw(self, ctx: Ctx, transition: float, incoming: Responder, outgoing: Responder) -> None:
+    def draw(
+        self, ctx: Ctx, transition: float, incoming: Responder, outgoing: Responder
+    ) -> None:
         """
         Called when the ViewManager performs a transition from the outgoing
         responder to the incoming responder. The implementer should draw both
@@ -67,7 +69,10 @@ class ViewTransitionBlend(ViewTransition):
     """
     Transition from one view to another by opacity blending.
     """
-    def draw(self, ctx: Ctx, transition: float, incoming: Responder, outgoing: Responder) -> None:
+
+    def draw(
+        self, ctx: Ctx, transition: float, incoming: Responder, outgoing: Responder
+    ) -> None:
         ctx.start_group()
         outgoing.draw(ctx)
         ctx.end_group()
@@ -82,7 +87,10 @@ class ViewTransitionSwipeLeft(ViewTransition):
     """
     Swipe the outoing view to the left and replace it with the incoming view.
     """
-    def draw(self, ctx: Ctx, transition: float, incoming: Responder, outgoing: Responder) -> None:
+
+    def draw(
+        self, ctx: Ctx, transition: float, incoming: Responder, outgoing: Responder
+    ) -> None:
         ctx.save()
         ctx.translate(transition * -240, 0)
         outgoing.draw(ctx)
@@ -98,7 +106,10 @@ class ViewTransitionSwipeRight(ViewTransition):
     """
     Swipe the outoing view to the right and replace it with the incoming view.
     """
-    def draw(self, ctx: Ctx, transition: float, incoming: Responder, outgoing: Responder) -> None:
+
+    def draw(
+        self, ctx: Ctx, transition: float, incoming: Responder, outgoing: Responder
+    ) -> None:
         ctx.save()
         ctx.translate(transition * 240, 0)
         outgoing.draw(ctx)
@@ -117,6 +128,7 @@ class ViewManager(Responder):
     It manages a history of Views, to which new Views can be pushed and then
     popped.
     """
+
     def __init__(self, vt: ViewTransition) -> None:
         """
         Create a new ViewManager with a default ViewTransition.
@@ -124,7 +136,7 @@ class ViewManager(Responder):
         self._incoming: Optional[View] = None
         self._outgoing: Optional[View] = None
 
-		# Transition time.
+        # Transition time.
         self._time_ms = 150
 
         self._default_vt = vt
@@ -140,9 +152,9 @@ class ViewManager(Responder):
             if self._transition >= 1.0:
                 self._transition = 0
                 self._transitioning = False
-                
+
                 self._outgoing = None
-        
+
         if self._outgoing is not None:
             self._outgoing.think(ins, delta_ms)
         if self._incoming is not None:
