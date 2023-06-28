@@ -1,14 +1,17 @@
-#include "badge23/spio.h"
+#include "st3m_io.h"
 
-static const char *TAG = "badge23-spio";
+static const char *TAG = "st3m-io";
 
 #include "esp_log.h"
+#include "esp_err.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 #include "st3m_audio.h"
 #include "flow3r_bsp_i2c.h"
 #include "flow3r_bsp.h"
 
-void update_button_state(){
+static void _update_button_state(){
     esp_err_t ret = flow3r_bsp_spio_update();
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "update failed: %s", esp_err_to_name(ret));
@@ -23,51 +26,51 @@ void init_buttons(){
     }
 }
 
-bool spio_charger_state_get() {
+bool st3m_io_charger_state_get() {
     return flow3r_bsp_spio_charger_state_get();
 }
 
-bool spio_line_in_jacksense_get(){
+bool st3m_io_line_in_jacksense_get(){
     return flow3r_bsp_spio_jacksense_right_get();
 }
 
 static bool menu_button_left = false;
 
-void spio_menu_button_set_left(bool left){
+void st3m_io_menu_button_set_left(bool left){
     menu_button_left = left;
 }
 
-int8_t spio_menu_button_get() {
+st3m_tripos st3m_io_menu_button_get() {
     if (menu_button_left)
         return flow3r_bsp_spio_left_button_get();
     return flow3r_bsp_spio_right_button_get();
 }
 
-int8_t spio_application_button_get(){
+st3m_tripos st3m_io_application_button_get(){
     if (menu_button_left)
         return flow3r_bsp_spio_right_button_get();
     return flow3r_bsp_spio_left_button_get();
 }
 
-int8_t spio_left_button_get(){
+st3m_tripos st3m_io_left_button_get(){
     return flow3r_bsp_spio_left_button_get();
 }
 
-int8_t spio_right_button_get(){
+st3m_tripos st3m_io_right_button_get(){
     return flow3r_bsp_spio_right_button_get();
 }
 
-int8_t spio_menu_button_get_left(){
+bool st3m_io_menu_button_get_left(){
     return menu_button_left;
 }
 
 static uint8_t badge_link_enabled = 0;
 
-uint8_t spio_badge_link_get_active(uint8_t pin_mask){
+uint8_t st3m_io_badge_link_get_active(uint8_t pin_mask){
     return badge_link_enabled & pin_mask;
 }
 
-static int8_t spio_badge_link_set(uint8_t mask, bool state) {
+static int8_t st3m_io_badge_link_set(uint8_t mask, bool state) {
     bool left_tip = (mask & BADGE_LINK_PIN_MASK_LINE_OUT_TIP) > 0;
     bool left_ring = (mask & BADGE_LINK_PIN_MASK_LINE_OUT_RING) > 0;
     bool right_tip = (mask & BADGE_LINK_PIN_MASK_LINE_IN_TIP) > 0;
@@ -93,13 +96,42 @@ static int8_t spio_badge_link_set(uint8_t mask, bool state) {
 
     flow3r_bsp_spio_badgelink_left_enable(left_tip, left_ring);
     flow3r_bsp_spio_badgelink_right_enable(right_tip, right_ring);
-    return spio_badge_link_get_active(mask);
+    return st3m_io_badge_link_get_active(mask);
 }
 
-uint8_t spio_badge_link_disable(uint8_t pin_mask){
-    return spio_badge_link_set(pin_mask, 0);
+uint8_t st3m_io_badge_link_disable(uint8_t pin_mask){
+    return st3m_io_badge_link_set(pin_mask, 0);
 }
 
-uint8_t spio_badge_link_enable(uint8_t pin_mask){
-    return spio_badge_link_set(pin_mask, 1);
+uint8_t st3m_io_badge_link_enable(uint8_t pin_mask){
+    return st3m_io_badge_link_set(pin_mask, 1);
+}
+
+// Imports from badge23, will be removed once captouch gets moved to bsp/st3m.
+void captouch_read_cycle(void);
+void captouch_init(void);
+void captouch_force_calibration(void);
+
+static void _task(void * data){
+    TickType_t last_wake = xTaskGetTickCount();
+    while(1) {
+        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(10)); // 100 Hz
+        captouch_read_cycle();
+        _update_button_state();
+    }
+}
+
+void st3m_io_init(void) {
+	esp_err_t ret = flow3r_bsp_spio_init();
+	if (ret != ESP_OK) {
+		ESP_LOGE(TAG, "spio init failed: %s", esp_err_to_name(ret));
+		for (;;) {}
+	}
+
+	captouch_init();
+	captouch_force_calibration();
+	st3m_io_badge_link_disable(BADGE_LINK_PIN_MASK_ALL);
+
+    xTaskCreate(&_task, "io", 4096, NULL, configMAX_PRIORITIES-1, NULL);
+	ESP_LOGI(TAG, "IO task started");
 }

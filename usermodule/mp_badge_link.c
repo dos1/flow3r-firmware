@@ -12,21 +12,20 @@
 #include "py/runtime.h"
 
 #include "badge23/captouch.h"
-#include "badge23/spio.h"
-#include "badge23/espan.h"
+#include "st3m_io.h"
 
 STATIC mp_obj_t mp_get_active(mp_obj_t pin_mask) {
-    return mp_obj_new_int(spio_badge_link_get_active(mp_obj_get_int(pin_mask)));
+    return mp_obj_new_int(st3m_io_badge_link_get_active(mp_obj_get_int(pin_mask)));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_get_active_obj, mp_get_active);
 
 STATIC mp_obj_t mp_enable(mp_obj_t pin_mask) {
-    return mp_obj_new_int(spio_badge_link_enable(mp_obj_get_int(pin_mask)));
+    return mp_obj_new_int(st3m_io_badge_link_enable(mp_obj_get_int(pin_mask)));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_enable_obj, mp_enable);
 
 STATIC mp_obj_t mp_disable(mp_obj_t pin_mask) {
-    return mp_obj_new_int(spio_badge_link_disable(mp_obj_get_int(pin_mask)));
+    return mp_obj_new_int(st3m_io_badge_link_disable(mp_obj_get_int(pin_mask)));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_disable_obj, mp_disable);
 

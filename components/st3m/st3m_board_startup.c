@@ -3,13 +3,11 @@
 #include "st3m_audio.h"
 #include "st3m_scope.h"
 #include "st3m_leds.h"
+#include "st3m_io.h"
 
 #include "bl00mbox.h"
 
 #include "flow3r_bsp.h"
-
-// Declared by badge23 codebase. To be removed and slurped up into st3m.
-void badge23_main(void);
 
 // Called by micropython via MICROPY_BOARD_STARTUP.
 void st3m_board_startup(void) {
@@ -29,7 +27,5 @@ void st3m_board_startup(void) {
     st3m_audio_init();
     st3m_audio_set_player_function(bl00mbox_player_function);
     st3m_leds_init();
-
-    // Handoff to badge23.
-    badge23_main();
+    st3m_io_init();
 }

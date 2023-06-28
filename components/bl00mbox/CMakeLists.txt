@@ -6,5 +6,5 @@ idf_component_register(
         include
         buds/tinysynth
     REQUIRES
-        badge23
+        st3m
 )

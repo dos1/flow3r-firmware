@@ -1,12 +1,9 @@
 idf_component_register(
     SRCS
         captouch.c
-        espan.c
-        spio.c
     INCLUDE_DIRS
         include
     REQUIRES
         flow3r_bsp
-        st3m
         bl00mbox
 )

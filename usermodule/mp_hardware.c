@@ -12,22 +12,16 @@
 #include "py/runtime.h"
 
 #include "badge23/captouch.h"
-#include "badge23/spio.h"
-#include "badge23/espan.h"
 
 #include "flow3r_bsp.h"
 #include "st3m_gfx.h"
 #include "st3m_scope.h"
+#include "st3m_io.h"
 
 #include "ctx_config.h"
 #include "ctx.h"
 
 mp_obj_t mp_ctx_from_ctx(Ctx *ctx);
-
-STATIC mp_obj_t mp_init_done(void) {
-    return mp_obj_new_int(hardware_is_initialized());
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_init_done_obj, mp_init_done);
 
 STATIC mp_obj_t mp_captouch_calibration_active(void) {
     return mp_obj_new_int(captouch_calibration_active());
@@ -107,33 +101,33 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_captouch_set_calibration_afe_target_obj, mp_
 
 
 STATIC mp_obj_t mp_menu_button_set_left(mp_obj_t left) {
-    spio_menu_button_set_left(mp_obj_get_int(left));
+    st3m_io_menu_button_set_left(mp_obj_get_int(left));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_menu_button_set_left_obj, mp_menu_button_set_left);
 
 STATIC mp_obj_t mp_menu_button_get_left() {
-    return mp_obj_new_int(spio_menu_button_get_left());
+    return mp_obj_new_int(st3m_io_menu_button_get_left());
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_menu_button_get_left_obj, mp_menu_button_get_left);
 
 STATIC mp_obj_t mp_menu_button_get() {
-    return mp_obj_new_int(spio_menu_button_get());
+    return mp_obj_new_int(st3m_io_menu_button_get());
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_menu_button_get_obj, mp_menu_button_get);
 
 STATIC mp_obj_t mp_application_button_get() {
-    return mp_obj_new_int(spio_application_button_get());
+    return mp_obj_new_int(st3m_io_application_button_get());
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_application_button_get_obj, mp_application_button_get);
 
 STATIC mp_obj_t mp_left_button_get() {
-    return mp_obj_new_int(spio_left_button_get());
+    return mp_obj_new_int(st3m_io_left_button_get());
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_left_button_get_obj, mp_left_button_get);
 
 STATIC mp_obj_t mp_right_button_get() {
-    return mp_obj_new_int(spio_right_button_get());
+    return mp_obj_new_int(st3m_io_right_button_get());
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_right_button_get_obj, mp_right_button_get);
 
@@ -205,7 +199,6 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_scope_draw_obj, mp_scope_draw);
 
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_hardware) },
-    { MP_ROM_QSTR(MP_QSTR_init_done), MP_ROM_PTR(&mp_init_done_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_captouch_calibration_active), MP_ROM_PTR(&mp_captouch_calibration_active_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_captouch), MP_ROM_PTR(&mp_get_captouch_obj) },
@@ -232,10 +225,10 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&mp_version_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_ctx), MP_ROM_PTR(&mp_get_ctx_obj) },
 
-    { MP_ROM_QSTR(MP_QSTR_BUTTON_PRESSED_LEFT), MP_ROM_INT(BUTTON_PRESSED_LEFT) },
-    { MP_ROM_QSTR(MP_QSTR_BUTTON_PRESSED_RIGHT), MP_ROM_INT(BUTTON_PRESSED_RIGHT) },
-    { MP_ROM_QSTR(MP_QSTR_BUTTON_PRESSED_DOWN), MP_ROM_INT(BUTTON_PRESSED_DOWN) },
-    { MP_ROM_QSTR(MP_QSTR_BUTTON_NOT_PRESSED), MP_ROM_INT(BUTTON_NOT_PRESSED) },
+    { MP_ROM_QSTR(MP_QSTR_BUTTON_PRESSED_LEFT), MP_ROM_INT(st3m_tripos_left) },
+    { MP_ROM_QSTR(MP_QSTR_BUTTON_PRESSED_RIGHT), MP_ROM_INT(st3m_tripos_right) },
+    { MP_ROM_QSTR(MP_QSTR_BUTTON_PRESSED_DOWN), MP_ROM_INT(st3m_tripos_mid) },
+    { MP_ROM_QSTR(MP_QSTR_BUTTON_NOT_PRESSED), MP_ROM_INT(st3m_tripos_none) },
 
     { MP_ROM_QSTR(MP_QSTR_scope_draw), MP_ROM_PTR(&mp_scope_draw_obj) },
 };
