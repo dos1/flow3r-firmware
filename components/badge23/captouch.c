@@ -18,7 +18,7 @@
 
 #define AFE_INCR_CAP 1000
 
-#if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P6)
+#if defined(CONFIG_FLOW3R_HW_GEN_P3) || defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P6)
 static const uint8_t top_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4};
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 7, 7, 9, 9, 8, 8, 8};
@@ -27,7 +27,7 @@ static const uint8_t bot_stage_config[] = {0,1,2,3,5,6,7,8,9,10,11,12};
 #define DEFAULT_THRES_TOP 8000
 #define DEFAULT_THRES_BOT 12000
 
-#elif defined(CONFIG_BADGE23_HW_GEN_P1)
+#elif defined(CONFIG_FLOW3R_HW_GEN_P1)
 static const uint8_t top_map[] = {2, 2, 2, 0, 0, 8, 8, 8, 6, 6, 4, 4};
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9};
@@ -42,13 +42,13 @@ static const uint8_t bot_stage_config[] = {0,1,2,3,4,5,6,7,8,9,10,11};
 #error "captouch not implemented for this badge generation"
 #endif
 
-#if defined(CONFIG_BADGE23_HW_GEN_P4)
+#if defined(CONFIG_FLOW3R_HW_GEN_P4)
 static const uint8_t top_segment_map[] = {1,3,2,2,3,1,1,3,2,1,3,2}; //PETAL_PAD_*
 static const uint8_t bot_segment_map[] = {3,0,3,0,0,0,3,0,3,1,2,3}; //PETAL_PAD_*
-#elif defined(CONFIG_BADGE23_HW_GEN_P6)
+#elif defined(CONFIG_FLOW3R_HW_GEN_P6)
 static const uint8_t top_segment_map[] = {1,3,2,2,3,1,1,3,2,1,3,2}; //PETAL_PAD_*
 static const uint8_t bot_segment_map[] = {3,0,3,0,0,0,3,0,3,1,2,3}; //PETAL_PAD_*
-#elif defined(CONFIG_BADGE23_HW_GEN_P3)
+#elif defined(CONFIG_FLOW3R_HW_GEN_P3)
 static const uint8_t top_segment_map[] = {0,1,2, 2,1,0, 0,1,2, 2,1,0}; //PETAL_PAD_*
 static const uint8_t bot_segment_map[] = {3,0,3,0,0,0,3,0,3, 0,2,1}; //PETAL_PAD_*
 #endif
@@ -284,7 +284,7 @@ static void captouch_init_petals(){
 int32_t captouch_get_petal_rad(uint8_t petal){
     if(petal > 9) petal = 9;
     uint8_t cf = petals[petal].config_mask;
-    #if defined(CONFIG_BADGE23_TOP_BOARD_SPIKES)
+    #if defined(CONFIG_FLOW3R_TOP_BOARD_SPIKES)
     if(cf == 0b1110){ //CCW, CW, BASE
         int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
         left -= petals[petal].amb_values[PETAL_PAD_CCW];
@@ -294,7 +294,7 @@ int32_t captouch_get_petal_rad(uint8_t petal){
         base -= petals[petal].amb_values[PETAL_PAD_BASE];
         return (left + right)/2 - base;
     }
-    #elif defined(CONFIG_BADGE23_TOP_BOARD_SPIRALS)
+    #elif defined(CONFIG_FLOW3R_TOP_BOARD_SPIRALS)
     if(cf == 0b1110){ //CCW, CW, BASE
         int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
         left -= petals[petal].amb_values[PETAL_PAD_CCW];
@@ -332,7 +332,7 @@ int32_t captouch_get_petal_rad(uint8_t petal){
 int32_t captouch_get_petal_phi(uint8_t petal){
     if(petal > 9) petal = 9;
     uint8_t cf = petals[petal].config_mask;
-    #if defined(CONFIG_BADGE23_TOP_BOARD_SPIKES)
+    #if defined(CONFIG_FLOW3R_TOP_BOARD_SPIKES)
     if((cf == 0b1110) || (cf == 0b110) || (cf == 0b111)){ //CCW, CW, (BASE)
         int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
         left -= petals[petal].amb_values[PETAL_PAD_CCW];
@@ -340,7 +340,7 @@ int32_t captouch_get_petal_phi(uint8_t petal){
         right -= petals[petal].amb_values[PETAL_PAD_CW];
         return left - right;
     }
-    #elif defined(CONFIG_BADGE23_TOP_BOARD_SPIRALS)
+    #elif defined(CONFIG_FLOW3R_TOP_BOARD_SPIRALS)
     if((cf == 0b1110) || (cf == 0b110) || (cf == 0b111)){ //CCW, CW, (BASE)
         int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
         left -= petals[petal].amb_values[PETAL_PAD_CCW];

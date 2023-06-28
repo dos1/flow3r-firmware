@@ -9,7 +9,7 @@
 
 static const char *TAG = "flow3r-bsp-display";
 
-#if defined(CONFIG_BADGE23_HW_GEN_P1)
+#if defined(CONFIG_FLOW3R_HW_GEN_P1)
 #define FLOW3R_BSP_GC9A01
 flow3r_bsp_gc9a01_config_t gc9a01_config = {
 	.reset_used = 1,
@@ -23,7 +23,7 @@ flow3r_bsp_gc9a01_config_t gc9a01_config = {
 
 	.host = 2,
 };
-#elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P6)
+#elif defined(CONFIG_FLOW3R_HW_GEN_P3) || defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P6)
 #define FLOW3R_BSP_GC9A01
 flow3r_bsp_gc9a01_config_t gc9a01_config = {
 	.reset_used = 0,

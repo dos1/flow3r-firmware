@@ -1,8 +1,8 @@
-menu "Badge23 Config"
-    choice BADGE23_HW_GEN
+menu "Flow3r Config"
+    choice FLOW3R_HW_GEN
         prompt "Badge23 Hardware Generation"
-        default BADGE23_HW_GEN_P4
-        config BADGE23_HW_GEN_P1
+        default FLOW3R_HW_GEN_P4
+        config FLOW3R_HW_GEN_P1
             help
                 Protoype version 1, a.k.a. proto1. Very early protoype.
                 Visual identifiers:
@@ -10,33 +10,33 @@ menu "Badge23 Config"
                  - White bottom board
                  - USB-C jack points side of leaf
             bool "Prototype 1"
-        config BADGE23_HW_GEN_P3
+        config FLOW3R_HW_GEN_P3
             help
                 Prototype version 3, a.k.a. proto3
                 Visual identifiers:
                   - Sticker with B3xx (xx being arbitrary digits) on the back
             bool "Prototype 3"
-        config BADGE23_HW_GEN_P4
+        config FLOW3R_HW_GEN_P4
             help
                 Prototype version 4, a.k.a. proto4
                 Visual identifiers:
                   - Sticker with B4xx (xx being arbitrary digits) on the back
             bool "Prototype 4"
-        config BADGE23_HW_GEN_P6
+        config FLOW3R_HW_GEN_P6
             help
                 Prototype version 6, a.k.a. proto6
                   - Sticker with B6xx (xx being arbitrary digits) on the back
             bool "Prototype 6"
     endchoice
 
-    choice BADGE23_TOP_BOARD_STYLE
+    choice FLOW3R_TOP_BOARD_STYLE
         prompt "Badge23 top board style (mainly for proto6)"
-        default BADGE23_TOP_BOARD_SPIRALS
-        config BADGE23_TOP_BOARD_SPIKES
+        default FLOW3R_TOP_BOARD_SPIRALS
+        config FLOW3R_TOP_BOARD_SPIKES
             help
                 Spikes between captouch pads
             bool "Spikes"
-        config BADGE23_TOP_BOARD_SPIRALS
+        config FLOW3R_TOP_BOARD_SPIRALS
             help
                 Spirals between captouch pads
             bool "Spirals"

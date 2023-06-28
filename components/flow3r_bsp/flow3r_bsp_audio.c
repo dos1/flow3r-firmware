@@ -11,7 +11,7 @@ esp_err_t flow3r_bsp_audio_write(const void *src, size_t size, size_t *bytes_wri
     return i2s_write(0, src, size, bytes_written, ticks_to_wait);
 }
 
-#if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P6)
+#if defined(CONFIG_FLOW3R_HW_GEN_P3) || defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P6)
 
 #include "flow3r_bsp_max98091.h"
 
@@ -83,7 +83,7 @@ esp_err_t flow3r_bsp_audio_read(void *dest, size_t size, size_t *bytes_read, Tic
     return i2s_read(0, dest, size, bytes_read, ticks_to_wait);
 }
 
-#elif defined(CONFIG_BADGE23_HW_GEN_P1)
+#elif defined(CONFIG_FLOW3R_HW_GEN_P1)
 
 void flow3r_bsp_audio_init(void) {
     static const i2s_config_t i2s_config = {

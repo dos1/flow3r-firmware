@@ -47,16 +47,16 @@ def action_extensions(base_actions, project_path=os.getcwd()):
             raise Exception(f'Invalid generation: want one of {", ".join(supported)}')
 
 
-        # Generate .sdkconfig.defaults.generated that contains BADGE23_*
+        # Generate .sdkconfig.defaults.generated that contains FLOW3R_*
         # options.
         sdkconfig_defaults_path = os.path.join(project_path, 'sdkconfig.defaults')
         sdkconfig_generated_path = os.path.join(project_path, '.sdkconfig.defaults.generated')
         with open(sdkconfig_generated_path, 'w') as f:
             if name == 'p6spike':
-                f.write('CONFIG_BADGE23_HW_GEN_P6=y\n')
-                f.write('CONFIG_BADGE23_TOP_BOARD_SPIKES=y\n')
+                f.write('CONFIG_FLOW3R_HW_GEN_P6=y\n')
+                f.write('CONFIG_FLOW3R_TOP_BOARD_SPIKES=y\n')
             else:
-                f.write(f'CONFIG_BADGE23_HW_GEN_{name.upper()}=y\n')
+                f.write(f'CONFIG_FLOW3R_HW_GEN_{name.upper()}=y\n')
             with open(sdkconfig_defaults_path) as f2:
                 f.write(f2.read())
 

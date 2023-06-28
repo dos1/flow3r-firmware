@@ -1,6 +1,6 @@
 #include "flow3r_bsp.h"
 
-#if defined(CONFIG_BADGE23_HW_GEN_P1)
+#if defined(CONFIG_FLOW3R_HW_GEN_P1)
 
 #include "flow3r_bsp_spiled.h"
 
@@ -16,7 +16,7 @@ esp_err_t flow3r_bsp_leds_refresh(TickType_t timeout_ms) {
 	return flow3r_bsp_spiled_refresh(timeout_ms);
 }
 
-#elif defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P6)
+#elif defined(CONFIG_FLOW3R_HW_GEN_P3) || defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P6)
 
 #include "flow3r_bsp_rmtled.h"
 

@@ -48,7 +48,7 @@ typedef struct {
 	flow3r_bsp_iopin_t jacksense_right;
 } flow3r_bsp_iodef_t;
 
-#if defined(CONFIG_BADGE23_HW_GEN_P1)
+#if defined(CONFIG_FLOW3R_HW_GEN_P1)
 static const flow3r_bsp_iodef_t iodef = {
 	.tripos_left = {
 		.left = IPEX(37, 1),
@@ -72,7 +72,7 @@ static const flow3r_bsp_iodef_t iodef = {
 	.jacksense_right = IODUMMY,
 };
 #define PORTEXP_NONE
-#elif defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P3)
+#elif defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P3)
 static const flow3r_bsp_iodef_t iodef = {
 	.tripos_left = {
 		.left = IESP(3, true),
@@ -96,7 +96,7 @@ static const flow3r_bsp_iodef_t iodef = {
 	.jacksense_right = IODUMMY,
 };
 #define PORTEXP_MAX7321S
-#elif defined(CONFIG_BADGE23_HW_GEN_P6)
+#elif defined(CONFIG_FLOW3R_HW_GEN_P6)
 static const flow3r_bsp_iodef_t iodef = {
 	.tripos_left = {
 		.left = IPEX(7, 1, .invert = true),

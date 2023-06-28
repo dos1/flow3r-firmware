@@ -252,11 +252,11 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_input_thru_get_mute_obj, mp_input_thru_get_m
 
 
 STATIC mp_obj_t mp_codec_i2c_write(mp_obj_t reg_in, mp_obj_t data_in) {
-#if defined(CONFIG_BADGE23_HW_GEN_P3) || defined(CONFIG_BADGE23_HW_GEN_P4) || defined(CONFIG_BADGE23_HW_GEN_P6)
+#if defined(CONFIG_FLOW3R_HW_GEN_P3) || defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P6)
     uint8_t reg = mp_obj_get_int(reg_in);
     uint8_t data = mp_obj_get_int(data_in);
     flow3r_bsp_audio_register_poke(reg, data);
-#elif defined(CONFIG_BADGE23_HW_GEN_P1)
+#elif defined(CONFIG_FLOW3R_HW_GEN_P1)
     mp_raise_NotImplementedError(MP_ERROR_TEXT("not implemented for p1 badges"));
 #else
 #error "audio not implemented for this badge generation"
