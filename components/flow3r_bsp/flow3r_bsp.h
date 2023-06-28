@@ -138,3 +138,59 @@ void flow3r_bsp_leds_set_pixel(uint32_t index, uint32_t red, uint32_t green, uin
 // Transmit from internal buffer into LEDs. This will block in case there
 // already is a previous transmission happening.
 esp_err_t flow3r_bsp_leds_refresh(TickType_t timeout_ms);
+
+// A 'tripos' button is what we're calling the shoulder buttons. As the name
+// indicates, it has three positions: left, middle (a.k.a. down/press) and right.
+typedef enum {
+	// Not pressed.
+	flow3r_bsp_tripos_none = 0,
+	// Pressed towards the left.
+	flow3r_bsp_tripos_left = -1,
+	// Pressed down.
+	flow3r_bsp_tripos_mid = 2,
+	// Pressed towards the right.
+	flow3r_bsp_tripos_right = 1,
+} flow3r_bsp_tripos_state_t;
+
+// Initialize 'special purpose i/o', which is like gpio, but more :). This means
+// effectively all the buttons and on-board detect/enable signals.
+esp_err_t flow3r_bsp_spio_init(void);
+
+// Refresh the state of I/O: update outputs based on last called _set functions,
+// and make _get return the newest hardware state.
+esp_err_t flow3r_bsp_spio_update(void);
+
+// Return the latest updated position of the left shoulder/tripos button.
+//
+// flow3r_bsp_spio_update must be called for this data to be up to date.
+flow3r_bsp_tripos_state_t flow3r_bsp_spio_left_button_get(void);
+
+// Return the latest updated position of the right shoulder/tripos button.
+//
+// flow3r_bsp_spio_update must be called for this data to be up to date.
+flow3r_bsp_tripos_state_t flow3r_bsp_spio_right_button_get(void);
+
+// Returns true if the device is charging.
+//
+// flow3r_bsp_spio_update must be called for this data to be up to date.
+bool flow3r_bsp_spio_charger_state_get(void);
+
+// Returns true if the device has something plugged into the right 3.5mm jack.
+//
+// flow3r_bsp_spio_update must be called for this data to be up to date.
+bool flow3r_bsp_spio_jacksense_right_get(void);
+
+// Switch tip/ring muxes to 'badgelink' digital I/O data pins on the left hand
+// jack. As this is the same as the headphone jack, please observe caution when
+// enabling this! See the comment at the bottom of st3m_audio.h.
+//
+// flow3r_bsp_spio_update must be called for this setting to actually propagate
+// to hardware.
+void flow3r_bsp_spio_badgelink_left_enable(bool tip_on, bool ring_on);
+
+// Switch tip/ring muxes to 'badgelink' digital I/O data pins on the right hand
+// jack.
+//
+// flow3r_bsp_spio_update must be called for this setting to actually propagate
+// to hardware.
+void flow3r_bsp_spio_badgelink_right_enable(bool tip_on, bool ring_on);
