@@ -17,7 +17,8 @@ typedef struct {
 	// The numeric ID of this descriptor.
 	int num;
 	// SPIRAM buffer.
-	uint16_t *buffer;
+	uint16_t buffer[240*240];
+	Ctx *ctx;
 } st3m_framebuffer_desc_t;
 
 // Initialize the gfx subsystem of st3m, includng the rasterization and

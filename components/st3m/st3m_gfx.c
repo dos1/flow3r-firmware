@@ -16,21 +16,11 @@
 
 static const char *TAG = "st3m-gfx";
 
-// SRAM framebuffer into which ctx drawlists will be rasterized. After
-// rasterization, their contents will be copied into SPIRAM. Then, the ESP SPI
-// driver will piecewise copy the buffer back into DMA-able memory to send it
-// over to the display.
+// Framebuffer descriptors, containing framebuffer and ctx for each of the
+// framebuffers.
 //
-// This Rube Goldberg contraption is still faster than directly rasterizing into
-// SPIRAM (~20% faster). Ideally we would also keep both buffers in DMAble SRAM,
-// but we don't have enough SRAM for that.
-static uint16_t framebuffer_staging[240*240];
-
-// framebuffer_staging-backed Ctx instance, used to render drawlists into
-// framebuffer_staging.
-static Ctx *framebuffer_staging_ctx;
-
-static st3m_framebuffer_desc_t framebuffer_descs[ST3M_GFX_NBUFFERS];
+// These live in SPIRAM, as we don't have enough space in SRAM/IRAM.
+EXT_RAM_BSS_ATTR static st3m_framebuffer_desc_t framebuffer_descs[ST3M_GFX_NBUFFERS];
 
 static st3m_ctx_desc_t dctx_descs[ST3M_GFX_NCTX];
 
@@ -112,22 +102,20 @@ static void st3m_gfx_rast_task(void *_arg) {
         int fb_descno, dctx_descno;
         int64_t start = esp_timer_get_time();
         xQueueReceiveNotifyStarved(framebuffer_freeq, &fb_descno, "rast task starved (freeq)!");
+        st3m_framebuffer_desc_t *fb = &framebuffer_descs[fb_descno];
         int64_t end = esp_timer_get_time();
         st3m_counter_timer_sample(&rast_read_fb_time, end-start);
 
         start = esp_timer_get_time();
         xQueueReceiveNotifyStarved(dctx_rastq, &dctx_descno, "rast task starved (dctx)!");
+        st3m_ctx_desc_t *draw = &dctx_descs[dctx_descno];
         end = esp_timer_get_time();
         st3m_counter_timer_sample(&rast_read_dctx_time, end-start);
 
-
+		// Render drawctx into fbctx.
         start = esp_timer_get_time();
-
-        // Render to staging and memcpy to framebuffer.
-        ctx_render_ctx(dctx_descs[dctx_descno].ctx, framebuffer_staging_ctx);
-        memcpy(framebuffer_descs[fb_descno].buffer, framebuffer_staging, 240*240*2);
-        ctx_drawlist_clear(dctx_descs[dctx_descno].ctx);
-
+        ctx_render_ctx(draw->ctx, fb->ctx);
+        ctx_drawlist_clear(draw->ctx);
         end = esp_timer_get_time();
         st3m_counter_timer_sample(&rast_work_time, end-start);
 
@@ -195,27 +183,23 @@ void st3m_gfx_init(void) {
     dctx_rastq = xQueueCreate(ST3M_GFX_NCTX+1, sizeof(int));
     assert(dctx_rastq != NULL);
 
-    // Create staging framebuffer Ctx.
-    framebuffer_staging_ctx = ctx_new_for_framebuffer(
-        framebuffer_staging,
-        FLOW3R_BSP_DISPLAY_WIDTH,
-        FLOW3R_BSP_DISPLAY_HEIGHT,
-        FLOW3R_BSP_DISPLAY_WIDTH * 2,
-        CTX_FORMAT_RGB565_BYTESWAPPED
-    );
-    assert(framebuffer_staging_ctx != NULL);
-       // Rotate by 180 deg and translate x and y by 120 px to have (0,0) at the center of the screen
-    int32_t offset_x = FLOW3R_BSP_DISPLAY_WIDTH / 2;
-    int32_t offset_y = FLOW3R_BSP_DISPLAY_HEIGHT / 2;
-    ctx_apply_transform(framebuffer_staging_ctx, -1, 0, offset_x, 0, -1, offset_y, 0, 0, 1);
 
     for (int i = 0; i < ST3M_GFX_NBUFFERS; i++) {
         // Setup framebuffer descriptor.
         st3m_framebuffer_desc_t *fb_desc = &framebuffer_descs[i];
         fb_desc->num = i;
-        fb_desc->buffer = malloc(2 * FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT);
-        assert(fb_desc->buffer != NULL);
-        memset(fb_desc->buffer, 0, 2 * FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT);
+        fb_desc->ctx = ctx_new_for_framebuffer(
+            fb_desc->buffer,
+            FLOW3R_BSP_DISPLAY_WIDTH,
+            FLOW3R_BSP_DISPLAY_HEIGHT,
+            FLOW3R_BSP_DISPLAY_WIDTH * 2,
+            CTX_FORMAT_RGB565_BYTESWAPPED
+        );
+        assert(fb_desc->ctx != NULL);
+        // Rotate by 180 deg and translate x and y by 120 px to have (0,0) at the center of the screen
+        int32_t offset_x = FLOW3R_BSP_DISPLAY_WIDTH / 2;
+        int32_t offset_y = FLOW3R_BSP_DISPLAY_HEIGHT / 2;
+        ctx_apply_transform(fb_desc->ctx, -1, 0, offset_x, 0, -1, offset_y, 0, 0, 1);
 
         // Push descriptor to freeq.
         BaseType_t res = xQueueSend(framebuffer_freeq, &i, 0);
