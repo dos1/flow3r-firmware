@@ -42,7 +42,6 @@ set(MICROPY_SOURCE_LIB
     ${MICROPY_DIR}/lib/littlefs/lfs1_util.c
     ${MICROPY_DIR}/lib/littlefs/lfs2.c
     ${MICROPY_DIR}/lib/littlefs/lfs2_util.c
-    ${MICROPY_DIR}/lib/mbedtls_errors/mp_mbedtls_errors.c
     ${MICROPY_DIR}/lib/oofatfs/ff.c
     ${MICROPY_DIR}/lib/oofatfs/ffunicode.c
 )
@@ -55,23 +54,16 @@ set(MICROPY_SOURCE_DRIVERS
 set(MICROPY_SOURCE_PORT
     ${MICROPY_PORT_DIR}/main.c
     ${MICROPY_PORT_DIR}/uart.c
-    ${MICROPY_PORT_DIR}/usb.c
-    ${MICROPY_PORT_DIR}/usb_serial_jtag.c
     ${MICROPY_PORT_DIR}/gccollect.c
     ${MICROPY_PORT_DIR}/mphalport.c
     ${MICROPY_PORT_DIR}/fatfs_port.c
     ${MICROPY_PORT_DIR}/help.c
     ${MICROPY_PORT_DIR}/modutime.c
-    ${MICROPY_PORT_DIR}/machine_bitstream.c
-    ${MICROPY_PORT_DIR}/machine_timer.c
     ${MICROPY_PORT_DIR}/machine_pin.c
-    ${MICROPY_PORT_DIR}/machine_touchpad.c
+    ${MICROPY_PORT_DIR}/machine_timer.c
+    ${MICROPY_PORT_DIR}/machine_uart.c
     ${MICROPY_PORT_DIR}/machine_adc.c
     ${MICROPY_PORT_DIR}/machine_adcblock.c
-    ${MICROPY_PORT_DIR}/machine_dac.c
-    ${MICROPY_PORT_DIR}/machine_i2c.c
-    ${MICROPY_PORT_DIR}/machine_i2s.c
-    ${MICROPY_PORT_DIR}/machine_uart.c
     ${MICROPY_PORT_DIR}/modmachine.c
     ${MICROPY_PORT_DIR}/network_common.c
     ${MICROPY_PORT_DIR}/network_lan.c
@@ -79,17 +71,14 @@ set(MICROPY_SOURCE_PORT
     ${MICROPY_PORT_DIR}/network_wlan.c
     ${MICROPY_PORT_DIR}/mpnimbleport.c
     ${MICROPY_PORT_DIR}/modsocket.c
-    ${MICROPY_PORT_DIR}/modesp.c
     ${MICROPY_PORT_DIR}/esp32_nvs.c
     ${MICROPY_PORT_DIR}/esp32_partition.c
-    ${MICROPY_PORT_DIR}/esp32_rmt.c
     ${MICROPY_PORT_DIR}/esp32_ulp.c
     ${MICROPY_PORT_DIR}/modesp32.c
-    ${MICROPY_PORT_DIR}/machine_hw_spi.c
-    ${MICROPY_PORT_DIR}/machine_wdt.c
     ${MICROPY_PORT_DIR}/mpthreadport.c
     ${MICROPY_PORT_DIR}/machine_rtc.c
-    ${MICROPY_PORT_DIR}/machine_sdcard.c
+    ${MICROPY_PORT_DIR}/ppp_set_auth.c
+    ${MICROPY_PORT_DIR}/usb_serial_jtag.c
 )
 
 set(MICROPY_SOURCE_QSTR
@@ -112,32 +101,31 @@ set(IDF_COMPONENTS
     bootloader_support
     bt
     driver
-    esp_adc_cal
+    esp_adc
+    esp_app_format
     esp_common
     esp_eth
     esp_event
     esp_hw_support
     esp_ringbuf
     esp_rom
+    esp_partition
     esp_pm
     esp_wifi
     esp_system
     esp_timer
     esp_netif
-    esp32s3
+    esp_psram
     freertos
     hal
     heap
     log
     lwip
-    mbedtls
-    mdns
     newlib
     nvs_flash
     sdmmc
     soc
     spi_flash
-    tcpip_adapter
     ulp
     vfs
     xtensa

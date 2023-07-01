@@ -29,9 +29,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_timer.h"
 
 #include "py/obj.h"
 #include "py/objstr.h"
@@ -118,6 +120,7 @@ void mp_hal_stdout_tx_strn(const char *str, size_t len) {
     #if MICROPY_HW_ENABLE_UART_REPL
     uart_stdout_tx_strn(str, len);
     #endif
+
     if (release_gil) {
         MP_THREAD_GIL_ENTER();
     }

@@ -20,7 +20,7 @@ static audio_source_t * _audio_sources = NULL;
 uint16_t bl00mbox_source_add(void * render_data, void * render_function){
     //construct audio source struct
     audio_source_t * src = malloc(sizeof(audio_source_t));
-    if(src == NULL) return;
+    if(src == NULL) return 0;
     src->render_data = render_data;
     src->render_function = render_function;
     src->next = NULL;

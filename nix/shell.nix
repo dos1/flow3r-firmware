@@ -1,5 +1,5 @@
 let
-  sources = import ./niv/sources.nix;
+  sources = import ./sources.nix;
   nixpkgs = import sources.nixpkgs {
     overlays = [
       (self: super: {
@@ -34,8 +34,6 @@ in with nixpkgs; pkgs.mkShell {
   shellHook = ''
     # For esp.py openocd integration.
     export OPENOCD_SCRIPTS="${pkgs.openocd-esp32-bin}/share/openocd/scripts"
-    # For GDB to be able to find libpython2.7 (????).
-    export LD_LIBRARY_PATH="${pkgs.python2}/lib:$LD_LIBRARY_PATH"
 
     # Some nice-to-have defaults.
     export ESPPORT=/dev/ttyACM0

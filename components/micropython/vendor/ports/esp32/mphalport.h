@@ -46,10 +46,8 @@
 // See https://github.com/micropython/micropython/issues/5489 for history
 #if CONFIG_FREERTOS_UNICORE
 #define MP_TASK_COREID (0)
-#elif ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 2, 0)
-#define MP_TASK_COREID (1)
 #else
-#define MP_TASK_COREID (0)
+#define MP_TASK_COREID (1)
 #endif
 
 extern TaskHandle_t mp_main_task_handle;
@@ -71,7 +69,7 @@ __attribute__((always_inline)) static inline uint32_t mp_hal_ticks_cpu(void) {
 }
 
 void mp_hal_delay_us(uint32_t);
-#define mp_hal_delay_us_fast(us) ets_delay_us(us)
+#define mp_hal_delay_us_fast(us) esp_rom_delay_us(us)
 void mp_hal_set_interrupt_char(int c);
 uint32_t mp_hal_get_cpu_freq(void);
 
@@ -83,6 +81,7 @@ void mp_hal_wake_main_task_from_isr(void);
 
 // C-level pin HAL
 #include "py/obj.h"
+#include "py/runtime.h"
 #include "driver/gpio.h"
 #define MP_HAL_PIN_FMT "%u"
 #define mp_hal_pin_obj_t gpio_num_t
@@ -91,28 +90,26 @@ mp_hal_pin_obj_t machine_pin_get_id(mp_obj_t pin_in);
 #define mp_obj_get_pin(o) machine_pin_get_id(o) // legacy name; only to support esp8266/modonewire
 #define mp_hal_pin_name(p) (p)
 static inline void mp_hal_pin_input(mp_hal_pin_obj_t pin) {
-    gpio_pad_select_gpio(pin);
-    gpio_set_direction(pin, GPIO_MODE_INPUT);
+    mp_raise_NotImplementedError(MP_ERROR_TEXT("low-level GPIO not supported"));
 }
 static inline void mp_hal_pin_output(mp_hal_pin_obj_t pin) {
-    gpio_pad_select_gpio(pin);
-    gpio_set_direction(pin, GPIO_MODE_INPUT_OUTPUT);
+    mp_raise_NotImplementedError(MP_ERROR_TEXT("low-level GPIO not supported"));
 }
 static inline void mp_hal_pin_open_drain(mp_hal_pin_obj_t pin) {
-    gpio_pad_select_gpio(pin);
-    gpio_set_direction(pin, GPIO_MODE_INPUT_OUTPUT_OD);
+    mp_raise_NotImplementedError(MP_ERROR_TEXT("low-level GPIO not supported"));
 }
 static inline void mp_hal_pin_od_low(mp_hal_pin_obj_t pin) {
-    gpio_set_level(pin, 0);
+    mp_raise_NotImplementedError(MP_ERROR_TEXT("low-level GPIO not supported"));
 }
 static inline void mp_hal_pin_od_high(mp_hal_pin_obj_t pin) {
-    gpio_set_level(pin, 1);
+    mp_raise_NotImplementedError(MP_ERROR_TEXT("low-level GPIO not supported"));
 }
 static inline int mp_hal_pin_read(mp_hal_pin_obj_t pin) {
-    return gpio_get_level(pin);
+    mp_raise_NotImplementedError(MP_ERROR_TEXT("low-level GPIO not supported"));
+    return mp_const_none;
 }
 static inline void mp_hal_pin_write(mp_hal_pin_obj_t pin, int v) {
-    gpio_set_level(pin, v);
+    mp_raise_NotImplementedError(MP_ERROR_TEXT("low-level GPIO not supported"));
 }
 
 spi_host_device_t machine_hw_spi_get_host(mp_obj_t in);

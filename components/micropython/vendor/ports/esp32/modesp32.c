@@ -31,7 +31,6 @@
 #include <sys/time.h>
 #include "soc/rtc_cntl_reg.h"
 #include "driver/gpio.h"
-#include "driver/adc.h"
 #include "esp_heap_caps.h"
 #include "multi_heap.h"
 
@@ -45,10 +44,8 @@
 #include "modesp32.h"
 
 // These private includes are needed for idf_heap_info.
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 3, 0)
 #define MULTI_HEAP_FREERTOS
 #include "../multi_heap_platform.h"
-#endif
 #include "../heap_private.h"
 
 STATIC mp_obj_t esp32_wake_on_touch(const mp_obj_t wake) {
@@ -161,9 +158,9 @@ STATIC mp_obj_t esp32_raw_temperature(void) {
     CLEAR_PERI_REG_MASK(SENS_SAR_TSENS_CTRL_REG, SENS_TSENS_DUMP_OUT);
     SET_PERI_REG_MASK(SENS_SAR_TSENS_CTRL_REG, SENS_TSENS_POWER_UP_FORCE);
     SET_PERI_REG_MASK(SENS_SAR_TSENS_CTRL_REG, SENS_TSENS_POWER_UP);
-    ets_delay_us(100);
+    esp_rom_delay_us(100);
     SET_PERI_REG_MASK(SENS_SAR_TSENS_CTRL_REG, SENS_TSENS_DUMP_OUT);
-    ets_delay_us(5);
+    esp_rom_delay_us(5);
     int res = GET_PERI_REG_BITS2(SENS_SAR_SLAVE_ADDR3_REG, SENS_TSENS_OUT, SENS_TSENS_OUT_S);
 
     return mp_obj_new_int(res);
@@ -216,7 +213,6 @@ STATIC const mp_rom_map_elem_t esp32_module_globals_table[] = {
 
     { MP_ROM_QSTR(MP_QSTR_NVS), MP_ROM_PTR(&esp32_nvs_type) },
     { MP_ROM_QSTR(MP_QSTR_Partition), MP_ROM_PTR(&esp32_partition_type) },
-    { MP_ROM_QSTR(MP_QSTR_RMT), MP_ROM_PTR(&esp32_rmt_type) },
     #if CONFIG_IDF_TARGET_ESP32
     { MP_ROM_QSTR(MP_QSTR_ULP), MP_ROM_PTR(&esp32_ulp_type) },
     #endif

@@ -108,7 +108,7 @@ void flow3r_bsp_i2c_scan(void) {
 		i2c_master_start(cmd);
         i2c_master_write_byte(cmd, (i << 1) | I2C_MASTER_WRITE, 1);
 		i2c_master_stop(cmd);
-		esp_err_t ret = i2c_master_cmd_begin(I2C_NUM_0, cmd, 100 / portTICK_RATE_MS);
+		esp_err_t ret = i2c_master_cmd_begin(I2C_NUM_0, cmd, 100 / portTICK_PERIOD_MS);
         i2c_cmd_link_delete(cmd);
 		if (ret == ESP_OK) {
 			ESP_LOGI(TAG, "Scan: detected %02x", i);

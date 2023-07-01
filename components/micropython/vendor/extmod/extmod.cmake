@@ -7,12 +7,8 @@ set(MICROPY_SOURCE_EXTMOD
     ${MICROPY_DIR}/shared/libc/abort_.c
     ${MICROPY_DIR}/shared/libc/printf.c
     ${MICROPY_EXTMOD_DIR}/machine_bitstream.c
-    ${MICROPY_EXTMOD_DIR}/machine_i2c.c
     ${MICROPY_EXTMOD_DIR}/machine_mem.c
-    ${MICROPY_EXTMOD_DIR}/machine_pulse.c
-    ${MICROPY_EXTMOD_DIR}/machine_pwm.c
     ${MICROPY_EXTMOD_DIR}/machine_signal.c
-    ${MICROPY_EXTMOD_DIR}/machine_spi.c
     ${MICROPY_EXTMOD_DIR}/modbluetooth.c
     ${MICROPY_EXTMOD_DIR}/modframebuf.c
     ${MICROPY_EXTMOD_DIR}/modlwip.c
@@ -22,7 +18,6 @@ set(MICROPY_SOURCE_EXTMOD
     ${MICROPY_EXTMOD_DIR}/modubinascii.c
     ${MICROPY_EXTMOD_DIR}/moducryptolib.c
     ${MICROPY_EXTMOD_DIR}/moductypes.c
-    ${MICROPY_EXTMOD_DIR}/moduhashlib.c
     ${MICROPY_EXTMOD_DIR}/moduheapq.c
     ${MICROPY_EXTMOD_DIR}/modujson.c
     ${MICROPY_EXTMOD_DIR}/moduos.c

@@ -13,4 +13,7 @@ idf_component_register(
 		flow3r_bsp_spio.c
     INCLUDE_DIRS
 		.
+    REQUIRES
+		driver
+		vfs
 )

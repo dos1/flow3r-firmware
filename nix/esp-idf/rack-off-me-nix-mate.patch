@@ -1,0 +1,76 @@
+diff --git a/tools/cmake/build.cmake b/tools/cmake/build.cmake
+index 70bb2d636c..e7b5c7f3bc 100644
+--- a/tools/cmake/build.cmake
++++ b/tools/cmake/build.cmake
+@@ -352,20 +352,6 @@ endfunction()
+ #
+ function(__build_check_python)
+     idf_build_get_property(check __CHECK_PYTHON)
+-    if(check)
+-        idf_build_get_property(python PYTHON)
+-        idf_build_get_property(idf_path IDF_PATH)
+-        message(STATUS "Checking Python dependencies...")
+-        execute_process(COMMAND "${python}" "${idf_path}/tools/idf_tools.py" "check-python-dependencies"
+-            RESULT_VARIABLE result)
+-        if(result EQUAL 1)
+-            # check_python_dependencies returns error code 1 on failure
+-            message(FATAL_ERROR "Some Python dependencies must be installed. Check above message for details.")
+-        elseif(NOT result EQUAL 0)
+-            # means check_python_dependencies.py failed to run at all, result should be an error message
+-            message(FATAL_ERROR "Failed to run Python dependency check. Python: ${python}, Error: ${result}")
+-        endif()
+-    endif()
+ endfunction()
+ 
+ #
+diff --git a/tools/idf.py b/tools/idf.py
+index a74439a069..e8f5a6d41d 100755
+--- a/tools/idf.py
++++ b/tools/idf.py
+@@ -33,16 +33,11 @@ sys.dont_write_bytecode = True
+ 
+ import python_version_checker  # noqa: E402
+ 
+-try:
+-    from idf_py_actions.errors import FatalError  # noqa: E402
+-    from idf_py_actions.tools import (PROG, SHELL_COMPLETE_RUN, SHELL_COMPLETE_VAR, PropertyDict,  # noqa: E402
+-                                      debug_print_idf_version, get_target, merge_action_lists, print_warning)
+-    if os.getenv('IDF_COMPONENT_MANAGER') != '0':
+-        from idf_component_manager import idf_extensions
+-except ImportError:
+-    # For example, importing click could cause this.
+-    print('Please use idf.py only in an ESP-IDF shell environment.', file=sys.stderr)
+-    sys.exit(1)
++from idf_py_actions.errors import FatalError  # noqa: E402
++from idf_py_actions.tools import (PROG, SHELL_COMPLETE_RUN, SHELL_COMPLETE_VAR, PropertyDict,  # noqa: E402
++                                  debug_print_idf_version, get_target, merge_action_lists, print_warning)
++if os.getenv('IDF_COMPONENT_MANAGER') != '0':
++    from idf_component_manager import idf_extensions
+ 
+ # Use this Python interpreter for any subprocesses we launch
+ PYTHON = sys.executable
+@@ -82,24 +77,6 @@ def check_environment() -> List:
+     except RuntimeError as e:
+         raise FatalError(e)
+ 
+-    # check Python dependencies
+-    checks_output.append('Checking Python dependencies...')
+-    try:
+-        out = subprocess.check_output(
+-            [
+-                os.environ['PYTHON'],
+-                os.path.join(os.environ['IDF_PATH'], 'tools', 'idf_tools.py'),
+-                'check-python-dependencies',
+-            ],
+-            env=os.environ,
+-        )
+-
+-        checks_output.append(out.decode('utf-8', 'ignore').strip())
+-    except subprocess.CalledProcessError as e:
+-        print_warning(e.output.decode('utf-8', 'ignore'), stream=sys.stderr)
+-        debug_print_idf_version()
+-        raise SystemExit(1)
+-
+     return checks_output
+ 
+ 

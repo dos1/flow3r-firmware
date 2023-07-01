@@ -42,11 +42,7 @@ STATIC void task_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_
     (void)kind;
     task_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_print_str(print, "Task(name=");
-    if (self->name != NULL) {
-        mp_print_str(print, self->name);
-    } else {
-        mp_print_str(print, "NULL");
-    }
+    mp_print_str(print, self->name);
     mp_print_str(print, ",state=");
     switch (self->state) {
     case eRunning:

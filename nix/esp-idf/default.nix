@@ -1,7 +1,7 @@
 # Based on https://github.com/mirrexagon/nixpkgs-esp-dev/
 
-{ rev ? "v4.4.5"
-, sha256 ? "sha256-Jz9cbTYoourYYNo873kLt4CQXbE704zc9Aeq9kbNdPU="
+{ rev ? "v5.1"
+, sha256 ? "sha256-IEa9R9VCWvbRjZFRPb2Qq2Qw1RFxsnVALFVgQlBCXMw="
 , stdenv
 , python3Packages
 , fetchFromGitHub
@@ -15,6 +15,91 @@ let
     sha256 = sha256;
     fetchSubmodules = true;
   };
+
+  deps = with python3Packages; rec {
+    pygdbmi_ = pygdbmi.overrideAttrs (oa: rec {
+      version = "0.9.0.2";
+      src = fetchFromGitHub {
+        owner = "cs01";
+        repo = "pygdbmi";
+        rev = version;
+        hash = "sha256-bZQYcT5lA8xkG2YIK7P7fxkbVJhO6T5YpWo1EdLpOgY=";
+      };
+    });
+
+    esptool = buildPythonPackage rec {
+      pname = "esptool";
+      version = "4.6.2";
+      src = fetchPypi {
+        inherit pname version;
+        sha256 = "sha256-VJ75Pu9C7n6UYs5aU8Ft96DHHZGz934Z7BV0mATN8wA=";
+      };
+      doCheck = false;
+      propagatedBuildInputs = [
+        cryptography
+        pyyaml
+        bitstring
+        ecdsa
+        reedsolo
+        pyserial
+        python-pkcs11
+        construct
+      ];
+    };
+
+    esp-idf-kconfig = buildPythonPackage rec {
+      pname = "esp-idf-kconfig";
+      version = "1.1.0";
+      src = fetchPypi {
+        inherit pname version;
+        sha256 = "sha256-s8ZXt6cf5w2pZSxQNIs/SODAUvHNgxyQ+onaCa7UbFA=";
+      };
+      propagatedBuildInputs = [
+        kconfiglib
+      ];
+    };
+
+    esp-coredump = buildPythonPackage rec {
+      pname = "esp-coredump";
+      version = "1.2";
+      src = fetchPypi {
+        inherit pname version;
+        sha256 = "sha256-xcBDMy/1/UZo5K1+nXAE220Tb2DaP2VgSkeN5eC3XYg=";
+      };
+      doCheck = false;
+      propagatedBuildInputs = [
+        pygdbmi_
+        esptool
+      ];
+    };
+
+    esp-idf-monitor = buildPythonPackage rec {
+      pname = "esp-idf-monitor";
+      version = "1.1.1";
+      src = fetchPypi {
+        inherit pname version;
+        sha256 = "sha256-c62X3ZHRShhbAFmuPc/d2keqE9T9SXYIlJTyn32LPaE=";
+      };
+      propagatedBuildInputs = [
+        pyserial
+        esp-coredump
+        pyelftools
+        pyparsing
+      ];
+    };
+
+    esp-idf-size = buildPythonPackage rec {
+      pname = "esp-idf-size";
+      version = "0.3.1";
+      src = fetchPypi {
+        inherit pname version;
+        sha256 = "sha256-OzthhzKGjyqDJrmJWs4LMkHz0rAwho+3Pyc2BYFK0EU=";
+      };
+      propagatedBuildInputs = [
+        pyyaml
+      ];
+    };
+  };
 in
 stdenv.mkDerivation rec {
   pname = "esp-idf";
@@ -27,17 +112,7 @@ stdenv.mkDerivation rec {
 
   propagatedBuildInputs = with python3Packages; [
     setuptools click future pyelftools urllib3
-    jinja2 itsdangerous
-
-    (pyparsing.overrideAttrs (oa: rec {
-      version = "2.3.1";
-      src = fetchFromGitHub {
-        owner = "pyparsing";
-        repo = "pyparsing";
-        rev = "pyparsing_${version}";
-        hash = "sha256-m4mvPUXjDxz77rofg2Bop4/RnVTBDBNL6lRDd5zkpxM=";
-      };
-    }))
+    jinja2 itsdangerous pyyaml
 
     (kconfiglib.overrideAttrs (oa: rec {
       version = "13.7.1";
@@ -81,21 +156,13 @@ stdenv.mkDerivation rec {
       });
     })
 
-    (pygdbmi.overrideAttrs (oa: rec {
-      version = "0.9.0.2";
-      src = fetchFromGitHub {
-        owner = "cs01";
-        repo = "pygdbmi";
-        rev = version;
-        hash = "sha256-bZQYcT5lA8xkG2YIK7P7fxkbVJhO6T5YpWo1EdLpOgY=";
-      };
-    }))
+    deps.esp-idf-monitor
+    deps.esp-idf-kconfig
+    deps.esp-idf-size
   ];
 
   patches = [
-    # Can't be bothered to package gdbgui and idf-component-manager and we
-    # don't need them.
-    ./fixup-requirements.patch
+    ./rack-off-me-nix-mate.patch
   ];
 
   installPhase = ''

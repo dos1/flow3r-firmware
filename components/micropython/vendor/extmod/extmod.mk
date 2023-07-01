@@ -7,7 +7,6 @@ SRC_EXTMOD_C += \
 	extmod/machine_mem.c \
 	extmod/machine_pinbase.c \
 	extmod/machine_pulse.c \
-	extmod/machine_pwm.c \
 	extmod/machine_signal.c \
 	extmod/machine_spi.c \
 	extmod/machine_timer.c \

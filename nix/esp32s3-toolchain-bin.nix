@@ -1,7 +1,7 @@
 # Based on https://github.com/mirrexagon/nixpkgs-esp-dev/
 
-{ version ? "2021r2-patch5"
-, hash ? "sha256-iqF6at8B76WxYoyKxXgGOkTSaulYHTlIa5IiOkHvJi8="
+{ version ? "12.2.0_20230208"
+, hash ? "sha256-KbXqazDZgjHwwX8jJ0BBCeCr9ZtI0PKJDZ2YmWeKiaM="
 , stdenv
 , lib
 , fetchurl
@@ -24,7 +24,7 @@ stdenv.mkDerivation rec {
   inherit version;
 
   src = fetchurl {
-    url = "https://github.com/espressif/crosstool-NG/releases/download/esp-${version}/xtensa-esp32s3-elf-gcc8_4_0-esp-${version}-linux-amd64.tar.gz";
+    url = "https://github.com/espressif/crosstool-NG/releases/download/esp-${version}/xtensa-esp32s3-elf-${version}-x86_64-linux-gnu.tar.xz";
     inherit hash;
   };
 

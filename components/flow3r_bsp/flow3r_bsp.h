@@ -34,7 +34,7 @@ void flow3r_bsp_display_set_backlight(uint8_t percent);
 #define FLOW3R_BSP_DISPLAY_HEIGHT 240
 
 // Badge hardware generation name, human-readable.
-const char *flow3r_bsp_hw_name;
+extern const char *flow3r_bsp_hw_name;
 
 #define FLOW3R_BSP_AUDIO_SAMPLE_RATE 48000
 #define FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE 64

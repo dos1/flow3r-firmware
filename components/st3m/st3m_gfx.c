@@ -270,7 +270,7 @@ void st3m_gfx_flush(void) {
 
     // Delay, making sure pipeline tasks have returned all used descriptors. One
     // second is enough to make sure we've processed everything.
-    vTaskDelay(1000 / portTICK_RATE_MS);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     // And drain again.
     xQueueReset(framebuffer_freeq);
