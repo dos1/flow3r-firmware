@@ -29,15 +29,15 @@
 #define CTX_MIN_EDGE_LIST_SIZE      512  // is also max and limits complexity
                                          // of paths that can be filled
 #define CTX_STATIC_OPAQUE       1
-#define CTX_MAX_SCANLINE_LENGTH 512
+#define CTX_MAX_SCANLINE_LENGTH 256
 #define CTX_1BIT_CLIP           1
 
 #define CTX_MAX_DASHES          10
 #define CTX_MAX_GRADIENT_STOPS  10
 #define CTX_CM                  0
-#define CTX_SHAPE_CACHE         1
-#define CTX_SHAPE_CACHE_DEFAULT 1
-#define CTX_RASTERIZER_MAX_CIRCLE_SEGMENTS 128
+#define CTX_SHAPE_CACHE         0
+#define CTX_SHAPE_CACHE_DEFAULT 0
+#define CTX_RASTERIZER_MAX_CIRCLE_SEGMENTS 64
 #define CTX_NATIVE_GRAYA8       0
 #define CTX_ENABLE_SHADOW_BLUR  0
 #define CTX_FONTS_FROM_FILE     0
@@ -57,7 +57,7 @@
 #define CTX_MATH                   0
 #define CTX_TERMINAL_EVENTS        0 // gets rid of posix bits and bobs
 #define CTX_THREADS                0
-#define CTX_TILED                  0
+#define CTX_TILED                  1
 #define CTX_FORMATTER              0  // we want these eventually
 #define CTX_PARSER                 0  // enabled
 #define CTX_BRAILLE_TEXT           0
