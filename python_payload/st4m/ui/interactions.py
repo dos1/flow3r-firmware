@@ -162,3 +162,4 @@ class ScrollController(st4m.Responder):
         self._current_position = (
             self._current_position + self._velocity * delta
         ) % self._nitems
+

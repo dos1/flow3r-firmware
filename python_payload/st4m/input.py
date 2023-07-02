@@ -13,7 +13,11 @@ class InputState:
     """
 
     def __init__(
-        self, petal_pressed: List[bool], left_button: int, right_button: int
+        self,
+        petal_pressed: List[bool],
+        petal_pads: List[List[int]],
+        left_button: int,
+        right_button: int,
     ) -> None:
         self.petal_pressed = petal_pressed
         self.left_button = left_button
@@ -26,16 +30,24 @@ class InputState:
         Reactor.
         """
         petal_pressed = [hardware.get_captouch(i) for i in range(10)]
+        petal_pads = [
+            [hardware.captouch_get_petal_pad(petal_ix, pad_ix) for pad_ix in range(3)]
+            for petal_ix in range(10)
+        ]
         left_button = hardware.left_button_get()
         right_button = hardware.right_button_get()
 
-        return InputState(petal_pressed, left_button, right_button)
+        return InputState(petal_pressed, petal_pads, left_button, right_button)
 
 
 class RepeatSettings:
     def __init__(self, first: float, subsequent: float) -> None:
         self.first = first
         self.subsequent = subsequent
+
+
+class Slideable:
+    pass
 
 
 class Pressable:
@@ -273,3 +285,16 @@ class InputController:
         self.captouch._ignore_pressed()
         self.left_shoulder._ignore_pressed()
         self.right_shoulder._ignore_pressed()
+
+
+class PetalSlideController:
+    def __init__(self, ix):
+        self._ts = 0
+        self._input = PetalState(ix)
+
+    def think(self, hr: InputState, delta_ms: int) -> None:
+        self._ts += delta_ms
+        self._input._update(self._ts, hr)
+
+    def _ignore_pressed(self) -> None:
+        self._input._ignore_pressed()
