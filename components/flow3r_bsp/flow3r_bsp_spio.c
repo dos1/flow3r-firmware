@@ -51,14 +51,14 @@ typedef struct {
 #if defined(CONFIG_FLOW3R_HW_GEN_P1)
 static const flow3r_bsp_iodef_t iodef = {
 	.tripos_left = {
-		.left = IPEX(37, 1),
-		.mid = IESP(0, false),
-		.right = IPEX(35, 1),
+		.left = IPEX(37, 1, .invert = true),
+		.mid = IESP(0, false, .invert = true),
+		.right = IPEX(35, 1, .invert = true),
 	},
 	.tripos_right = {
-		.left = IESP(7, 1),
-		.mid = IESP(6, true),
-		.right = IESP(5, 1),
+		.left = IESP(7, 1, .invert = true),
+		.mid = IESP(6, true, .invert = true),
+		.right = IESP(5, 1, .invert = true),
 	},
 	.trrs_left = {
 		.tip_badgelink_enable = IODUMMY,
@@ -75,14 +75,14 @@ static const flow3r_bsp_iodef_t iodef = {
 #elif defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P3)
 static const flow3r_bsp_iodef_t iodef = {
 	.tripos_left = {
-		.left = IESP(3, true),
-		.mid = IESP(0, false),
-		.right = IPEX(0, 1),
+		.left = IESP(3, true, .invert = true),
+		.mid = IESP(0, false, .invert = true),
+		.right = IPEX(0, 1, .invert = true),
 	},
 	.tripos_right = {
-		.left = IPEX(6, 1),
-		.mid = IPEX(5, 1),
-		.right = IPEX(7, 1),
+		.left = IPEX(6, 1, .invert = true),
+		.mid = IPEX(5, 1, .invert = true),
+		.right = IPEX(7, 1, .invert = true),
 	},
 	.trrs_left = {
 		.tip_badgelink_enable = OPEX(6, 0),
