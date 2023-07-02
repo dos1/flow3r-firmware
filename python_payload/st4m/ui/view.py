@@ -42,8 +42,6 @@ class ViewWithInputState(View):
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.input.think(ins, delta_ms)
 
-class ViewWithSingleInputState(ViewWithInputState()):
-    def __
 
 class ViewTransition(ABCBase):
     """
