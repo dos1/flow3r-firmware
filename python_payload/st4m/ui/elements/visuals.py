@@ -1,5 +1,5 @@
 from st4m.utils import xy_from_polar
-from st4m.color import PUSH_RED, GO_GREEN, BLACK
+from st4m.property import PUSH_RED, GO_GREEN, BLACK
 from st4m import Responder, Ctx, InputState
 
 
