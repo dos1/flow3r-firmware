@@ -126,7 +126,11 @@ class FlowerIcon(Responder):
         ctx.text_baseline = ctx.MIDDLE
         ctx.font_size = self.size / 3
         ctx.line_width = 5
-        ctx.font = ctx.get_font_name(6)
+        try:
+            ctx.font = ctx.get_font_name(6)
+        except AttributeError:
+            pass
+
         if self.rotation_time:
             phi_rotate = tau * ((self.ts % self.rotation_time) / self.rotation_time)
         else:
