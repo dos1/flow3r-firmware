@@ -194,3 +194,15 @@ void flow3r_bsp_spio_badgelink_left_enable(bool tip_on, bool ring_on);
 // flow3r_bsp_spio_update must be called for this setting to actually propagate
 // to hardware.
 void flow3r_bsp_spio_badgelink_right_enable(bool tip_on, bool ring_on);
+
+// Pin mapping information of programmable badge I/O. These are GPIO numbers
+// that can be used with the ESP-IDF API.
+typedef struct {
+	// Left jack, headphone/line out.
+	uint8_t badgelink_left_tip;
+	uint8_t badgelink_left_ring;
+	// Right jack, line in.
+	uint8_t badgelink_right_tip;
+	uint8_t badgelink_right_ring;
+} flow3r_bsp_spio_programmable_pins_t;
+extern const flow3r_bsp_spio_programmable_pins_t flow3r_bsp_spio_programmable_pins;

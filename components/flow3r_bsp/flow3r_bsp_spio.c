@@ -35,7 +35,9 @@ typedef struct {
 
 typedef struct {
 	flow3r_bsp_iopin_t tip_badgelink_enable;
+	flow3r_bsp_iopin_t tip_badgelink_data;
 	flow3r_bsp_iopin_t ring_badgelink_enable;
+	flow3r_bsp_iopin_t ring_badgelink_data;
 } flow3r_bsp_iodef_trrs_t;
 
 typedef struct {
@@ -71,6 +73,12 @@ static const flow3r_bsp_iodef_t iodef = {
 	.charger_state = IODUMMY,
 	.jacksense_right = IODUMMY,
 };
+const flow3r_bsp_spio_programmable_pins_t flow3r_bsp_spio_programmable_pins = {
+	.badgelink_left_tip = 6,
+	.badgelink_left_ring = 7,
+	.badgelink_right_tip = 4,
+	.badgelink_right_ring = 5,
+};
 #define PORTEXP_NONE
 #elif defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P3)
 static const flow3r_bsp_iodef_t iodef = {
@@ -85,15 +93,21 @@ static const flow3r_bsp_iodef_t iodef = {
 		.right = IPEX(7, 1, .invert = true),
 	},
 	.trrs_left = {
-		.tip_badgelink_enable = OPEX(6, 0),
-		.ring_badgelink_enable = OPEX(7, 0),
+		.tip_badgelink_enable = OPEX(6, 0, .invert = true),
+		.ring_badgelink_enable = OPEX(7, 0, .invert = true),
 	},
 	.trrs_right = {
-		.tip_badgelink_enable = OPEX(5, 0),
-		.ring_badgelink_enable = OPEX(4, 0),
+		.tip_badgelink_enable = OPEX(5, 0, .invert = true),
+		.ring_badgelink_enable = OPEX(4, 0, .invert = true),
 	},
 	.charger_state = IODUMMY,
 	.jacksense_right = IODUMMY,
+};
+const flow3r_bsp_spio_programmable_pins_t flow3r_bsp_spio_programmable_pins = {
+	.badgelink_left_tip = 6,
+	.badgelink_left_ring = 7,
+	.badgelink_right_tip = 4,
+	.badgelink_right_ring = 5,
 };
 #define PORTEXP_MAX7321S
 #elif defined(CONFIG_FLOW3R_HW_GEN_P6)
@@ -118,6 +132,12 @@ static const flow3r_bsp_iodef_t iodef = {
 	},
 	.charger_state = IPEX(2, 1),
 	.jacksense_right = IPEX(6, 1),
+};
+const flow3r_bsp_spio_programmable_pins_t flow3r_bsp_spio_programmable_pins = {
+	.badgelink_left_tip = 7,
+	.badgelink_left_ring = 6,
+	.badgelink_right_tip = 4,
+	.badgelink_right_ring = 5,
 };
 #define PORTEXP_MAX7321S
 #else
@@ -271,7 +291,7 @@ esp_err_t flow3r_bsp_spio_init(void) {
 	INITIO(trrs_left.ring_badgelink_enable);
 	INITIO(trrs_right.tip_badgelink_enable);
 	INITIO(trrs_right.ring_badgelink_enable);
-	
+
 	return _portexp_update();
 }
 
