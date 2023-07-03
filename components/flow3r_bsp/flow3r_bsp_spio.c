@@ -109,12 +109,12 @@ static const flow3r_bsp_iodef_t iodef = {
 		.right = IPEX(5, 1, .invert = true),
 	},
 	.trrs_left = {
-		.tip_badgelink_enable = OPEX(6, 0, .invert = true),
-		.ring_badgelink_enable = OPEX(5, 0, .invert = true),
+		.tip_badgelink_enable = OPEX(6, 0),
+		.ring_badgelink_enable = OPEX(5, 0),
 	},
 	.trrs_right = {
-		.tip_badgelink_enable = OPEX(4, 0, .invert = true),
-		.ring_badgelink_enable = OPEX(3, 0, .invert = true),
+		.tip_badgelink_enable = OPEX(4, 0),
+		.ring_badgelink_enable = OPEX(3, 0),
 	},
 	.charger_state = IPEX(2, 1),
 	.jacksense_right = IPEX(6, 1),
