@@ -144,6 +144,56 @@ STATIC const machine_pin_obj_t machine_pin_obj[GPIO_NUM_MAX] = {
     {{&machine_pin_type}, GPIO_NUM_20},
     {{&machine_pin_type}, GPIO_NUM_21},
 
+	#elif CONFIG_FLOW3R_ESP32S3
+
+    {{NULL}, -1}, // 0
+    {{NULL}, -1}, // 1
+    {{NULL}, -1}, // 2
+    {{NULL}, -1}, // 3
+    {{&machine_pin_type}, GPIO_NUM_4}, // Badgelink
+    {{&machine_pin_type}, GPIO_NUM_5}, // Badgelink
+    {{&machine_pin_type}, GPIO_NUM_6}, // Badgelink
+    {{&machine_pin_type}, GPIO_NUM_7}, // Badgelink
+    {{NULL}, -1}, // 8
+    {{NULL}, -1}, // 9
+    {{NULL}, -1}, // 10
+    {{NULL}, -1}, // 11
+    {{NULL}, -1}, // 12
+    {{NULL}, -1}, // 13
+    {{NULL}, -1}, // 14
+    {{NULL}, -1}, // 15
+    {{NULL}, -1}, // 16
+    {{&machine_pin_type}, GPIO_NUM_17}, // QWIIC
+    {{NULL}, -1}, // 18
+    {{NULL}, -1}, // 19
+    {{NULL}, -1}, // 20
+    {{NULL}, -1}, // 21
+    {{NULL}, -1}, // 22
+    {{NULL}, -1}, // 23
+    {{NULL}, -1}, // 24
+    {{NULL}, -1}, // 25
+    {{NULL}, -1}, // 26
+    {{NULL}, -1}, // 27
+    {{NULL}, -1}, // 28
+    {{NULL}, -1}, // 29
+    {{NULL}, -1}, // 30
+    {{NULL}, -1}, // 31
+    {{NULL}, -1}, // 32
+    {{NULL}, -1}, // 33
+    {{NULL}, -1}, // 34
+    {{NULL}, -1}, // 35
+    {{NULL}, -1}, // 36
+    {{NULL}, -1}, // 37
+    {{NULL}, -1}, // 38
+    {{NULL}, -1}, // 39
+    {{NULL}, -1}, // 40
+    {{NULL}, -1}, // 41
+    {{NULL}, -1}, // 42
+    {{NULL}, -1}, // 43
+    {{NULL}, -1}, // 44
+    {{&machine_pin_type}, GPIO_NUM_45}, // QWIIC
+    {{NULL}, -1}, // 46
+
     #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 
     {{&machine_pin_type}, GPIO_NUM_0},
@@ -615,6 +665,56 @@ STATIC const machine_pin_irq_obj_t machine_pin_irq_object[GPIO_NUM_MAX] = {
     {{&machine_pin_irq_type}, GPIO_NUM_19},
     {{&machine_pin_irq_type}, GPIO_NUM_20},
     {{&machine_pin_irq_type}, GPIO_NUM_21},
+
+	#elif CONFIG_FLOW3R_ESP32S3
+
+    {{NULL}, -1}, // 0
+    {{NULL}, -1}, // 1
+    {{NULL}, -1}, // 2
+    {{NULL}, -1}, // 3
+    {{&machine_pin_irq_type}, GPIO_NUM_4}, // Badgelink
+    {{&machine_pin_irq_type}, GPIO_NUM_5}, // Badgelink
+    {{&machine_pin_irq_type}, GPIO_NUM_6}, // Badgelink
+    {{&machine_pin_irq_type}, GPIO_NUM_7}, // Badgelink
+    {{NULL}, -1}, // 8
+    {{NULL}, -1}, // 9
+    {{NULL}, -1}, // 10
+    {{NULL}, -1}, // 11
+    {{NULL}, -1}, // 12
+    {{NULL}, -1}, // 13
+    {{NULL}, -1}, // 14
+    {{NULL}, -1}, // 15
+    {{NULL}, -1}, // 16
+    {{&machine_pin_irq_type}, GPIO_NUM_17}, // QWIIC
+    {{NULL}, -1}, // 18
+    {{NULL}, -1}, // 19
+    {{NULL}, -1}, // 20
+    {{NULL}, -1}, // 21
+    {{NULL}, -1}, // 22
+    {{NULL}, -1}, // 23
+    {{NULL}, -1}, // 24
+    {{NULL}, -1}, // 25
+    {{NULL}, -1}, // 26
+    {{NULL}, -1}, // 27
+    {{NULL}, -1}, // 28
+    {{NULL}, -1}, // 29
+    {{NULL}, -1}, // 30
+    {{NULL}, -1}, // 31
+    {{NULL}, -1}, // 32
+    {{NULL}, -1}, // 33
+    {{NULL}, -1}, // 34
+    {{NULL}, -1}, // 35
+    {{NULL}, -1}, // 36
+    {{NULL}, -1}, // 37
+    {{NULL}, -1}, // 38
+    {{NULL}, -1}, // 39
+    {{NULL}, -1}, // 40
+    {{NULL}, -1}, // 41
+    {{NULL}, -1}, // 42
+    {{NULL}, -1}, // 43
+    {{NULL}, -1}, // 44
+    {{&machine_pin_irq_type}, GPIO_NUM_45}, // QWIIC
+    {{NULL}, -1}, // 46
 
     #elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
 

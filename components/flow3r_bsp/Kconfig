@@ -9,23 +9,27 @@ menu "Flow3r Config"
                  - No line in/out jacks
                  - White bottom board
                  - USB-C jack points side of leaf
+            select FLOW3R_ESP32S3
             bool "Prototype 1"
         config FLOW3R_HW_GEN_P3
             help
                 Prototype version 3, a.k.a. proto3
                 Visual identifiers:
                   - Sticker with B3xx (xx being arbitrary digits) on the back
+            select FLOW3R_ESP32S3
             bool "Prototype 3"
         config FLOW3R_HW_GEN_P4
             help
                 Prototype version 4, a.k.a. proto4
                 Visual identifiers:
                   - Sticker with B4xx (xx being arbitrary digits) on the back
+            select FLOW3R_ESP32S3
             bool "Prototype 4"
         config FLOW3R_HW_GEN_P6
             help
                 Prototype version 6, a.k.a. proto6
                   - Sticker with B6xx (xx being arbitrary digits) on the back
+            select FLOW3R_ESP32S3
             bool "Prototype 6"
     endchoice
 
@@ -41,5 +45,8 @@ menu "Flow3r Config"
                 Spirals between captouch pads
             bool "Spirals"
     endchoice
+
+    config FLOW3R_ESP32S3
+        bool
 
 endmenu
