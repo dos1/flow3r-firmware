@@ -72,7 +72,7 @@ void flow3r_bsp_i2c_init(void) {
 	assert(mutex != NULL);
 
     assert(i2c_param_config(I2C_NUM_0, &i2c_conf) == ESP_OK);
-	assert(i2c_driver_install(I2C_NUM_0, i2c_conf.mode, 0, 0, 0) == ESP_OK);
+	assert(i2c_driver_install(I2C_NUM_0, i2c_conf.mode, 0, 0, ESP_INTR_FLAG_LOWMED | ESP_INTR_FLAG_SHARED) == ESP_OK);
 
 	flow3r_bsp_i2c_scan();
 }

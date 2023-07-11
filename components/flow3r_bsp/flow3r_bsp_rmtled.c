@@ -90,7 +90,7 @@ esp_err_t flow3r_bsp_rmtled_init(uint16_t num_leds) {
         ESP_LOGE(TAG, "rmt_config failed: %s", esp_err_to_name(ret));
         return ret;
     }
-    if ((ret = rmt_driver_install(config.channel, 0, 0)) != ESP_OK) {
+    if ((ret = rmt_driver_install(config.channel, 0, ESP_INTR_FLAG_LOWMED | ESP_INTR_FLAG_SHARED)) != ESP_OK) {
         ESP_LOGE(TAG, "rmt_driver_install failed: %s", esp_err_to_name(ret));
         return ret;
     }
