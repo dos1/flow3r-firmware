@@ -9,6 +9,10 @@ idf_component_register(
         st3m_leds.c
         st3m_colors.c
         st3m_io.c
+        st3m_usb_cdc.c
+        st3m_usb_descriptors.c
+        st3m_usb_msc.c
+        st3m_usb.c
     INCLUDE_DIRS
         .
     REQUIRES
@@ -16,4 +20,9 @@ idf_component_register(
         bl00mbox
         ctx
         fatfs
+        tinyusb
+        usb
 )
+
+idf_component_get_property(tusb_lib tinyusb COMPONENT_LIB)
+target_include_directories(${tusb_lib} PRIVATE .)
