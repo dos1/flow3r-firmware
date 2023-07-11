@@ -30,6 +30,7 @@ in with nixpkgs; pkgs.mkShell {
       sphinx sphinx_rtd_theme
     ]))
     emscripten
+    mypy
   ];
   shellHook = ''
     # For esp.py openocd integration.
