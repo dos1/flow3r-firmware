@@ -151,6 +151,10 @@ class Ctx:
         self._emit(f"translate {int(x)} {int(y)}")
         return self
 
+    def scale(self, x, y):
+        self._emit(f"scale {x:.3f} {y:.3f}")
+        return self
+
     def line_to(self, x, y):
         self._emit(f"lineTo {int(x)} {int(y)}")
         return self
