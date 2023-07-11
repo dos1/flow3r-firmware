@@ -14,7 +14,7 @@ from st4m.ui.view import View, ViewManager, ViewTransitionBlend
 from st4m.ui.menu import MenuItem, MenuController, MenuItemBack, MenuItemForeground, MenuItemNoop
 from st4m import Responder, InputState, Ctx
 
-import math
+import math, hardware
 
 
 vm = ViewManager(ViewTransitionBlend())
@@ -26,6 +26,37 @@ def lerp(a: float, b: float, v: float) -> float:
     if v >= 1.0:
         return b
     return a + (b - a) * v
+
+
+class USBIcon(Responder):
+    """
+    Found in the bargain bin at an Aldi Süd.
+    """
+    def draw(self, ctx: Ctx) -> None:
+        ctx.gray(1.0)
+        ctx.arc(-90, 0, 20, 0, 6.28, 0).fill()
+        ctx.line_width = 10.0
+        ctx.move_to(-90, 0).line_to(90, 0).stroke()
+        ctx.move_to(100, 0).line_to(70, 15).line_to(70, -15).line_to(100, 0).fill()
+        ctx.move_to(-50, 0).line_to(-10, -40).line_to(20, -40).stroke()
+        ctx.arc(20, -40, 15, 0, 6.28, 0).fill()
+        ctx.move_to(-30, 0).line_to(10, 40).line_to(40, 40).stroke()
+        ctx.rectangle(40-15, 40-15, 30, 30).fill()
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        pass
+
+
+class REPLIcon(Responder):
+    def draw(self, ctx: Ctx) -> None:
+        ctx.gray(1.0)
+        ctx.line_width = 10.0
+        for i in range(3):
+            x = i * 40
+            ctx.move_to(-60 + x, -60).line_to(0 + x, 0).line_to(-60 + x, 60).stroke()
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        pass
 
 
 class Sun(Responder):
@@ -166,6 +197,46 @@ menu_main = MainMenu([
 
 vm.push(menu_main)
 
+
+class Viewport(Responder):
+    def __init__(self, vm: ViewManager) -> None:
+        self.vm = vm
+        self.usb = USBIcon()
+        self.repl = REPLIcon()
+        self.visible: List[Responder] = []
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        self.vm.think(ins, delta_ms)
+        
+        self.visible = []
+        usb = hardware.usb_connected()
+        console = hardware.usb_console_active()
+        if not usb:
+            console = False
+        if usb:
+            self.visible.append(self.usb)
+        #if console:
+        #    self.visible.append(self.repl)
+
+        for v in self.visible:
+            v.think(ins, delta_ms)
+
+    def draw(self, ctx: Ctx) -> None:
+        self.vm.draw(ctx)
+
+        nicons = len(self.visible)
+        dist = 20
+        width = (nicons - 1) * dist
+        x0 = width / -2
+        for i, v in enumerate(self.visible):
+            x = x0 + i * dist
+            ctx.save()
+            ctx.translate(x, -100)
+            ctx.scale(0.1, 0.1)
+            v.draw(ctx)
+            ctx.restore()
+
+
 reactor = st4m.Reactor()
-reactor.set_top(vm)
+reactor.set_top(Viewport(vm))
 reactor.run()
