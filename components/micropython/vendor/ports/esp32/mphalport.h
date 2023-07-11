@@ -29,7 +29,6 @@
 #ifndef INCLUDED_MPHALPORT_H
 #define INCLUDED_MPHALPORT_H
 
-#include "py/ringbuf.h"
 #include "shared/runtime/interrupt_char.h"
 
 #include "freertos/FreeRTOS.h"
@@ -51,8 +50,6 @@
 #endif
 
 extern TaskHandle_t mp_main_task_handle;
-
-extern ringbuf_t stdin_ringbuf;
 
 // Check the ESP-IDF error code and raise an OSError if it's not ESP_OK.
 void check_esp_err(esp_err_t code);

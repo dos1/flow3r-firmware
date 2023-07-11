@@ -13,6 +13,7 @@ idf_component_register(
         st3m_usb_descriptors.c
         st3m_usb_msc.c
         st3m_usb.c
+        st3m_console.c
     INCLUDE_DIRS
         .
     REQUIRES
@@ -21,6 +22,7 @@ idf_component_register(
         ctx
         fatfs
         tinyusb
+        esp_ringbuf
         usb
 )
 

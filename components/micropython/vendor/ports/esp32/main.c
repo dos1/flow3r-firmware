@@ -81,14 +81,6 @@ void mp_task(void *pvParameter) {
     #if MICROPY_PY_THREAD
     mp_thread_init(pxTaskGetStackStart(NULL), MP_TASK_STACK_SIZE / sizeof(uintptr_t));
     #endif
-    #if CONFIG_USB_ENABLED
-    usb_init();
-    #elif CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
-    usb_serial_jtag_init();
-    #endif
-    #if MICROPY_HW_ENABLE_UART_REPL
-    uart_stdout_init();
-    #endif
     machine_init();
 
     esp_err_t err = esp_event_loop_create_default();

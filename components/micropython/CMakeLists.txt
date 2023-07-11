@@ -53,7 +53,6 @@ set(MICROPY_SOURCE_DRIVERS
 
 set(MICROPY_SOURCE_PORT
     ${MICROPY_PORT_DIR}/main.c
-    ${MICROPY_PORT_DIR}/uart.c
     ${MICROPY_PORT_DIR}/gccollect.c
     ${MICROPY_PORT_DIR}/mphalport.c
     ${MICROPY_PORT_DIR}/fatfs_port.c
@@ -78,7 +77,6 @@ set(MICROPY_SOURCE_PORT
     ${MICROPY_PORT_DIR}/mpthreadport.c
     ${MICROPY_PORT_DIR}/machine_rtc.c
     ${MICROPY_PORT_DIR}/ppp_set_auth.c
-    ${MICROPY_PORT_DIR}/usb_serial_jtag.c
 )
 
 set(MICROPY_SOURCE_QSTR

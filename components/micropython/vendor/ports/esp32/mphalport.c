@@ -50,9 +50,6 @@
 
 TaskHandle_t mp_main_task_handle;
 
-STATIC uint8_t stdin_ringbuf_array[260];
-ringbuf_t stdin_ringbuf = {stdin_ringbuf_array, sizeof(stdin_ringbuf_array), 0, 0};
-
 // Check the ESP-IDF error code and raise an OSError if it's not ESP_OK.
 void check_esp_err(esp_err_t code) {
     if (code != ESP_OK) {
@@ -85,10 +82,24 @@ void check_esp_err(esp_err_t code) {
     }
 }
 
+static bool stdin_chr_buf = false;
+static char stdin_chr_val = 0;
+
 uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
+    printf("mp_hal_stdio_poll\n");
     uintptr_t ret = 0;
-    if ((poll_flags & MP_STREAM_POLL_RD) && stdin_ringbuf.iget != stdin_ringbuf.iput) {
-        ret |= MP_STREAM_POLL_RD;
+    if ((poll_flags & MP_STREAM_POLL_RD)) {
+        if (!stdin_chr_buf) {
+            char c;
+            if (fread(&c, 1, 1, stdin) == 1) {
+                stdin_chr_val = c;
+                stdin_chr_buf = true;
+            }
+        }
+
+        if (stdin_chr_buf) {
+            ret |= MP_STREAM_POLL_RD;
+        }
     }
     if (poll_flags & MP_STREAM_POLL_WR) {
         ret |= MP_STREAM_POLL_WR;
@@ -97,9 +108,14 @@ uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
 }
 
 int mp_hal_stdin_rx_chr(void) {
+    if (stdin_chr_buf) {
+        stdin_chr_buf = false;
+        return stdin_chr_val;
+    }
     for (;;) {
-        int c = ringbuf_get(&stdin_ringbuf);
-        if (c != -1) {
+        char c;
+        size_t res = fread(&c, 1, 1, stdin);
+        if (res == 1) {
             return c;
         }
         MICROPY_EVENT_POLL_HOOK
@@ -112,15 +128,7 @@ void mp_hal_stdout_tx_strn(const char *str, size_t len) {
     if (release_gil) {
         MP_THREAD_GIL_EXIT();
     }
-    #if CONFIG_USB_ENABLED
-    usb_tx_strn(str, len);
-    #elif CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG
-    usb_serial_jtag_tx_strn(str, len);
-    #endif
-    #if MICROPY_HW_ENABLE_UART_REPL
-    uart_stdout_tx_strn(str, len);
-    #endif
-
+    fwrite(str, len, 1, stdout);
     if (release_gil) {
         MP_THREAD_GIL_ENTER();
     }
