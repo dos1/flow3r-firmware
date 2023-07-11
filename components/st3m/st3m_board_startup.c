@@ -8,6 +8,7 @@
 #include "st3m_usb.h"
 #include "bl00mbox.h"
 #include "flow3r_bsp.h"
+#include "st3m_mode.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -23,9 +24,14 @@ void st3m_board_startup(void) {
     // initial framebuffer (both on-ESP and in-screen) noise before we turn on
     // the backlight.
     for (int i = 0; i < 4; i++) {
-        st3m_gfx_splash("Starting st3m...");
+        st3m_gfx_splash("");
     }
+    // Display should've flushed by now. Turn on backlight.
     flow3r_bsp_display_set_backlight(100);
+    
+    st3m_mode_init();
+    st3m_mode_set(st3m_mode_kind_starting, "st3m");
+    st3m_mode_update_display(NULL);
 
     // Initialize USB and console so that we get logging as early as possible.
     st3m_usb_init();
@@ -35,11 +41,11 @@ void st3m_board_startup(void) {
         .fn_txpoll = st3m_console_cdc_on_txpoll,
         .fn_detach = st3m_console_cdc_on_detach,
     };
-    st3m_usb_mode_t mode = {
+    st3m_usb_mode_t usb_mode = {
         .kind = st3m_usb_mode_kind_app,
         .app = &app,
     };
-    st3m_usb_mode_switch(&mode);
+    st3m_usb_mode_switch(&usb_mode);
     puts(" ___ _           ___     _         _");
     puts("|  _| |___ _ _ _|_  |___| |_ ___ _| |___ ___");
     puts("|  _| | . | | | |_  |  _| . | .'| . | . | -_|");
@@ -50,12 +56,21 @@ void st3m_board_startup(void) {
     // TODO(q3k): debug this
     vTaskDelay(100/portTICK_PERIOD_MS);
 
+
     flow3r_bsp_i2c_init();
+    st3m_mode_set(st3m_mode_kind_starting, "fs");
+    st3m_mode_update_display(NULL);
     st3m_fs_init();
+    st3m_mode_set(st3m_mode_kind_starting, "audio");
+    st3m_mode_update_display(NULL);
     st3m_scope_init();
     st3m_audio_init();
     st3m_audio_set_player_function(bl00mbox_player_function);
+    st3m_mode_set(st3m_mode_kind_starting, "io");
+    st3m_mode_update_display(NULL);
     st3m_leds_init();
     st3m_io_init();
-    st3m_gfx_splash("Starting micropython...");
+
+    st3m_mode_set(st3m_mode_kind_starting, "micropython");
+    st3m_mode_update_display(NULL);
 }

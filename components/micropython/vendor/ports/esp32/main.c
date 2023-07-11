@@ -56,6 +56,8 @@
 #include "modnetwork.h"
 #include "mpthreadport.h"
 
+#include "st3m_mode.h"
+
 #if MICROPY_BLUETOOTH_NIMBLE
 #include "extmod/modbluetooth.h"
 #endif
@@ -113,6 +115,8 @@ soft_reset:
     machine_i2s_init0();
     #endif
 
+    st3m_mode_set(st3m_mode_kind_app, NULL);
+
     // run boot-up scripts
     pyexec_frozen_module("_boot.py");
     pyexec_file_if_exists("boot.py");
@@ -122,6 +126,8 @@ soft_reset:
             goto soft_reset_exit;
         }
     }
+
+    st3m_mode_set(st3m_mode_kind_repl, NULL);
 
     for (;;) {
         if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
@@ -136,6 +142,8 @@ soft_reset:
             }
         }
     }
+
+    st3m_mode_set(st3m_mode_kind_starting, NULL);
 
 soft_reset_exit:
 

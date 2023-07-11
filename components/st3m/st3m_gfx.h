@@ -54,6 +54,13 @@ uint8_t st3m_gfx_drawctx_pipe_full(void);
 // operation.
 void st3m_gfx_flush(void);
 
+typedef struct {
+	const char *title;
+	const char **lines;
+} st3m_gfx_textview_t;
+
+void st3m_gfx_show_textview(st3m_gfx_textview_t *tv);
+
 // Display some text as a splash message. This should be used early on in the
 // badge boot process to provide feedback on the rest of the software stack
 // coming up

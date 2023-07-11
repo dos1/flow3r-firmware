@@ -90,7 +90,7 @@ static void st3m_gfx_crtc_task(void *_arg) {
             float read = st3m_counter_timer_average(&blit_read_time) / 1000.0;
             float work = st3m_counter_timer_average(&blit_work_time) / 1000.0;
             float write = st3m_counter_timer_average(&blit_write_time) / 1000.0;
-            ESP_LOGI(TAG, "blitting: %.3f/sec, read %.3fms, work %.3fms, write %.3fms", rate, read, work, write);
+            //ESP_LOGI(TAG, "blitting: %.3f/sec, read %.3fms, work %.3fms, write %.3fms", rate, read, work, write);
         }
     }
 }
@@ -112,7 +112,7 @@ static void st3m_gfx_rast_task(void *_arg) {
         end = esp_timer_get_time();
         st3m_counter_timer_sample(&rast_read_dctx_time, end-start);
 
-		// Render drawctx into fbctx.
+        // Render drawctx into fbctx.
         start = esp_timer_get_time();
         ctx_render_ctx(draw->ctx, fb->ctx);
         ctx_drawlist_clear(draw->ctx);
@@ -133,23 +133,61 @@ static void st3m_gfx_rast_task(void *_arg) {
             float read_dctx = st3m_counter_timer_average(&rast_read_dctx_time) / 1000.0;
             float work = st3m_counter_timer_average(&rast_work_time) / 1000.0;
             float write = st3m_counter_timer_average(&rast_write_time) / 1000.0;
-            ESP_LOGI(TAG, "rasterization: %.3f/sec, read fb %.3fms, read dctx %.3fms, work %.3fms, write %.3fms", rate, read_fb, read_dctx, work, write);
+            //ESP_LOGI(TAG, "rasterization: %.3f/sec, read fb %.3fms, read dctx %.3fms, work %.3fms, write %.3fms", rate, read_fb, read_dctx, work, write);
         }
     }
 }
 
 void st3m_gfx_splash(const char *text) {
+    const char *lines[] = {
+        text, NULL,
+    };
+    st3m_gfx_textview_t tv = {
+        .title = NULL,
+        .lines = lines,
+    };
+    st3m_gfx_show_textview(&tv);
+}
+
+void st3m_gfx_show_textview(st3m_gfx_textview_t *tv) {
+    if (tv == NULL) {
+        return;
+    }
+
     st3m_ctx_desc_t *target = st3m_gfx_drawctx_free_get(portMAX_DELAY);
-    ctx_rgb(target->ctx, 0.157, 0.129, 0.167);
+
+	// Draw background.
+    ctx_rgb(target->ctx, 0, 0, 0);
     ctx_rectangle(target->ctx, -120, -120, 240, 240);
     ctx_fill(target->ctx);
 
-    ctx_move_to(target->ctx, 0, 0);
-    ctx_rgb(target->ctx, 0.9, 0.9, 0.9);
+    int y = -30;
+
+	ctx_gray(target->ctx, 1.0);
     ctx_text_align(target->ctx, CTX_TEXT_ALIGN_CENTER);
-    ctx_text_baseline(target->ctx, CTX_TEXT_BASELINE_ALPHABETIC);
+    ctx_text_baseline(target->ctx, CTX_TEXT_BASELINE_MIDDLE);
+    ctx_font_size(target->ctx, 20.0);
+
+	// Draw title, if any.
+    if (tv->title != NULL) {
+        ctx_move_to(target->ctx, 0, y);
+        ctx_text(target->ctx, tv->title);
+        y += 20;
+    }
+
     ctx_font_size(target->ctx, 15.0);
-    ctx_text(target->ctx, text);
+	ctx_gray(target->ctx, 0.8);
+
+    // Draw messages.
+    const char **lines = tv->lines;
+    if (lines != NULL) {
+        while (*lines != NULL) {
+            const char *text = *lines++;
+            ctx_move_to(target->ctx, 0, y);
+            ctx_text(target->ctx, text);
+            y += 15;
+        }
+    }
 
     st3m_gfx_drawctx_pipe_put(target);
 }
