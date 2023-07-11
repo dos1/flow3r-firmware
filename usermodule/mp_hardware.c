@@ -17,6 +17,8 @@
 #include "st3m_gfx.h"
 #include "st3m_scope.h"
 #include "st3m_io.h"
+#include "st3m_console.h"
+#include "st3m_usb.h"
 
 #include "ctx_config.h"
 #include "ctx.h"
@@ -167,7 +169,7 @@ STATIC mp_obj_t mp_display_update(mp_obj_t in_ctx) {
 
     if (gfx_last_desc != NULL) {
         st3m_gfx_drawctx_pipe_put(gfx_last_desc);
-	    gfx_last_desc = NULL;
+        gfx_last_desc = NULL;
     }
     return mp_const_none;
 }
@@ -214,6 +216,42 @@ STATIC mp_obj_t mp_i2c_scan(void) {
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_i2c_scan_obj, mp_i2c_scan);
 
+STATIC mp_obj_t mp_usb_connected(void) {
+    static int64_t last_check = 0;
+    static bool value = false;
+    int64_t now = esp_timer_get_time();
+
+    if (last_check == 0) {
+        last_check = now;
+        value = st3m_usb_connected();
+    }
+
+    if ((now - last_check) > 10000) {
+        value = st3m_usb_connected();
+        last_check = now;
+    }
+    return mp_obj_new_bool(value);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_usb_connected_obj, mp_usb_connected);
+
+STATIC mp_obj_t mp_usb_console_active(void) {
+    static int64_t last_check = 0;
+    static bool value = false;
+    int64_t now = esp_timer_get_time();
+
+    if (last_check == 0) {
+        last_check = now;
+        value = st3m_console_active();
+    }
+
+    if ((now - last_check) > 10000) {
+        value = st3m_console_active();
+        last_check = now;
+    }
+    return mp_obj_new_bool(value);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_usb_console_active_obj, mp_usb_console_active);
+
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_hardware) },
 
@@ -241,6 +279,8 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_display_set_backlight), MP_ROM_PTR(&mp_display_set_backlight_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&mp_version_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_ctx), MP_ROM_PTR(&mp_get_ctx_obj) },
+    { MP_ROM_QSTR(MP_QSTR_usb_connected), MP_ROM_PTR(&mp_usb_connected_obj) },
+    { MP_ROM_QSTR(MP_QSTR_usb_console_active), MP_ROM_PTR(&mp_usb_console_active_obj) },
     { MP_ROM_QSTR(MP_QSTR_i2c_scan), MP_ROM_PTR(&mp_i2c_scan_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_BUTTON_PRESSED_LEFT), MP_ROM_INT(st3m_tripos_left) },
@@ -259,4 +299,3 @@ const mp_obj_module_t mp_module_hardware = {
 };
 
 MP_REGISTER_MODULE(MP_QSTR_hardware, mp_module_hardware);
-
