@@ -12,6 +12,7 @@ target_sources(usermod_badge23 INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/mp_badge_link.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_kernel.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_uctx.c
+    ${CMAKE_CURRENT_LIST_DIR}/mp_captouch.c
 )
 
 target_include_directories(usermod_badge23 INTERFACE

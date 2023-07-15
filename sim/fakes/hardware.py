@@ -1,6 +1,7 @@
 import math
 import os
 import time
+import itertools
 
 import pygame
 
@@ -42,8 +43,6 @@ class Input:
 
     def _mouse_coords_to_id(self, mouse_x, mouse_y):
         for i, (x, y) in enumerate(self.POSITIONS):
-            x += self.MARKER_SIZE // 2
-            y += self.MARKER_SIZE // 2
             dx = mouse_x - x
             dy = mouse_y - y
             if math.sqrt(dx**2 + dy**2) < self.MARKER_SIZE // 2:
@@ -71,8 +70,6 @@ class Input:
     def render(self, surface):
         s = self.state()
         for i, (x, y) in enumerate(self.POSITIONS):
-            x += self.MARKER_SIZE // 2
-            y += self.MARKER_SIZE // 2
             if s[i]:
                 pygame.draw.circle(surface, self.COLOR_HELD, (x, y), self.MARKER_SIZE//2)
             elif i == self._mouse_hover:
@@ -82,16 +79,83 @@ class Input:
 
 
 class PetalsInput(Input):
-    # First petal is above USB-C jack, then CCW.
-    POSITIONS = [
-        (356, 122), (163, 112), (114, 302), ( 49, 477), (204, 587), (352, 696), (504, 587), (660, 477), (602, 298), (547, 117),
+    _petal_positions_top = [
+        (406, 172), (164, 352), (254, 637), (554, 637), (652, 348),
     ]
+    _petal_positions_bottom = [
+        (213, 162), (99, 527), (402, 746), (710, 527), (597, 167)
+    ]
+    POSITIONS = list(itertools.chain(*[
+        [
+            (x + math.cos(i * -1.256 + 1.57) * 40, y + math.sin(i * -1.256 + 1.57) * 40), # base
+            (x + math.cos(i * -1.256 + 5.75) * 40, y + math.sin(i * -1.256 + 5.75) * 40), # cw
+            (x + math.cos(i * -1.256 + 3.66) * 40, y + math.sin(i * -1.256 + 3.66) * 40), # ccw
+        ]
+        for i, (x, y) in enumerate(_petal_positions_top)
+    ] + [
+        [
+            (x + math.cos(i * -1.256 - 2.20) * 40, y + math.sin(i * -1.256 - 2.20) * 40), # tip
+            (x + math.cos(i * -1.256 - 5.34) * 40, y + math.sin(i * -1.256 - 5.34) * 40), # base
+        ]
+        for i, (x, y) in enumerate(_petal_positions_bottom)
+    ]))
+    MARKER_SIZE = 40
+
+    def _index_for_petal_pad(self, petal, pad):
+        if petal >= 10:
+            raise ValueError("petal cannot be > 10")
+        
+        # convert from st3m/bsp index into input state index
+        top = False
+        if petal % 2 == 0:
+            top = True
+        res = petal // 2
+        if top:
+            res *= 3
+        else:
+            res *= 2
+            res += 3 * 5
+
+        if top:
+            if pad == 1: # ccw
+                res += 2
+            elif pad == 2: # cw
+                res += 1
+            elif pad == 3: # base
+                res += 0
+            else:
+                raise ValueError("invalid pad number")
+        else:
+            if pad == 0: # tip
+                res += 0
+            elif pad == 3: # base
+                res += 1
+            else:
+                raise ValueError("invalid pad number")
+        return res
+
+    def state_for_petal_pad(self, petal, pad):
+        ix = self._index_for_petal_pad(petal, pad)
+        return self.state()[ix]
+
+    def state_for_petal(self, petal):
+        res = False
+        if petal % 2 == 0:
+            # top
+            res = res or self.state_for_petal_pad(petal, 1)
+            res = res or self.state_for_petal_pad(petal, 2)
+            res = res or self.state_for_petal_pad(petal, 3)
+        else:
+            # bottom
+            res = res or self.state_for_petal_pad(petal, 0)
+            res = res or self.state_for_petal_pad(petal, 3)
+        return res
 
 
 class ButtonsInput(Input):
     POSITIONS = [
-        ( 14, 230), ( 46, 230), ( 78, 230),
-        (714, 230), (746, 230), (778, 230),
+        ( 24, 240), ( 56, 240), ( 88, 240),
+        (724, 240), (756, 240), (788, 240),
     ]
     MARKER_SIZE = 20
     COLOR_HELD = (0x80, 0x80, 0x80, 0xff)
@@ -394,7 +458,7 @@ def menu_button_get_left():
 def get_captouch(a):
     _sim.process_events()
     _sim.render_gui_lazy()
-    return _sim.petals.state()[a]
+    return _sim.petals.state_for_petal(a)
 
 #TODO(iggy/q3k do proper positional captouch)
 def captouch_get_petal_rad(a):
@@ -424,3 +488,12 @@ def scope_draw(ctx):
     ctx.line_to(130, 130)
     ctx.line_to(-130, 130)
     ctx.line_to(-130, 0)
+
+def usb_connected():
+    return True
+
+def usb_console_active():
+    return True
+
+def i2c_scan():
+    return [16, 44, 45, 85, 109, 110]

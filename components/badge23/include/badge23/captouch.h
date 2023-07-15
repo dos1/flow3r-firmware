@@ -64,14 +64,23 @@ void captouch_force_calibration();
 uint8_t captouch_calibration_active();
 
 typedef struct {
+	// Not all pads are present on all petals.
+	// Top petals have a base, cw and ccw pad.
+	// Bottom petlas have a base and a tip.
+
+	// Is the tip pressed down?
 	bool tip_pressed;
+	// Is the base pressed down?
 	bool base_pressed;
+	// Is the clockwise pad pressed down?
 	bool cw_pressed;
+	// Is the counter-clockwise pad pressed down?
 	bool ccw_pressed;
 } captouch_pad_state_t;
 
 typedef struct {
 	captouch_pad_state_t pads;
+	// Are any of the pads pressed down?
 	bool pressed;
 } captouch_petal_state_t;
 
@@ -79,8 +88,12 @@ typedef struct {
 	captouch_petal_state_t petals[10];
 } captouch_state_t;
 
+/* Extened/new API for reading captouch state. Allows for access to individual
+ * pad data.
+ *
+ * Likely to evolce into the new st3m api for captouch.
+ */
 void read_captouch_ex(captouch_state_t *state);
-
 
 /* returns uint16_t which encodes each petal "touched" state as the bit
  * corresponding to the petal index. "touched" is determined by checking if
