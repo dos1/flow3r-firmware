@@ -11,8 +11,10 @@ Welcome to flow3r's documentation!
    :caption: The badge:
 
    badge/hardware_specs.rst
+   badge/usage.rst
+   badge/programming.rst
+   badge/firmware.rst
    badge/badge_link.rst
-   badge/sdcard.rst
 
 .. toctree::
    :maxdepth: 1
