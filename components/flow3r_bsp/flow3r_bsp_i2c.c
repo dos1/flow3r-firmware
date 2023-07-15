@@ -5,6 +5,8 @@
 #include "freertos/semphr.h"
 #include "esp_log.h"
 
+#include <string.h>
+
 static SemaphoreHandle_t mutex;
 
 static const char *TAG = "flow3r-bsp-i2c";
@@ -74,7 +76,7 @@ void flow3r_bsp_i2c_init(void) {
     assert(i2c_param_config(I2C_NUM_0, &i2c_conf) == ESP_OK);
 	assert(i2c_driver_install(I2C_NUM_0, i2c_conf.mode, 0, 0, ESP_INTR_FLAG_LOWMED | ESP_INTR_FLAG_SHARED) == ESP_OK);
 
-	flow3r_bsp_i2c_scan();
+	flow3r_bsp_i2c_scan(NULL);
 }
 
 // Take I2C bus lock.
@@ -101,7 +103,10 @@ esp_err_t flow3r_bsp_i2c_write_read_device(uint8_t address, const uint8_t *write
 	return res;
 }
 
-void flow3r_bsp_i2c_scan(void) {
+void flow3r_bsp_i2c_scan(flow3r_bsp_i2c_scan_result_t *res) {
+	if (res != NULL) {
+		memset(res, 0, sizeof(flow3r_bsp_i2c_scan_result_t));
+	}
 	ESP_LOGI(TAG, "Scan: starting...");
 	for (uint8_t i = 1; i < 127; i++) {
 		i2c_cmd_handle_t cmd = i2c_cmd_link_create();
@@ -112,6 +117,11 @@ void flow3r_bsp_i2c_scan(void) {
         i2c_cmd_link_delete(cmd);
 		if (ret == ESP_OK) {
 			ESP_LOGI(TAG, "Scan: detected %02x", i);
+			if (res != NULL) {
+				size_t ix = i / 32;
+				size_t offs = i % 32;
+				res->res[ix] |= (1 << offs);
+			}
 		}
 	}
 	ESP_LOGI(TAG, "Scan: done.");

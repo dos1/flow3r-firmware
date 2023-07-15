@@ -197,6 +197,23 @@ STATIC mp_obj_t mp_scope_draw(mp_obj_t ctx_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_scope_draw_obj, mp_scope_draw);
 
+STATIC mp_obj_t mp_i2c_scan(void) {
+    flow3r_bsp_i2c_scan_result_t scan;
+    flow3r_bsp_i2c_scan(&scan);
+
+	mp_obj_t res = mp_obj_new_list(0, NULL);
+    for (int i = 0; i < 127; i++) {
+        size_t ix = i / 32;
+        size_t offs = i % 32;
+        if (scan.res[ix] & (1 << offs)) {
+            mp_obj_list_append(res, mp_obj_new_int_from_uint(i));
+        }
+    }
+    return res;
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_i2c_scan_obj, mp_i2c_scan);
+
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_hardware) },
 
@@ -224,6 +241,7 @@ STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_display_set_backlight), MP_ROM_PTR(&mp_display_set_backlight_obj) },
     { MP_ROM_QSTR(MP_QSTR_version), MP_ROM_PTR(&mp_version_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_ctx), MP_ROM_PTR(&mp_get_ctx_obj) },
+    { MP_ROM_QSTR(MP_QSTR_i2c_scan), MP_ROM_PTR(&mp_i2c_scan_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_BUTTON_PRESSED_LEFT), MP_ROM_INT(st3m_tripos_left) },
     { MP_ROM_QSTR(MP_QSTR_BUTTON_PRESSED_RIGHT), MP_ROM_INT(st3m_tripos_right) },
