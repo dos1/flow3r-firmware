@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+#include <stdbool.h>
 
 /* GENERAL INFORMATION
  *
@@ -61,6 +62,24 @@ void captouch_force_calibration();
  * 0: calibration cycle inactive
  */
 uint8_t captouch_calibration_active();
+
+typedef struct {
+	bool tip_pressed;
+	bool base_pressed;
+	bool cw_pressed;
+	bool ccw_pressed;
+} captouch_pad_state_t;
+
+typedef struct {
+	captouch_pad_state_t pads;
+	bool pressed;
+} captouch_petal_state_t;
+
+typedef struct {
+	captouch_petal_state_t petals[10];
+} captouch_state_t;
+
+void read_captouch_ex(captouch_state_t *state);
 
 
 /* returns uint16_t which encodes each petal "touched" state as the bit

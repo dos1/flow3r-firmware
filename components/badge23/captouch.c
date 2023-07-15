@@ -1,5 +1,4 @@
-//#include <stdio.h>
-//#include <string.h>
+#include "include/badge23/captouch.h"
 #include "esp_log.h"
 #include <stdint.h>
 #include <freertos/FreeRTOS.h>
@@ -68,11 +67,16 @@ static const char *TAG = "captouch";
 static struct ad714x_chip *chip_top;
 static struct ad714x_chip *chip_bot;
 
+typedef struct {
+    uint16_t amb;
+    uint16_t cdc;
+    uint16_t thres;
+    uint8_t pressed;
+} petal_pad_t;
+
 typedef struct{
     uint8_t config_mask;
-    uint16_t amb_values[4]; //ordered according to PETAL_PAD_*
-    uint16_t cdc_values[4]; //ordered according to PETAL_PAD_*
-    uint16_t thres_values[4]; //ordered according to PETAL_PAD_*
+    petal_pad_t pads[4]; // ordered according to PETAL_PAD_*
     uint8_t pressed;
 } petal_t;
 
@@ -263,12 +267,12 @@ static void captouch_init_chip(struct ad714x_chip* chip, const struct ad7147_dev
 static void captouch_init_petals(){
     for(int i = 0; i < 10; i++){
         for(int j = 0; j < 4; j++){
-            petals[i].amb_values[j] = 0;
-            petals[i].cdc_values[j] = 0;
+            petals[i].pads[j].amb = 0;
+            petals[i].pads[j].cdc = 0;
             if(i%2){
-                petals[i].thres_values[j] = DEFAULT_THRES_BOT;
+                petals[i].pads[j].thres = DEFAULT_THRES_BOT;
             } else {
-                petals[i].thres_values[j] = DEFAULT_THRES_TOP;
+                petals[i].pads[j].thres = DEFAULT_THRES_TOP;
             }
         }
         petals[i].config_mask = 0;
@@ -286,44 +290,44 @@ int32_t captouch_get_petal_rad(uint8_t petal){
     uint8_t cf = petals[petal].config_mask;
     #if defined(CONFIG_FLOW3R_TOP_BOARD_SPIKES)
     if(cf == 0b1110){ //CCW, CW, BASE
-        int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
-        left -= petals[petal].amb_values[PETAL_PAD_CCW];
-        int32_t right = petals[petal].cdc_values[PETAL_PAD_CW];
-        right -= petals[petal].amb_values[PETAL_PAD_CW];
-        int32_t base = petals[petal].cdc_values[PETAL_PAD_BASE];
-        base -= petals[petal].amb_values[PETAL_PAD_BASE];
+        int32_t left = petals[petal].pads[PETAL_PAD_CCW].cdc;
+        left -= petals[petal].pads[PETAL_PAD_CCW].amb;
+        int32_t right = petals[petal].pads[PETAL_PAD_CW].cdc;
+        right -= petals[petal].pads[PETAL_PAD_CW].amb;
+        int32_t base = petals[petal].pads[PETAL_PAD_BASE].cdc;
+        base -= petals[petal].pads[PETAL_PAD_BASE].amb;
         return (left + right)/2 - base;
     }
     #elif defined(CONFIG_FLOW3R_TOP_BOARD_SPIRALS)
     if(cf == 0b1110){ //CCW, CW, BASE
-        int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
-        left -= petals[petal].amb_values[PETAL_PAD_CCW];
-        int32_t right = petals[petal].cdc_values[PETAL_PAD_CW];
-        right -= petals[petal].amb_values[PETAL_PAD_CW];
-        int32_t base = petals[petal].cdc_values[PETAL_PAD_BASE];
-        base -= petals[petal].amb_values[PETAL_PAD_BASE];
+        int32_t left = petals[petal].pads[PETAL_PAD_CCW].cdc;
+        left -= petals[petal].pads[PETAL_PAD_CCW].amb;
+        int32_t right = petals[petal].pads[PETAL_PAD_CW].cdc;
+        right -= petals[petal].pads[PETAL_PAD_CW].amb;
+        int32_t base = petals[petal].pads[PETAL_PAD_BASE].cdc;
+        base -= petals[petal].pads[PETAL_PAD_BASE].amb;
         return (left + right)/2 - base;
     }
     #endif
     if(cf == 0b111){ //CCW, CW, TIP
-        int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
-        left -= petals[petal].amb_values[PETAL_PAD_CCW];
-        int32_t right = petals[petal].cdc_values[PETAL_PAD_CW];
-        right -= petals[petal].amb_values[PETAL_PAD_CW];
-        int32_t tip = petals[petal].cdc_values[PETAL_PAD_TIP];
-        tip -= petals[petal].amb_values[PETAL_PAD_TIP];
+        int32_t left = petals[petal].pads[PETAL_PAD_CCW].cdc;
+        left -= petals[petal].pads[PETAL_PAD_CCW].amb;
+        int32_t right = petals[petal].pads[PETAL_PAD_CW].cdc;
+        right -= petals[petal].pads[PETAL_PAD_CW].amb;
+        int32_t tip = petals[petal].pads[PETAL_PAD_TIP].cdc;
+        tip -= petals[petal].pads[PETAL_PAD_TIP].amb;
         return (-left - right)/2 + tip;
     }
     if(cf == 0b1001){ //TIP, BASE
-        int32_t tip = petals[petal].cdc_values[PETAL_PAD_TIP];
-        tip -= petals[petal].amb_values[PETAL_PAD_TIP];
-        int32_t base = petals[petal].cdc_values[PETAL_PAD_BASE];
-        base -= petals[petal].amb_values[PETAL_PAD_BASE];
+        int32_t tip = petals[petal].pads[PETAL_PAD_TIP].cdc;
+        tip -= petals[petal].pads[PETAL_PAD_TIP].amb;
+        int32_t base = petals[petal].pads[PETAL_PAD_BASE].cdc;
+        base -= petals[petal].pads[PETAL_PAD_BASE].amb;
         return tip - base;
     }
     if(cf == 0b1){ //TIP
-        int32_t tip = petals[petal].cdc_values[PETAL_PAD_TIP];
-        tip -= petals[petal].amb_values[PETAL_PAD_TIP];
+        int32_t tip = petals[petal].pads[PETAL_PAD_TIP].cdc;
+        tip -= petals[petal].pads[PETAL_PAD_TIP].amb;
         return tip;
     }
     return 0;
@@ -334,18 +338,18 @@ int32_t captouch_get_petal_phi(uint8_t petal){
     uint8_t cf = petals[petal].config_mask;
     #if defined(CONFIG_FLOW3R_TOP_BOARD_SPIKES)
     if((cf == 0b1110) || (cf == 0b110) || (cf == 0b111)){ //CCW, CW, (BASE)
-        int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
-        left -= petals[petal].amb_values[PETAL_PAD_CCW];
-        int32_t right = petals[petal].cdc_values[PETAL_PAD_CW];
-        right -= petals[petal].amb_values[PETAL_PAD_CW];
+        int32_t left = petals[petal].pads[PETAL_PAD_CCW].cdc;
+        left -= petals[petal].pads[PETAL_PAD_CCW].amb;
+        int32_t right = petals[petal].pads[PETAL_PAD_CW].cdc;
+        right -= petals[petal].pads[PETAL_PAD_CW].amb;
         return left - right;
     }
     #elif defined(CONFIG_FLOW3R_TOP_BOARD_SPIRALS)
     if((cf == 0b1110) || (cf == 0b110) || (cf == 0b111)){ //CCW, CW, (BASE)
-        int32_t left = petals[petal].cdc_values[PETAL_PAD_CCW];
-        left -= petals[petal].amb_values[PETAL_PAD_CCW];
-        int32_t right = petals[petal].cdc_values[PETAL_PAD_CW];
-        right -= petals[petal].amb_values[PETAL_PAD_CW];
+        int32_t left = petals[petal].pads[PETAL_PAD_CCW].cdc;
+        left -= petals[petal].pads[PETAL_PAD_CCW].amb;
+        int32_t right = petals[petal].pads[PETAL_PAD_CW].cdc;
+        right -= petals[petal].pads[PETAL_PAD_CW].amb;
         return left - right;
     }
     #endif
@@ -377,6 +381,16 @@ uint16_t read_captouch(){
     return bin_petals;
 }
 
+void read_captouch_ex(captouch_state_t *state) {
+    for (int i = 0; i < 10; i++) {
+        state->petals[i].pressed = petals[i].pressed > 0;
+        state->petals[i].pads.base_pressed = petals[i].pads[PETAL_PAD_BASE].pressed > 0;
+        state->petals[i].pads.tip_pressed = petals[i].pads[PETAL_PAD_TIP].pressed > 0;
+        state->petals[i].pads.cw_pressed = petals[i].pads[PETAL_PAD_CW].pressed > 0;
+        state->petals[i].pads.ccw_pressed = petals[i].pads[PETAL_PAD_CCW].pressed > 0;
+    }
+}
+
 uint16_t cdc_data[2][12] = {0,};
 uint16_t cdc_ambient[2][12] = {0,};
 
@@ -397,65 +411,55 @@ uint8_t captouch_calibration_active(){
 
 void check_petals_pressed(){
     for(int i = 0; i < 10; i++){
-        bool pressed = 0;
-        bool prev = petals[i].pressed;
+        bool petal_pressed = false;
         for(int j = 0; j < 4; j++){
-            if((petals[i].amb_values[j] +
-                petals[i].thres_values[j]) <
-                petals[i].cdc_values[j]){
-                pressed = 1;
+            bool pad_pressed = false;
+            if((petals[i].pads[j].amb +
+                petals[i].pads[j].thres) <
+                petals[i].pads[j].cdc) {
+                petal_pressed = true;
+                pad_pressed = true;
+            }
+
+            if (pad_pressed) {
+                petals[i].pads[j].pressed = PETAL_PRESSED_DEBOUNCE;
+            } else if (petals[i].pads[j].pressed) {
+                petals[i].pads[j].pressed--;
             }
         }
-        if(pressed){
+        if(petal_pressed){
             petals[i].pressed = PETAL_PRESSED_DEBOUNCE;
         } else if(petals[i].pressed){
             petals[i].pressed--;
-        }
-
-        if(petals[i].pressed && (!prev)){
-            // TODO: PETAL_PRESS_CALLBACK
-        }
-        if((!petals[i].pressed) && prev){
-            // TODO: PETAL_RELEASE_CALLBACK
         }
     }
 }
 
 void cdc_to_petal(bool bot, bool amb, uint16_t cdc_data[], uint8_t cdc_data_length){
-    if(!bot){
-        for(int i = 0; i < cdc_data_length; i++){
-            if(amb){
-                petals[top_map[i]].amb_values[top_segment_map[i]] = cdc_data[i];
-            } else {
-                petals[top_map[i]].cdc_values[top_segment_map[i]] = cdc_data[i];
-            }
-        }
-    } else {
-        for(int i = 0; i < cdc_data_length; i++){
-            if(amb){
-                petals[bot_map[i]].amb_values[bot_segment_map[i]] = cdc_data[i];
-            } else {
-                petals[bot_map[i]].cdc_values[bot_segment_map[i]] = cdc_data[i];
-            }
-        }
+    for(int i = 0; i < cdc_data_length; i++) {
+        size_t petal_index = bot ? bot_map[i] : top_map[i];
+        size_t pad_index = bot ? bot_segment_map[i] : top_segment_map[i];
+        petal_pad_t *pad = &petals[petal_index].pads[pad_index];
+        uint16_t *target = amb ? &pad->amb : &pad->cdc;
+        *target = cdc_data[i];
     }
 }
 
 uint16_t captouch_get_petal_pad_raw(uint8_t petal, uint8_t pad){
     if(petal > 9) petal = 9;
     if(pad > 3) pad = 3;
-    return petals[petal].cdc_values[pad];
+    return petals[petal].pads[pad].cdc;
 }
 uint16_t captouch_get_petal_pad_calib_ref(uint8_t petal, uint8_t pad){
     if(petal > 9) petal = 9;
     if(pad > 3) pad = 3;
-    return petals[petal].amb_values[pad];
+    return petals[petal].pads[pad].amb;
 }
 uint16_t captouch_get_petal_pad(uint8_t petal, uint8_t pad){
     if(petal > 9) petal = 9;
     if(pad > 3) pad = 3;
-    if(petals[petal].amb_values[pad] < petals[petal].cdc_values[pad]){
-        return petals[petal].cdc_values[pad] - petals[petal].amb_values[pad];
+    if(petals[petal].pads[pad].amb < petals[petal].pads[pad].cdc){
+        return petals[petal].pads[pad].cdc - petals[petal].pads[pad].amb;
     }
     return 0;
 }
@@ -463,7 +467,7 @@ uint16_t captouch_get_petal_pad(uint8_t petal, uint8_t pad){
 void captouch_set_petal_pad_threshold(uint8_t petal, uint8_t pad, uint16_t thres){
     if(petal > 9) petal = 9;
     if(pad > 3) pad = 3;
-    petals[petal].thres_values[pad] = thres;    
+    petals[petal].pads[pad].thres = thres;    
 }
 
 static int32_t calib_target = 6000;
