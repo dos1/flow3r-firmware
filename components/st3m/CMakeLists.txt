@@ -15,6 +15,7 @@ idf_component_register(
         st3m_usb.c
         st3m_console.c
         st3m_mode.c
+        st3m_tar.c
     INCLUDE_DIRS
         .
     REQUIRES
