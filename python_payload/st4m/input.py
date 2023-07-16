@@ -3,6 +3,8 @@ from st4m.ui.ctx import Ctx
 
 import hardware
 
+import math
+
 
 class InputState:
     """
@@ -15,11 +17,14 @@ class InputState:
     def __init__(
         self,
         petal_pressed: List[bool],
-        petal_pads: List[List[int]],
+        # petal_pads: List[List[int]],
+        petal_pos: List[List[int]],
         left_button: int,
         right_button: int,
     ) -> None:
         self.petal_pressed = petal_pressed
+        # self.petal_pads = petal_pads
+        self.petal_pos = petal_pos
         self.left_button = left_button
         self.right_button = right_button
 
@@ -30,24 +35,28 @@ class InputState:
         Reactor.
         """
         petal_pressed = [hardware.get_captouch(i) for i in range(10)]
-        petal_pads = [
-            [hardware.captouch_get_petal_pad(petal_ix, pad_ix) for pad_ix in range(3)]
+        # petal_pads = [
+        #    [hardware.captouch_get_petal_pad(petal_ix, pad_ix) for pad_ix in range(3)]
+        #    for petal_ix in range(10)
+        # ]
+        petal_pos = [
+            (
+                hardware.captouch_get_petal_rad(petal_ix),
+                hardware.captouch_get_petal_phi(petal_ix),
+            )
             for petal_ix in range(10)
         ]
+
         left_button = hardware.left_button_get()
         right_button = hardware.right_button_get()
 
-        return InputState(petal_pressed, petal_pads, left_button, right_button)
+        return InputState(petal_pressed, petal_pos, left_button, right_button)
 
 
 class RepeatSettings:
     def __init__(self, first: float, subsequent: float) -> None:
         self.first = first
         self.subsequent = subsequent
-
-
-class Slideable:
-    pass
 
 
 class Pressable:
@@ -184,6 +193,90 @@ class PetalState(Pressable):
         super().__init__(False)
 
 
+class Touchable(Pressable):
+    """
+    An object that can receive touch gestures (captouch petal)
+    """
+
+    BEGIN = "begin"
+    RESTING = "resting"
+    MOVED = "moved"
+    ENDED = "ended"
+
+    def __init__(self, pos=(0, 0)):
+        super().__init__(False)
+        self._pos = pos
+        self._prev_pos = pos
+        self._polar = self._prev_polar = (0, 0)
+        self._dx = 0.0
+        self._dy = 0.0
+        self._dphi = 0.0
+        self._dr = 0.0
+
+    def _update(self, ts, state, pos):
+        self._prev_pos = self._pos
+        self._pos = pos
+
+        self._prev_polar = self._polar
+
+        self._dx = self._pos[0] - self._prev_pos[0]
+        self._dy = self._pos[1] - self._prev_pos[1]
+
+        x0 = -pos[0] / 500
+        x1 = pos[1] / 500
+
+        phi = math.atan2(x0, x1) - math.pi / 2
+        r = math.sqrt(x0 * x0 + x1 * x1)
+        self._polar = (r, phi)
+
+        self._dr = self._polar[0] - self._prev_polar[0]
+
+        v = self._polar[1] - self._prev_polar[1]
+
+        for sign in [1, -1]:
+            t = v + sign * 2 * math.pi
+            if abs(t) < abs(v):
+                v = t
+
+        self._dphi = v
+
+        #        self._dphi = min(
+        #            self._polar[1] - self._prev_polar[1],
+        #    self._polar[1] + 2 * math.pi - (self._prev_polar[1]),
+        #    self._polar[1] - 2 * math.pi - (self._prev_polar[1]),
+        #       )
+
+        super()._update(ts, state)
+        if self.state != self.DOWN:
+            self._dx = self._dy = self._dphi = self._dr = 0
+        else:
+            pass
+            # print(r, phi, self._dr, self._dphi)
+
+    def phase(self) -> str:
+        if self.state == self.UP:
+            return self.UP
+        if self.state == self.RELEASED:
+            return self.ENDED
+        if self.state == self.PRESSED:
+            return self.BEGIN
+        if self.state == self.DOWN or self.state == self.REPEATED:
+            if abs(self._dr) > 1 or abs(self._dphi) > 0.01:
+                return self.MOVED
+            else:
+                return self.RESTING
+        return "HUHUHU"
+
+
+class PetalGestureState(Touchable):
+    def __init__(self, ix: int) -> None:
+        self.ix = ix
+        super().__init__()
+
+    def _update(self, ts: int, hr: InputState) -> None:
+        super()._update(ts, hr.petal_pressed[self.ix], hr.petal_pos[self.ix])
+
+
 class CaptouchState:
     """
     State of capacitive touch petals.
@@ -287,10 +380,10 @@ class InputController:
         self.right_shoulder._ignore_pressed()
 
 
-class PetalSlideController:
+class PetalController:
     def __init__(self, ix):
         self._ts = 0
-        self._input = PetalState(ix)
+        self._input = PetalGestureState(ix)
 
     def think(self, hr: InputState, delta_ms: int) -> None:
         self._ts += delta_ms

@@ -3,8 +3,14 @@ import st4m
 from st4m import Responder
 from st4m.goose import ABCBase, abstractmethod, List, Optional
 from st4m.input import InputState, InputController
-from st4m.ui.view import ViewWithInputState, View, ViewManager, ViewTransitionSwipeLeft, ViewTransitionSwipeRight
-from st4m.ui.interactions import ScrollController
+from st4m.ui.view import (
+    ViewWithInputState,
+    View,
+    ViewManager,
+    ViewTransitionSwipeLeft,
+    ViewTransitionSwipeRight,
+)
+from st4m.ui.interactions import ScrollController, GestureScrollController
 from st4m.ui.ctx import Ctx
 
 
@@ -12,7 +18,7 @@ class MenuItem(ABCBase):
     """
     An abstract MenuItem to be implemented by concrete impementations.
 
-    A MenuItem implementation can be added to a MenuController 
+    A MenuItem implementation can be added to a MenuController
     """
 
     @abstractmethod
@@ -37,6 +43,7 @@ class MenuItemForeground(MenuItem):
     """
     A MenuItem which, when activated, navigates to the given View.
     """
+
     def __init__(self, label: str, r: View) -> None:
         self._r = r
         self._label = label
@@ -53,6 +60,7 @@ class MenuItemNoop(MenuItem):
     """
     A MenuItem which does nothing.
     """
+
     def __init__(self, label: str) -> None:
         self._label = label
 
@@ -67,6 +75,7 @@ class MenuItemBack(MenuItem):
     """
     A MenuItem which, when activatd, navigates back in history.
     """
+
     def press(self, vm: Optional[ViewManager]) -> None:
         if vm is not None:
             vm.pop(ViewTransitionSwipeRight())
@@ -83,15 +92,16 @@ class MenuController(ViewWithInputState):
     Implementers must implement draw() and use self._items and
     self._scroll_controller to display menu items accordingly.
     """
+
     __slots__ = (
-        '_items',
-        '_scroll_controller',
-        '_view_manager',
+        "_items",
+        "_scroll_controller",
+        "_view_manager",
     )
 
     def __init__(self, items: List[MenuItem], vm: Optional[ViewManager]) -> None:
         self._items = items
-        self._scroll_controller = ScrollController()
+        self._scroll_controller = GestureScrollController(0)
         self._scroll_controller.set_item_count(len(items))
         self._view_manager = vm
 
@@ -100,7 +110,7 @@ class MenuController(ViewWithInputState):
     def _parse_state(self) -> None:
         left = self.input.left_shoulder.left
         right = self.input.left_shoulder.right
-        
+
         if left.pressed:
             self._scroll_controller.scroll_left()
             return
@@ -135,4 +145,3 @@ class MenuController(ViewWithInputState):
         Automatically called on canonical user input.
         """
         self._items[self._scroll_controller.target_position()].press(self._view_manager)
-

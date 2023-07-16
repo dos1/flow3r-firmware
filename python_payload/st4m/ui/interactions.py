@@ -1,6 +1,6 @@
 import st4m
 
-from st4m.input import InputState
+from st4m.input import InputState, PetalController
 from st4m.ui.ctx import Ctx
 from st4m import Responder
 
@@ -56,7 +56,7 @@ class ScrollController(st4m.Responder):
         press).
         """
         self._target_position -= 1
-        self._velocity = -10
+        self._velocity = -30
 
     def scroll_right(self) -> None:
         """
@@ -64,7 +64,7 @@ class ScrollController(st4m.Responder):
         press).
         """
         self._target_position += 1
-        self._velocity = 10
+        self._velocity = 30
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         if self._nitems == 0:
@@ -97,7 +97,7 @@ class ScrollController(st4m.Responder):
 
         Use this value to animate the scroll list.
         """
-        return self._current_position
+        return round(self._current_position, 4) % self._nitems
 
     def target_position(self) -> int:
         """
@@ -134,12 +134,15 @@ class ScrollController(st4m.Responder):
         max_velocity = 500
         velocity = self._velocity
 
+        if abs(velocity) < 1:
+            self._target_position = int(self._current_position)
+
         if abs(diff) > 0.2:
             # Apply force to reach target position.
             if diff > 0:
-                velocity += 80 * delta
+                velocity += 5 * delta
             else:
-                velocity -= 80 * delta
+                velocity -= 5 * delta
 
             # Clamp velocity.
             if velocity > max_velocity:
@@ -147,12 +150,16 @@ class ScrollController(st4m.Responder):
             if velocity < -max_velocity:
                 velocity = -max_velocity
             self._velocity = velocity
+        elif diff == 0:
+            pass
+            print("at target")
         else:
             # Try to snap to target position.
             pos = self._velocity > 0 and diff > 0
             neg = self._velocity < 0 and diff < 0
             if self.wrap or pos or neg:
-                self._current_position = self._target_position
+                print("snapped")
+                self._current_position = self._target_position % self._nitems
                 self._velocity = 0
 
         self._physics_integrate(delta)
@@ -163,3 +170,81 @@ class ScrollController(st4m.Responder):
             self._current_position + self._velocity * delta
         ) % self._nitems
 
+
+class GestureScrollController(ScrollController):
+    def __init__(self, petal_index, wrap=False):
+        super().__init__(wrap)
+        self._petal = PetalController(petal_index)
+        self._speedbuffer = [0.0]
+        self._ignore = 0
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        # super().think(ins, delta_ms)
+
+        self._petal.think(ins, delta_ms)
+
+        if self._ignore:
+            self._ignore -= 1
+            return
+
+        dphi = self._petal._input._dphi
+        phase = self._petal._input.phase()
+        self._speedbuffer.append(self._velocity)
+        if len(self._speedbuffer) > 10:
+            self._speedbuffer.pop(0)
+        speed = sum(self._speedbuffer) / len(self._speedbuffer)
+
+        if phase == self._petal._input.ENDED:
+            self._speedbuffer = [0 if abs(speed) < 0.001 else speed]
+        elif phase == self._petal._input.UP:
+            # pass
+            self._speedbuffer.append(speed * 0.85)
+        elif phase == self._petal._input.BEGIN:
+            self._ignore = 5
+            self._speedbuffer = [0.0]
+        elif phase == self._petal._input.RESTING:
+            self._speedbuffer.append(0.0)
+        elif phase == self._petal._input.MOVED:
+            impulse = -dphi / delta_ms
+            # if impulse > 10:
+            #    self._target_position -= 1
+            # elif impulse < -10:
+            #    self._target_position += 1
+            self._speedbuffer.append(impulse)
+
+        if abs(speed) < 0.000001:
+            speed = 0
+
+        self._velocity = speed
+
+        self._current_position = (
+            self._current_position + self._velocity * delta_ms
+        ) % self._nitems
+
+        microstep = round(self._current_position) - self._current_position
+        print("micro:", microstep)
+        print("v", self._velocity)
+
+        if self._velocity >= 0 and microstep > 0:
+            self._velocity -= microstep / 100
+            print("1")
+        elif self._velocity <= 0 and microstep > 0:
+            self._velocity += microstep / 100
+            print("2")
+        elif self._velocity >= 0 and microstep < 0:
+            self._velocity -= microstep / 50
+            print("3")
+        elif self._velocity <= 0 and microstep < 0:
+            self._velocity += microstep / 50
+            print("4")
+
+        # if self._velocity > 0:
+        #    self._velocity -= microstep / 100
+        # else:
+        #    self._velocity += microstep / 100
+        # if self._velocity > 0 and microstep > 0:
+        #    self._velocity -= (0.5 - microstep) / 1000
+        # if self._velocity < 0 and microstep < 0:
+        #    self._velocity -= (-0.5 + microstep) / 1000
+
+        # print(phase, self._speedbuffer)
