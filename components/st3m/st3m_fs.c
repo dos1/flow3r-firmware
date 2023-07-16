@@ -1,15 +1,44 @@
 #include "st3m_fs.h"
+#include "st3m_sys_data.h"
+#include "st3m_mode.h"
+#include "st3m_tar.h"
 
 #include "esp_vfs.h"
 #include "esp_vfs_fat.h"
 #include "esp_system.h"
 
-
 static const char *TAG = "st3m-fs";
+
+static const char *sysflag = "/flash/sys/.sys-installed";
+
+static void _extract_callback(const char *path) {
+    char *msg = malloc(256);
+    snprintf(msg, 256, "Installing %s...", path);
+    st3m_mode_set(st3m_mode_kind_starting, msg);
+    free(msg);
+}
+
+// Extract data from baked-in sys tarball into /flash/sys.
+static void _extract_sys_data(void) {
+    st3m_tar_extractor_t extractor;
+    st3m_tar_extractor_init(&extractor);
+    extractor.root = "/flash/sys/";
+    extractor.on_file = _extract_callback;
+
+    bool res = st3m_tar_parser_run_zlib(&extractor.parser, st3m_sys_data, st3m_sys_data_length);
+    if (!res) {
+        ESP_LOGE(TAG, "Failed to extract sys fs");
+        return;
+    }
+
+    FILE *f = fopen(sysflag, "w");
+    assert(f != NULL);
+    fprintf(f, "remove me to reinstall /sys on next startup");
+    fclose(f);
+}
 
 // Handle of the wear levelling library instance
 static wl_handle_t s_wl_handle = WL_INVALID_HANDLE;
-
 
 void st3m_fs_init(void) {
 	const esp_vfs_fat_mount_config_t mount_config = {
@@ -18,11 +47,23 @@ void st3m_fs_init(void) {
         .allocation_unit_size = CONFIG_WL_SECTOR_SIZE
     };
 
-	esp_err_t err = esp_vfs_fat_spiflash_mount("", "vfs", &mount_config, &s_wl_handle);
+	esp_err_t err = esp_vfs_fat_spiflash_mount("/flash", "vfs", &mount_config, &s_wl_handle);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to mount FAT FS: %s", esp_err_to_name(err));
         return;
     }
 
-	ESP_LOGI(TAG, "Mounted Flash VFS Partition at /");
+	ESP_LOGI(TAG, "Mounted Flash VFS Partition at /flash");
+
+    bool have_mpy = false;
+	struct stat st;
+    if (stat(sysflag, &st) == 0) {
+        have_mpy = S_ISREG(st.st_mode);
+    }
+
+    if (!have_mpy) {
+        st3m_mode_set(st3m_mode_kind_starting, "Installing /flash/sys...");
+        ESP_LOGI(TAG, "No %s on flash, preparing sys directory...", sysflag);
+        _extract_sys_data();
+    }
 }
