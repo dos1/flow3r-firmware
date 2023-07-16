@@ -17,6 +17,10 @@ def set_rgb(ix, r, g, b):
         b = 255
     _sim.set_led_rgb(ix, r, g, b)
 
+def set_all_rgb(r, g, b):
+    for i in range(40):
+        set_rgb(i, r, g, b)
+
 
 def set_hsv(ix, h, s, v):
     color = pygame.Color(0)
