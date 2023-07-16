@@ -123,8 +123,10 @@ class FlowerMenu(MenuController):
             item.highlighted = False
             item.rotation_time = 10000
         current = self._scroll_controller.current_position()
-        self.ui.items_ring[int(current)].highlighted = True
-        self.ui.items_ring[int(current)].rotation_time = 3000
+        current_int = round(current) % len(self._items)
+        print("current", current, current_int)
+        self.ui.items_ring[current_int].highlighted = True
+        self.ui.items_ring[current_int].rotation_time = 3000
         self.ui.angle_offset = math.pi - (tau * current / len(self.ui.items_ring))
 
         self.ui.draw(ctx)
