@@ -28,4 +28,4 @@
 // *FORMAT-OFF*
 
 // Entries for sys.path
-Q(/lib)
+Q(/flash/sys)
