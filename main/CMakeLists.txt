@@ -13,12 +13,12 @@ idf_component_register(
 
 # Generate st3m_sys_data.c from python_payload.
 idf_build_get_property(python PYTHON)
-file(GLOB_RECURSE payload_files "${PROJECT_DIR}/python_payload/*.py")
+file(GLOB_RECURSE payload_files "${PROJECT_DIR}/python_payload_factory/*.py")
 add_custom_command(
     OUTPUT
         "${SYS_C_PATH}"
     COMMAND
-        "${python}" "${CMAKE_CURRENT_SOURCE_DIR}/host-tools/pack-sys.py" "${PROJECT_DIR}/python_payload" "${SYS_C_PATH}"
+        "${python}" "${CMAKE_CURRENT_SOURCE_DIR}/host-tools/pack-sys.py" "${PROJECT_DIR}/python_payload_factory" "${SYS_C_PATH}"
     DEPENDS
         "${CMAKE_CURRENT_SOURCE_DIR}/host-tools/pack-sys.py" 
         "${payload_files}"
