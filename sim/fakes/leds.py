@@ -4,7 +4,7 @@ import pygame
 
 
 def set_rgb(ix, r, g, b):
-    ix = ((39-ix) + 1 + 32)%40;
+    ix = ((39-ix) - 2 + 32)%40;
 
     r = r << 3
     g = g << 2
