@@ -8,9 +8,11 @@ from st4m.goose import Optional, List, ABCBase, abstractmethod, Tuple
 from st4m.input import InputController
 from st4m.ui.view import View, ViewManager, ViewTransitionBlend
 from st4m import Responder, InputState, Ctx
-import audio
 
-import math, hardware, leds
+import audio
+import badge_link
+
+import math, time, hardware, leds
 
 
 vm = ViewManager(ViewTransitionBlend())
@@ -190,6 +192,8 @@ class DispatchApp(Responder):
             return
         self._selftest_ran = True
         self.selftest_i2c()
+        self.selftest_badge_link()
+
         if not self._selftest_error:
             print('SELF-TEST PASSED')
     
@@ -205,6 +209,45 @@ class DispatchApp(Responder):
             self._fail(21, "i2c:portexp-0")
         if 0x6d not in devices:
             self._fail(22, "i2c:portexp-1")
+
+    def selftest_badge_link(self):
+        badge_link.right.enable()
+        badge_link.left.enable()
+
+        rt = badge_link.right.tip
+        rr = badge_link.right.ring
+
+        lt = badge_link.left.tip
+        lr = badge_link.left.ring
+
+        rt.pin.init(mode=rt.pin.OUT)
+        rr.pin.init(mode=rr.pin.OUT)
+
+        lt.pin.init(mode=lt.pin.IN)
+        lr.pin.init(mode=lr.pin.IN)
+
+        rt.pin.on()
+        rr.pin.on()
+
+        time.sleep(0.1)
+
+        if not lt.pin.value():
+            self._fail(23, "tip stuck 0")
+        if not lr.pin.value():
+            self._fail(24, "ring stuck 0")
+
+        rt.pin.off()
+        rr.pin.off()
+
+        time.sleep(0.1)
+
+        if lt.pin.value():
+            self._fail(23, "tip stuck 1")
+        if lr.pin.value():
+            self._fail(24, "ring stuck 1")
+
+        badge_link.right.disable()
+        badge_link.left.disable()
 
     def draw(self, ctx: Ctx) -> None:
         ctx.save()
