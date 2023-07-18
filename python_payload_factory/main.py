@@ -8,6 +8,7 @@ from st4m.goose import Optional, List, ABCBase, abstractmethod, Tuple
 from st4m.input import InputController
 from st4m.ui.view import View, ViewManager, ViewTransitionBlend
 from st4m import Responder, InputState, Ctx
+import audio
 
 import math, hardware, leds
 
@@ -248,6 +249,7 @@ class DispatchApp(Responder):
         if passed and not self._passed and not self._selftest_error:
             self._passed = passed
             print('ALL PASSED')
+            audio.input_set_source(audio.INPUT_SOURCE_ONBOARD_MIC)
 
         if self._passed:
             rgb = int(self._ms / 1000) % 4
