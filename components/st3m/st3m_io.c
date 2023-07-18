@@ -75,6 +75,8 @@ static int8_t st3m_io_badge_link_set(uint8_t mask, bool state) {
     bool left_ring = (mask & BADGE_LINK_PIN_MASK_LINE_OUT_RING) > 0;
     bool right_tip = (mask & BADGE_LINK_PIN_MASK_LINE_IN_TIP) > 0;
     bool right_ring = (mask & BADGE_LINK_PIN_MASK_LINE_IN_RING) > 0;
+
+    // Apply request to badge_link_enabled.
     if(state) {
         if (left_tip || left_ring) {
             if(!st3m_audio_headphones_are_connected()) {
@@ -93,6 +95,13 @@ static int8_t st3m_io_badge_link_set(uint8_t mask, bool state) {
         if (!right_tip) badge_link_enabled &= ~BADGE_LINK_PIN_MASK_LINE_IN_TIP;
         if (!right_ring) badge_link_enabled &= ~BADGE_LINK_PIN_MASK_LINE_IN_RING;
     }
+
+    // Convert badge_link_enabled back to {left,right}_{tip,ring}, but this
+    // time as requested state.
+    left_tip = (badge_link_enabled & BADGE_LINK_PIN_MASK_LINE_OUT_TIP) > 0;
+    left_ring = (badge_link_enabled & BADGE_LINK_PIN_MASK_LINE_OUT_RING) > 0;
+    right_tip = (badge_link_enabled & BADGE_LINK_PIN_MASK_LINE_IN_TIP) > 0;
+    right_ring = (badge_link_enabled & BADGE_LINK_PIN_MASK_LINE_IN_RING) > 0;
 
     flow3r_bsp_spio_badgelink_left_enable(left_tip, left_ring);
     flow3r_bsp_spio_badgelink_right_enable(right_tip, right_ring);
