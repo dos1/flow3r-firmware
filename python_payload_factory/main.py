@@ -209,6 +209,8 @@ class DispatchApp(Responder):
             self._fail(21, "i2c:portexp-0")
         if 0x6d not in devices:
             self._fail(22, "i2c:portexp-1")
+        if 0x68 not in devices:
+            self._fail(23, "i2c:imu")
 
     def selftest_badge_link(self):
         badge_link.right.enable()
@@ -232,9 +234,9 @@ class DispatchApp(Responder):
         time.sleep(0.1)
 
         if not lt.pin.value():
-            self._fail(23, "tip stuck 0")
+            self._fail(25, "tip stuck 0")
         if not lr.pin.value():
-            self._fail(25, "ring stuck 0")
+            self._fail(26, "ring stuck 0")
 
         rt.pin.off()
         rr.pin.off()
@@ -242,9 +244,9 @@ class DispatchApp(Responder):
         time.sleep(0.1)
 
         if lt.pin.value():
-            self._fail(23, "tip stuck 1")
+            self._fail(25, "tip stuck 1")
         if lr.pin.value():
-            self._fail(25, "ring stuck 1")
+            self._fail(26, "ring stuck 1")
 
         badge_link.right.disable()
         badge_link.left.disable()
