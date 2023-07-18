@@ -1,14 +1,14 @@
-#include "st3m_gfx.h"
-#include "st3m_fs.h"
-#include "st3m_audio.h"
-#include "st3m_scope.h"
-#include "st3m_leds.h"
-#include "st3m_io.h"
-#include "st3m_console.h"
-#include "st3m_usb.h"
 #include "bl00mbox.h"
 #include "flow3r_bsp.h"
+#include "st3m_audio.h"
+#include "st3m_console.h"
+#include "st3m_fs.h"
+#include "st3m_gfx.h"
+#include "st3m_io.h"
+#include "st3m_leds.h"
 #include "st3m_mode.h"
+#include "st3m_scope.h"
+#include "st3m_usb.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -17,7 +17,7 @@
 static const char *TAG = "st3m-board-startup";
 
 // Called by micropython via MICROPY_BOARD_STARTUP.
-void st3m_board_startup(void) {
+void flow3r_main(void) {
     // Initialize display first as that gives us a nice splash screen.
     st3m_gfx_init();
     // Submit splash a couple of times to make sure we've fully flushed out the
