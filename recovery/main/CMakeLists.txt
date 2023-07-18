@@ -1,0 +1,9 @@
+idf_component_register(
+    SRCS
+        "rec_main.c"
+        "rec_gui.c"
+        "rec_vfs.c"
+        "rec_fatal.c"
+    INCLUDE_DIRS
+        .
+)
