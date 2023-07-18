@@ -196,7 +196,7 @@ class DispatchApp(Responder):
 
         if not self._selftest_error:
             print('SELF-TEST PASSED')
-    
+
     def selftest_i2c(self):
         devices = hardware.i2c_scan()
         if 0x10 not in devices:
@@ -234,7 +234,7 @@ class DispatchApp(Responder):
         if not lt.pin.value():
             self._fail(23, "tip stuck 0")
         if not lr.pin.value():
-            self._fail(24, "ring stuck 0")
+            self._fail(25, "ring stuck 0")
 
         rt.pin.off()
         rr.pin.off()
@@ -244,7 +244,7 @@ class DispatchApp(Responder):
         if lt.pin.value():
             self._fail(23, "tip stuck 1")
         if lr.pin.value():
-            self._fail(24, "ring stuck 1")
+            self._fail(25, "ring stuck 1")
 
         badge_link.right.disable()
         badge_link.left.disable()
