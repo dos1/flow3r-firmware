@@ -5,5 +5,4 @@ idf_component_register(
         include
     REQUIRES
         flow3r_bsp
-        bl00mbox
 )
