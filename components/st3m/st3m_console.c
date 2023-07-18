@@ -6,6 +6,7 @@
 #include "esp_vfs.h"
 #include "esp_vfs_dev.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "driver/uart.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/ringbuf.h"
