@@ -47,6 +47,7 @@ void st3m_usb_init(void) {
 	assert(_mu == NULL);
 	_mu = xSemaphoreCreateMutex();
 	assert(_mu != NULL);
+	_mode = st3m_usb_mode_kind_disabled;
 
 	_generate_serial();
 	st3m_usb_cdc_init();
@@ -57,6 +58,7 @@ void st3m_usb_init(void) {
     };
 	// TODO(q3k): set self-powered based on battery state?
     ESP_ERROR_CHECK(usb_new_phy(&phy_conf, &phy_hdl));
+    usb_phy_action(phy_hdl, USB_PHY_ACTION_HOST_FORCE_DISCONN);
 
     if (!tusb_init()) {
         ESP_LOGE(TAG, "TInyUSB init failed");
