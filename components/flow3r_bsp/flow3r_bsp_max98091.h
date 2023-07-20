@@ -12,7 +12,8 @@ float flow3r_bsp_max98091_headphones_set_volume(bool mute, float dB);
 float flow3r_bsp_max98091_speaker_set_volume(bool mute, float dB);
 void flow3r_bsp_max98091_headset_set_gain_dB(uint8_t gain_dB);
 void flow3r_bsp_max98091_read_jacksense(flow3r_bsp_audio_jacksense_state_t *st);
-void flow3r_bsp_max98091_input_set_source(flow3r_bsp_audio_input_source_t source);
+void flow3r_bsp_max98091_input_set_source(
+    flow3r_bsp_audio_input_source_t source);
 void flow3r_bsp_max98091_headphones_line_in_set_hardware_thru(bool enable);
 void flow3r_bsp_max98091_speaker_line_in_set_hardware_thru(bool enable);
 void flow3r_bsp_max98091_line_in_set_hardware_thru(bool enable);

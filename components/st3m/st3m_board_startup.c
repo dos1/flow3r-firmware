@@ -1,18 +1,18 @@
-#include "st3m_gfx.h"
-#include "st3m_fs.h"
-#include "st3m_audio.h"
-#include "st3m_scope.h"
-#include "st3m_leds.h"
-#include "st3m_io.h"
-#include "st3m_console.h"
-#include "st3m_usb.h"
 #include "bl00mbox.h"
 #include "flow3r_bsp.h"
+#include "st3m_audio.h"
+#include "st3m_console.h"
+#include "st3m_fs.h"
+#include "st3m_gfx.h"
+#include "st3m_io.h"
+#include "st3m_leds.h"
 #include "st3m_mode.h"
+#include "st3m_scope.h"
+#include "st3m_usb.h"
 
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "esp_log.h"
 
 // Called by micropython via MICROPY_BOARD_STARTUP.
 void st3m_board_startup(void) {
@@ -26,7 +26,7 @@ void st3m_board_startup(void) {
     }
     // Display should've flushed by now. Turn on backlight.
     flow3r_bsp_display_set_backlight(100);
-    
+
     st3m_mode_init();
     st3m_mode_set(st3m_mode_kind_starting, "st3m");
     st3m_mode_update_display(NULL);
@@ -49,11 +49,10 @@ void st3m_board_startup(void) {
     puts("|  _| | . | | | |_  |  _| . | .'| . | . | -_|");
     puts("|_| |_|___|_____|___|_| |___|__,|___|_  |___|");
     puts("                                    |___|");
-    
+
     // Load bearing delay. USB crashes otherwise?
     // TODO(q3k): debug this
-    vTaskDelay(100/portTICK_PERIOD_MS);
-
+    vTaskDelay(100 / portTICK_PERIOD_MS);
 
     flow3r_bsp_i2c_init();
     st3m_mode_set(st3m_mode_kind_starting, "fs");

@@ -6,6 +6,4 @@
 
 bud_t
 
-bud_t buds[BUD_ENTRIES] = {
-    tinysynth_bud
-}
+    bud_t buds[BUD_ENTRIES] = {tinysynth_bud}

@@ -1,15 +1,15 @@
 #include "st3m_audio.h"
 
-#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "flow3r_bsp.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
 #include "esp_log.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+#include "freertos/task.h"
 
 static const char *TAG = "st3m-audio";
 
@@ -22,7 +22,8 @@ static bool _headphones_connected(void);
 // used for exp(vol_dB * NAT_LOG_DB)
 #define NAT_LOG_DB 0.1151292546497023
 
-// placeholder for "fake mute" -inf dB (we know floats can do that but we have trust issues when using NAN)
+// placeholder for "fake mute" -inf dB (we know floats can do that but we have
+// trust issues when using NAN)
 #define SILLY_LOW_VOLUME_DB (-10000.)
 
 const static float headphones_maximum_volume_system_dB = 3;
@@ -49,9 +50,7 @@ typedef struct st3m_audio_output {
 
 // Apply output settings to actual output channel, calculate software volume if
 // output is active.
-static void _output_apply(st3m_audio_output_t *out) {
-    out->apply(out);
-}
+static void _output_apply(st3m_audio_output_t *out) { out->apply(out); }
 
 static void _output_set_mute(st3m_audio_output_t *out, bool mute) {
     out->mute = mute;
@@ -82,7 +81,8 @@ static float _output_adjust_volume(st3m_audio_output_t *out, float vol_dB) {
     return out->volume;
 }
 
-static float _output_set_maximum_volume(st3m_audio_output_t *out, float vol_dB) {
+static float _output_set_maximum_volume(st3m_audio_output_t *out,
+                                        float vol_dB) {
     if (vol_dB > out->volume_max_system) {
         vol_dB = out->volume_max_system;
     }
@@ -97,11 +97,12 @@ static float _output_set_maximum_volume(st3m_audio_output_t *out, float vol_dB) 
     return vol_dB;
 }
 
-static float _output_set_minimum_volume(st3m_audio_output_t *out, float vol_dB) {
+static float _output_set_minimum_volume(st3m_audio_output_t *out,
+                                        float vol_dB) {
     if (vol_dB > out->volume_max) {
         vol_dB = out->volume_max;
     }
-    if (vol_dB+1 < SILLY_LOW_VOLUME_DB) {
+    if (vol_dB + 1 < SILLY_LOW_VOLUME_DB) {
         vol_dB = SILLY_LOW_VOLUME_DB + 1.;
     }
     out->volume_min = vol_dB;
@@ -115,18 +116,18 @@ static float _output_set_minimum_volume(st3m_audio_output_t *out, float vol_dB) 
 static float _output_get_volume_relative(st3m_audio_output_t *out) {
     float ret = out->volume;
     // fake mute
-    if(ret < out->volume_min) return 0;
+    if (ret < out->volume_min) return 0;
     float vol_range = out->volume_max - out->volume_min;
     // shift to above zero
     ret -= out->volume_min;
     // restrict to 0..1 range
     ret /= vol_range;
     // shift to 0.01 to 0.99 range to distinguish from fake mute
-    return (ret*0.99) + 0.01;
+    return (ret * 0.99) + 0.01;
 }
 
 // Output apply function for headphones.
-static void _audio_headphones_apply(st3m_audio_output_t *out){
+static void _audio_headphones_apply(st3m_audio_output_t *out) {
     bool mute = out->mute;
     float vol_dB = out->volume;
 
@@ -135,17 +136,20 @@ static void _audio_headphones_apply(st3m_audio_output_t *out){
         mute = true;
     }
 
-    float hardware_volume_dB = flow3r_bsp_audio_headphones_set_volume(mute, vol_dB);
+    float hardware_volume_dB =
+        flow3r_bsp_audio_headphones_set_volume(mute, vol_dB);
 
     // do the fine steps in software
-    // note: synchronizing both hw and software volume changes is somewhat tricky
+    // note: synchronizing both hw and software volume changes is somewhat
+    // tricky
     float software_volume_dB = vol_dB - hardware_volume_dB;
-    if(software_volume_dB > 0) software_volume_dB = 0;
-    out->volume_software = (int32_t) (32768 * exp(software_volume_dB * NAT_LOG_DB));
+    if (software_volume_dB > 0) software_volume_dB = 0;
+    out->volume_software =
+        (int32_t)(32768 * exp(software_volume_dB * NAT_LOG_DB));
 }
 
 // Output apply function for speaker.
-static void _audio_speaker_apply(st3m_audio_output_t *out){
+static void _audio_speaker_apply(st3m_audio_output_t *out) {
     bool mute = out->mute;
     float vol_dB = out->volume;
 
@@ -154,13 +158,16 @@ static void _audio_speaker_apply(st3m_audio_output_t *out){
         mute = true;
     }
 
-    float hardware_volume_dB = flow3r_bsp_audio_speaker_set_volume(mute, vol_dB);
+    float hardware_volume_dB =
+        flow3r_bsp_audio_speaker_set_volume(mute, vol_dB);
 
     // do the fine steps in software
-    // note: synchronizing both hw and software volume changes is somewhat tricky
+    // note: synchronizing both hw and software volume changes is somewhat
+    // tricky
     float software_volume_dB = vol_dB - hardware_volume_dB;
-    if(software_volume_dB > 0) software_volume_dB = 0;
-    out->volume_software = (int32_t) (32768. * exp(software_volume_dB * NAT_LOG_DB));
+    if (software_volume_dB > 0) software_volume_dB = 0;
+    out->volume_software =
+        (int32_t)(32768. * exp(software_volume_dB * NAT_LOG_DB));
 }
 
 // Global state structure. Guarded by state_mutex.
@@ -192,28 +199,31 @@ SemaphoreHandle_t state_mutex;
 #define UNLOCK xSemaphoreGiveRecursive(state_mutex)
 
 static st3m_audio_state_t state = {
-    .jacksense = {
-        .headphones = false,
-        .headset = false,
-        .line_in = false,
-    },
+    .jacksense =
+        {
+            .headphones = false,
+            .headset = false,
+            .line_in = false,
+        },
     .headphones_detection_override = false,
-    .headphones = {
-        .volume = 0,
-        .mute = false,
-        .volume_max = headphones_maximum_volume_system_dB,
-        .volume_min = headphones_maximum_volume_system_dB - 70,
-        .volume_max_system = headphones_maximum_volume_system_dB,
-        .apply = _audio_headphones_apply,
-    },
-    .speaker = {
-        .volume = 0,
-        .mute = false,
-        .volume_max = speaker_maximum_volume_system_dB,
-        .volume_min = speaker_maximum_volume_system_dB - 60,
-        .volume_max_system = speaker_maximum_volume_system_dB,
-        .apply = _audio_speaker_apply,
-    },
+    .headphones =
+        {
+            .volume = 0,
+            .mute = false,
+            .volume_max = headphones_maximum_volume_system_dB,
+            .volume_min = headphones_maximum_volume_system_dB - 70,
+            .volume_max_system = headphones_maximum_volume_system_dB,
+            .apply = _audio_headphones_apply,
+        },
+    .speaker =
+        {
+            .volume = 0,
+            .mute = false,
+            .volume_max = speaker_maximum_volume_system_dB,
+            .volume_min = speaker_maximum_volume_system_dB - 60,
+            .volume_max_system = speaker_maximum_volume_system_dB,
+            .apply = _audio_speaker_apply,
+        },
 
     .source = st3m_audio_input_source_none,
     .headset_gain = 0,
@@ -238,16 +248,18 @@ static void _update_jacksense() {
     // Update volume to trigger mutes if needed. But only do that if the
     // jacks actually changed.
     LOCK;
-    if (memcmp(&state.jacksense, &st, sizeof(flow3r_bsp_audio_jacksense_state_t)) != 0) {
-        memcpy(&state.jacksense, &st, sizeof(flow3r_bsp_audio_jacksense_state_t));
+    if (memcmp(&state.jacksense, &st,
+               sizeof(flow3r_bsp_audio_jacksense_state_t)) != 0) {
+        memcpy(&state.jacksense, &st,
+               sizeof(flow3r_bsp_audio_jacksense_state_t));
         _output_apply(&state.speaker);
         _output_apply(&state.headphones);
     }
     UNLOCK;
 }
 
-void st3m_audio_player_function_dummy(int16_t * rx, int16_t * tx, uint16_t len){
-    for(uint16_t i = 0; i < len; i++){
+void st3m_audio_player_function_dummy(int16_t *rx, int16_t *tx, uint16_t len) {
+    for (uint16_t i = 0; i < len; i++) {
         tx[i] = 0;
     }
 }
@@ -264,8 +276,10 @@ void st3m_audio_init(void) {
     _output_apply(&state.speaker);
     _output_apply(&state.headphones);
 
-    xTaskCreate(&_audio_player_task, "audio", 3000, NULL, configMAX_PRIORITIES - 1, NULL);
-    xTaskCreate(&_jacksense_update_task, "jacksense", 2048, NULL, configMAX_PRIORITIES - 2, NULL);
+    xTaskCreate(&_audio_player_task, "audio", 3000, NULL,
+                configMAX_PRIORITIES - 1, NULL);
+    xTaskCreate(&_jacksense_update_task, "jacksense", 2048, NULL,
+                configMAX_PRIORITIES - 2, NULL);
     ESP_LOGI(TAG, "Audio task started");
 }
 
@@ -280,38 +294,43 @@ static void _audio_player_task(void *data) {
 
     bool hwmute = flow3r_bsp_audio_has_hardware_mute();
 
-    while(true) {
+    while (true) {
         count = 0;
         flow3r_bsp_audio_read(buffer_rx, sizeof(buffer_rx), &count, 1000);
         if (count != sizeof(buffer_rx)) {
-            ESP_LOGE(TAG, "audio_read: count (%d) != length (%d)\n", count, sizeof(buffer_rx));
+            ESP_LOGE(TAG, "audio_read: count (%d) != length (%d)\n", count,
+                     sizeof(buffer_rx));
             abort();
         }
 
         LOCK;
         bool headphones = _headphones_connected();
         st3m_audio_player_function_t function = state.function;
-        int32_t software_volume = headphones ? state.headphones.volume_software : state.speaker.volume_software;
-        bool software_mute = headphones ? state.headphones.mute : state.speaker.mute;
+        int32_t software_volume = headphones ? state.headphones.volume_software
+                                             : state.speaker.volume_software;
+        bool software_mute =
+            headphones ? state.headphones.mute : state.speaker.mute;
         bool input_thru_mute = state.input_thru_mute;
         int32_t input_thru_vol_int = state.input_thru_vol_int;
         UNLOCK;
 
-        (*function)(buffer_rx, buffer_tx, FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE*2);
+        (*function)(buffer_rx, buffer_tx, FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2);
 
         if (!hwmute && software_mute) {
             // Software muting needed. Only used on P1.
-            for(int i = 0; i < (FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2); i += 2){
+            for (int i = 0; i < (FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2);
+                 i += 2) {
                 buffer_tx[i] = 0;
             }
         } else {
-            for(int i = 0; i < (FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2); i += 2){
+            for (int i = 0; i < (FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2);
+                 i += 2) {
                 int32_t acc = buffer_tx[i];
 
                 acc = (acc * software_volume) >> 15;
 
-                if(!input_thru_mute){
-                    acc += (((int32_t) buffer_rx[i]) * input_thru_vol_int) >> 15;
+                if (!input_thru_mute) {
+                    acc += (((int32_t)buffer_rx[i]) * input_thru_vol_int) >> 15;
                 }
                 buffer_tx[i] = acc;
             }
@@ -319,23 +338,22 @@ static void _audio_player_task(void *data) {
 
         flow3r_bsp_audio_write(buffer_tx, sizeof(buffer_tx), &count, 1000);
         if (count != sizeof(buffer_tx)) {
-            ESP_LOGE(TAG, "audio_write: count (%d) != length (%d)\n", count, sizeof(buffer_tx));
+            ESP_LOGE(TAG, "audio_write: count (%d) != length (%d)\n", count,
+                     sizeof(buffer_tx));
             abort();
         }
-
     }
 }
 
-static void _jacksense_update_task(void * data) {
+static void _jacksense_update_task(void *data) {
     (void)data;
 
     TickType_t last_wake = xTaskGetTickCount();
-    while(1) {
-        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(100)); // 10 Hz
+    while (1) {
+        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(100));  // 10 Hz
         _update_jacksense();
     }
 }
-
 
 // BSP wrappers that don't need locking.
 
@@ -353,20 +371,24 @@ void st3m_audio_line_in_set_hardware_thru(bool enable) {
 
 // Locked global state getters.
 
-#define GETTER(ty, name, accessor) ty st3m_##name(void) {\
-    LOCK; \
-    ty res = accessor; \
-    UNLOCK; \
-    return res; \
+#define GETTER(ty, name, accessor) \
+    ty st3m_##name(void) {         \
+        LOCK;                      \
+        ty res = accessor;         \
+        UNLOCK;                    \
+        return res;                \
     }
 
 GETTER(bool, audio_headset_is_connected, state.jacksense.headset)
-GETTER(bool, audio_headphones_is_connected, state.jacksense.headphones || state.headphones_detection_override)
+GETTER(bool, audio_headphones_is_connected,
+       state.jacksense.headphones || state.headphones_detection_override)
 GETTER(float, audio_headphones_get_volume_dB, state.headphones.volume)
 GETTER(float, audio_speaker_get_volume_dB, state.speaker.volume)
-GETTER(float, audio_headphones_get_minimum_volume_dB, state.headphones.volume_min)
+GETTER(float, audio_headphones_get_minimum_volume_dB,
+       state.headphones.volume_min)
 GETTER(float, audio_speaker_get_minimum_volume_dB, state.speaker.volume_min)
-GETTER(float, audio_headphones_get_maximum_volume_dB, state.headphones.volume_max)
+GETTER(float, audio_headphones_get_maximum_volume_dB,
+       state.headphones.volume_max)
 GETTER(float, audio_speaker_get_maximum_volume_dB, state.speaker.volume_max)
 GETTER(bool, audio_headphones_get_mute, state.headphones.mute)
 GETTER(bool, audio_speaker_get_mute, state.speaker.mute)
@@ -376,10 +398,9 @@ GETTER(float, audio_input_thru_get_volume_dB, state.input_thru_vol)
 GETTER(bool, audio_input_thru_get_mute, state.input_thru_mute)
 #undef GETTER
 
-
 // Locked global API functions.
 
-uint8_t st3m_audio_headset_set_gain_dB(uint8_t gain_dB){
+uint8_t st3m_audio_headset_set_gain_dB(uint8_t gain_dB) {
     flow3r_bsp_audio_headset_set_gain_dB(gain_dB);
     LOCK;
     state.headset_gain = gain_dB;
@@ -389,18 +410,22 @@ uint8_t st3m_audio_headset_set_gain_dB(uint8_t gain_dB){
 
 void st3m_audio_input_set_source(st3m_audio_input_source_t source) {
     switch (source) {
-    case st3m_audio_input_source_none:
-        flow3r_bsp_audio_input_set_source(flow3r_bsp_audio_input_source_none);
-        break;
-    case st3m_audio_input_source_line_in:
-        flow3r_bsp_audio_input_set_source(flow3r_bsp_audio_input_source_line_in);
-        break;
-    case st3m_audio_input_source_headset_mic:
-        flow3r_bsp_audio_input_set_source(flow3r_bsp_audio_input_source_headset_mic);
-        break;
-    case st3m_audio_input_source_onboard_mic:
-        flow3r_bsp_audio_input_set_source(flow3r_bsp_audio_input_source_onboard_mic);
-        break;
+        case st3m_audio_input_source_none:
+            flow3r_bsp_audio_input_set_source(
+                flow3r_bsp_audio_input_source_none);
+            break;
+        case st3m_audio_input_source_line_in:
+            flow3r_bsp_audio_input_set_source(
+                flow3r_bsp_audio_input_source_line_in);
+            break;
+        case st3m_audio_input_source_headset_mic:
+            flow3r_bsp_audio_input_set_source(
+                flow3r_bsp_audio_input_source_headset_mic);
+            break;
+        case st3m_audio_input_source_onboard_mic:
+            flow3r_bsp_audio_input_set_source(
+                flow3r_bsp_audio_input_source_onboard_mic);
+            break;
     }
     LOCK;
     state.source = source;
@@ -413,16 +438,16 @@ void st3m_audio_input_thru_set_mute(bool mute) {
     UNLOCK;
 }
 
-float st3m_audio_input_thru_set_volume_dB(float vol_dB){
-    if(vol_dB > 0) vol_dB = 0;
+float st3m_audio_input_thru_set_volume_dB(float vol_dB) {
+    if (vol_dB > 0) vol_dB = 0;
     LOCK;
-    state.input_thru_vol_int = (int32_t) (32768. * exp(vol_dB * NAT_LOG_DB));
+    state.input_thru_vol_int = (int32_t)(32768. * exp(vol_dB * NAT_LOG_DB));
     state.input_thru_vol = vol_dB;
     UNLOCK;
     return vol_dB;
 }
 
-void st3m_audio_set_player_function(st3m_audio_player_function_t fun){
+void st3m_audio_set_player_function(st3m_audio_player_function_t fun) {
     LOCK;
     state.function = fun;
     UNLOCK;
@@ -437,26 +462,33 @@ bool st3m_audio_headphones_are_connected(void) {
 
 // Locked output getters/setters.
 
-#define LOCKED0(body) LOCK; body; UNLOCK
-#define LOCKED(ty, body) LOCK; ty res = body; UNLOCK; return res
+#define LOCKED0(body) \
+    LOCK;             \
+    body;             \
+    UNLOCK
+#define LOCKED(ty, body) \
+    LOCK;                \
+    ty res = body;       \
+    UNLOCK;              \
+    return res
 
-void st3m_audio_headphones_set_mute(bool mute){
+void st3m_audio_headphones_set_mute(bool mute) {
     LOCKED0(_output_set_mute(&state.headphones, mute));
 }
 
-void st3m_audio_speaker_set_mute(bool mute){
+void st3m_audio_speaker_set_mute(bool mute) {
     LOCKED0(_output_set_mute(&state.speaker, mute));
 }
 
-float st3m_audio_speaker_set_volume_dB(float vol_dB){
+float st3m_audio_speaker_set_volume_dB(float vol_dB) {
     LOCKED(float, _output_set_volume(&state.speaker, vol_dB));
 }
 
-float st3m_audio_headphones_set_volume_dB(float vol_dB){
+float st3m_audio_headphones_set_volume_dB(float vol_dB) {
     LOCKED(float, _output_set_volume(&state.headphones, vol_dB));
 }
 
-void st3m_audio_headphones_detection_override(bool enable){
+void st3m_audio_headphones_detection_override(bool enable) {
     LOCK;
     state.headphones_detection_override = enable;
     _output_apply(&state.headphones);
@@ -464,27 +496,27 @@ void st3m_audio_headphones_detection_override(bool enable){
     UNLOCK;
 }
 
-float st3m_audio_headphones_adjust_volume_dB(float vol_dB){
+float st3m_audio_headphones_adjust_volume_dB(float vol_dB) {
     LOCKED(float, _output_adjust_volume(&state.headphones, vol_dB));
 }
 
-float st3m_audio_speaker_adjust_volume_dB(float vol_dB){
+float st3m_audio_speaker_adjust_volume_dB(float vol_dB) {
     LOCKED(float, _output_adjust_volume(&state.speaker, vol_dB));
 }
 
-float st3m_audio_headphones_set_maximum_volume_dB(float vol_dB){
+float st3m_audio_headphones_set_maximum_volume_dB(float vol_dB) {
     LOCKED(float, _output_set_maximum_volume(&state.headphones, vol_dB));
 }
 
-float st3m_audio_headphones_set_minimum_volume_dB(float vol_dB){
+float st3m_audio_headphones_set_minimum_volume_dB(float vol_dB) {
     LOCKED(float, _output_set_minimum_volume(&state.headphones, vol_dB));
 }
 
-float st3m_audio_speaker_set_maximum_volume_dB(float vol_dB){
+float st3m_audio_speaker_set_maximum_volume_dB(float vol_dB) {
     LOCKED(float, _output_set_maximum_volume(&state.speaker, vol_dB));
 }
 
-float st3m_audio_speaker_set_minimum_volume_dB(float vol_dB){
+float st3m_audio_speaker_set_minimum_volume_dB(float vol_dB) {
     LOCKED(float, _output_set_minimum_volume(&state.speaker, vol_dB));
 }
 
@@ -492,7 +524,7 @@ float st3m_audio_speaker_get_volume_relative(void) {
     LOCKED(float, _output_get_volume_relative(&state.speaker));
 }
 
-float st3m_audio_headphones_get_volume_relative(){
+float st3m_audio_headphones_get_volume_relative() {
     LOCKED(float, _output_get_volume_relative(&state.headphones));
 }
 
@@ -500,38 +532,41 @@ float st3m_audio_headphones_get_volume_relative(){
 // sure we don't race between output detection and applying the function to the
 // current output.
 
-#define DISPATCH_TY_TY(ty, ty2, name) ty st3m_audio_##name(ty2 arg) { \
-        ty res; \
-        LOCK; \
-        if (_headphones_connected()) { \
+#define DISPATCH_TY_TY(ty, ty2, name)                \
+    ty st3m_audio_##name(ty2 arg) {                  \
+        ty res;                                      \
+        LOCK;                                        \
+        if (_headphones_connected()) {               \
             res = st3m_audio_headphones_##name(arg); \
-        } else { \
-            res = st3m_audio_speaker_##name(arg); \
-        } \
-        UNLOCK; \
-        return res; \
+        } else {                                     \
+            res = st3m_audio_speaker_##name(arg);    \
+        }                                            \
+        UNLOCK;                                      \
+        return res;                                  \
     }
 
-#define DISPATCH_TY_VOID(ty, name) ty st3m_audio_##name(void) { \
-        ty res; \
-        LOCK; \
-        if (_headphones_connected()) { \
+#define DISPATCH_TY_VOID(ty, name)                \
+    ty st3m_audio_##name(void) {                  \
+        ty res;                                   \
+        LOCK;                                     \
+        if (_headphones_connected()) {            \
             res = st3m_audio_headphones_##name(); \
-        } else { \
-            res = st3m_audio_speaker_##name(); \
-        } \
-        UNLOCK; \
-        return res; \
+        } else {                                  \
+            res = st3m_audio_speaker_##name();    \
+        }                                         \
+        UNLOCK;                                   \
+        return res;                               \
     }
 
-#define DISPATCH_VOID_TY(ty, name) void st3m_audio_##name(ty arg) { \
-        LOCK; \
-        if (_headphones_connected()) { \
+#define DISPATCH_VOID_TY(ty, name)             \
+    void st3m_audio_##name(ty arg) {           \
+        LOCK;                                  \
+        if (_headphones_connected()) {         \
             st3m_audio_headphones_##name(arg); \
-        } else { \
-            st3m_audio_speaker_##name(arg); \
-        } \
-        UNLOCK; \
+        } else {                               \
+            st3m_audio_speaker_##name(arg);    \
+        }                                      \
+        UNLOCK;                                \
     }
 
 DISPATCH_TY_TY(float, float, adjust_volume_dB)

@@ -1,7 +1,7 @@
 #include <stdio.h>
 
-#include "py/runtime.h"
 #include "py/obj.h"
+#include "py/runtime.h"
 
 #include "bl00mbox.h"
 #include "tinysynth.h"
@@ -18,7 +18,8 @@ typedef struct _synth_tinysynth_obj_t {
 
 const mp_obj_type_t synth_tinysynth_type;
 
-STATIC void tinysynth_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+STATIC void tinysynth_print(const mp_print_t *print, mp_obj_t self_in,
+                            mp_print_kind_t kind) {
     (void)kind;
     synth_tinysynth_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_print_str(print, "tinysynth(");
@@ -26,9 +27,11 @@ STATIC void tinysynth_print(const mp_print_t *print, mp_obj_t self_in, mp_print_
     mp_print_str(print, ")");
 }
 
-STATIC mp_obj_t tinysynth_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
+STATIC mp_obj_t tinysynth_make_new(const mp_obj_type_t *type, size_t n_args,
+                                   size_t n_kw, const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 1, 1, true);
-    synth_tinysynth_obj_t *self = m_new_obj_with_finaliser(synth_tinysynth_obj_t);
+    synth_tinysynth_obj_t *self =
+        m_new_obj_with_finaliser(synth_tinysynth_obj_t);
     self->base.type = &synth_tinysynth_type;
 
     self->osc.vol = 32767;
@@ -126,44 +129,35 @@ STATIC mp_obj_t tinysynth_deinit(mp_obj_t self_in) {
 MP_DEFINE_CONST_FUN_OBJ_1(tinysynth_deinit_obj, tinysynth_deinit);
 
 STATIC const mp_rom_map_elem_t tinysynth_locals_dict_table[] = {
-    { MP_ROM_QSTR(MP_QSTR_start), MP_ROM_PTR(&tinysynth_start_obj) },
-    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&tinysynth_stop_obj) },
-    { MP_ROM_QSTR(MP_QSTR_freq), MP_ROM_PTR(&tinysynth_freq_obj) },
-    { MP_ROM_QSTR(MP_QSTR_tone), MP_ROM_PTR(&tinysynth_tone_obj) },
-    { MP_ROM_QSTR(MP_QSTR_waveform), MP_ROM_PTR(&tinysynth_waveform_obj) },
-    { MP_ROM_QSTR(MP_QSTR_attack_ms), MP_ROM_PTR(&tinysynth_attack_ms_obj) },
-    { MP_ROM_QSTR(MP_QSTR_decay_ms), MP_ROM_PTR(&tinysynth_decay_ms_obj) },
-    { MP_ROM_QSTR(MP_QSTR_volume), MP_ROM_PTR(&tinysynth_sustain_obj) },
-    { MP_ROM_QSTR(MP_QSTR_sustain), MP_ROM_PTR(&tinysynth_sustain_obj) },
-    { MP_ROM_QSTR(MP_QSTR_release_ms), MP_ROM_PTR(&tinysynth_release_ms_obj) },
-    { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&tinysynth_deinit_obj) },
+    {MP_ROM_QSTR(MP_QSTR_start), MP_ROM_PTR(&tinysynth_start_obj)},
+    {MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&tinysynth_stop_obj)},
+    {MP_ROM_QSTR(MP_QSTR_freq), MP_ROM_PTR(&tinysynth_freq_obj)},
+    {MP_ROM_QSTR(MP_QSTR_tone), MP_ROM_PTR(&tinysynth_tone_obj)},
+    {MP_ROM_QSTR(MP_QSTR_waveform), MP_ROM_PTR(&tinysynth_waveform_obj)},
+    {MP_ROM_QSTR(MP_QSTR_attack_ms), MP_ROM_PTR(&tinysynth_attack_ms_obj)},
+    {MP_ROM_QSTR(MP_QSTR_decay_ms), MP_ROM_PTR(&tinysynth_decay_ms_obj)},
+    {MP_ROM_QSTR(MP_QSTR_volume), MP_ROM_PTR(&tinysynth_sustain_obj)},
+    {MP_ROM_QSTR(MP_QSTR_sustain), MP_ROM_PTR(&tinysynth_sustain_obj)},
+    {MP_ROM_QSTR(MP_QSTR_release_ms), MP_ROM_PTR(&tinysynth_release_ms_obj)},
+    {MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&tinysynth_deinit_obj)},
 };
 
 STATIC MP_DEFINE_CONST_DICT(tinysynth_locals_dict, tinysynth_locals_dict_table);
 
-
-MP_DEFINE_CONST_OBJ_TYPE(
-    synth_tinysynth_type,
-    MP_QSTR_bl00mbox,
-    MP_TYPE_FLAG_NONE,
-    make_new, tinysynth_make_new,
-    print, tinysynth_print,
-    locals_dict, &tinysynth_locals_dict
-    );    
+MP_DEFINE_CONST_OBJ_TYPE(synth_tinysynth_type, MP_QSTR_bl00mbox,
+                         MP_TYPE_FLAG_NONE, make_new, tinysynth_make_new, print,
+                         tinysynth_print, locals_dict, &tinysynth_locals_dict);
 
 STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
-    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_bl00mbox) },
-    { MP_OBJ_NEW_QSTR(MP_QSTR_tinysynth), (mp_obj_t)&synth_tinysynth_type },
+    {MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_bl00mbox)},
+    {MP_OBJ_NEW_QSTR(MP_QSTR_tinysynth), (mp_obj_t)&synth_tinysynth_type},
 };
 
-STATIC MP_DEFINE_CONST_DICT (
-    mp_module_bl00mbox_globals,
-    bl00mbox_globals_table
-);
+STATIC MP_DEFINE_CONST_DICT(mp_module_bl00mbox_globals, bl00mbox_globals_table);
 
 const mp_obj_module_t bl00mbox_user_cmodule = {
-    .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t*)&mp_module_bl00mbox_globals,
+    .base = {&mp_type_module},
+    .globals = (mp_obj_dict_t *)&mp_module_bl00mbox_globals,
 };
 
 MP_REGISTER_MODULE(MP_QSTR_bl00mbox, bl00mbox_user_cmodule);

@@ -11,22 +11,22 @@
 #include "st3m_gfx.h"
 
 typedef struct {
-	// Scope buffer size, in samples. Currently always 240 (same as screen
-	// width).
+    // Scope buffer size, in samples. Currently always 240 (same as screen
+    // width).
     size_t buffer_size;
 
-	// Triple-buffering for lockless exhange between free-running writer and
-	// reader. The exchange buffer is swapped to/from by the reader/writer
-	// whenever they're done with a whole sample buffer.
-	int16_t *write_buffer;
-	int16_t *exchange_buffer;
-	int16_t *read_buffer;
+    // Triple-buffering for lockless exhange between free-running writer and
+    // reader. The exchange buffer is swapped to/from by the reader/writer
+    // whenever they're done with a whole sample buffer.
+    int16_t *write_buffer;
+    int16_t *exchange_buffer;
+    int16_t *read_buffer;
 
-	// Offset where the write handler should write the next sample.
+    // Offset where the write handler should write the next sample.
     uint32_t write_head_position;
-	// Previous sample that was attempted to be written. Used for
-	// zero-detection.
-	int16_t prev_write_attempt;
+    // Previous sample that was attempted to be written. Used for
+    // zero-detection.
+    int16_t prev_write_attempt;
 } st3m_scope_t;
 
 // Initialize global scope. Must be performed before any other access to scope
@@ -48,4 +48,3 @@ void st3m_scope_write(int16_t value);
 // The user is responsible for setting a color and running a fill/stroke
 // afterwards.
 void st3m_scope_draw(Ctx *ctx);
-

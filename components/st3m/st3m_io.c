@@ -2,71 +2,64 @@
 
 static const char *TAG = "st3m-io";
 
-#include "esp_log.h"
 #include "esp_err.h"
+#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#include "st3m_audio.h"
-#include "flow3r_bsp_i2c.h"
 #include "flow3r_bsp.h"
+#include "flow3r_bsp_i2c.h"
+#include "st3m_audio.h"
 
-static void _update_button_state(){
+static void _update_button_state() {
     esp_err_t ret = flow3r_bsp_spio_update();
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "update failed: %s", esp_err_to_name(ret));
     }
 }
 
-void init_buttons(){
+void init_buttons() {
     esp_err_t ret = flow3r_bsp_spio_init();
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "init failed: %s", esp_err_to_name(ret));
-        for (;;) {}
+        for (;;) {
+        }
     }
 }
 
-bool st3m_io_charger_state_get() {
-    return flow3r_bsp_spio_charger_state_get();
-}
+bool st3m_io_charger_state_get() { return flow3r_bsp_spio_charger_state_get(); }
 
-bool st3m_io_line_in_jacksense_get(){
+bool st3m_io_line_in_jacksense_get() {
     return flow3r_bsp_spio_jacksense_right_get();
 }
 
 static bool menu_button_left = false;
 
-void st3m_io_menu_button_set_left(bool left){
-    menu_button_left = left;
-}
+void st3m_io_menu_button_set_left(bool left) { menu_button_left = left; }
 
 st3m_tripos st3m_io_menu_button_get() {
-    if (menu_button_left)
-        return flow3r_bsp_spio_left_button_get();
+    if (menu_button_left) return flow3r_bsp_spio_left_button_get();
     return flow3r_bsp_spio_right_button_get();
 }
 
-st3m_tripos st3m_io_application_button_get(){
-    if (menu_button_left)
-        return flow3r_bsp_spio_right_button_get();
+st3m_tripos st3m_io_application_button_get() {
+    if (menu_button_left) return flow3r_bsp_spio_right_button_get();
     return flow3r_bsp_spio_left_button_get();
 }
 
-st3m_tripos st3m_io_left_button_get(){
+st3m_tripos st3m_io_left_button_get() {
     return flow3r_bsp_spio_left_button_get();
 }
 
-st3m_tripos st3m_io_right_button_get(){
+st3m_tripos st3m_io_right_button_get() {
     return flow3r_bsp_spio_right_button_get();
 }
 
-bool st3m_io_menu_button_get_left(){
-    return menu_button_left;
-}
+bool st3m_io_menu_button_get_left() { return menu_button_left; }
 
 static uint8_t badge_link_enabled = 0;
 
-uint8_t st3m_io_badge_link_get_active(uint8_t pin_mask){
+uint8_t st3m_io_badge_link_get_active(uint8_t pin_mask) {
     return badge_link_enabled & pin_mask;
 }
 
@@ -77,12 +70,14 @@ static int8_t st3m_io_badge_link_set(uint8_t mask, bool state) {
     bool right_ring = (mask & BADGE_LINK_PIN_MASK_LINE_IN_RING) > 0;
 
     // Apply request to badge_link_enabled.
-    if(state) {
+    if (state) {
         if (left_tip || left_ring) {
-            if(!st3m_audio_headphones_are_connected()) {
+            if (!st3m_audio_headphones_are_connected()) {
                 left_tip = false;
                 left_ring = false;
-                ESP_LOGE(TAG, "cannot enable line out badge link without cable plugged in for safety reasons");
+                ESP_LOGE(TAG,
+                         "cannot enable line out badge link without cable "
+                         "plugged in for safety reasons");
             }
         }
         if (left_tip) badge_link_enabled |= BADGE_LINK_PIN_MASK_LINE_OUT_TIP;
@@ -91,9 +86,11 @@ static int8_t st3m_io_badge_link_set(uint8_t mask, bool state) {
         if (right_ring) badge_link_enabled |= BADGE_LINK_PIN_MASK_LINE_IN_RING;
     } else {
         if (!left_tip) badge_link_enabled &= ~BADGE_LINK_PIN_MASK_LINE_OUT_TIP;
-        if (!left_ring) badge_link_enabled &= ~BADGE_LINK_PIN_MASK_LINE_OUT_RING;
+        if (!left_ring)
+            badge_link_enabled &= ~BADGE_LINK_PIN_MASK_LINE_OUT_RING;
         if (!right_tip) badge_link_enabled &= ~BADGE_LINK_PIN_MASK_LINE_IN_TIP;
-        if (!right_ring) badge_link_enabled &= ~BADGE_LINK_PIN_MASK_LINE_IN_RING;
+        if (!right_ring)
+            badge_link_enabled &= ~BADGE_LINK_PIN_MASK_LINE_IN_RING;
     }
 
     // Convert badge_link_enabled back to {left,right}_{tip,ring}, but this
@@ -108,11 +105,11 @@ static int8_t st3m_io_badge_link_set(uint8_t mask, bool state) {
     return st3m_io_badge_link_get_active(mask);
 }
 
-uint8_t st3m_io_badge_link_disable(uint8_t pin_mask){
+uint8_t st3m_io_badge_link_disable(uint8_t pin_mask) {
     return st3m_io_badge_link_set(pin_mask, 0);
 }
 
-uint8_t st3m_io_badge_link_enable(uint8_t pin_mask){
+uint8_t st3m_io_badge_link_enable(uint8_t pin_mask) {
     return st3m_io_badge_link_set(pin_mask, 1);
 }
 
@@ -121,26 +118,27 @@ void captouch_read_cycle(void);
 void captouch_init(void);
 void captouch_force_calibration(void);
 
-static void _task(void * data){
+static void _task(void *data) {
     TickType_t last_wake = xTaskGetTickCount();
-    while(1) {
-        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(10)); // 100 Hz
+    while (1) {
+        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(10));  // 100 Hz
         captouch_read_cycle();
         _update_button_state();
     }
 }
 
 void st3m_io_init(void) {
-	esp_err_t ret = flow3r_bsp_spio_init();
-	if (ret != ESP_OK) {
-		ESP_LOGE(TAG, "spio init failed: %s", esp_err_to_name(ret));
-		for (;;) {}
-	}
+    esp_err_t ret = flow3r_bsp_spio_init();
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "spio init failed: %s", esp_err_to_name(ret));
+        for (;;) {
+        }
+    }
 
-	captouch_init();
-	captouch_force_calibration();
-	st3m_io_badge_link_disable(BADGE_LINK_PIN_MASK_ALL);
+    captouch_init();
+    captouch_force_calibration();
+    st3m_io_badge_link_disable(BADGE_LINK_PIN_MASK_ALL);
 
-    xTaskCreate(&_task, "io", 4096, NULL, configMAX_PRIORITIES-1, NULL);
-	ESP_LOGI(TAG, "IO task started");
+    xTaskCreate(&_task, "io", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
+    ESP_LOGI(TAG, "IO task started");
 }

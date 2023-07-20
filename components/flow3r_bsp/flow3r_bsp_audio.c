@@ -5,7 +5,9 @@
 #include "driver/i2s.h"
 #include "esp_log.h"
 
-esp_err_t flow3r_bsp_audio_write(const void *src, size_t size, size_t *bytes_written, TickType_t ticks_to_wait) {
+esp_err_t flow3r_bsp_audio_write(const void *src, size_t size,
+                                 size_t *bytes_written,
+                                 TickType_t ticks_to_wait) {
     return i2s_write(0, src, size, bytes_written, ticks_to_wait);
 }
 
@@ -13,18 +15,17 @@ esp_err_t flow3r_bsp_audio_write(const void *src, size_t size, size_t *bytes_wri
 
 void flow3r_bsp_audio_init(void) {
     flow3r_bsp_max98091_init();
-    vTaskDelay(100 / portTICK_PERIOD_MS); // dunno if necessary
+    vTaskDelay(100 / portTICK_PERIOD_MS);  // dunno if necessary
     static const i2s_config_t i2s_config = {
         .mode = I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX,
         .sample_rate = FLOW3R_BSP_AUDIO_SAMPLE_RATE,
         .bits_per_sample = 16,
         .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
         .communication_format = I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_LSB,
-        .intr_alloc_flags = 0, // default interrupt priority
+        .intr_alloc_flags = 0,  // default interrupt priority
         .dma_buf_count = FLOW3R_BSP_AUDIO_DMA_BUFFER_COUNT,
         .dma_buf_len = FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE,
-        .use_apll = false
-    };
+        .use_apll = false};
     static const i2s_pin_config_t pin_config = {
         .bck_io_num = 10,
         .mck_io_num = 18,
@@ -67,14 +68,13 @@ void flow3r_bsp_audio_line_in_set_hardware_thru(bool enable) {
     flow3r_bsp_max98091_line_in_set_hardware_thru(enable);
 }
 
-bool flow3r_bsp_audio_has_hardware_mute(void) {
-    return true;
-}
+bool flow3r_bsp_audio_has_hardware_mute(void) { return true; }
 
 void flow3r_bsp_audio_register_poke(uint8_t reg, uint8_t data) {
     flow3r_bsp_max98091_register_poke(reg, data);
 }
 
-esp_err_t flow3r_bsp_audio_read(void *dest, size_t size, size_t *bytes_read, TickType_t ticks_to_wait) {
+esp_err_t flow3r_bsp_audio_read(void *dest, size_t size, size_t *bytes_read,
+                                TickType_t ticks_to_wait) {
     return i2s_read(0, dest, size, bytes_read, ticks_to_wait);
 }

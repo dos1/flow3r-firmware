@@ -35,65 +35,69 @@
 // each mode, and thus things are a bit simplistic. This might change in the
 // future.
 
-#include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 typedef enum {
-	// Device should not enumerate.
-	st3m_usb_mode_kind_disabled = 0,
-	// Device should appear as a 'flow3er' with a CDC-ACM (serial) endpoint.
-	st3m_usb_mode_kind_app = 1,
-	// Device should appear as a 'flower (disk mode)' with a MSC (mass storage)
-	// endpoint.
-	st3m_usb_mode_kind_disk = 2,
+    // Device should not enumerate.
+    st3m_usb_mode_kind_disabled = 0,
+    // Device should appear as a 'flow3er' with a CDC-ACM (serial) endpoint.
+    st3m_usb_mode_kind_app = 1,
+    // Device should appear as a 'flower (disk mode)' with a MSC (mass storage)
+    // endpoint.
+    st3m_usb_mode_kind_disk = 2,
 } st3m_usb_mode_kind_t;
 
 // Description of the device in disk mode.
 typedef struct {
-	// Number of blocks.
-	size_t block_size;
-	// Size of each block (usually 512 bytes).
-	size_t block_count;
-	// Product ID, padded with zeroes.
-	uint8_t product_id[16];
+    // Number of blocks.
+    size_t block_size;
+    // Size of each block (usually 512 bytes).
+    size_t block_count;
+    // Product ID, padded with zeroes.
+    uint8_t product_id[16];
 
-	// Optional. Called whenever the host asks if the device is ready. Defaults to always ready.
-	bool (*fn_ready)(uint8_t lun);
-	// Optional. Called whenever the hosts executes a scsi start/stop. Defaults to 'yeah sure' stub.
-	bool (*fn_start_stop)(uint8_t lun, uint8_t power_condition, bool start, bool load_eject);
-	// Required. Called when the host wishes to read from an LBA/offset. Address
-	// = lba*block_size+offset. Must return however many bytes were actually
-	// read.
-	int32_t (*fn_read10)(uint8_t lun, uint32_t lba, uint32_t offset, void* buffer, uint32_t bufsize);
-	// Optional. Called when the host wishes to write to an LBA/offset. Defaults
-	// to ignoring writes.
-	int32_t (*fn_write10)(uint8_t lun, uint32_t lba, uint32_t offset, const void* buffer, uint32_t bufsize);
+    // Optional. Called whenever the host asks if the device is ready. Defaults
+    // to always ready.
+    bool (*fn_ready)(uint8_t lun);
+    // Optional. Called whenever the hosts executes a scsi start/stop. Defaults
+    // to 'yeah sure' stub.
+    bool (*fn_start_stop)(uint8_t lun, uint8_t power_condition, bool start,
+                          bool load_eject);
+    // Required. Called when the host wishes to read from an LBA/offset. Address
+    // = lba*block_size+offset. Must return however many bytes were actually
+    // read.
+    int32_t (*fn_read10)(uint8_t lun, uint32_t lba, uint32_t offset,
+                         void *buffer, uint32_t bufsize);
+    // Optional. Called when the host wishes to write to an LBA/offset. Defaults
+    // to ignoring writes.
+    int32_t (*fn_write10)(uint8_t lun, uint32_t lba, uint32_t offset,
+                          const void *buffer, uint32_t bufsize);
 } st3m_usb_msc_conf_t;
 
 // Description of the device in application mode.
 typedef struct {
-	// Required. Called whenever the host wrote some bytes. All bytes must be
-	// processed.
-	void (*fn_rx)(const uint8_t *buffer, size_t bufsize);
-	// Required. Called whenever the host requests bytes to read. Must return
-	// how many bytes are actually available to transmit to the host.
-	size_t (*fn_txpoll)(uint8_t *buffer, size_t bufsize);
-	// Optional. Called whenever the host has detached from the device.
-	void (*fn_detach)(void);
+    // Required. Called whenever the host wrote some bytes. All bytes must be
+    // processed.
+    void (*fn_rx)(const uint8_t *buffer, size_t bufsize);
+    // Required. Called whenever the host requests bytes to read. Must return
+    // how many bytes are actually available to transmit to the host.
+    size_t (*fn_txpoll)(uint8_t *buffer, size_t bufsize);
+    // Optional. Called whenever the host has detached from the device.
+    void (*fn_detach)(void);
 } st3m_usb_app_conf_t;
 
 // Main configuration structure, passed by pointer to st3m_usb_mode_switch.
 // Describes a requested configuration mode of the USB subsystem.
 typedef struct {
-	st3m_usb_mode_kind_t kind;
+    st3m_usb_mode_kind_t kind;
 
-	// Only valid if kind == disk.
-	st3m_usb_msc_conf_t *disk;
-	// Only valid if kind == app.
-	st3m_usb_app_conf_t *app;
+    // Only valid if kind == disk.
+    st3m_usb_msc_conf_t *disk;
+    // Only valid if kind == app.
+    st3m_usb_app_conf_t *app;
 } st3m_usb_mode_t;
-
 
 // Immediately switch to a given mode, blocking until that mode is active. A
 // mode being active does not indicate that the device is connected to a host.
@@ -115,11 +119,11 @@ void st3m_usb_cdc_txpoll(void);
 void st3m_usb_cdc_detached(void);
 
 typedef enum {
-	st3m_usb_interface_disk_msc,
-	st3m_usb_interface_disk_total,
+    st3m_usb_interface_disk_msc,
+    st3m_usb_interface_disk_total,
 } st3m_usb_interface_disk_t;
 
 typedef enum {
-	st3m_usb_interface_app_cdc,
-	st3m_usb_interface_app_total,
+    st3m_usb_interface_app_cdc,
+    st3m_usb_interface_app_total,
 } st3m_usb_interface_app_t;

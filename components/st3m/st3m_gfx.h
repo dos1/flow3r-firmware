@@ -2,8 +2,8 @@
 
 #include "freertos/FreeRTOS.h"
 
-#include "ctx_config.h"
 #include "ctx.h"
+#include "ctx_config.h"
 
 // Each buffer  takes ~116kB SPIRAM. While one framebuffer is being blitted, the
 // other one is being written to by the rasterizer.
@@ -14,11 +14,11 @@
 
 // A framebuffer descriptor, pointing at a framebuffer.
 typedef struct {
-	// The numeric ID of this descriptor.
-	int num;
-	// SPIRAM buffer.
-	uint16_t buffer[240*240];
-	Ctx *ctx;
+    // The numeric ID of this descriptor.
+    int num;
+    // SPIRAM buffer.
+    uint16_t buffer[240 * 240];
+    Ctx *ctx;
 } st3m_framebuffer_desc_t;
 
 // Initialize the gfx subsystem of st3m, includng the rasterization and
@@ -27,9 +27,9 @@ void st3m_gfx_init(void);
 
 // A drawlist ctx descriptor, pointing to a drawlist-backed Ctx.
 typedef struct {
-	// The numeric ID of this descriptor.
-	int num;
-	Ctx *ctx;
+    // The numeric ID of this descriptor.
+    int num;
+    Ctx *ctx;
 } st3m_ctx_desc_t;
 
 // Get a free drawlist ctx to draw into.
@@ -55,8 +55,8 @@ uint8_t st3m_gfx_drawctx_pipe_full(void);
 void st3m_gfx_flush(void);
 
 typedef struct {
-	const char *title;
-	const char **lines;
+    const char *title;
+    const char **lines;
 } st3m_gfx_textview_t;
 
 void st3m_gfx_show_textview(st3m_gfx_textview_t *tv);

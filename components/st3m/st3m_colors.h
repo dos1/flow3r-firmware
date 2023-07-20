@@ -3,15 +3,15 @@
 #include <stdint.h>
 
 typedef struct {
-	// From 0 to 255.
+    // From 0 to 255.
 
-	uint8_t r;
-	uint8_t g;
-	uint8_t b;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
 } st3m_rgb_t;
 
 typedef struct {
-	// From 0.0 to 1.0.
+    // From 0.0 to 1.0.
 
     double h;
     double s;

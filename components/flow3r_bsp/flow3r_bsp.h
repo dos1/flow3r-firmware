@@ -41,19 +41,18 @@ extern const char *flow3r_bsp_hw_name;
 #define FLOW3R_BSP_AUDIO_DMA_BUFFER_COUNT 4
 
 typedef enum {
-	flow3r_bsp_audio_input_source_none = 0,
-	// Line in on riht jack.
-	flow3r_bsp_audio_input_source_line_in = 1,
-	// Headset microphone on left jack.
-	flow3r_bsp_audio_input_source_headset_mic = 2,
-	// Onboard microphone (enabled red LED).
-	flow3r_bsp_audio_input_source_onboard_mic = 3
+    flow3r_bsp_audio_input_source_none = 0,
+    // Line in on riht jack.
+    flow3r_bsp_audio_input_source_line_in = 1,
+    // Headset microphone on left jack.
+    flow3r_bsp_audio_input_source_headset_mic = 2,
+    // Onboard microphone (enabled red LED).
+    flow3r_bsp_audio_input_source_onboard_mic = 3
 } flow3r_bsp_audio_input_source_t;
 
 // Initialize the audio subsystem of the badge, including the codec and I2S data
 // channel.
 void flow3r_bsp_audio_init(void);
-
 
 // Attempts to set target volume for the headphone output/onboard speakers
 // respectively, clamps/rounds if necessary and returns the actual volume
@@ -74,9 +73,9 @@ float flow3r_bsp_audio_speaker_set_volume(bool mute, float dB);
 void flow3r_bsp_audio_headset_set_gain_dB(uint8_t gain_dB);
 
 typedef struct {
-	bool headphones;
-	bool headset;
-	bool line_in;
+    bool headphones;
+    bool headset;
+    bool line_in;
 } flow3r_bsp_audio_jacksense_state_t;
 
 // Polls hardware to check if headphones, headset or line in are plugged into
@@ -88,14 +87,16 @@ void flow3r_bsp_audio_read_jacksense(flow3r_bsp_audio_jacksense_state_t *st);
 // enum.
 //
 // Note: The onboard digital mic turns on an LED on the top board if it receives
-// a clock signal which is considered a good proxy for its capability of reading data.
+// a clock signal which is considered a good proxy for its capability of reading
+// data.
 //
 // TODO: check if sources are available
 void flow3r_bsp_audio_input_set_source(flow3r_bsp_audio_input_source_t source);
 
 // These route whatever is on the line in port directly to the headphones or
 // speaker respectively (enable = 1), or don't (enable = 0). Is affected by mute
-// and coarse hardware volume settings, however software fine volume is not applied.
+// and coarse hardware volume settings, however software fine volume is not
+// applied.
 //
 // Good for testing, might deprecate later, idk~
 void flow3r_bsp_audio_headphones_line_in_set_hardware_thru(bool enable);
@@ -117,8 +118,11 @@ bool flow3r_bsp_audio_has_hardware_mute(void);
 //
 // The input is routed according to the configured source (via
 // flow3r_bp_audio_input_set_source).
-esp_err_t flow3r_bsp_audio_read(void *dest, size_t size, size_t *bytes_read, TickType_t ticks_to_wait);
-esp_err_t flow3r_bsp_audio_write(const void *src, size_t size, size_t *bytes_written, TickType_t ticks_to_wait);
+esp_err_t flow3r_bsp_audio_read(void *dest, size_t size, size_t *bytes_read,
+                                TickType_t ticks_to_wait);
+esp_err_t flow3r_bsp_audio_write(const void *src, size_t size,
+                                 size_t *bytes_written,
+                                 TickType_t ticks_to_wait);
 
 // Write audio codec register. Obviously very unsafe. Have fun.
 void flow3r_bsp_audio_register_poke(uint8_t reg, uint8_t data);
@@ -133,23 +137,25 @@ esp_err_t flow3r_bsp_leds_init(void);
 // Index is a value in [0, FLOW3R_BSP_LED_COUNT).
 //
 // RGB values are in [0, 0xff].
-void flow3r_bsp_leds_set_pixel(uint32_t index, uint32_t red, uint32_t green, uint32_t blue);
+void flow3r_bsp_leds_set_pixel(uint32_t index, uint32_t red, uint32_t green,
+                               uint32_t blue);
 
 // Transmit from internal buffer into LEDs. This will block in case there
 // already is a previous transmission happening.
 esp_err_t flow3r_bsp_leds_refresh(TickType_t timeout_ms);
 
 // A 'tripos' button is what we're calling the shoulder buttons. As the name
-// indicates, it has three positions: left, middle (a.k.a. down/press) and right.
+// indicates, it has three positions: left, middle (a.k.a. down/press) and
+// right.
 typedef enum {
-	// Not pressed.
-	flow3r_bsp_tripos_none = 0,
-	// Pressed towards the left.
-	flow3r_bsp_tripos_left = -1,
-	// Pressed down.
-	flow3r_bsp_tripos_mid = 2,
-	// Pressed towards the right.
-	flow3r_bsp_tripos_right = 1,
+    // Not pressed.
+    flow3r_bsp_tripos_none = 0,
+    // Pressed towards the left.
+    flow3r_bsp_tripos_left = -1,
+    // Pressed down.
+    flow3r_bsp_tripos_mid = 2,
+    // Pressed towards the right.
+    flow3r_bsp_tripos_right = 1,
 } flow3r_bsp_tripos_state_t;
 
 // Initialize 'special purpose i/o', which is like gpio, but more :). This means
@@ -198,11 +204,12 @@ void flow3r_bsp_spio_badgelink_right_enable(bool tip_on, bool ring_on);
 // Pin mapping information of programmable badge I/O. These are GPIO numbers
 // that can be used with the ESP-IDF API.
 typedef struct {
-	// Left jack, headphone/line out.
-	uint8_t badgelink_left_tip;
-	uint8_t badgelink_left_ring;
-	// Right jack, line in.
-	uint8_t badgelink_right_tip;
-	uint8_t badgelink_right_ring;
+    // Left jack, headphone/line out.
+    uint8_t badgelink_left_tip;
+    uint8_t badgelink_left_ring;
+    // Right jack, line in.
+    uint8_t badgelink_right_tip;
+    uint8_t badgelink_right_ring;
 } flow3r_bsp_spio_programmable_pins_t;
-extern const flow3r_bsp_spio_programmable_pins_t flow3r_bsp_spio_programmable_pins;
+extern const flow3r_bsp_spio_programmable_pins_t
+    flow3r_bsp_spio_programmable_pins;

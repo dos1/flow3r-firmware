@@ -4,7 +4,8 @@
 //
 // https://www.analog.com/media/en/technical-documentation/data-sheets/MAX98091.pdf
 
-#define MAX98091_BITS(n, v) (((v) & ((1 << MAX98091_##n##_WIDTH)-1)) << (MAX98091_##n##_BASE))
+#define MAX98091_BITS(n, v) \
+    (((v) & ((1 << MAX98091_##n##_WIDTH) - 1)) << (MAX98091_##n##_BASE))
 #define MAX98091_BOOL(n, v) MAX98091_BITS(n, v ? 1 : 0)
 #define MAX98091_ON(n) MAX98091_BOOL(n, true)
 #define MAX98091_OFF(n) MAX98091_BOOL(n, false)
@@ -138,7 +139,6 @@
 #define MAX98091_RIGHT_SPK_VOLUME_SPVOLR_WIDTH 6
 #define MAX98091_RIGHT_SPK_VOLUME_SPRM_BASE 7
 #define MAX98091_RIGHT_SPK_VOLUME_SPRM_WIDTH 1
-
 
 #define MAX98091_JACK_DETECT 0x3D
 

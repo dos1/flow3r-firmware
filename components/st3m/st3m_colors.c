@@ -5,14 +5,11 @@
 st3m_rgb_t st3m_hsv_to_rgb(st3m_hsv_t hsv) {
     double r = 0, g = 0, b = 0;
 
-    if (hsv.s == 0)
-    {
+    if (hsv.s == 0) {
         r = hsv.v;
         g = hsv.v;
         b = hsv.v;
-    }
-    else
-    {
+    } else {
         int i;
         double f, p, q, t;
 
@@ -28,8 +25,7 @@ st3m_rgb_t st3m_hsv_to_rgb(st3m_hsv_t hsv) {
         q = hsv.v * (1.0 - (hsv.s * f));
         t = hsv.v * (1.0 - (hsv.s * (1.0 - f)));
 
-        switch (i)
-        {
+        switch (i) {
             case 0:
                 r = hsv.v;
                 g = t;
@@ -66,13 +62,12 @@ st3m_rgb_t st3m_hsv_to_rgb(st3m_hsv_t hsv) {
                 b = q;
                 break;
         }
-
     }
 
     st3m_rgb_t rgb = {
-		.r = r * 255,
-		.g = g * 255,
-		.b = b * 255,
-	};
-	return rgb;
+        .r = r * 255,
+        .g = g * 255,
+        .b = b * 255,
+    };
+    return rgb;
 }

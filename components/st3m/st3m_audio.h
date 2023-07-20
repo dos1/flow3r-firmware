@@ -1,31 +1,32 @@
 #pragma once
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef enum {
-	st3m_audio_input_source_none = 0,
-	// Line in on riht jack.
-	st3m_audio_input_source_line_in = 1,
-	// Headset microphone on left jack.
-	st3m_audio_input_source_headset_mic = 2,
-	// Onboard microphone (enabled red LED).
-	st3m_audio_input_source_onboard_mic = 3
+    st3m_audio_input_source_none = 0,
+    // Line in on riht jack.
+    st3m_audio_input_source_line_in = 1,
+    // Headset microphone on left jack.
+    st3m_audio_input_source_headset_mic = 2,
+    // Onboard microphone (enabled red LED).
+    st3m_audio_input_source_onboard_mic = 3
 } st3m_audio_input_source_t;
 
-typedef void (*st3m_audio_player_function_t)(int16_t * tx, int16_t * rx, uint16_t len);
+typedef void (*st3m_audio_player_function_t)(int16_t* tx, int16_t* rx,
+                                             uint16_t len);
 
 /* The default audio task takes a function of prototype
- * &st3m_audio_player_function_t, loops it and sets software volume/adds software
- * thru. tx is the stereo zipped l/r output, rx is the stereo zipped input, each
- * buffer the size of len.
+ * &st3m_audio_player_function_t, loops it and sets software volume/adds
+ * software thru. tx is the stereo zipped l/r output, rx is the stereo zipped
+ * input, each buffer the size of len.
  */
 void st3m_audio_set_player_function(st3m_audio_player_function_t fun);
 
-/* Dummy for st3m_audio_set_player_function that just writes zeros to the output.
- * Default state.
+/* Dummy for st3m_audio_set_player_function that just writes zeros to the
+ * output. Default state.
  */
-void st3m_audio_player_function_dummy(int16_t * rx, int16_t * tx, uint16_t len);
+void st3m_audio_player_function_dummy(int16_t* rx, int16_t* tx, uint16_t len);
 
 /* Initializes I2S bus, the audio task and required data structures.
  * Expects an initialized I2C bus, will fail ungracefully otherwise (TODO).
@@ -72,7 +73,7 @@ float st3m_audio_headphones_adjust_volume_dB(float vol_dB);
 float st3m_audio_speaker_adjust_volume_dB(float vol_dB);
 float st3m_audio_adjust_volume_dB(float vol_dB);
 
-/* Returns volume as set with st3m_audio_{headphones/speaker}_set_volume_dB.  The
+/* Returns volume as set with st3m_audio_{headphones/speaker}_set_volume_dB. The
  * unspecified variant automatically chooses the adequate channel (**).
  */
 float st3m_audio_headphones_get_volume_dB(void);
@@ -98,16 +99,16 @@ bool st3m_audio_speaker_get_mute(void);
 bool st3m_audio_get_mute(void);
 
 /* Set the minimum and maximum allowed volume levels for speakers and headphones
- * respectively. Clamps with hardware limitations. Maximum clamps below the minimum
- * value, minimum clamps above the maximum. Returns clamped value.
+ * respectively. Clamps with hardware limitations. Maximum clamps below the
+ * minimum value, minimum clamps above the maximum. Returns clamped value.
  */
 float st3m_audio_headphones_set_minimum_volume_dB(float vol_dB);
 float st3m_audio_headphones_set_maximum_volume_dB(float vol_dB);
 float st3m_audio_speaker_set_minimum_volume_dB(float vol_dB);
 float st3m_audio_speaker_set_maximum_volume_dB(float vol_dB);
 
-/* Returns the minimum and maximum allowed volume levels for speakers and headphones
- * respectively. Change with
+/* Returns the minimum and maximum allowed volume levels for speakers and
+ * headphones respectively. Change with
  * st3m_audio_{headphones/speaker}_set_{minimum/maximum}_volume_dB.
  */
 float st3m_audio_headphones_get_minimum_volume_dB(void);
@@ -132,7 +133,8 @@ float st3m_audio_get_volume_relative(void);
 
 /* These route whatever is on the line in port directly to the headphones or
  * speaker respectively (enable = 1), or don't (enable = 0). Is affected by mute
- * and coarse hardware volume settings, however software fine volume is not applied.
+ * and coarse hardware volume settings, however software fine volume is not
+ * applied.
  *
  * Good for testing, might deprecate later, idk~
  */
@@ -140,11 +142,12 @@ void st3m_audio_headphones_line_in_set_hardware_thru(bool enable);
 void st3m_audio_speaker_line_in_set_hardware_thru(bool enable);
 void st3m_audio_line_in_set_hardware_thru(bool enable);
 
-/* The codec can transmit audio data from different sources. This function enables
- * one or no source as provided by the st3m_audio_input_source_t enum.
+/* The codec can transmit audio data from different sources. This function
+ * enables one or no source as provided by the st3m_audio_input_source_t enum.
  *
  * Note: The onboard digital mic turns on an LED on the top board if it receives
- * a clock signal which is considered a good proxy for its capability of reading data.
+ * a clock signal which is considered a good proxy for its capability of reading
+ * data.
  *
  * TODO: check if sources are available
  */
@@ -173,14 +176,15 @@ HEADPHONE PORT POLICY
 
 Under normal circumstances it is an important feature to have a reliable speaker
 mute when plugging in headphones. However, since the headphone port on the badge
-can also be used for badge link, there are legimate cases where it is desirable to
-have the speakers unmuted while a cable is plugged into the jack.
+can also be used for badge link, there are legimate cases where it is desirable
+to have the speakers unmuted while a cable is plugged into the jack.
 
-As a person who plugs in the headphones on the tram, doesn't put them on, turns on
-music to check if it's not accidentially playing on speakers and then finally puts
-on headphones (temporarily, of course, intermittent checks if the speakers didn't
-magically turn on are scheduled according to our general anxiety level) we wish to
-make it difficult to accidentially have sound coming from the speakers.
+As a person who plugs in the headphones on the tram, doesn't put them on, turns
+on music to check if it's not accidentially playing on speakers and then finally
+puts on headphones (temporarily, of course, intermittent checks if the speakers
+didn't magically turn on are scheduled according to our general anxiety level)
+we wish to make it difficult to accidentially have sound coming from the
+speakers.
 
 Our proposed logic is as follows (excluding boot conditions):
 
@@ -192,19 +196,20 @@ of digital data before the software can react to the state change.
 2) If the software detects that the headphone jack has changed from unplugged to
 plugged it *always* turns off speakers, no exceptions.
 
-3) If a user wishes to TX on headphone badge link, they must confirm a warning that
-having headphones plugged in may potentially cause hearing damage *every time*.
+3) If a user wishes to TX on headphone badge link, they must confirm a warning
+that having headphones plugged in may potentially cause hearing damage *every
+time*.
 
-4) If a user wishes to RX or TX on headphone badge link while playing sound on the
-onboard speakers, they must confirm a warning *every time*.
+4) If a user wishes to RX or TX on headphone badge link while playing sound on
+the onboard speakers, they must confirm a warning *every time*.
 
 We understand that these means seem extreme, but we find them to be a sensible
 default configuration to make sure people can safely operate the device without
 needing to refer to a manual.
 
 (TX here means any state that is not constantly ~GND with whatever impedance.
-While there are current limiting resistors (value TBD at the time of writing, but
-presumably 100R-470R) in series with the GPIOs, they still can generate quite some
-volume with standard 40Ohm-ish headphones. Ideally the analog switch will never
-switch to the GPIOs without a cable plugged in.)
+While there are current limiting resistors (value TBD at the time of writing,
+but presumably 100R-470R) in series with the GPIOs, they still can generate
+quite some volume with standard 40Ohm-ish headphones. Ideally the analog switch
+will never switch to the GPIOs without a cable plugged in.)
 */

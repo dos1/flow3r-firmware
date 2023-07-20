@@ -3,19 +3,19 @@
 #include <stdbool.h>
 
 typedef enum {
-	st3m_mode_kind_invalid = 0,
-	st3m_mode_kind_starting = 1,
-	st3m_mode_kind_app = 2,
-	st3m_mode_kind_repl = 3,
-	st3m_mode_kind_disk = 4,
-	st3m_mode_kind_fatal = 5,
+    st3m_mode_kind_invalid = 0,
+    st3m_mode_kind_starting = 1,
+    st3m_mode_kind_app = 2,
+    st3m_mode_kind_repl = 3,
+    st3m_mode_kind_disk = 4,
+    st3m_mode_kind_fatal = 5,
 } st3m_mode_kind_t;
 
 typedef struct {
-	st3m_mode_kind_t kind;
+    st3m_mode_kind_t kind;
 
-	// Valid if mode != app.
-	char *message;
+    // Valid if mode != app.
+    char *message;
 } st3m_mode_t;
 
 // Must be called exactly once before using any other st3m_mode_* functions.

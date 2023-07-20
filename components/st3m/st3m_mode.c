@@ -2,10 +2,10 @@
 
 #include <string.h>
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
 #include "esp_system.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+#include "freertos/task.h"
 
 #include "st3m_gfx.h"
 #include "st3m_io.h"
@@ -38,18 +38,18 @@ void st3m_mode_set(st3m_mode_kind_t kind, const char *message) {
 }
 
 void st3m_mode_update_display(bool *restartable) {
-    if (restartable != NULL)
-        *restartable = false;
+    if (restartable != NULL) *restartable = false;
 
     xSemaphoreTake(_mu, portMAX_DELAY);
     switch (_mode.kind) {
-    case st3m_mode_kind_app:
-    case st3m_mode_kind_invalid:
-        // Nothing to do.
-        break;
-    case st3m_mode_kind_starting: {
-        	const char *lines[] = {
-                _mode.message, NULL,
+        case st3m_mode_kind_app:
+        case st3m_mode_kind_invalid:
+            // Nothing to do.
+            break;
+        case st3m_mode_kind_starting: {
+            const char *lines[] = {
+                _mode.message,
+                NULL,
             };
             st3m_gfx_textview_t tv = {
                 .title = "Starting...",
@@ -58,11 +58,11 @@ void st3m_mode_update_display(bool *restartable) {
             st3m_gfx_show_textview(&tv);
             break;
         }
-    case st3m_mode_kind_disk:
-        st3m_gfx_splash("Disk Mode");
-        break;
-    case st3m_mode_kind_repl: {
-        	const char *lines[] = {
+        case st3m_mode_kind_disk:
+            st3m_gfx_splash("Disk Mode");
+            break;
+        case st3m_mode_kind_repl: {
+            const char *lines[] = {
                 "Send Ctrl-D over USB",
                 "or press left shoulder button",
                 "to restart.",
@@ -73,12 +73,11 @@ void st3m_mode_update_display(bool *restartable) {
                 .lines = lines,
             };
             st3m_gfx_show_textview(&tv);
-            if (restartable != NULL)
-                *restartable = true;
+            if (restartable != NULL) *restartable = true;
             break;
         }
-    case st3m_mode_kind_fatal: {
-        	const char *msg = _mode.message;
+        case st3m_mode_kind_fatal: {
+            const char *msg = _mode.message;
             if (msg == NULL) {
                 msg = "";
             }
@@ -93,8 +92,7 @@ void st3m_mode_update_display(bool *restartable) {
                 .lines = lines,
             };
             st3m_gfx_show_textview(&tv);
-            if (restartable != NULL)
-                *restartable = true;
+            if (restartable != NULL) *restartable = true;
             break;
         }
     }
@@ -111,7 +109,6 @@ static void _task(void *arg) {
 
         bool restartable = false;
         st3m_mode_update_display(&restartable);
-
 
         if (restartable) {
             st3m_tripos tp = st3m_io_left_button_get();

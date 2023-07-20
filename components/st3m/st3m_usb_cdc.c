@@ -1,18 +1,16 @@
 #include "st3m_usb.h"
 
-#include "tusb.h"
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "freertos/task.h"
+#include "tusb.h"
 
 #include "esp_log.h"
 
-static st3m_usb_app_conf_t _conf = { 0 };
+static st3m_usb_app_conf_t _conf = {0};
 static SemaphoreHandle_t _write_mu;
 
-void st3m_usb_cdc_init(void) {
-    _write_mu = xSemaphoreCreateMutex();
-}
+void st3m_usb_cdc_init(void) { _write_mu = xSemaphoreCreateMutex(); }
 
 void st3m_usb_cdc_set_conf(st3m_usb_app_conf_t *conf) {
     assert(conf->fn_rx != NULL);
@@ -45,7 +43,7 @@ void st3m_usb_cdc_txpoll(void) {
         return;
     }
 
-	for (;;) {
+    for (;;) {
         uint32_t space = tud_cdc_n_write_available(st3m_usb_interface_app_cdc);
         if (space == 0) {
             return;

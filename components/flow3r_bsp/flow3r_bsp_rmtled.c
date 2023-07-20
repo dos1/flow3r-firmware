@@ -43,16 +43,19 @@ typedef struct {
 
 static flow3r_bsp_rmtled_t rmtled = {0};
 
-static void IRAM_ATTR _rmtled_adapter(const void *src, rmt_item32_t *dest, size_t src_size,
-        size_t wanted_num, size_t *translated_size, size_t *item_num)
-{
+static void IRAM_ATTR _rmtled_adapter(const void *src, rmt_item32_t *dest,
+                                      size_t src_size, size_t wanted_num,
+                                      size_t *translated_size,
+                                      size_t *item_num) {
     if (src == NULL || dest == NULL) {
         *translated_size = 0;
         *item_num = 0;
         return;
     }
-    const rmt_item32_t bit0 = {{{ rmtled.ws2812_t0h_ticks, 1, rmtled.ws2812_t0l_ticks, 0 }}}; //Logical 0
-    const rmt_item32_t bit1 = {{{ rmtled.ws2812_t1h_ticks, 1, rmtled.ws2812_t1l_ticks, 0 }}}; //Logical 1
+    const rmt_item32_t bit0 = {{{rmtled.ws2812_t0h_ticks, 1,
+                                 rmtled.ws2812_t0l_ticks, 0}}};  // Logical 0
+    const rmt_item32_t bit1 = {{{rmtled.ws2812_t1h_ticks, 1,
+                                 rmtled.ws2812_t1l_ticks, 0}}};  // Logical 1
     size_t size = 0;
     size_t num = 0;
     uint8_t *psrc = (uint8_t *)src;
@@ -61,9 +64,9 @@ static void IRAM_ATTR _rmtled_adapter(const void *src, rmt_item32_t *dest, size_
         for (int i = 0; i < 8; i++) {
             // MSB first
             if (*psrc & (1 << (7 - i))) {
-                pdest->val =  bit1.val;
+                pdest->val = bit1.val;
             } else {
-                pdest->val =  bit0.val;
+                pdest->val = bit0.val;
             }
             num++;
             pdest++;
@@ -74,7 +77,6 @@ static void IRAM_ATTR _rmtled_adapter(const void *src, rmt_item32_t *dest, size_
     *translated_size = size;
     *item_num = num;
 }
-
 
 esp_err_t flow3r_bsp_rmtled_init(uint16_t num_leds) {
     if (rmtled.buffer != NULL) {
@@ -90,13 +92,16 @@ esp_err_t flow3r_bsp_rmtled_init(uint16_t num_leds) {
         ESP_LOGE(TAG, "rmt_config failed: %s", esp_err_to_name(ret));
         return ret;
     }
-    if ((ret = rmt_driver_install(config.channel, 0, ESP_INTR_FLAG_LOWMED | ESP_INTR_FLAG_SHARED)) != ESP_OK) {
+    if ((ret = rmt_driver_install(
+             config.channel, 0, ESP_INTR_FLAG_LOWMED | ESP_INTR_FLAG_SHARED)) !=
+        ESP_OK) {
         ESP_LOGE(TAG, "rmt_driver_install failed: %s", esp_err_to_name(ret));
         return ret;
     }
 
     uint32_t counter_clk_hz = 0;
-    if ((ret = rmt_get_counter_clock(config.channel, &counter_clk_hz)) != ESP_OK) {
+    if ((ret = rmt_get_counter_clock(config.channel, &counter_clk_hz)) !=
+        ESP_OK) {
         ESP_LOGE(TAG, "rmt_get_counter_clock failed: %s", esp_err_to_name(ret));
         return ret;
     }
@@ -116,7 +121,8 @@ esp_err_t flow3r_bsp_rmtled_init(uint16_t num_leds) {
     }
     rmtled.transmitting = false;
 
-    if ((ret = rmt_translator_init(config.channel, _rmtled_adapter)) != ESP_OK) {
+    if ((ret = rmt_translator_init(config.channel, _rmtled_adapter)) !=
+        ESP_OK) {
         ESP_LOGE(TAG, "rmt_translator_init: %s", esp_err_to_name(ret));
         return ret;
     }
@@ -124,8 +130,8 @@ esp_err_t flow3r_bsp_rmtled_init(uint16_t num_leds) {
     return ESP_OK;
 }
 
-void flow3r_bsp_rmtled_set_pixel(uint32_t index, uint32_t red, uint32_t green, uint32_t blue)
-{
+void flow3r_bsp_rmtled_set_pixel(uint32_t index, uint32_t red, uint32_t green,
+                                 uint32_t blue) {
     if (rmtled.buffer == NULL) {
         return;
     }
@@ -144,14 +150,16 @@ esp_err_t flow3r_bsp_rmtled_refresh(int32_t timeout_ms) {
     }
 
     if (rmtled.transmitting) {
-        esp_err_t ret = rmt_wait_tx_done(rmtled.chan, pdMS_TO_TICKS(timeout_ms));
+        esp_err_t ret =
+            rmt_wait_tx_done(rmtled.chan, pdMS_TO_TICKS(timeout_ms));
         if (ret != ESP_OK) {
             ESP_LOGE(TAG, "rmt_wait_tx_done: %s", esp_err_to_name(ret));
         }
         rmtled.transmitting = false;
     }
 
-    esp_err_t ret = rmt_write_sample(rmtled.chan, rmtled.buffer, rmtled.num_leds * 3, true);
+    esp_err_t ret =
+        rmt_write_sample(rmtled.chan, rmtled.buffer, rmtled.num_leds * 3, true);
     rmtled.transmitting = true;
     return ret;
 }
