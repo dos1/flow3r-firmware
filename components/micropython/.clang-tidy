@@ -1,0 +1,4 @@
+# Disable all checks for Micropython (noise)
+# But we need at least one check defined otherwise clang-tidy is unhappy, so we
+# pick something arbitrary.
+Checks: '-*,portability-simd-intrinsics'
