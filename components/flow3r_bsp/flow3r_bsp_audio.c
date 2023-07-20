@@ -5,8 +5,6 @@
 #include "driver/i2s.h"
 #include "esp_log.h"
 
-static const char *TAG = "flow3r-bsp-audio";
-
 esp_err_t flow3r_bsp_audio_write(const void *src, size_t size, size_t *bytes_written, TickType_t ticks_to_wait) {
     return i2s_write(0, src, size, bytes_written, ticks_to_wait);
 }

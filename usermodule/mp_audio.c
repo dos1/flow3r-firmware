@@ -209,7 +209,7 @@ STATIC mp_obj_t mp_input_set_source(mp_obj_t enable) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_input_set_source_obj, mp_input_set_source);
 
-STATIC mp_obj_t mp_input_get_source(mp_obj_t enable) {
+STATIC mp_obj_t mp_input_get_source(void) {
     return mp_obj_new_int(st3m_audio_input_get_source());
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_input_get_source_obj, mp_input_get_source);
@@ -222,7 +222,7 @@ STATIC mp_obj_t mp_headset_set_gain_dB(mp_obj_t gain_dB) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_headset_set_gain_dB_obj, mp_headset_set_gain_dB);
 
-STATIC mp_obj_t mp_headset_get_gain_dB(mp_obj_t enable) {
+STATIC mp_obj_t mp_headset_get_gain_dB(void) {
     return mp_obj_new_int(st3m_audio_headset_get_gain_dB());
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_headset_get_gain_dB_obj, mp_headset_get_gain_dB);

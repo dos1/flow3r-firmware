@@ -83,7 +83,7 @@ typedef struct{
 static petal_t petals[10];
 
 struct ad714x_chip {
-    flow3r_i2c_address *addr;
+    const flow3r_i2c_address *addr;
     uint8_t gpio;
     int pos_afe_offsets[13];
     int neg_afe_offsets[13];
@@ -551,6 +551,8 @@ static void captouch_print_debug_info_chip(const struct ad714x_chip* chip)
         ambient = cdc_ambient[1];
     }
 
+    // Appease clang-tidy.
+	(void)data; (void)ambient;
     ESP_LOGI(TAG, "CDC results: %X %X %X %X %X %X %X %X %X %X %X %X", data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8], data[9], data[10], data[11]);
 
     for(int stage=0; stage<stages; stage++) {

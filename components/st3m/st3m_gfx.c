@@ -91,7 +91,9 @@ static void st3m_gfx_crtc_task(void *_arg) {
             float read = st3m_counter_timer_average(&blit_read_time) / 1000.0;
             float work = st3m_counter_timer_average(&blit_work_time) / 1000.0;
             float write = st3m_counter_timer_average(&blit_write_time) / 1000.0;
-            //ESP_LOGI(TAG, "blitting: %.3f/sec, read %.3fms, work %.3fms, write %.3fms", rate, read, work, write);
+            // Mark variables as used even if debug is disabled.
+            (void)rate; (void)read; (void)work; (void)write;
+            ESP_LOGD(TAG, "blitting: %.3f/sec, read %.3fms, work %.3fms, write %.3fms", rate, read, work, write);
         }
     }
 }
@@ -128,13 +130,16 @@ static void st3m_gfx_rast_task(void *_arg) {
 
         st3m_counter_rate_sample(&rast_rate);
 
+
         if (st3m_counter_rate_report(&rast_rate, 1)) {
             float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
             float read_fb = st3m_counter_timer_average(&rast_read_fb_time) / 1000.0;
             float read_dctx = st3m_counter_timer_average(&rast_read_dctx_time) / 1000.0;
             float work = st3m_counter_timer_average(&rast_work_time) / 1000.0;
             float write = st3m_counter_timer_average(&rast_write_time) / 1000.0;
-            //ESP_LOGI(TAG, "rasterization: %.3f/sec, read fb %.3fms, read dctx %.3fms, work %.3fms, write %.3fms", rate, read_fb, read_dctx, work, write);
+            // Mark variables as used even if debug is disabled.
+            (void)rate; (void)read_fb; (void)read_dctx; (void)work; (void)write;
+            ESP_LOGD(TAG, "rasterization: %.3f/sec, read fb %.3fms, read dctx %.3fms, work %.3fms, write %.3fms", rate, read_fb, read_dctx, work, write);
         }
     }
 }

@@ -161,6 +161,7 @@ void st3m_usb_descriptors_switch(st3m_usb_mode_t *mode) {
 		_descset_current = &_descset_disk;
 		break;
 	default:
+		break;
 	}
 }
 

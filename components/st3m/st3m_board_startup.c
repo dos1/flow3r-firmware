@@ -14,8 +14,6 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 
-static const char *TAG = "st3m-board-startup";
-
 // Called by micropython via MICROPY_BOARD_STARTUP.
 void st3m_board_startup(void) {
     // Initialize display first as that gives us a nice splash screen.

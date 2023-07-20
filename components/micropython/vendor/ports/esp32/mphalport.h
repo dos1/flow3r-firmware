@@ -103,7 +103,7 @@ static inline void mp_hal_pin_od_high(mp_hal_pin_obj_t pin) {
 }
 static inline int mp_hal_pin_read(mp_hal_pin_obj_t pin) {
     mp_raise_NotImplementedError(MP_ERROR_TEXT("low-level GPIO not supported"));
-    return mp_const_none;
+    return 0;
 }
 static inline void mp_hal_pin_write(mp_hal_pin_obj_t pin, int v) {
     mp_raise_NotImplementedError(MP_ERROR_TEXT("low-level GPIO not supported"));

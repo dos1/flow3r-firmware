@@ -118,9 +118,9 @@ void mp_sched_keyboard_interrupt();
 extern int mp_interrupt_char;
 
 // Called by st3m_usb_cdc when it receives some data from the host.
-void st3m_console_cdc_on_rx(void *buffer, size_t bufsize) {
+void st3m_console_cdc_on_rx(const uint8_t *buffer, size_t bufsize) {
 	bool interrupted = false;
-	uint8_t *bufbytes = buffer;
+	const uint8_t *bufbytes = buffer;
 	for (size_t i = 0; i < bufsize; i++) {
 		if (bufbytes[i] == mp_interrupt_char) {
 			interrupted = true;
@@ -142,7 +142,7 @@ void st3m_gfx_splash(const char *c);
 
 // Called by st3m_usb_cdc when it has the opportunity to send some data to the
 // host.
-size_t st3m_console_cdc_on_txpoll(void *buffer, size_t bufsize) {
+size_t st3m_console_cdc_on_txpoll(uint8_t *buffer, size_t bufsize) {
 	// I have no idea why this is needed, but it is. Otherwise a large backlog
 	// of data cuases the IN endpoint to get stuck.
 	//

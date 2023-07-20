@@ -135,7 +135,7 @@ STATIC mp_obj_t mp_captouch_state_new(const captouch_state_t *underlying) {
 }
 
 STATIC mp_obj_t mp_captouch_read(void) {
-	mp_captouch_state_t st;
+	captouch_state_t st;
 	read_captouch_ex(&st);
 	return mp_captouch_state_new(&st);
 }

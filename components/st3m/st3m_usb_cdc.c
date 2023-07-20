@@ -7,8 +7,6 @@
 
 #include "esp_log.h"
 
-static const char *TAG = "st3m-usb-cdc";
-
 static st3m_usb_app_conf_t _conf = { 0 };
 static SemaphoreHandle_t _write_mu;
 

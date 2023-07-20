@@ -70,7 +70,7 @@ void st3m_scope_write(int16_t value){
     }
 
     if (scope.write_head_position >= scope.buffer_size) {
-        scope.write_buffer = Atomic_SwapPointers_p32(&scope.exchange_buffer, scope.write_buffer);
+        scope.write_buffer = Atomic_SwapPointers_p32((void *volatile *)&scope.exchange_buffer, scope.write_buffer);
         scope.write_head_position = 0;
     } else {
         scope.write_buffer[scope.write_head_position] = value;
@@ -83,7 +83,7 @@ void st3m_scope_draw(Ctx *ctx){
         return;
     }
 
-    scope.read_buffer = Atomic_SwapPointers_p32(&scope.exchange_buffer, scope.read_buffer);
+    scope.read_buffer = Atomic_SwapPointers_p32((void *volatile *)&scope.exchange_buffer, scope.read_buffer);
 
 
 	// How much to divide the values persisted in the buffer to scale to

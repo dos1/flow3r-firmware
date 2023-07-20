@@ -70,9 +70,9 @@ st3m_rgb_t st3m_hsv_to_rgb(st3m_hsv_t hsv) {
     }
 
     st3m_rgb_t rgb = {
-		r = r * 255,
-		g = g * 255,
-		b = b * 255,
+		.r = r * 255,
+		.g = g * 255,
+		.b = b * 255,
 	};
 	return rgb;
 }

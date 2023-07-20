@@ -75,12 +75,12 @@ typedef struct {
 typedef struct {
 	// Required. Called whenever the host wrote some bytes. All bytes must be
 	// processed.
-	void (*fn_rx)(uint8_t *buffer, size_t bufsize);
+	void (*fn_rx)(const uint8_t *buffer, size_t bufsize);
 	// Required. Called whenever the host requests bytes to read. Must return
 	// how many bytes are actually available to transmit to the host.
 	size_t (*fn_txpoll)(uint8_t *buffer, size_t bufsize);
 	// Optional. Called whenever the host has detached from the device.
-	size_t (*fn_detach)(void);
+	void (*fn_detach)(void);
 } st3m_usb_app_conf_t;
 
 // Main configuration structure, passed by pointer to st3m_usb_mode_switch.

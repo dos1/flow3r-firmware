@@ -77,7 +77,9 @@ void st3m_usb_mode_switch(st3m_usb_mode_t *mode) {
 	case st3m_usb_mode_kind_app:
 	case st3m_usb_mode_kind_disk:
 		running = true;
+		break;
 	default:
+		break;
 	}
 
 	bool should_run = false;
@@ -85,7 +87,9 @@ void st3m_usb_mode_switch(st3m_usb_mode_t *mode) {
 	case st3m_usb_mode_kind_app:
 	case st3m_usb_mode_kind_disk:
 		should_run = true;
+		break;
 	default:
+		break;
 	}
 
 	if (running) {

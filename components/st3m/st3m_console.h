@@ -2,6 +2,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 // Initialize st3m console, taking over whatever stdio is currently being used
 // by the ESP-IDF codebase. After calling this, a CDC-ACM console will be
@@ -14,6 +15,6 @@ void st3m_console_init(void);
 bool st3m_console_active(void);
 
 // Private.
-void st3m_console_cdc_on_rx(void *buffer, size_t bufsize);
-size_t st3m_console_cdc_on_txpoll(void *buffer, size_t bufsize);
+void st3m_console_cdc_on_rx(const uint8_t *buffer, size_t bufsize);
+size_t st3m_console_cdc_on_txpoll(uint8_t *buffer, size_t bufsize);
 void st3m_console_cdc_on_detach(void);

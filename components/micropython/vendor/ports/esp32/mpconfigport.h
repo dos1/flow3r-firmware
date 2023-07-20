@@ -5,7 +5,6 @@
 #include "mpconfigboard.h"
 
 #include <stdint.h>
-#include <alloca.h>
 #include "esp_system.h"
 #include "esp_random.h"
 #include "freertos/FreeRTOS.h"

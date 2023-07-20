@@ -162,7 +162,8 @@ void trad_osc_set_freq_semitone(trad_osc_t * osc, float tone){
 }
 
 void trad_osc_set_freq_Hz(trad_osc_t * osc, float freq){
-    osc->freq = (freq/(SYNTH_SAMPLE_RATE)) * (~((uint64_t) 0));
+    uint64_t max = ~((uint64_t)0);
+    osc->freq = (freq/(SYNTH_SAMPLE_RATE)) * max;
 }
 
 void trad_osc_set_waveform(trad_osc_t * osc, uint8_t waveform){
@@ -178,7 +179,8 @@ void trad_osc_set_decay_ms(trad_osc_t * osc, float ms){
 }
 
 void trad_osc_set_sustain(trad_osc_t * osc, float sus){
-    osc->env.sustain = (~((uint32_t) 0)) * sus;
+    uint32_t max = ~((uint32_t)0);
+    osc->env.sustain = max * sus;
 }
 
 void trad_osc_set_release_ms(trad_osc_t * osc, float ms){
