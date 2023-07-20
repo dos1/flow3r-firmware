@@ -24,19 +24,6 @@ menu "Flow3r Config"
             bool "Prototype 6"
     endchoice
 
-    choice FLOW3R_TOP_BOARD_STYLE
-        prompt "Badge23 top board style (mainly for proto6)"
-        default FLOW3R_TOP_BOARD_SPIRALS
-        config FLOW3R_TOP_BOARD_SPIKES
-            help
-                Spikes between captouch pads
-            bool "Spikes"
-        config FLOW3R_TOP_BOARD_SPIRALS
-            help
-                Spirals between captouch pads
-            bool "Spirals"
-    endchoice
-
     config FLOW3R_ESP32S3
         bool
 

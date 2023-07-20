@@ -17,7 +17,6 @@ def action_extensions(base_actions, project_path=os.getcwd()):
         'p3': ['proto3'],
         'p4': ['proto4'],
         'p6': ['proto6'],
-        'p6spike': ['proto6-spike'],
     }
 
     def generation_callback(ctx, global_args, tasks):
@@ -51,11 +50,7 @@ def action_extensions(base_actions, project_path=os.getcwd()):
         sdkconfig_defaults_path = os.path.join(project_path, 'sdkconfig.defaults')
         sdkconfig_generated_path = os.path.join(project_path, '.sdkconfig.defaults.generated')
         with open(sdkconfig_generated_path, 'w') as f:
-            if name == 'p6spike':
-                f.write('CONFIG_FLOW3R_HW_GEN_P6=y\n')
-                f.write('CONFIG_FLOW3R_TOP_BOARD_SPIKES=y\n')
-            else:
-                f.write(f'CONFIG_FLOW3R_HW_GEN_{name.upper()}=y\n')
+            f.write(f'CONFIG_FLOW3R_HW_GEN_{name.upper()}=y\n')
             with open(sdkconfig_defaults_path) as f2:
                 f.write(f2.read())
 

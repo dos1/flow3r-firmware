@@ -272,7 +272,6 @@ static void captouch_init_petals(){
 int32_t captouch_get_petal_rad(uint8_t petal){
     if(petal > 9) petal = 9;
     uint8_t cf = petals[petal].config_mask;
-    #if defined(CONFIG_FLOW3R_TOP_BOARD_SPIKES)
     if(cf == 0b1110){ //CCW, CW, BASE
         int32_t left = petals[petal].pads[PETAL_PAD_CCW].cdc;
         left -= petals[petal].pads[PETAL_PAD_CCW].amb;
@@ -282,17 +281,6 @@ int32_t captouch_get_petal_rad(uint8_t petal){
         base -= petals[petal].pads[PETAL_PAD_BASE].amb;
         return (left + right)/2 - base;
     }
-    #elif defined(CONFIG_FLOW3R_TOP_BOARD_SPIRALS)
-    if(cf == 0b1110){ //CCW, CW, BASE
-        int32_t left = petals[petal].pads[PETAL_PAD_CCW].cdc;
-        left -= petals[petal].pads[PETAL_PAD_CCW].amb;
-        int32_t right = petals[petal].pads[PETAL_PAD_CW].cdc;
-        right -= petals[petal].pads[PETAL_PAD_CW].amb;
-        int32_t base = petals[petal].pads[PETAL_PAD_BASE].cdc;
-        base -= petals[petal].pads[PETAL_PAD_BASE].amb;
-        return (left + right)/2 - base;
-    }
-    #endif
     if(cf == 0b111){ //CCW, CW, TIP
         int32_t left = petals[petal].pads[PETAL_PAD_CCW].cdc;
         left -= petals[petal].pads[PETAL_PAD_CCW].amb;
@@ -320,7 +308,6 @@ int32_t captouch_get_petal_rad(uint8_t petal){
 int32_t captouch_get_petal_phi(uint8_t petal){
     if(petal > 9) petal = 9;
     uint8_t cf = petals[petal].config_mask;
-    #if defined(CONFIG_FLOW3R_TOP_BOARD_SPIKES)
     if((cf == 0b1110) || (cf == 0b110) || (cf == 0b111)){ //CCW, CW, (BASE)
         int32_t left = petals[petal].pads[PETAL_PAD_CCW].cdc;
         left -= petals[petal].pads[PETAL_PAD_CCW].amb;
@@ -328,15 +315,6 @@ int32_t captouch_get_petal_phi(uint8_t petal){
         right -= petals[petal].pads[PETAL_PAD_CW].amb;
         return left - right;
     }
-    #elif defined(CONFIG_FLOW3R_TOP_BOARD_SPIRALS)
-    if((cf == 0b1110) || (cf == 0b110) || (cf == 0b111)){ //CCW, CW, (BASE)
-        int32_t left = petals[petal].pads[PETAL_PAD_CCW].cdc;
-        left -= petals[petal].pads[PETAL_PAD_CCW].amb;
-        int32_t right = petals[petal].pads[PETAL_PAD_CW].cdc;
-        right -= petals[petal].pads[PETAL_PAD_CW].amb;
-        return left - right;
-    }
-    #endif
     return 0;
 }
 
