@@ -14,7 +14,6 @@ def action_extensions(base_actions, project_path=os.getcwd()):
 
     # Map from canonical name to user-supported names.
     GENERATIONS = {
-        'p1': ['proto1'],
         'p3': ['proto3'],
         'p4': ['proto4'],
         'p6': ['proto6'],

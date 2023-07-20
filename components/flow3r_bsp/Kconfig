@@ -2,15 +2,6 @@ menu "Flow3r Config"
     choice FLOW3R_HW_GEN
         prompt "Badge23 Hardware Generation"
         default FLOW3R_HW_GEN_P4
-        config FLOW3R_HW_GEN_P1
-            help
-                Protoype version 1, a.k.a. proto1. Very early protoype.
-                Visual identifiers:
-                 - No line in/out jacks
-                 - White bottom board
-                 - USB-C jack points side of leaf
-            select FLOW3R_ESP32S3
-            bool "Prototype 1"
         config FLOW3R_HW_GEN_P3
             help
                 Prototype version 3, a.k.a. proto3

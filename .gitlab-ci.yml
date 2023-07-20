@@ -4,17 +4,6 @@ stages:
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
-build-p1:
-  stage: build
-  tags:
-    - nixos
-  script:
-    - nix-shell nix/shell.nix --command "idf.py -g p1 build"
-  artifacts:
-    expose_as: 'Proto 1 ELF'
-    paths: ['build/badge23.elf']
-    expire_in: 5 hours
-
 build-p3:
   stage: build
   tags:

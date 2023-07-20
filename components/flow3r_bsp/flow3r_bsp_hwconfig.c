@@ -1,8 +1,6 @@
 #include "sdkconfig.h"
 
-#if defined(CONFIG_FLOW3R_HW_GEN_P1)
-const char *flow3r_bsp_hw_name = "proto1";
-#elif defined(CONFIG_FLOW3R_HW_GEN_P3)
+#if defined(CONFIG_FLOW3R_HW_GEN_P3)
 const char *flow3r_bsp_hw_name = "proto3";
 #elif defined(CONFIG_FLOW3R_HW_GEN_P4)
 const char *flow3r_bsp_hw_name = "proto4";

@@ -50,37 +50,7 @@ typedef struct {
 	flow3r_bsp_iopin_t jacksense_right;
 } flow3r_bsp_iodef_t;
 
-#if defined(CONFIG_FLOW3R_HW_GEN_P1)
-static const flow3r_bsp_iodef_t iodef = {
-	.tripos_left = {
-		.left = IPEX(37, 1, .invert = true),
-		.mid = IESP(0, false, .invert = true),
-		.right = IPEX(35, 1, .invert = true),
-	},
-	.tripos_right = {
-		.left = IESP(7, 1, .invert = true),
-		.mid = IESP(6, true, .invert = true),
-		.right = IESP(5, 1, .invert = true),
-	},
-	.trrs_left = {
-		.tip_badgelink_enable = IODUMMY,
-		.ring_badgelink_enable = IODUMMY,
-	},
-	.trrs_right = {
-		.tip_badgelink_enable = IODUMMY,
-		.ring_badgelink_enable = IODUMMY,
-	},
-	.charger_state = IODUMMY,
-	.jacksense_right = IODUMMY,
-};
-const flow3r_bsp_spio_programmable_pins_t flow3r_bsp_spio_programmable_pins = {
-	.badgelink_left_tip = 6,
-	.badgelink_left_ring = 7,
-	.badgelink_right_tip = 4,
-	.badgelink_right_ring = 5,
-};
-#define PORTEXP_NONE
-#elif defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P3)
+#if defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P3)
 static const flow3r_bsp_iodef_t iodef = {
 	.tripos_left = {
 		.left = IESP(3, true, .invert = true),
@@ -194,14 +164,6 @@ static esp_err_t _portexp_update(void) {
 	}
 	return ESP_OK;
 }
-#endif
-
-#ifdef PORTEXP_NONE
-static esp_err_t _portexp_init(void) { return ESP_OK; }
-static void _iopin_portexp_init(const flow3r_bsp_iopin_t *iopin) {}
-static bool _iopin_portexp_get_pin(const flow3r_bsp_iopin_t *iopin) { return false; }
-static void _iopin_portexp_set_pin(const flow3r_bsp_iopin_t *iopin, bool on) {}
-static esp_err_t _portexp_update(void) { return ESP_OK; }
 #endif
 
 static esp_err_t _iopin_esp32_init(const flow3r_bsp_iopin_t *iopin) {

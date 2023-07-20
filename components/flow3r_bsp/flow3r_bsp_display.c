@@ -9,22 +9,6 @@
 
 static const char *TAG = "flow3r-bsp-display";
 
-#if defined(CONFIG_FLOW3R_HW_GEN_P1)
-#define FLOW3R_BSP_GC9A01
-flow3r_bsp_gc9a01_config_t gc9a01_config = {
-	.reset_used = 1,
-	.backlight_used = 0,
-
-	.pin_rst = 38,
-	.pin_sck = 39,
-	.pin_mosi = 41,
-	.pin_cs = 40,
-	.pin_dc = 42,
-
-	.host = 2,
-};
-#elif defined(CONFIG_FLOW3R_HW_GEN_P3) || defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P6)
-#define FLOW3R_BSP_GC9A01
 flow3r_bsp_gc9a01_config_t gc9a01_config = {
 	.reset_used = 0,
 	.backlight_used = 1,
@@ -37,11 +21,6 @@ flow3r_bsp_gc9a01_config_t gc9a01_config = {
 
 	.host = 2,
 };
-#else
-#error "display unimplemented for this badge generation"
-#endif
-
-#ifdef FLOW3R_BSP_GC9A01
 
 static flow3r_bsp_gc9a01_t gc9a01;
 static uint8_t gc9a01_initialized = 0;
@@ -83,4 +62,3 @@ void flow3r_bsp_display_set_backlight(uint8_t percent) {
 	}
 	flow3r_bsp_gc9a01_backlight_set(&gc9a01, percent);
 }
-#endif

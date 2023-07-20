@@ -11,14 +11,7 @@ static SemaphoreHandle_t mutex;
 
 static const char *TAG = "flow3r-bsp-i2c";
 
-#if defined(CONFIG_FLOW3R_HW_GEN_P1)
-const flow3r_i2c_addressdef flow3r_i2c_addresses = {
-	.codec = 0, // p1 has no i2c control channel to codec.
-	.touch_top = 0x2d,
-	.touch_bottom = 0x2c,
-	.portexp = { 0x6e, 0x6d },
-};
-#elif defined(CONFIG_FLOW3R_HW_GEN_P3)
+#if defined(CONFIG_FLOW3R_HW_GEN_P3)
 const flow3r_i2c_addressdef flow3r_i2c_addresses = {
 	.codec = 0x10,
 	.touch_top = 0x2d,
@@ -43,7 +36,6 @@ const flow3r_i2c_addressdef flow3r_i2c_addresses = {
 #error "i2c not implemented for this badge generation"
 #endif
 
-#if defined(CONFIG_FLOW3R_HW_GEN_P3) || defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P6)
 static i2c_config_t i2c_conf = {
     .mode = I2C_MODE_MASTER,
     .sda_io_num = 2,
@@ -52,18 +44,6 @@ static i2c_config_t i2c_conf = {
     .scl_pullup_en = GPIO_PULLUP_ENABLE,
     .master.clk_speed = 400000,
 };
-#elif defined(CONFIG_FLOW3R_HW_GEN_P1)
-static i2c_config_t i2c_conf = {
-    .mode = I2C_MODE_MASTER,
-    .sda_io_num = 10,
-    .scl_io_num = 9,
-    .sda_pullup_en = GPIO_PULLUP_ENABLE,
-    .scl_pullup_en = GPIO_PULLUP_ENABLE,
-    .master.clk_speed = 400000,
-};
-#else
-#error "i2c not implemented for this badge generation"
-#endif
 
 void flow3r_bsp_i2c_init(void) {
 	if (mutex != NULL) {

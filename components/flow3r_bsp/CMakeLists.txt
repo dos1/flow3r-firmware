@@ -9,7 +9,6 @@ idf_component_register(
 		flow3r_bsp_max98091.c
 		flow3r_bsp_leds.c
 		flow3r_bsp_rmtled.c
-		flow3r_bsp_spiled.c
 		flow3r_bsp_spio.c
     INCLUDE_DIRS
 		.

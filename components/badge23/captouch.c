@@ -17,7 +17,6 @@
 
 #define AFE_INCR_CAP 1000
 
-#if defined(CONFIG_FLOW3R_HW_GEN_P3) || defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P6)
 static const uint8_t top_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4};
 static const uint8_t top_stages = 12;
 static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 7, 7, 9, 9, 8, 8, 8};
@@ -25,21 +24,6 @@ static const uint8_t bot_stages = 12;
 static const uint8_t bot_stage_config[] = {0,1,2,3,5,6,7,8,9,10,11,12};
 #define DEFAULT_THRES_TOP 8000
 #define DEFAULT_THRES_BOT 12000
-
-#elif defined(CONFIG_FLOW3R_HW_GEN_P1)
-static const uint8_t top_map[] = {2, 2, 2, 0, 0, 8, 8, 8, 6, 6, 4, 4};
-static const uint8_t top_stages = 12;
-static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 5, 7, 7, 9, 9};
-static const uint8_t bot_stages = 10;
-static const uint8_t top_segment_map[] = {1,2,0,1,2,1,2,0,1,2,1,2}; //idk
-static const uint8_t bot_segment_map[] = {3,0,3,0,3,0,0,3,0,3}; //idk
-static const uint8_t bot_stage_config[] = {0,1,2,3,4,5,6,7,8,9,10,11};
-#define DEFAULT_THRES_TOP 2000
-#define DEFAULT_THRES_BOT 12000
-
-#else
-#error "captouch not implemented for this badge generation"
-#endif
 
 #if defined(CONFIG_FLOW3R_HW_GEN_P4)
 static const uint8_t top_segment_map[] = {1,3,2,2,3,1,1,3,2,1,3,2}; //PETAL_PAD_*
