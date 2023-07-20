@@ -17,11 +17,26 @@ clang-tidy:
   script:
     - "idf.py build"
     - "idf.py clang-check"
-    - "python3 tools/clang-tidy-report.py warnings.txt > clang-tidy-cqual.json"
+    - "python3 tools/codequal-report.py clang-tidy warnings.txt > cqual.json"
   artifacts:
     when: always
     reports:
-      codequality: clang-tidy-cqual.json
+      codequality: cqual.json
+
+mypy:
+  stage: check
+  variables:
+    MYPYPATH: python_payload/mypystubs
+  script:
+    - "set +e +o pipefail"
+    - "mypy python_payload/main_st4m.py --strict --no-color-output > warnings.txt; result=$?"
+    - "python3 tools/codequal-report.py mypy warnings.txt > cqual.json"
+    - "set -e -o pipefail"
+    - "[ $result == 0 ]"
+  artifacts:
+    when: always
+    reports:
+      codequality: cqual.json
 
 build-p3:
   stage: build
