@@ -5,17 +5,9 @@
 , stdenv
 , lib
 , fetchurl
-, makeWrapper
-, buildFHSUserEnv
+, autoPatchelfHook
+, zlib
 }:
-
-let
-  fhsEnv = buildFHSUserEnv {
-    name = "esp32s3-toolchain-env";
-    targetPkgs = pkgs: with pkgs; [ zlib ];
-    runScript = "";
-  };
-in
 
 assert stdenv.system == "x86_64-linux";
 
@@ -28,19 +20,17 @@ stdenv.mkDerivation rec {
     inherit hash;
   };
 
-  buildInputs = [ makeWrapper ];
+  nativeBuildInputs = [
+    autoPatchelfHook
+  ];
 
-  phases = [ "unpackPhase" "installPhase" ];
+  buildInputs = [
+    zlib
+    stdenv.cc.cc.lib
+  ];
 
   installPhase = ''
     cp -r . $out
-    for FILE in $(ls $out/bin); do
-      FILE_PATH="$out/bin/$FILE"
-      if [[ -x $FILE_PATH ]]; then
-        mv $FILE_PATH $FILE_PATH-unwrapped
-        makeWrapper ${fhsEnv}/bin/esp32s3-toolchain-env $FILE_PATH --add-flags "$FILE_PATH-unwrapped"
-      fi
-    done
   '';
 
   meta = with lib; {

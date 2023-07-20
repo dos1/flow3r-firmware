@@ -1,15 +1,29 @@
 stages:
+  - check
   - build
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
 
+default:
+  # built via:
+  #     docker load < $(nix-build nix/docker-image.nix)
+  image: registry.k0.hswaw.net/q3k/flow3r-build:xm5xqlpswrnav5pi36qjphyg8v7gplik
+
+clang-tidy:
+  stage: check
+  variables:
+    IDF_TOOLCHAIN: "clang"
+  script:
+    - "idf.py build"
+    - "idf.py clang-check"
+    - "grep warning: warnings.txt > only-warnings.txt"
+    - "[ -s only-warnings.txt ] && echo 'clang-tidy found issues:' && cat only-warnings.txt && exit 1"
+
 build-p3:
   stage: build
-  tags:
-    - nixos
   script:
-    - nix-shell nix/shell.nix --command "idf.py -g p3 build"
+    - idf.py -g p3 build
   artifacts:
     expose_as: 'Proto 3 ELF'
     paths: ['build/flow3r.elf']
@@ -17,10 +31,8 @@ build-p3:
 
 build-p4:
   stage: build
-  tags:
-    - nixos
   script:
-    - nix-shell nix/shell.nix --command "idf.py -g p4 build"
+    - idf.py -g p4 build
   artifacts:
     expose_as: 'Proto 4 ELF'
     paths: ['build/flow3r.elf']
@@ -28,10 +40,8 @@ build-p4:
 
 build-p6:
   stage: build
-  tags:
-    - nixos
   script:
-    - nix-shell nix/shell.nix --command "idf.py -g p6 build"
+    - idf.py -g p6 build
   artifacts:
     expose_as: 'Proto 6 ELF'
     paths: ['build/flow3r.elf']

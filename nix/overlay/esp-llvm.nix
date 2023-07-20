@@ -3,17 +3,11 @@
 , stdenv
 , lib
 , fetchurl
-, makeWrapper
 , buildFHSUserEnv
+, autoPatchelfHook
+, zlib
+, libxml2
 }:
-
-let
-  fhsEnv = buildFHSUserEnv {
-    name = "esp-llvm-env";
-    targetPkgs = pkgs: with pkgs; [ zlib libxml2 ];
-    runScript = "";
-  };
-in
 
 assert stdenv.system == "x86_64-linux";
 
@@ -26,21 +20,25 @@ stdenv.mkDerivation rec {
     inherit hash;
   };
 
-  buildInputs = [ makeWrapper ];
+  nativeBuildInputs = [
+    autoPatchelfHook
+  ];
 
-  phases = [ "unpackPhase" "installPhase" ];
+  buildInputs = [
+    zlib
+    libxml2
+    stdenv.cc.cc.lib
+  ];
 
   installPhase = ''
     cp -r . $out
-    for FILE in $(ls $out/bin); do
-      FILE_PATH="$out/bin/$FILE"
-      FILE_PATH_UNWRAPPED="$out/.bin-unwrapped/$FILE"
-      mkdir -p $out/.bin-unwrapped
-      if [[ -x $FILE_PATH ]]; then
-        mv $FILE_PATH $FILE_PATH_UNWRAPPED
-        makeWrapper ${fhsEnv}/bin/esp-llvm-env $FILE_PATH --add-flags "$FILE_PATH_UNWRAPPED"
-      fi
-    done
+    # remove unused architectures
+    rm -r $out/riscv32-esp-elf
+    rm -r $out/xtensa-esp32-elf
+    rm -r $out/xtensa-esp32s2-elf
+    rm -r $out/bin/riscv32-*
+    rm -r $out/bin/xtensa-esp32-*
+    rm -r $out/bin/xtensa-esp32s2-*
   '';
 
   meta = with lib; {

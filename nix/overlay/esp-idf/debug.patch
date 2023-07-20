@@ -1,0 +1,20 @@
+diff --git a/components/esp_hw_support/intr_alloc.c b/components/esp_hw_support/intr_alloc.c
+index 40434232ed..a600be34be 100644
+--- a/components/esp_hw_support/intr_alloc.c
++++ b/components/esp_hw_support/intr_alloc.c
+@@ -309,6 +309,7 @@ static int get_available_int(int flags, int cpu, int force, int source)
+     int best=-1;
+     int bestPriority=9;
+     int bestSharedCt=INT_MAX;
++    ESP_LOGI(TAG, "get_available_int: start");
+ 
+     //Default vector desc, for vectors not in the linked list
+     vector_desc_t empty_vect_desc;
+@@ -418,6 +419,7 @@ static int get_available_int(int flags, int cpu, int force, int source)
+         }
+     }
+     ALCHLOG("get_available_int: using int %d", best);
++    ESP_LOGI(TAG, "get_available_int: using int %d", best);
+ 
+     //Okay, by now we have looked at all potential interrupts and hopefully have selected the best one in best.
+     return best;
