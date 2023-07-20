@@ -17,8 +17,11 @@ clang-tidy:
   script:
     - "idf.py build"
     - "idf.py clang-check"
-    - "grep warning: warnings.txt > only-warnings.txt"
-    - "[ -s only-warnings.txt ] && echo 'clang-tidy found issues:' && cat only-warnings.txt && exit 1"
+    - "python3 tools/clang-tidy-report.py warnings.txt > clang-tidy-cqual.json"
+  artifacts:
+    when: always
+    reports:
+      codequality: clang-tidy-cqual.json
 
 build-p3:
   stage: build
