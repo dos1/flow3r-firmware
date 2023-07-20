@@ -27,7 +27,7 @@ def action_extensions(base_actions, project_path=os.getcwd()):
         """
         generation = global_args.generation
         if generation is None:
-            generation = os.environ.get('BADGE_GENERATION', 'proto4')
+            generation = os.environ.get('BADGE_GENERATION', 'proto6')
 
         name = None
         if generation in GENERATIONS:
