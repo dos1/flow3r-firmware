@@ -42,6 +42,10 @@ foreach(_arg ${MICROPY_CPP_DEF})
     list(APPEND MICROPY_CPP_FLAGS ${_prefix}${_arg})
 endforeach()
 list(APPEND MICROPY_CPP_FLAGS ${MICROPY_CPP_FLAGS_EXTRA})
+foreach(_arg ${CMAKE_C_FLAGS})
+    string(STRIP "${_arg}" _arg_stripped)
+    list(APPEND MICROPY_CPP_FLAGS "${_arg_stripped}")
+endforeach()
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
