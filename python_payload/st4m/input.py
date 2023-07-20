@@ -8,24 +8,24 @@ class InputState:
     """
     Current state of inputs from badge user. Passed via think() to every
     Responder.
-    
+
     If you want to detect edges, use the stateful InputController.
     """
-    def __init__(self, petal_pressed: List[bool], left_button: int, right_button: int) -> None:
+
+    def __init__(
+        self, petal_pressed: List[bool], left_button: int, right_button: int
+    ) -> None:
         self.petal_pressed = petal_pressed
         self.left_button = left_button
         self.right_button = right_button
-    
+
     @classmethod
-    def gather(cls) -> 'InputState':
+    def gather(cls) -> "InputState":
         """
         Build InputState from current hardware state. Should only be used by the
         Reactor.
         """
-        petal_pressed = [
-            hardware.get_captouch(i)
-            for i in range(10)
-        ]
+        petal_pressed = [hardware.get_captouch(i) for i in range(10)]
         left_button = hardware.left_button_get()
         right_button = hardware.right_button_get()
 
@@ -48,11 +48,11 @@ class Pressable:
     button repeating.
     """
 
-    PRESSED = 'pressed'
-    REPEATED = 'repeated'
-    RELEASED = 'released'
-    DOWN = 'down'
-    UP = 'up'
+    PRESSED = "pressed"
+    REPEATED = "repeated"
+    RELEASED = "released"
+    DOWN = "down"
+    UP = "up"
 
     def __init__(self, state: bool) -> None:
         self._state = state
@@ -93,7 +93,6 @@ class Pressable:
                     self._prev_state = False
                     self._pressed_at = ts
                     self._repeated = True
-        
 
     @property
     def state(self) -> str:
@@ -162,10 +161,10 @@ class Pressable:
         self._ignoring = 2
         self._repeating = False
         self._repeated = False
-    
+
     def __repr__(self) -> str:
-        return '<Pressable: ' + self.state + '>'
-    
+        return "<Pressable: " + self.state + ">"
+
 
 class PetalState(Pressable):
     def __init__(self, ix: int) -> None:
@@ -180,18 +179,16 @@ class CaptouchState:
     The petals are indexed from 0 to 9 (inclusive). Petal 0 is above the USB-C
     socket, then the numbering continues counter-clockwise.
     """
-    __slots__ = ('petals')
+
+    __slots__ = "petals"
 
     def __init__(self) -> None:
-        self.petals = [
-            PetalState(i)
-            for i in range(10)
-        ]
-    
+        self.petals = [PetalState(i) for i in range(10)]
+
     def _update(self, ts: int, hr: InputState) -> None:
         for i, petal in enumerate(self.petals):
             petal._update(ts, hr.petal_pressed[i])
-    
+
     def _ignore_pressed(self) -> None:
         for petal in self.petals:
             petal._ignore_pressed()
@@ -201,15 +198,17 @@ class TriSwitchHandedness(Enum):
     """
     Left or right shoulder button.
     """
-    left = 'left'
-    right = 'right'
+
+    left = "left"
+    right = "right"
 
 
 class TriSwitchState:
     """
     State of a tri-stat shoulder button
     """
-    __slots__ = ('left', 'middle', 'right', 'handedness')
+
+    __slots__ = ("left", "middle", "right", "handedness")
 
     def __init__(self, h: TriSwitchHandedness) -> None:
         self.handedness = h
@@ -219,7 +218,11 @@ class TriSwitchState:
         self.right = Pressable(False)
 
     def _update(self, ts: int, hr: InputState) -> None:
-        st = hr.left_button if self.handedness == TriSwitchHandedness.left else hr.right_button
+        st = (
+            hr.left_button
+            if self.handedness == TriSwitchHandedness.left
+            else hr.right_button
+        )
         self.left._update(ts, st == -1)
         self.middle._update(ts, st == 2)
         self.right._update(ts, st == 1)
@@ -228,7 +231,7 @@ class TriSwitchState:
         self.left._ignore_pressed()
         self.middle._ignore_pressed()
         self.right._ignore_pressed()
-    
+
 
 class InputController:
     """
@@ -241,12 +244,14 @@ class InputController:
 
     Then, access the captouch/left_shoulder/right_shoulder fields.
     """
+
     __slots__ = (
-        'captouch',
-        'left_shoulder',
-        'right_shoulder',
-        '_ts',
+        "captouch",
+        "left_shoulder",
+        "right_shoulder",
+        "_ts",
     )
+
     def __init__(self) -> None:
         self.captouch = CaptouchState()
         self.left_shoulder = TriSwitchState(TriSwitchHandedness.left)
@@ -268,4 +273,3 @@ class InputController:
         self.captouch._ignore_pressed()
         self.left_shoulder._ignore_pressed()
         self.right_shoulder._ignore_pressed()
-

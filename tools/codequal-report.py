@@ -50,13 +50,13 @@ class Issue:
     fingerprint: str
 
 
-def parse_line(s: str, nocol: bool=False) -> Union[Issue, None]:
+def parse_line(s: str, nocol: bool = False) -> Union[Issue, None]:
     nparts = 4
     if nocol:
         nparts = 3
-    parts = s.split(':', nparts)
+    parts = s.split(":", nparts)
     path = parts[0]
-    path = path.removeprefix(os.getcwd() + '/')
+    path = path.removeprefix(os.getcwd() + "/")
     line = int(parts[1])
     if nocol:
         col = None
@@ -67,17 +67,25 @@ def parse_line(s: str, nocol: bool=False) -> Union[Issue, None]:
         col = int(parts[2])
         rest = parts[4].strip()
     severity: Severity = {
-        'warning': Severity.major,
-        'error': Severity.blocker,
+        "warning": Severity.major,
+        "error": Severity.blocker,
     }.get(level, Severity.info)
-    check = ''
-    if rest.endswith(']'):
-        rest, check = rest.split('[')
+    check = ""
+    if rest.endswith("]"):
+        rest, check = rest.split("[")
         rest = rest.strip()
-        check = check.rstrip(']')
-    location = Location(path=path, positions=Positions(begin=Position(line=line, column=col)))
-    fp = hashlib.md5(f'{check} {path} {line}'.encode()).hexdigest()
-    return Issue(description=rest, check_name=check, severity=severity, location=location, fingerprint=fp)
+        check = check.rstrip("]")
+    location = Location(
+        path=path, positions=Positions(begin=Position(line=line, column=col))
+    )
+    fp = hashlib.md5(f"{check} {path} {line}".encode()).hexdigest()
+    return Issue(
+        description=rest,
+        check_name=check,
+        severity=severity,
+        location=location,
+        fingerprint=fp,
+    )
 
 
 def mypy(p: str) -> List[Issue]:
@@ -85,9 +93,9 @@ def mypy(p: str) -> List[Issue]:
     with open(p) as f:
         for line in f:
             line = line.strip()
-            if line.startswith('Found '):
+            if line.startswith("Found "):
                 continue
-            if line.startswith('Success: '):
+            if line.startswith("Success: "):
                 continue
             v = parse_line(line, nocol=True)
             if v is not None:
@@ -103,7 +111,7 @@ def clang_tidy(p: str) -> List[Issue]:
         in_context = False
         for line in f:
             line = line.strip()
-            if line == 'Enabled checks:':
+            if line == "Enabled checks:":
                 in_checks = True
                 continue
 
@@ -113,7 +121,7 @@ def clang_tidy(p: str) -> List[Issue]:
                 continue
 
             if in_list:
-                if line.split()[0].endswith('clang-tidy'):
+                if line.split()[0].endswith("clang-tidy"):
                     in_context = False
                     continue
                 if not in_context:
@@ -132,9 +140,9 @@ def main() -> None:
 
     kind = sys.argv[1]
     path = sys.argv[2]
-    if kind == 'clang-tidy':
+    if kind == "clang-tidy":
         res = clang_tidy(path)
-    elif kind == 'mypy':
+    elif kind == "mypy":
         res = mypy(path)
     else:
         sys.stderr.write(f"Unknown kind {kind}\n")
@@ -145,5 +153,6 @@ def main() -> None:
     if res != []:
         sys.exit(1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

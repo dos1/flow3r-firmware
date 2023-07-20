@@ -4,7 +4,7 @@ import pygame
 
 
 def set_rgb(ix, r, g, b):
-    ix = ((39-ix) - 2 + 32)%40;
+    ix = ((39 - ix) - 2 + 32) % 40
 
     r = r << 3
     g = g << 2
@@ -16,6 +16,7 @@ def set_rgb(ix, r, g, b):
     if b > 255:
         b = 255
     _sim.set_led_rgb(ix, r, g, b)
+
 
 def set_all_rgb(r, g, b):
     for i in range(40):

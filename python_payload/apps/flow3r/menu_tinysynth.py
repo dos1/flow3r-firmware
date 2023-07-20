@@ -6,6 +6,7 @@ from st3m.system import hardware, audio
 synth = tinysynth(440)
 synth.sustain(1)
 
+
 def set_play(value):
     print("set_controls_overlay")
     if value:

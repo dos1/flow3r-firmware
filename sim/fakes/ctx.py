@@ -16,13 +16,14 @@ class Wasm:
     Wasm wraps access to WebAssembly functions, converting to/from Python types
     as needed. It's intended to be used as a singleton.
     """
+
     def __init__(self):
         store = wasmer.Store(wasmer.engine.JIT(wasmer_compiler_cranelift.Compiler))
         simpath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        wasmpath = os.path.join(simpath, 'wasm', 'ctx.wasm')
-        module = wasmer.Module(store, open(wasmpath, 'rb').read())
+        wasmpath = os.path.join(simpath, "wasm", "ctx.wasm")
+        module = wasmer.Module(store, open(wasmpath, "rb").read())
         wasi_version = wasmer.wasi.get_version(module, strict=False)
-        wasi_env = wasmer.wasi.StateBuilder('badge23sim').finalize()
+        wasi_env = wasmer.wasi.StateBuilder("badge23sim").finalize()
         import_object = wasi_env.generate_import_object(store, wasi_version)
         instance = wasmer.Instance(module, import_object)
         self._i = instance
@@ -34,12 +35,12 @@ class Wasm:
         self._i.exports.free(p)
 
     def ctx_parse(self, ctx, s):
-        s = s.encode('utf-8')
+        s = s.encode("utf-8")
         slen = len(s) + 1
         p = self.malloc(slen)
         mem = self._i.exports.memory.uint8_view(p)
-        mem[0:slen-1] = s
-        mem[slen-1] = 0
+        mem[0 : slen - 1] = s
+        mem[slen - 1] = 0
         self._i.exports.ctx_parse(ctx, p)
         self.free(p)
 
@@ -55,7 +56,9 @@ class Wasm:
         # framebuffer into pygame's surfaces, which is a _huge_ speed benefit
         # (difference between ~10FPS and 500+FPS!).
         BRGA8 = 5
-        return fb, self._i.exports.ctx_new_for_framebuffer(fb, width, height, width * 4, BRGA8)
+        return fb, self._i.exports.ctx_new_for_framebuffer(
+            fb, width, height, width * 4, BRGA8
+        )
 
     def ctx_new_drawlist(self, width, height):
         return self._i.exports.ctx_new_drawlist(width, height)
@@ -65,12 +68,12 @@ class Wasm:
         return self._i.exports.ctx_apply_transform(ctx, *args)
 
     def ctx_text_width(self, ctx, text):
-        s = text.encode('utf-8')
+        s = text.encode("utf-8")
         slen = len(s) + 1
         p = self.malloc(slen)
         mem = self._i.exports.memory.uint8_view(p)
-        mem[0:slen-1] = s
-        mem[slen-1] = 0
+        mem[0 : slen - 1] = s
+        mem[slen - 1] = 0
         res = self._i.exports.ctx_text_width(ctx, p)
         self.free(p)
         return res
@@ -81,7 +84,9 @@ class Wasm:
     def ctx_render_ctx(self, ctx, dctx):
         return self._i.exports.ctx_render_ctx(ctx, dctx)
 
+
 _wasm = Wasm()
+
 
 class Ctx:
     """
@@ -90,12 +95,13 @@ class Ctx:
 
     [1] - https://ctx.graphics/uctx/
     """
-    LEFT = 'left'
-    RIGHT = 'right'
-    CENTER = 'center'
-    END = 'end'
-    MIDDLE = 'middle'
-    BEVEL = 'bevel'
+
+    LEFT = "left"
+    RIGHT = "right"
+    CENTER = "center"
+    END = "end"
+    MIDDLE = "middle"
+    BEVEL = "bevel"
 
     def __init__(self, _ctx):
         self._ctx = _ctx
@@ -107,7 +113,7 @@ class Ctx:
     @text_align.setter
     def text_align(self, v):
         self._emit(f"textAlign {v}")
-    
+
     @property
     def text_baseline(self):
         return None
@@ -127,7 +133,7 @@ class Ctx:
     @property
     def font_size(self):
         return None
-    
+
     @font_size.setter
     def font_size(self, v):
         self._emit(f"fontSize {v:.3f}")
@@ -135,7 +141,7 @@ class Ctx:
     @property
     def global_alpha(self):
         return None
-    
+
     @global_alpha.setter
     def global_alpha(self, v):
         self._emit(f"globalAlpha {v:.3f}")
@@ -167,7 +173,6 @@ class Ctx:
         self._emit(f"gray {v:.3f}")
         return self
 
-
     def rgba(self, r, g, b, a):
         # TODO(q3k): dispatch by type instead of value, warn on
         # ambiguous/unexpected values for type.
@@ -190,11 +195,13 @@ class Ctx:
         return self
 
     def text(self, s):
-        self._emit(f"text \"{s}\"")
+        self._emit(f'text "{s}"')
         return self
 
     def round_rectangle(self, x, y, width, height, radius):
-        self._emit(f"roundRectangle {int(x)} {int(y)} {int(width)} {int(height)} {radius}")
+        self._emit(
+            f"roundRectangle {int(x)} {int(y)} {int(width)} {int(height)} {radius}"
+        )
         return self
 
     def rectangle(self, x, y, width, height):
@@ -225,8 +232,10 @@ class Ctx:
         self._emit(f"fill")
         return self
 
-    def arc(self, x, y , radius, arc_from, arc_to, direction):
-        self._emit(f"arc {int(x)} {int(y)} {int(radius)} {arc_from:.4f} {arc_to:.4f} {1 if direction else 0}")
+    def arc(self, x, y, radius, arc_from, arc_to, direction):
+        self._emit(
+            f"arc {int(x)} {int(y)} {int(radius)} {arc_from:.4f} {arc_to:.4f} {1 if direction else 0}"
+        )
         return self
 
     def text_width(self, text):

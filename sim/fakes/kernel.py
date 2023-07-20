@@ -5,9 +5,11 @@ class FakeHeapKindStats:
         self.total_allocated_bytes = 1337
         self.largest_free_block = 1337
 
+
 class FakeHeapStats:
-    general = FakeHeapKindStats('general')
-    dma = FakeHeapKindStats('dma')
+    general = FakeHeapKindStats("general")
+    dma = FakeHeapKindStats("dma")
+
 
 def heap_stats():
     return FakeHeapStats()

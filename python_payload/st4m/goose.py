@@ -13,6 +13,7 @@ except:
 if TYPE_CHECKING:
     # We're in MyPy.
     from abc import ABCMeta, abstractmethod
+
     class ABCBase(metaclass=ABCMeta):
         pass
 
@@ -26,6 +27,7 @@ else:
     def abstractmethod(f):
         def _fail():
             raise Exception("abstract method call")
+
         return _fail
 
     try:
@@ -39,11 +41,12 @@ else:
         class Enum:
             pass
 
+
 __all__ = [
-    'TYPE_CHECKING',
-    'ABCBase', 'abstractmethod',
-
-    'List', 'Optional',
-
-    'Enum',
+    "TYPE_CHECKING",
+    "ABCBase",
+    "abstractmethod",
+    "List",
+    "Optional",
+    "Enum",
 ]

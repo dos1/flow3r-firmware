@@ -11,7 +11,13 @@ import st4m
 
 from st4m.goose import Optional, List, ABCBase, abstractmethod
 from st4m.ui.view import View, ViewManager, ViewTransitionBlend
-from st4m.ui.menu import MenuItem, MenuController, MenuItemBack, MenuItemForeground, MenuItemNoop
+from st4m.ui.menu import (
+    MenuItem,
+    MenuController,
+    MenuItemBack,
+    MenuItemForeground,
+    MenuItemNoop,
+)
 from st4m import Responder, InputState, Ctx
 
 import math, hardware
@@ -32,6 +38,7 @@ class USBIcon(Responder):
     """
     Found in the bargain bin at an Aldi Süd.
     """
+
     def draw(self, ctx: Ctx) -> None:
         ctx.gray(1.0)
         ctx.arc(-90, 0, 20, 0, 6.28, 0).fill()
@@ -41,7 +48,7 @@ class USBIcon(Responder):
         ctx.move_to(-50, 0).line_to(-10, -40).line_to(20, -40).stroke()
         ctx.arc(20, -40, 15, 0, 6.28, 0).fill()
         ctx.move_to(-30, 0).line_to(10, 40).line_to(40, 40).stroke()
-        ctx.rectangle(40-15, 40-15, 30, 30).fill()
+        ctx.rectangle(40 - 15, 40 - 15, 30, 30).fill()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         pass
@@ -63,6 +70,7 @@ class Sun(Responder):
     """
     A rotating sun widget.
     """
+
     def __init__(self) -> None:
         self.x = 0.0
         self.y = 0.0
@@ -74,12 +82,11 @@ class Sun(Responder):
         pass
 
     def draw(self, ctx: Ctx) -> None:
-
         nrays = 10
         angle_per_ray = 6.28 / nrays
         for i in range(nrays):
             angle = i * angle_per_ray + self.ts / 4000
-            angle %= 3.14159*2
+            angle %= 3.14159 * 2
 
             if angle > 2 and angle < 4:
                 continue
@@ -108,8 +115,8 @@ class MainMenu(MenuController):
     """
 
     __slots__ = (
-        '_ts',
-        '_sun',
+        "_ts",
+        "_sun",
     )
 
     def __init__(self, items: List[MenuItem], vm: ViewManager) -> None:
@@ -122,7 +129,9 @@ class MainMenu(MenuController):
         self._sun.think(ins, delta_ms)
         self._ts += delta_ms
 
-    def _draw_text_angled(self, ctx: Ctx, text: str, angle: float, activity: float) -> None:
+    def _draw_text_angled(
+        self, ctx: Ctx, text: str, angle: float, activity: float
+    ) -> None:
         size = lerp(20, 40, activity)
         color = lerp(0, 1, activity)
         if color < 0.01:
@@ -137,7 +146,7 @@ class MainMenu(MenuController):
     def draw(self, ctx: Ctx) -> None:
         ctx.gray(0)
         ctx.rectangle(-120, -120, 240, 240).fill()
-        
+
         self._sun.draw(ctx)
 
         ctx.font_size = 40
@@ -150,13 +159,14 @@ class MainMenu(MenuController):
 
         for ix, item in enumerate(self._items):
             rot = (ix - current) * angle_per_item
-            self._draw_text_angled(ctx, item.label(), rot, 1-abs(rot))
-    
+            self._draw_text_angled(ctx, item.label(), rot, 1 - abs(rot))
+
 
 class SimpleMenu(MenuController):
     """
     A simple line-by-line menu.
     """
+
     def draw(self, ctx: Ctx) -> None:
         ctx.gray(0)
         ctx.rectangle(-120, -120, 240, 240).fill()
@@ -174,26 +184,35 @@ class SimpleMenu(MenuController):
             ctx.move_to(0, offs).text(item.label())
 
 
-menu_music = SimpleMenu([
-    MenuItemBack(),
-    MenuItemNoop("Harmonic"),
-    MenuItemNoop("Melodic"),
-    MenuItemNoop("TinySynth"),
-    MenuItemNoop("CrazySynth"),
-    MenuItemNoop("Sequencer"),
-], vm)
+menu_music = SimpleMenu(
+    [
+        MenuItemBack(),
+        MenuItemNoop("Harmonic"),
+        MenuItemNoop("Melodic"),
+        MenuItemNoop("TinySynth"),
+        MenuItemNoop("CrazySynth"),
+        MenuItemNoop("Sequencer"),
+    ],
+    vm,
+)
 
-menu_apps = SimpleMenu([
-    MenuItemBack(),
-    MenuItemNoop("captouch"),
-    MenuItemNoop("worms"),
-], vm)
+menu_apps = SimpleMenu(
+    [
+        MenuItemBack(),
+        MenuItemNoop("captouch"),
+        MenuItemNoop("worms"),
+    ],
+    vm,
+)
 
-menu_main = MainMenu([
-    MenuItemForeground("Music", menu_music),
-    MenuItemForeground("Apps", menu_apps),
-    MenuItemNoop("Settings"),
-], vm)
+menu_main = MainMenu(
+    [
+        MenuItemForeground("Music", menu_music),
+        MenuItemForeground("Apps", menu_apps),
+        MenuItemNoop("Settings"),
+    ],
+    vm,
+)
 
 vm.push(menu_main)
 
@@ -207,7 +226,7 @@ class Viewport(Responder):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.vm.think(ins, delta_ms)
-        
+
         self.visible = []
         usb = hardware.usb_connected()
         console = hardware.usb_console_active()
@@ -215,7 +234,7 @@ class Viewport(Responder):
             console = False
         if usb:
             self.visible.append(self.usb)
-        #if console:
+        # if console:
         #    self.visible.append(self.repl)
 
         for v in self.visible:

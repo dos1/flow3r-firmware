@@ -8,7 +8,6 @@ from apps.flow3r import menu_settings, menu_tinysynth, menu_crazysynth
 import time
 
 
-
 def get_menu(app):
     menu_main = menu.Menu("flow3r", has_back=False)
     menu_badge = menu.Menu("badge")

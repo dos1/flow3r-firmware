@@ -20,17 +20,15 @@ class HarmonicApp(Application):
         self.color_intensity = 0
         self.chord_index = None
         self.chord = None
-        self.synths = [
-            tinysynth(440) for i in range(15)
-        ]
+        self.synths = [tinysynth(440) for i in range(15)]
         for i, synth in enumerate(self.synths):
             synth.decay_ms(100)
             synth.sustain(0.5)
-            if(i<5):
+            if i < 5:
                 synth.waveform(1)
                 synth.volume(0.5)
                 synth.release_ms(1200)
-            elif(i<10):
+            elif i < 10:
                 synth.waveform(1)
                 synth.attack_ms(300)
                 synth.volume(0.1)
@@ -75,18 +73,18 @@ class HarmonicApp(Application):
                 else:
                     k = int(i / 2)
                     self.synths[k].tone(self.chord[k])
-                    self.synths[k+5].tone(12+self.chord[k])
-                    self.synths[k+10].tone(7+self.chord[k])
+                    self.synths[k + 5].tone(12 + self.chord[k])
+                    self.synths[k + 10].tone(7 + self.chord[k])
                     self.synths[k].start()
-                    self.synths[k+5].start()
-                    self.synths[k+10].start()
+                    self.synths[k + 5].start()
+                    self.synths[k + 10].start()
                     self.color_intensity = 1.0
             else:
-                if (1+i) % 2:
+                if (1 + i) % 2:
                     k = int(i / 2)
                     self.synths[k].stop()
-                    self.synths[k+5].stop()
-                    self.synths[k+10].stop()
+                    self.synths[k + 5].stop()
+                    self.synths[k + 10].stop()
 
 
 app = HarmonicApp("harmonic")

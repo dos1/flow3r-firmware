@@ -11,7 +11,7 @@ screen_w = 814
 screen_h = 854
 screen = pygame.display.set_mode(size=(screen_w, screen_h))
 simpath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-bgpath = os.path.join(simpath, 'background.png')
+bgpath = os.path.join(simpath, "background.png")
 background = pygame.image.load(bgpath)
 
 
@@ -20,15 +20,16 @@ class Input:
     Input implements an input overlay (for petals or buttons) that can be
     mouse-picked by the user, and in the future also keyboard-controlled.
     """
+
     # Pixels positions of each marker.
     POSITIONS = []
     # Pixel size (diameter) of each marker.
     MARKER_SIZE = 100
 
     # Colors for various states (RGBA).
-    COLOR_HELD = (0x5b, 0x5b, 0x5b, 0xa0)
-    COLOR_HOVER = (0x6b, 0x6b, 0x6b, 0xa0)
-    COLOR_IDLE = (0x8b, 0x8b, 0x8b, 0x80)
+    COLOR_HELD = (0x5B, 0x5B, 0x5B, 0xA0)
+    COLOR_HOVER = (0x6B, 0x6B, 0x6B, 0xA0)
+    COLOR_IDLE = (0x8B, 0x8B, 0x8B, 0x80)
 
     def __init__(self):
         self._state = [False for _ in self.POSITIONS]
@@ -71,40 +72,74 @@ class Input:
         s = self.state()
         for i, (x, y) in enumerate(self.POSITIONS):
             if s[i]:
-                pygame.draw.circle(surface, self.COLOR_HELD, (x, y), self.MARKER_SIZE//2)
+                pygame.draw.circle(
+                    surface, self.COLOR_HELD, (x, y), self.MARKER_SIZE // 2
+                )
             elif i == self._mouse_hover:
-                pygame.draw.circle(surface, self.COLOR_HOVER, (x, y), self.MARKER_SIZE//2)
+                pygame.draw.circle(
+                    surface, self.COLOR_HOVER, (x, y), self.MARKER_SIZE // 2
+                )
             else:
-                pygame.draw.circle(surface, self.COLOR_IDLE, (x, y), self.MARKER_SIZE//2)
+                pygame.draw.circle(
+                    surface, self.COLOR_IDLE, (x, y), self.MARKER_SIZE // 2
+                )
 
 
 class PetalsInput(Input):
     _petal_positions_top = [
-        (406, 172), (164, 352), (254, 637), (554, 637), (652, 348),
+        (406, 172),
+        (164, 352),
+        (254, 637),
+        (554, 637),
+        (652, 348),
     ]
     _petal_positions_bottom = [
-        (213, 162), (99, 527), (402, 746), (710, 527), (597, 167)
+        (213, 162),
+        (99, 527),
+        (402, 746),
+        (710, 527),
+        (597, 167),
     ]
-    POSITIONS = list(itertools.chain(*[
-        [
-            (x + math.cos(i * -1.256 + 1.57) * 40, y + math.sin(i * -1.256 + 1.57) * 40), # base
-            (x + math.cos(i * -1.256 + 5.75) * 40, y + math.sin(i * -1.256 + 5.75) * 40), # cw
-            (x + math.cos(i * -1.256 + 3.66) * 40, y + math.sin(i * -1.256 + 3.66) * 40), # ccw
-        ]
-        for i, (x, y) in enumerate(_petal_positions_top)
-    ] + [
-        [
-            (x + math.cos(i * -1.256 - 2.20) * 40, y + math.sin(i * -1.256 - 2.20) * 40), # tip
-            (x + math.cos(i * -1.256 - 5.34) * 40, y + math.sin(i * -1.256 - 5.34) * 40), # base
-        ]
-        for i, (x, y) in enumerate(_petal_positions_bottom)
-    ]))
+    POSITIONS = list(
+        itertools.chain(
+            *[
+                [
+                    (
+                        x + math.cos(i * -1.256 + 1.57) * 40,
+                        y + math.sin(i * -1.256 + 1.57) * 40,
+                    ),  # base
+                    (
+                        x + math.cos(i * -1.256 + 5.75) * 40,
+                        y + math.sin(i * -1.256 + 5.75) * 40,
+                    ),  # cw
+                    (
+                        x + math.cos(i * -1.256 + 3.66) * 40,
+                        y + math.sin(i * -1.256 + 3.66) * 40,
+                    ),  # ccw
+                ]
+                for i, (x, y) in enumerate(_petal_positions_top)
+            ]
+            + [
+                [
+                    (
+                        x + math.cos(i * -1.256 - 2.20) * 40,
+                        y + math.sin(i * -1.256 - 2.20) * 40,
+                    ),  # tip
+                    (
+                        x + math.cos(i * -1.256 - 5.34) * 40,
+                        y + math.sin(i * -1.256 - 5.34) * 40,
+                    ),  # base
+                ]
+                for i, (x, y) in enumerate(_petal_positions_bottom)
+            ]
+        )
+    )
     MARKER_SIZE = 40
 
     def _index_for_petal_pad(self, petal, pad):
         if petal >= 10:
             raise ValueError("petal cannot be > 10")
-        
+
         # convert from st3m/bsp index into input state index
         top = False
         if petal % 2 == 0:
@@ -117,18 +152,18 @@ class PetalsInput(Input):
             res += 3 * 5
 
         if top:
-            if pad == 1: # ccw
+            if pad == 1:  # ccw
                 res += 2
-            elif pad == 2: # cw
+            elif pad == 2:  # cw
                 res += 1
-            elif pad == 3: # base
+            elif pad == 3:  # base
                 res += 0
             else:
                 raise ValueError("invalid pad number")
         else:
-            if pad == 0: # tip
+            if pad == 0:  # tip
                 res += 0
-            elif pad == 3: # base
+            elif pad == 3:  # base
                 res += 1
             else:
                 raise ValueError("invalid pad number")
@@ -154,13 +189,17 @@ class PetalsInput(Input):
 
 class ButtonsInput(Input):
     POSITIONS = [
-        ( 24, 240), ( 56, 240), ( 88, 240),
-        (724, 240), (756, 240), (788, 240),
+        (24, 240),
+        (56, 240),
+        (88, 240),
+        (724, 240),
+        (756, 240),
+        (788, 240),
     ]
     MARKER_SIZE = 20
-    COLOR_HELD = (0x80, 0x80, 0x80, 0xff)
-    COLOR_HOVER = (0x40, 0x40, 0x40, 0xff)
-    COLOR_IDLE = (0x20, 0x20, 0x20, 0xff)
+    COLOR_HELD = (0x80, 0x80, 0x80, 0xFF)
+    COLOR_HOVER = (0x40, 0x40, 0x40, 0xFF)
+    COLOR_IDLE = (0x20, 0x20, 0x20, 0xFF)
 
 
 class Simulation:
@@ -172,11 +211,46 @@ class Simulation:
     # Pixel coordinates of each LED. The order is the same as the hardware
     # WS2812 chain, not the order as expected by the micropython API!
     LED_POSITIONS = [
-        (660, 455), (608, 490), (631, 554), (648, 618), (659, 690), (655, 770), (571, 746), (502, 711),
-        (452, 677), (401, 639), (352, 680), (299, 713), (241, 745), (151, 771), (147, 682), (160, 607),
-        (176, 549), (197, 491), (147, 453), ( 98, 416), ( 43, 360), (  0, 292), ( 64, 267), (144, 252),
-        (210, 248), (276, 249), (295, 190), (318, 129), (351,  65), (404,   0), (456,  64), (490, 131),
-        (511, 186), (529, 250), (595, 247), (663, 250), (738, 264), (810, 292), (755, 371), (705, 419),
+        (660, 455),
+        (608, 490),
+        (631, 554),
+        (648, 618),
+        (659, 690),
+        (655, 770),
+        (571, 746),
+        (502, 711),
+        (452, 677),
+        (401, 639),
+        (352, 680),
+        (299, 713),
+        (241, 745),
+        (151, 771),
+        (147, 682),
+        (160, 607),
+        (176, 549),
+        (197, 491),
+        (147, 453),
+        (98, 416),
+        (43, 360),
+        (0, 292),
+        (64, 267),
+        (144, 252),
+        (210, 248),
+        (276, 249),
+        (295, 190),
+        (318, 129),
+        (351, 65),
+        (404, 0),
+        (456, 64),
+        (490, 131),
+        (511, 186),
+        (529, 250),
+        (595, 247),
+        (663, 250),
+        (738, 264),
+        (810, 292),
+        (755, 371),
+        (705, 419),
     ]
 
     def __init__(self):
@@ -196,7 +270,9 @@ class Simulation:
         # corresponding surface when there was no change to its render data.
         self._led_surface = pygame.Surface((screen_w, screen_h), flags=pygame.SRCALPHA)
         self._led_surface_dirty = True
-        self._petal_surface = pygame.Surface((screen_w, screen_h), flags=pygame.SRCALPHA)
+        self._petal_surface = pygame.Surface(
+            (screen_w, screen_h), flags=pygame.SRCALPHA
+        )
         self._petal_surface_dirty = True
         self._full_surface = pygame.Surface((screen_w, screen_h), flags=pygame.SRCALPHA)
         self._oled_surface = pygame.Surface((240, 240), flags=pygame.SRCALPHA)
@@ -215,19 +291,13 @@ class Simulation:
         # that is True if the pixel corresponding to this mask's bit is part of
         # the OLED disc, and false otherwise.
         mask = [
-            [
-                math.sqrt((x - 120)**2 + (y - 120)**2) <= 120
-                for x in range(240)
-            ]
+            [math.sqrt((x - 120) ** 2 + (y - 120) ** 2) <= 120 for x in range(240)]
             for y in range(240)
         ]
         # Now, we iterate the mask row-by-row and find the first True bit in
         # it. The offset within that row is our per-row offset for the
         # rendering routine.
-        self._oled_offset = [
-            m.index(True)
-            for m in mask
-        ]
+        self._oled_offset = [m.index(True) for m in mask]
 
     def process_events(self):
         """
@@ -262,14 +332,14 @@ class Simulation:
         surface.fill((0, 0, 0, 0))
         buf = surface.get_buffer()
 
-        fb = fb[:240*240*4]
+        fb = fb[: 240 * 240 * 4]
         for y in range(240):
             # Use precalculated row offset to turn OLED disc into square
             # bounded plane.
             offset = self._oled_offset[y]
             start_offs_bytes = y * 240 * 4
             start_offs_bytes += offset * 4
-            end_offs_bytes = (y+1) * 240 * 4
+            end_offs_bytes = (y + 1) * 240 * 4
             end_offs_bytes -= offset * 4
             buf.write(bytes(fb[start_offs_bytes:end_offs_bytes]), start_offs_bytes)
 
@@ -309,7 +379,7 @@ class Simulation:
         off_y = center_y - (240 // 2)
         full.blit(self._oled_surface, (off_x, off_y))
 
-        screen.blit(full, (0,0))
+        screen.blit(full, (0, 0))
         pygame.display.flip()
 
     def render_gui_lazy(self):
@@ -319,7 +389,7 @@ class Simulation:
         this call.
         """
         target_fps = 60.0
-        d = 1/target_fps
+        d = 1 / target_fps
 
         if self.last_gui_render is None:
             self.render_gui_now()
@@ -362,6 +432,7 @@ def captouch_calibration_active():
 
 import ctx
 
+
 class FramebufferManager:
     def __init__(self):
         self._free = []
@@ -369,7 +440,7 @@ class FramebufferManager:
             fb, c = ctx._wasm.ctx_new_for_framebuffer(240, 240)
             ctx._wasm.ctx_apply_transform(c, 1, 0, 120, 0, 1, 120, 0, 0, 1)
             self._free.append((fb, c))
-    
+
     def get(self):
         if len(self._free) == 0:
             return None, None
@@ -381,7 +452,9 @@ class FramebufferManager:
     def put(self, fb, ctx):
         self._free.append((fb, ctx))
 
+
 fbm = FramebufferManager()
+
 
 def get_ctx():
     dctx = ctx._wasm.ctx_new_drawlist(240, 240)
@@ -435,21 +508,27 @@ def get_button_state(left):
 
 menu_button_left = 0
 
+
 def menu_button_get():
     return get_button_state(menu_button_left)
+
 
 def application_button_get():
     return get_button_state(1 - menu_button_left)
 
+
 def left_button_get():
     return get_button_state(1)
+
 
 def right_button_get():
     return get_button_state(0)
 
+
 def menu_button_set_left(_broken):
     global menu_button_left
     menu_button_left = 1
+
 
 def menu_button_get_left():
     return menu_button_left
@@ -460,18 +539,23 @@ def get_captouch(a):
     _sim.render_gui_lazy()
     return _sim.petals.state_for_petal(a)
 
-#TODO(iggy/q3k do proper positional captouch)
+
+# TODO(iggy/q3k do proper positional captouch)
 def captouch_get_petal_rad(a):
     return 0
+
 
 def captouch_get_petal_phi(a):
     return 0
 
+
 def captouch_get_petal_pad(i, x):
     return 0
 
+
 def freertos_sleep(ms):
     import _time
+
     _time.sleep(ms / 1000.0)
 
 
@@ -482,18 +566,21 @@ def scope_draw(ctx):
     ctx.move_to(x, 0)
     for i in range(240):
         x2 = x + i
-        y2 = math.sin(i/10) * 80
+        y2 = math.sin(i / 10) * 80
         ctx.line_to(x2, y2)
     ctx.line_to(130, 0)
     ctx.line_to(130, 130)
     ctx.line_to(-130, 130)
     ctx.line_to(-130, 0)
 
+
 def usb_connected():
     return True
 
+
 def usb_console_active():
     return True
+
 
 def i2c_scan():
     return [16, 44, 45, 85, 109, 110]

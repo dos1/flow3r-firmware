@@ -11,10 +11,10 @@ class CaptouchPetalPadsState:
     @property
     def tip(self) -> bool:
         return self._tip
-    
+
     @property
     def base(self) -> bool:
-        return  self._base
+        return self._base
 
     @property
     def cw(self) -> bool:
@@ -61,6 +61,7 @@ class CaptouchState:
 
 def read() -> CaptouchState:
     import hardware
+
     hardware._sim.process_events()
     hardware._sim.render_gui_lazy()
     petals = hardware._sim.petals

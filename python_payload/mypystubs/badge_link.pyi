@@ -38,8 +38,8 @@ class Pin(Protocol):
     """
     TODO(q3k): properly define in machine.pyi
     """
-    pass
 
+    pass
 
 class JackPin(Protocol):
     @property
@@ -51,7 +51,6 @@ class JackPin(Protocol):
         badgelink mode.
         """
         ...
-
     def enable(self) -> bool:
         """
         Enable badgelink on this jack, on both ring and tip connectors.
@@ -67,13 +66,11 @@ class JackPin(Protocol):
         currently plugged in (as a safety measure).
         """
         ...
-
     def disable(self) -> None:
         """
         Disable badgelink on this jack, returning it into audio mode.
         """
         ...
-
     def active(self) -> bool:
         """
         Returns true if this pin is currently enabled for badgelink, false if
@@ -100,7 +97,6 @@ class Jack(Protocol):
         individually enabled using the .pin.enable/.pin.disable methods.
         """
         ...
-
     def disable(self) -> None:
         """
         Disable badgelink on this jack, returning it into audio mode.
@@ -109,7 +105,6 @@ class Jack(Protocol):
         individually disabled using the .pin.enable/.pin.disable methods.
         """
         ...
-
     def active(self) -> bool:
         """
         Returns true if this jack is currently fully enabled for badgelink,
@@ -119,7 +114,6 @@ class Jack(Protocol):
         false.
         """
         ...
-
     @property
     def tip(self) -> JackPin:
         """
@@ -130,7 +124,6 @@ class Jack(Protocol):
         badge link on this pin only.
         """
         ...
-
     @property
     def ring(self) -> JackPin:
         """

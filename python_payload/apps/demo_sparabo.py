@@ -21,7 +21,9 @@ class AppSparabo(application.Application):
         self.synth.decay_ms(250)
 
         print("here")
-        self.sequencer = event.Sequence(bpm=160, steps=8, action=self.on_step, loop=True)
+        self.sequencer = event.Sequence(
+            bpm=160, steps=8, action=self.on_step, loop=True
+        )
         self.sequencer.start()
         if self.sequencer.repeat_event:
             self.add_event(self.sequencer.repeat_event)
@@ -34,7 +36,7 @@ class AppSparabo(application.Application):
             synth.start()
 
         self.x, self.y = ui.xy_from_polar(90, -2 * math.pi / 8 * data["step"] + math.pi)
-        self.step = data['step']
+        self.step = data["step"]
 
     def on_draw(self, ctx):
         x, y = self.x, self.y

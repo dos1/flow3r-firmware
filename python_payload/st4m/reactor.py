@@ -4,6 +4,7 @@ from st4m.ui.ctx import Ctx
 
 import time, hardware
 
+
 class Responder(ABCBase):
     """
     Responder is an interface from the Reactor to any running Micropython code
@@ -14,6 +15,7 @@ class Responder(ABCBase):
     The Reactor will call think and draw methods at a somewhat-constant pace in
     order to maintain a smooth system-wide update rate and framerate.
     """
+
     @abstractmethod
     def think(self, ins: InputState, delta_ms: int) -> None:
         """
@@ -37,7 +39,7 @@ class Responder(ABCBase):
         left). Unless specified otherwise by the compositing stack, the screen
         coordinates are +/- 120 in both X and Y (positive numbers towards up and
         right), with 0,0 being the middle of the screen.
-        
+
         The Reactor will then rasterize and blit the result.
 
         The code must not sleep or block during this callback, as that will
@@ -54,7 +56,9 @@ class Reactor:
     It will attempt to run a top Responder with a fixed tickrate a framerate
     that saturates the display rasterization/blitting pipeline.
     """
-    __slots__ = ('_top', '_tickrate_ms', '_last_tick', '_ctx', '_ts')
+
+    __slots__ = ("_top", "_tickrate_ms", "_last_tick", "_ctx", "_ts")
+
     def __init__(self) -> None:
         self._top: Optional[Responder] = None
         self._tickrate_ms: int = 20
@@ -89,14 +93,14 @@ class Reactor:
         if wait > 0:
             hardware.freertos_sleep(wait)
         else:
-            print('too long', wait)
+            print("too long", wait)
 
     def _run_top(self, start: int) -> None:
         # Skip if we have no top Responder.
         if self._top is None:
             return
 
-		# Calculate delta (default to tickrate if running first iteration).
+        # Calculate delta (default to tickrate if running first iteration).
         delta = self._tickrate_ms
         if self._last_tick is not None:
             delta = start - self._last_tick
@@ -106,7 +110,7 @@ class Reactor:
 
         hr = InputState.gather()
 
-		# Think!
+        # Think!
         self._top.think(hr, delta)
 
         # Draw!
@@ -119,4 +123,3 @@ class Reactor:
         if self._ctx is not None and not hardware.display_pipe_full():
             hardware.display_update(self._ctx)
             self._ctx = None
-

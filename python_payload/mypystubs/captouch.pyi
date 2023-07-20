@@ -1,6 +1,5 @@
 from typing import Protocol, List
 
-
 class CaptouchPetalPadsState(Protocol):
     """
     Current state of pads on a captouch petal.
@@ -15,28 +14,24 @@ class CaptouchPetalPadsState(Protocol):
         True if the petals's tip is currently touched.
         """
         ...
-    
     @property
     def base(self) -> bool:
         """
         True if the petal's base is currently touched.
         """
         ...
-
     @property
     def cw(self) -> bool:
         """
         True if the petal's clockwise pad is currently touched.
         """
         ...
-
     @property
     def ccw(self) -> bool:
         """
         True if the petal's counter clockwise pad is currently touched.
         """
         ...
-
 
 class CaptouchPetalState(Protocol):
     @property
@@ -45,21 +40,18 @@ class CaptouchPetalState(Protocol):
         True if any of the petal's pads is currently touched.
         """
         ...
-
     @property
     def top(self) -> bool:
         """
         True if this is a top petal.
         """
         ...
-
     @property
     def bottom(self) -> bool:
         """
         True if this is a bottom petal.
         """
         ...
-
     @property
     def pads(self) -> CaptouchPetalPadsState:
         """
@@ -67,11 +59,11 @@ class CaptouchPetalState(Protocol):
         """
         ...
 
-
 class CaptouchState(Protocol):
     """
     State of captouch sensors, captured at some time.
     """
+
     @property
     def petals(self) -> List[CaptouchPetalState]:
         """
@@ -85,7 +77,6 @@ class CaptouchState(Protocol):
         Pads 1, 3, 5, 7, 9 are Bottom pads.
         """
         ...
-
 
 def read() -> CaptouchState:
     """

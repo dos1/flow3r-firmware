@@ -23,11 +23,12 @@ class ScrollController(st4m.Responder):
     effects like acceleration and past-end-of-list bounce-back. This value
     should be used to render the current state of the scrolling list.
     """
+
     __slots__ = (
-        '_nitems',
-        '_target_position',
-        '_current_position',
-        '_velocity',
+        "_nitems",
+        "_target_position",
+        "_current_position",
+        "_velocity",
     )
 
     def __init__(self) -> None:
@@ -35,7 +36,7 @@ class ScrollController(st4m.Responder):
         self._target_position = 0
         self._current_position = 0.0
         self._velocity: float = 0.0
-    
+
     def set_item_count(self, count: int) -> None:
         """
         Set how many items this scrollable list contains. Currently, updating
@@ -108,7 +109,7 @@ class ScrollController(st4m.Responder):
         Returns true if the scrollable list is at its leftmost (0) position.
         """
         return self._target_position <= 0
-    
+
     def at_right_limit(self) -> bool:
         """
         Returns true if the scrollable list is as its rightmost (Nitems-1)
@@ -147,5 +148,3 @@ class ScrollController(st4m.Responder):
     def _physics_integrate(self, delta: float) -> None:
         self._velocity -= self._velocity * delta * 10
         self._current_position += self._velocity * delta
-
-

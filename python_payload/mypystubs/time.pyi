@@ -1,1 +1,2 @@
-def ticks_ms() -> int: pass
+def ticks_ms() -> int:
+    pass
