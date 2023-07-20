@@ -6,6 +6,8 @@ let
         gcc-xtensa-esp32s3-elf-bin = super.callPackage ./esp32s3-toolchain-bin.nix {};
         openocd-esp32-bin = super.callPackage ./openocd-esp32-bin.nix {};
         esp-idf = super.callPackage ./esp-idf {};
+        esp-llvm = super.callPackage ./esp-llvm.nix {};
+        run-clang-tidy = super.callPackage ./run-clang-tidy {};
       })
     ];
   };
@@ -16,7 +18,9 @@ in with nixpkgs; pkgs.mkShell {
     gcc-xtensa-esp32s3-elf-bin
     openocd-esp32-bin
     esp-idf
+    esp-llvm
     esptool
+    run-clang-tidy
 
     git wget gnumake
     flex bison gperf pkgconfig

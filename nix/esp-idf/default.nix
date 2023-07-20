@@ -99,6 +99,18 @@ let
         pyyaml
       ];
     };
+
+    pyclang = buildPythonPackage rec {
+      pname = "pyclang";
+      version = "0.2.3";
+      src = fetchPypi {
+        inherit pname version;
+        sha256 = "sha256-gl3ZaK7/CpMICJlPdPqHfYXb/3MxlKiMpC4AyUtv7MY=";
+      };
+      propagatedBuildInputs = [
+        pyyaml
+      ];
+    };
   };
 in
 stdenv.mkDerivation rec {
@@ -110,7 +122,7 @@ stdenv.mkDerivation rec {
   # This is so that downstream derivations will have IDF_PATH set.
   setupHook = ./setup-hook.sh;
 
-  propagatedBuildInputs = with python3Packages; [
+  propagatedBuildInputs = (with python3Packages; [
     setuptools click future pyelftools urllib3
     jinja2 itsdangerous pyyaml
 
@@ -155,11 +167,10 @@ stdenv.mkDerivation rec {
         };
       });
     })
-
-    deps.esp-idf-monitor
-    deps.esp-idf-kconfig
-    deps.esp-idf-size
-  ];
+  ]) ++ (with deps; [
+    esp-idf-monitor esp-idf-kconfig esp-idf-size
+    pyclang
+  ]);
 
   patches = [
     ./rack-off-me-nix-mate.patch
