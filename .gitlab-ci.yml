@@ -12,7 +12,7 @@ build-p3:
     - nix-shell nix/shell.nix --command "idf.py -g p3 build"
   artifacts:
     expose_as: 'Proto 3 ELF'
-    paths: ['build/badge23.elf']
+    paths: ['build/flow3r.elf']
     expire_in: 5 hours
 
 build-p4:
@@ -23,7 +23,7 @@ build-p4:
     - nix-shell nix/shell.nix --command "idf.py -g p4 build"
   artifacts:
     expose_as: 'Proto 4 ELF'
-    paths: ['build/badge23.elf']
+    paths: ['build/flow3r.elf']
     expire_in: 5 hours
 
 build-p6:
@@ -34,5 +34,5 @@ build-p6:
     - nix-shell nix/shell.nix --command "idf.py -g p6 build"
   artifacts:
     expose_as: 'Proto 6 ELF'
-    paths: ['build/badge23.elf']
+    paths: ['build/flow3r.elf']
     expire_in: 5 hours
