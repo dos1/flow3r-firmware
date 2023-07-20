@@ -311,6 +311,29 @@ STATIC mp_obj_t vfs_posix_rmdir(mp_obj_t self_in, mp_obj_t path_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(vfs_posix_rmdir_obj, vfs_posix_rmdir);
 
+STATIC mp_obj_t vfs_posix_stat(mp_obj_t self_in, mp_obj_t path_in) {
+    mp_obj_vfs_posix_t *self = MP_OBJ_TO_PTR(self_in);
+    struct stat sb;
+    const char *path = vfs_posix_get_path_str(self, path_in);
+    int ret = stat(path, &sb);
+    if (ret != 0) {
+        mp_raise_OSError(ret);
+    }
+    mp_obj_tuple_t *t = MP_OBJ_TO_PTR(mp_obj_new_tuple(10, NULL));
+    t->items[0] = MP_OBJ_NEW_SMALL_INT(sb.st_mode);
+    t->items[1] = mp_obj_new_int_from_uint(sb.st_ino);
+    t->items[2] = mp_obj_new_int_from_uint(sb.st_dev);
+    t->items[3] = mp_obj_new_int_from_uint(sb.st_nlink);
+    t->items[4] = mp_obj_new_int_from_uint(sb.st_uid);
+    t->items[5] = mp_obj_new_int_from_uint(sb.st_gid);
+    t->items[6] = mp_obj_new_int_from_uint(sb.st_size);
+    t->items[7] = mp_obj_new_int_from_uint(sb.st_atime);
+    t->items[8] = mp_obj_new_int_from_uint(sb.st_mtime);
+    t->items[9] = mp_obj_new_int_from_uint(sb.st_ctime);
+    return MP_OBJ_FROM_PTR(t);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(vfs_posix_stat_obj, vfs_posix_stat);
+
 STATIC const mp_rom_map_elem_t vfs_posix_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_mount), MP_ROM_PTR(&vfs_posix_mount_obj) },
     { MP_ROM_QSTR(MP_QSTR_umount), MP_ROM_PTR(&vfs_posix_umount_obj) },
@@ -323,6 +346,7 @@ STATIC const mp_rom_map_elem_t vfs_posix_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_remove), MP_ROM_PTR(&vfs_posix_remove_obj) },
     { MP_ROM_QSTR(MP_QSTR_rename), MP_ROM_PTR(&vfs_posix_rename_obj) },
     { MP_ROM_QSTR(MP_QSTR_rmdir), MP_ROM_PTR(&vfs_posix_rmdir_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stat), MP_ROM_PTR(&vfs_posix_stat_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(vfs_posix_locals_dict, vfs_posix_locals_dict_table);
 
