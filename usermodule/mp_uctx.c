@@ -1,4 +1,6 @@
+#ifndef __clang__
 #pragma GCC optimize ("O3")
+#endif
 
 #include <stdlib.h>
 #include "py/binary.h"
