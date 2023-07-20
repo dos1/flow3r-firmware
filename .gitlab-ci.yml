@@ -8,7 +8,7 @@ variables:
 default:
   # built via:
   #     docker load < $(nix-build nix/docker-image.nix)
-  image: registry.k0.hswaw.net/q3k/flow3r-build:xm5xqlpswrnav5pi36qjphyg8v7gplik
+  image: registry.k0.hswaw.net/q3k/flow3r-build:kvy1jakg8i4jxx4skhpy6si3vvslsgrb
 
 clang-tidy:
   stage: check

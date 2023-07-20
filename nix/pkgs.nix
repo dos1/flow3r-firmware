@@ -24,6 +24,7 @@ in with nixpkgs; rec {
 
     python3Packages.sphinx
     python3Packages.sphinx_rtd_theme
+    python3Packages.black
     mypy
   ];
   fwdev = fwbuild ++ [

@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -e -x
 
+# Python: black
+black \
+    python_payload \
+    sim \
+    tools
+
+# C: clang-format
 find . \
     -type d \
     \( \

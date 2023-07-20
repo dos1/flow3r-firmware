@@ -18,8 +18,13 @@ pkgs.dockerTools.buildImage {
 
       mypy
 
+      (python3.withPackages (ps: with ps; [
+        sphinx sphinx_rtd_theme
+        black
+      ]))
+
       # random build tools
-      python3 gcc gnused findutils gnugrep
+      gcc gnused findutils gnugrep
       git wget gnumake
       cmake ninja pkgconfig
     ];
