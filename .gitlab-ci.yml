@@ -38,6 +38,12 @@ mypy:
     reports:
       codequality: cqual.json
 
+format:
+  stage: check
+  script:
+    - "bash tools/format.sh"
+    - "[ -z \"$(git status --porcelain -u no)\" ] || (echo 'Differences found, please run tools/format.sh.' && git diff HEAD && exit 1)"
+
 build-p3:
   stage: build
   script:
