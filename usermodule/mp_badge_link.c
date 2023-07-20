@@ -18,41 +18,62 @@
 //
 // See mypystubs/badge_link.pyi for more information.
 
-typedef struct _badgelink_jack_t {
-    mp_obj_base_t base;
-    bool left;
-
-    // Lazy initialized on first access.
-    mp_obj_t pin_tip;
-    mp_obj_t pin_ring;
-} badgelink_jack_t;
-
-const mp_obj_type_t badgelink_jack_type;
-
 typedef struct _badgelink_jack_pin_t {
     mp_obj_base_t base;
 
     bool left;
     bool tip;
 
+    // Lazy initialized on first access.
     mp_obj_t pin;
 } badgelink_jack_pin_t;
 
 const mp_obj_type_t badgelink_jack_pin_type;
 
+typedef struct _badgelink_jack_t {
+    mp_obj_base_t base;
+    bool left;
+
+    badgelink_jack_pin_t tip;
+    badgelink_jack_pin_t ring;
+} badgelink_jack_t;
+
+const mp_obj_type_t badgelink_jack_type;
+
+
 STATIC badgelink_jack_t left = {
     .base = {&badgelink_jack_type},
     .left = true,
 
-    .pin_tip = mp_const_none,
-    .pin_ring = mp_const_none,
+    .tip = {
+        .base = {&badgelink_jack_pin_type},
+        .left = true,
+        .tip = true,
+        .pin = mp_const_none,
+    },
+    .ring = {
+        .base = {&badgelink_jack_pin_type},
+        .left = true,
+        .tip = false,
+        .pin = mp_const_none,
+    },
 };
 STATIC badgelink_jack_t right = {
     .base = {&badgelink_jack_type},
     .left = false,
 
-    .pin_tip = mp_const_none,
-    .pin_ring = mp_const_none,
+    .tip = {
+        .base = {&badgelink_jack_pin_type},
+        .left = false,
+        .tip = true,
+        .pin = mp_const_none,
+    },
+    .ring = {
+        .base = {&badgelink_jack_pin_type},
+        .left = false,
+        .tip = false,
+        .pin = mp_const_none,
+    },
 };
 
 STATIC void badgelink_jack_pin_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
@@ -83,29 +104,23 @@ STATIC void badgelink_jack_print(const mp_print_t *print, mp_obj_t self_in, mp_p
 // From machine_pin.c. Used to make a machine.Pin below.
 mp_obj_t mp_pin_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args);
 
-STATIC mp_obj_t badgelink_jack_pin_make_new(bool left, bool tip) {
-    badgelink_jack_pin_t *self = m_new_obj(badgelink_jack_pin_t);
-    self->base.type = &badgelink_jack_pin_type;
-    self->left = left;
-    self->tip = tip;
-
-    uint32_t unum = left
-        ? (tip
-            ? flow3r_bsp_spio_programmable_pins.badgelink_left_tip
-            : flow3r_bsp_spio_programmable_pins.badgelink_left_ring)
-        : (tip
-            ? flow3r_bsp_spio_programmable_pins.badgelink_right_tip
-            : flow3r_bsp_spio_programmable_pins.badgelink_right_ring);
-    mp_obj_t num = mp_obj_new_int_from_uint(unum);
-    self->pin = mp_pin_make_new(NULL, 1, 0, &num);
-
-    return MP_OBJ_FROM_PTR(self);
-}
-
 STATIC void badgelink_jack_pin_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     badgelink_jack_pin_t *self = MP_OBJ_TO_PTR(self_in);
     if (dest[0] != MP_OBJ_NULL) {
         return;
+    }
+    if (self->pin == mp_const_none) {
+        bool left = self->left;
+        bool tip = self->tip;
+        uint32_t unum = left
+            ? (tip
+                ? flow3r_bsp_spio_programmable_pins.badgelink_left_tip
+                : flow3r_bsp_spio_programmable_pins.badgelink_left_ring)
+            : (tip
+                ? flow3r_bsp_spio_programmable_pins.badgelink_right_tip
+                : flow3r_bsp_spio_programmable_pins.badgelink_right_ring);
+        mp_obj_t num = mp_obj_new_int_from_uint(unum);
+        self->pin = mp_pin_make_new(NULL, 1, 0, &num);
     }
     switch (attr) {
     case MP_QSTR_pin: dest[0] = self->pin; break;
@@ -119,15 +134,9 @@ STATIC void badgelink_jack_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     if (dest[0] != MP_OBJ_NULL) {
         return;
     }
-    if (self->pin_tip == mp_const_none) {
-        self->pin_tip = badgelink_jack_pin_make_new(self->left, true);
-    }
-    if (self->pin_ring == mp_const_none) {
-        self->pin_ring = badgelink_jack_pin_make_new(self->left, false);
-    }
     switch (attr) {
-    case MP_QSTR_tip: dest[0] = self->pin_tip; break;
-    case MP_QSTR_ring: dest[0] = self->pin_ring; break;
+    case MP_QSTR_tip: dest[0] = MP_OBJ_FROM_PTR(&self->tip); break;
+    case MP_QSTR_ring: dest[0] = MP_OBJ_FROM_PTR(&self->ring); break;
     default:
         dest[1] = MP_OBJ_SENTINEL;
     }
@@ -137,7 +146,7 @@ STATIC uint8_t pin_mask_for_jack(mp_obj_t self_in) {
     const mp_obj_type_t *ty = mp_obj_get_type(self_in);
 
     uint8_t pin_mask = 0;
-	bool left = false;
+    bool left = false;
     bool tip = false;
     bool ring = false;
     if (ty == &badgelink_jack_pin_type) {
