@@ -10,6 +10,9 @@ idf_component_register(
 		flow3r_bsp_leds.c
 		flow3r_bsp_rmtled.c
 		flow3r_bsp_spio.c
+		flow3r_bsp_captouch.c
+		flow3r_bsp_ad7147.c
+		flow3r_bsp_ad7147_hw.c
     INCLUDE_DIRS
 		.
     REQUIRES

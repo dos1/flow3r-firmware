@@ -1,0 +1,319 @@
+#include "flow3r_bsp_captouch.h"
+#include "flow3r_bsp_ad7147.h"
+#include "flow3r_bsp_i2c.h"
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+#include "freertos/task.h"
+
+#include "driver/gpio.h"
+
+#include "esp_log.h"
+
+static const char *TAG = "flow3r-bsp-captouch";
+
+typedef struct {
+    size_t petal_number;
+    petal_kind_t pad_kind;
+} pad_mapping_t;
+
+static const pad_mapping_t _map_top[12] = {
+    { 0, petal_pad_ccw },   // 0
+    { 0, petal_pad_base },  // 1
+    { 0, petal_pad_cw },    // 2
+    { 2, petal_pad_cw },    // 3
+    { 2, petal_pad_base },  // 4
+    { 2, petal_pad_ccw },   // 5
+    { 6, petal_pad_ccw },   // 6
+    { 6, petal_pad_base },  // 7
+    { 6, petal_pad_cw },    // 8
+    { 4, petal_pad_ccw },   // 9
+    { 4, petal_pad_base },  // 10
+    { 4, petal_pad_cw },    // 11
+};
+
+static ad7147_chip_t _top = {
+    .name = "top",
+    .nchannels = 12,
+    .sequences = {
+        {
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+        },
+        {
+            -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1,
+        },
+    },
+};
+
+static const pad_mapping_t _map_bot[13] = {
+    { 1, petal_pad_base },  // 0
+    { 1, petal_pad_tip },   // 1
+
+    { 3, petal_pad_base },  // 2
+    { 3, petal_pad_tip },   // 3
+
+    { 5, petal_pad_base },  // 4
+    { 5, petal_pad_tip },   // 5
+
+    { 7, petal_pad_tip },   // 6
+    { 7, petal_pad_base },  // 7
+
+    { 9, petal_pad_tip },   // 8
+    { 9, petal_pad_base },  // 9
+
+    { 8, petal_pad_ccw },   // 10
+    { 8, petal_pad_cw },    // 11
+    { 8, petal_pad_base },  // 12
+};
+
+static ad7147_chip_t _bot = {
+    .name = "bot",
+    .nchannels = 13,
+    .sequences = {
+        /// This is the ideal sequence we want. First, all the bottom sensors.
+        /// Then the top petal.
+
+        //{
+        //     0,  1,  2,  3,  4,  5,
+        //     6,  7,  8,  9, -1, -1,
+        //},
+        //{
+        //    10, 11, 12, -1, -1, -1,
+        //    -1, -1, -1, -1, -1, -1
+        //},
+        
+        /// However, that causes extreme glitches. This seems to make it
+        /// slightly better:
+
+        //{
+        //     0,  1,  2,  3,  4,  5,
+        //     9, -1, -1, -1, -1, -1,
+        //},
+        //{
+        //    10, 11, 12,  6,  7,  8,
+        //     9, -1, -1, -1, -1, -1
+        //},
+
+        /// However again, that's still too glitchy for my taste. So we end up
+        /// just ignoring one of the bottom petal pads and hope to figure this
+        /// out later (tm).
+        /// BUG(q3k): whyyyyyyyyyyyyyyy
+        {
+            0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12
+        },
+        {
+            -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1,
+        },
+    },
+};
+
+static gpio_num_t _interrupt_gpio_top = GPIO_NUM_15;
+static gpio_num_t _interrupt_gpio_bot = GPIO_NUM_16;
+
+static flow3r_bsp_captouch_callback_t _callback = NULL;
+
+static flow3r_bsp_captouch_state_t _state = {};
+
+static bool _processed = false;
+
+static void _on_chip_data(void *user, uint16_t *data, size_t len) {
+    ad7147_chip_t *chip = (ad7147_chip_t *)user;
+    assert(chip == &_top || chip == &_bot);
+    bool top = chip == &_top;
+    const pad_mapping_t *map = top ? _map_top : _map_bot;
+
+    for (size_t i = 0; i < len; i++) {
+        flow3r_bsp_captouch_petal_state_t *petal =
+            &_state.petals[map[i].petal_number];
+        flow3r_bsp_captouch_petal_pad_state_t *pad =
+            flow3r_bsp_captouch_pad_for_petal(petal, map[i].pad_kind);
+        pad->raw = data[i];
+    }
+
+    _processed = true;
+}
+
+static QueueHandle_t _q = NULL;
+
+static void _bot_isr(void *data) {
+    (void)data;
+    bool bot = true;
+    xQueueSendFromISR(_q, &bot, NULL);
+}
+
+static void _top_isr(void *data) {
+    (void)data;
+    bool bot = false;
+    xQueueSendFromISR(_q, &bot, NULL);
+}
+
+static void _kickstart(void) {
+    bool bot = false;
+    xQueueSend(_q, &bot, portMAX_DELAY);
+    bot = true;
+    xQueueSend(_q, &bot, portMAX_DELAY);
+}
+
+static void _task(void *data) {
+    (void)data;
+
+    bool top_ok = true;
+    bool bot_ok = true;
+    esp_err_t ret;
+    for (;;) {
+        bool bot = false;
+        if (xQueueReceive(_q, &bot, portMAX_DELAY) == pdFALSE) {
+            ESP_LOGE(TAG, "Queue receive failed");
+            return;
+        }
+
+        if (bot) {
+            if ((ret = flow3r_bsp_ad7147_chip_process(&_bot)) != ESP_OK) {
+                if (bot_ok) {
+                    ESP_LOGE(TAG,
+                             "Bottom captouch processing failed: %s (silencing "
+                             "future warnings)",
+                             esp_err_to_name(ret));
+                    bot_ok = false;
+                }
+            } else {
+                bot_ok = true;
+            }
+        } else {
+            if ((ret = flow3r_bsp_ad7147_chip_process(&_top)) != ESP_OK) {
+                if (top_ok) {
+                    ESP_LOGE(TAG,
+                             "Top captouch processing failed: %s (silencing "
+                             "future warnings)",
+                             esp_err_to_name(ret));
+                    top_ok = false;
+                }
+            } else {
+                top_ok = true;
+            }
+        }
+
+        _callback(&_state);
+    }
+}
+
+esp_err_t _gpio_interrupt_setup(gpio_num_t num, gpio_isr_t isr) {
+    esp_err_t ret;
+
+    gpio_config_t io_conf = {
+        .intr_type = GPIO_INTR_NEGEDGE,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = true,
+        .pin_bit_mask = (1 << num),
+    };
+    if ((ret = gpio_config(&io_conf)) != ESP_OK) {
+        return ret;
+    }
+    if ((ret = gpio_isr_handler_add(num, isr, NULL)) != ESP_OK) {
+        return ret;
+    }
+    return ESP_OK;
+}
+
+esp_err_t flow3r_bsp_captouch_init(flow3r_bsp_captouch_callback_t callback) {
+    assert(_callback == NULL);
+    assert(callback != NULL);
+    _callback = callback;
+
+    _q = xQueueCreate(2, sizeof(bool));
+    assert(_q != NULL);
+
+    esp_err_t ret;
+
+    for (size_t i = 0; i < 10; i++) {
+        bool top = (i % 2) == 0;
+        _state.petals[i].kind = top ? petal_top : petal_bottom;
+        _state.petals[i].ccw.kind = petal_pad_ccw;
+        _state.petals[i].ccw.threshold = top ? 8000 : 12000;
+        _state.petals[i].cw.kind = petal_pad_cw;
+        _state.petals[i].cw.threshold = top ? 8000 : 12000;
+        _state.petals[i].tip.kind = petal_pad_tip;
+        _state.petals[i].tip.threshold = top ? 8000 : 12000;
+        _state.petals[i].base.kind = petal_pad_base;
+        _state.petals[i].base.threshold = top ? 8000 : 12000;
+    }
+
+    _top.callback = _on_chip_data;
+    _top.user = &_top;
+    _bot.callback = _on_chip_data;
+    _bot.user = &_bot;
+
+    if ((ret = flow3r_bsp_ad7147_chip_init(
+             &_top, flow3r_i2c_addresses.touch_top)) != ESP_OK) {
+        return ret;
+    }
+    if ((ret = flow3r_bsp_ad7147_chip_init(
+             &_bot, flow3r_i2c_addresses.touch_bottom)) != ESP_OK) {
+        return ret;
+    }
+    ESP_LOGI(TAG, "Captouch initialized");
+
+    if ((ret = gpio_install_isr_service(ESP_INTR_FLAG_SHARED |
+                                        ESP_INTR_FLAG_LOWMED)) != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to install GPIO ISR service");
+        return ret;
+    }
+    if ((ret = _gpio_interrupt_setup(_interrupt_gpio_bot, _bot_isr)) !=
+        ESP_OK) {
+        ESP_LOGE(TAG, "Failed to add bottom captouch ISR");
+        return ret;
+    }
+    if ((ret = _gpio_interrupt_setup(_interrupt_gpio_top, _top_isr)) !=
+        ESP_OK) {
+        ESP_LOGE(TAG, "Failed to add top captouch ISR");
+        return ret;
+    }
+
+    xTaskCreate(&_task, "captouch", 4096, NULL, configMAX_PRIORITIES - 1, NULL);
+    _kickstart();
+    return ESP_OK;
+}
+
+const flow3r_bsp_captouch_petal_pad_state_t *
+flow3r_bsp_captouch_pad_for_petal_const(
+    const flow3r_bsp_captouch_petal_state_t *petal, petal_pad_kind_t kind) {
+    switch (kind) {
+        case petal_pad_tip:
+            return &petal->tip;
+        case petal_pad_base:
+            return &petal->base;
+        case petal_pad_cw:
+            return &petal->cw;
+        case petal_pad_ccw:
+            return &petal->ccw;
+    }
+    assert(0);
+}
+
+flow3r_bsp_captouch_petal_pad_state_t *flow3r_bsp_captouch_pad_for_petal(
+    flow3r_bsp_captouch_petal_state_t *petal, petal_pad_kind_t kind) {
+    switch (kind) {
+        case petal_pad_tip:
+            return &petal->tip;
+        case petal_pad_base:
+            return &petal->base;
+        case petal_pad_cw:
+            return &petal->cw;
+        case petal_pad_ccw:
+            return &petal->ccw;
+    }
+    assert(0);
+}
+
+void flow3r_bsp_captouch_calibrate() {
+    _bot.calibration_pending = true;
+    _top.calibration_pending = true;
+}
+
+bool flow3r_bsp_captouch_calibrating() {
+    bool bot = _bot.calibration_pending || _bot.calibration_cycles > 0;
+    bool top = _top.calibration_pending || _top.calibration_cycles > 0;
+    return bot || top;
+}
