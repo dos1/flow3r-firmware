@@ -73,23 +73,25 @@ def foreground():
     adjust_playing_field_to_octave()
 
 
-from st3m.application import Application
+from st4m.application import Application
 
 
 class MelodicApp(Application):
-    def on_init(self):
+    def __init__(self, name):
+        super().__init__(name)
         init()
 
-    def on_draw(self, ctx):
+    def draw(self, ctx):
         ctx.rgb(1, 1, 1).rectangle(-120, -120, 240, 240).fill()
         ctx.rgb(0, 0, 0)
         scope_draw(ctx)
         ctx.fill()
 
-    def on_foreground(self):
+    def on_enter(self):
         foreground()
 
-    def main_foreground(self):
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        super().think(ins, delta_ms)
         run()
 
 
