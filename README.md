@@ -267,6 +267,10 @@ uart.read(5)
 
 ### Documentation
 
+Automatically updated on CI runs of the main branch and lives under https://docs.flow3r.garden
+
+#### Build
+
 To build sphinx docs:
 
 ```
