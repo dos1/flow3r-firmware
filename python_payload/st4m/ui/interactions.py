@@ -172,11 +172,38 @@ class ScrollController(st4m.Responder):
 
 
 class GestureScrollController(ScrollController):
+    """
+    GestureScrollController extends ScrollController to also react to swipe gestures
+    on a configurable petal.
+
+    #TODO (iggy): rewrite both to extend a e.g. "PhysicsController"
+    """
+
     def __init__(self, petal_index, wrap=False):
         super().__init__(wrap)
         self._petal = PetalController(petal_index)
         self._speedbuffer = [0.0]
         self._ignore = 0
+
+    def scroll_left(self) -> None:
+        """
+        Call when the user wants to scroll left by discrete action (eg. button
+        press).
+        """
+        # self._target_position -= 1
+        self._speedbuffer = []
+        self._velocity = -1
+        self._current_position -= 0.3
+
+    def scroll_right(self) -> None:
+        """
+        Call when the user wants to scroll right by discrete action (eg. button
+        press).
+        """
+        # self._target_position += 1
+        self._speedbuffer = []
+        self._velocity = 1
+        self._current_position += 0.3
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         # super().think(ins, delta_ms)
@@ -190,39 +217,30 @@ class GestureScrollController(ScrollController):
         dphi = self._petal._input._dphi
         phase = self._petal._input.phase()
 
-        if self._velocity == 30:
-            print("here")
-            # raise ValueError
-            self._speedbuffer = [1]
-            self._current_position += 0.3
-        elif self._velocity == -30:
-            self._speedbuffer = [-1]
-            self._current_position -= 0.3
-        else:
-            self._speedbuffer.append(self._velocity)
-        # print(self._speedbuffer)
-        while len(self._speedbuffer) > 5:
+        self._speedbuffer.append(self._velocity)
+
+        while len(self._speedbuffer) > 3:
             self._speedbuffer.pop(0)
+
         speed = sum(self._speedbuffer) / len(self._speedbuffer)
+
         speed = min(speed, 0.008)
         speed = max(speed, -0.008)
 
         if phase == self._petal._input.ENDED:
-            self._speedbuffer = [0 if abs(speed) < 0.005 else speed]
+            # self._speedbuffer = [0 if abs(speed) < 0.005 else speed]
+            while len(self._speedbuffer) > 3:
+                print("sb:", self._speedbuffer)
+                self._speedbuffer.pop()
         elif phase == self._petal._input.UP:
             pass
-            # self._speedbuffer.append(speed * 0.85)
         elif phase == self._petal._input.BEGIN:
             self._ignore = 5
-            self._speedbuffer = [0.0]
+            # self._speedbuffer = [0.0]
         elif phase == self._petal._input.RESTING:
             self._speedbuffer.append(0.0)
         elif phase == self._petal._input.MOVED:
             impulse = -dphi / delta_ms
-            # if impulse > 10:
-            #    self._target_position -= 1
-            # elif impulse < -10:
-            #    self._target_position += 1
             self._speedbuffer.append(impulse)
 
         if abs(speed) < 0.0001:
@@ -248,52 +266,27 @@ class GestureScrollController(ScrollController):
             # and abs(self._velocity)
         ):
             self._velocity = 0
-            # self._speedbuffer = []
             self._speedbuffer.append(0)
             self._current_position = round(self._current_position)
+            self._target_position = self._current_position
             # print("LOCK")
             return
-        # if abs(self._velocity) <= 0.0001:
-        #    self._velocity = 0
 
         if abs(self._velocity) > 0.001:
-            # self._velocity *= 0.7
             self._speedbuffer.append(-self._velocity)
             # print("BREAKING")
             return
 
         if self._velocity >= 0 and microstep > 0:
-            # self._velocity += microstep / 5
-            # self._speedbuffer.append(microstep / 10)
             self._speedbuffer.append(max(self._velocity, 0.01) * microstep * 10)
             # print("1")
         elif self._velocity < 0 and microstep > 0:
-            # self._velocity += microstep / 100
-            # self._speedbuffer.append(microstep / 5)
             self._speedbuffer.append(-self._velocity)
             # print("2")
         elif self._velocity > 0 and microstep < 0:
-            # self._speedbuffer.append(microstep / 5)
             self._speedbuffer.append(-self._velocity * 0.5)
-            # self._velocity = max(self._velocity + microstep, 0)
-            # if self._velocity == 0:
-            #    self._speedbuffer = []
             # print("3")
 
         elif self._velocity <= 0 and microstep < 0:
-            # self._velocity += microstep / 20
-            # self._speedbuffer.append(microstep / 10)
             self._speedbuffer.append(min(self._velocity, -0.01) * abs(microstep) * 10)
             # print("4")
-
-        # self._speedbuffer.append(self._velocity)
-        # if self._velocity > 0:
-        #    self._velocity -= microstep / 100
-        # else:
-        #    self._velocity += microstep / 100
-        # if self._velocity > 0 and microstep > 0:
-        #    self._velocity -= (0.5 - microstep) / 1000
-        # if self._velocity < 0 and microstep < 0:
-        #    self._velocity -= (-0.5 + microstep) / 1000
-
-        # print(phase, self._speedbuffer)

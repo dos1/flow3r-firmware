@@ -240,12 +240,6 @@ class Touchable(Pressable):
 
         self._dphi = v
 
-        #        self._dphi = min(
-        #            self._polar[1] - self._prev_polar[1],
-        #    self._polar[1] + 2 * math.pi - (self._prev_polar[1]),
-        #    self._polar[1] - 2 * math.pi - (self._prev_polar[1]),
-        #       )
-
         super()._update(ts, state)
         if self.state != self.DOWN:
             self._dx = self._dy = self._dphi = self._dr = 0
