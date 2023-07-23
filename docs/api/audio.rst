@@ -97,6 +97,50 @@ the "headphone" variant is chosen, else the "speaker" variant is chosen.
    :code:`audio_{headphones_/speaker_/}set_{maximum/minimum}_volume_` and 0 if
    in a fake mute condition.
 
+.. py:function:: headphones_line_in_set_hardware_thru(enable : bool)
+.. py:function:: speaker_line_in_set_hardware_thru(enable : bool)
+.. py:function:: line_in_set_hardware_thru(enable : bool)
+
+   These route whatever is on the line in port directly to the headphones or
+   speaker respectively (enable = 1), or don't (enable = 0). Is affected by mute
+   and coarse hardware volume settings, however software fine volume is not
+   applied.
+
+   Good for testing, might deprecate later, idk~
+
+.. py:function:: input_set_source(source : int)
+.. py:function:: input_get_source() -> int
+
+   The codec can transmit audio data from different sources. This function
+   enables one or no source as provided by the ``INPUT_SOURCE_*`` constants.
+
+   Note: The onboard digital mic turns on an LED on the top board if it receives
+   a clock signal which is considered a good proxy for its capability of reading
+   data.
+
+.. py:data:: INPUT_SOURCE_NONE
+.. py:data:: INPUT_SOURCE_LINE_IN
+.. py:data:: INPUT_SOURCE_HEADSET_MIC
+.. py:data:: INPUT_SOURCE_ONBOARD_MIC
+
+.. py:function:: headset_set_gain_dB(gain_dB : int)
+.. py:function:: headset_get_gain_dB() -> int
+
+   Hardware preamp gain, 0dB-50dB. TODO: figure out if int/float inconsistency
+   is a good thing here compared to all other _dB functions.
+
+.. py:function:: input_thru_set_volume_dB(vol_dB : float)
+.. py:function:: input_thru_get_volume_dB() -> float
+.. py:function:: input_thru_set_mute(mute : bool)
+.. py:function:: input_thru_get_mute() -> bool
+
+   You can route whatever source is selected with input_set_source() to
+   the audio output. Use these to control volume and mute.
+
+.. py:function:: codec_i2c_write(reg : int, data : int)
+
+   Write audio codec register. Obviously very unsafe. Have fun.
+
 
 Headphone port policy
 ---------------------

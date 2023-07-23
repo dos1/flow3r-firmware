@@ -215,7 +215,7 @@ STATIC mp_obj_t mp_line_in_set_hardware_thru(mp_obj_t enable) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_line_in_set_hardware_thru_obj,
                                  mp_line_in_set_hardware_thru);
 
-STATIC mp_obj_t mp_input_set_source(mp_obj_t enable) {
+STATIC mp_obj_t mp_input_set_source(mp_obj_t source) {
     st3m_audio_input_set_source(mp_obj_get_int(enable));
     return mp_const_none;
 }
