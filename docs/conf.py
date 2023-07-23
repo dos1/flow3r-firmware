@@ -1,4 +1,6 @@
 import os
+import sys
+import shutil
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -17,6 +19,7 @@ author = 'ccc'
 
 extensions = [
     'sphinx_rtd_theme',
+    'sphinx.ext.autodoc',
 ]
 
 templates_path = ['_templates']
@@ -38,3 +41,14 @@ html_theme_options = {
     'logo_only': True,
     'style_nav_header_background': "#000",
 }
+
+def setup(app):
+    tmpdir = "_build/mypystubs"
+    shutil.rmtree(tmpdir, ignore_errors=True)
+    shutil.copytree("../python_payload/mypystubs", tmpdir)
+    for filename in os.listdir(tmpdir):
+        full_path = os.path.join(tmpdir, filename)
+        os.rename(full_path, full_path.replace(".pyi", ".py"))
+
+    sys.path.insert(0, os.path.abspath(tmpdir))
+    sys.path.insert(1, os.path.abspath("../python_payload"))
