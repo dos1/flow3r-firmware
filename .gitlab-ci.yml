@@ -71,14 +71,25 @@ build-p6:
     paths: ['build/flow3r.elf']
     expire_in: 5 hours
 
-pages:
+.pages: &pages
   stage: build
   script:
     - cd docs
     - make html
     - mv _build/html ../public
+
+preview pages:
+  <<: *pages
   artifacts:
     paths: ['public']
-  # only for main branch public docs
-  #rules:
-  #  - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    # shorter artifacts keep duration to be storage friendly
+    expire_in: 10m
+
+# only update public page for CI runs on protected default branch
+pages:
+  <<: *pages
+  rules:
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+  artifacts:
+    paths: ['public']
+    expire_in: 1d
