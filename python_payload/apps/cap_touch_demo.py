@@ -7,9 +7,8 @@ import cmath
 import math
 import time
 
-import captouch
-
-from st3m import utils, application, ui, event
+import hardware
+from st4m import application
 
 
 class Dot:
@@ -32,24 +31,26 @@ class Dot:
 
 
 class CapTouchDemo(application.Application):
-    def on_init(self):
+    def __init__(self, name):
+        super().__init__(name)
         self.dots = []
         self.last_calib = None
-        self.ui_autocalib = ui.IconLabel("Autocalib done", size=30)
+        # self.ui_autocalib = ui.IconLabel("Autocalib done", size=30)
 
-        self.add_event(
-            event.Event(
-                name="captouch_autocalib",
-                action=self.do_autocalib,
-                condition=lambda data: data["type"] == "button"
-                and data["index"] == 0
-                and data["change"]
-                and data["from"] == 2,
-                enabled=True,
-            )
-        )
+        # self.add_event(
+        #    event.Event(
+        #        name="captouch_autocalib",
+        #        action=self.do_autocalib,
+        #        condition=lambda data: data["type"] == "button"
+        #        and data["index"] == 0
+        #        and data["change"]
+        #        and data["from"] == 2,
+        #        enabled=True,
+        #    )
+        # )
 
-    def main_foreground(self):
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        super().think(ins, delta_ms)
         self.dots = []
         cps = captouch.read()
         for i in range(10):
@@ -65,13 +66,17 @@ class CapTouchDemo(application.Application):
 
             self.dots.append(Dot(size, x.imag, x.real))
 
-    def on_draw(self, ctx):
+    def draw(self, ctx):
+        # print(self.last_calib)
+
+        # TODO (q3k) bug: we have to do this, otherwise we have horrible blinking
+        ctx.rgb(1, 1, 1)
+
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
-        for i, dot in enumerate(self.dots):
             dot.draw(i, ctx)
-        if not self.last_calib is None and self.last_calib > 0:
-            self.last_calib -= 1
-            self.ui_autocalib.draw(ctx)
+        # if not self.last_calib is None and self.last_calib > 0:
+        #    self.last_calib -= 1
+        #    self.ui_autocalib.draw(ctx)
 
     def do_autocalib(self, data):
         log.info("Performing captouch autocalibration")

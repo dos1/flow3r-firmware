@@ -44,10 +44,23 @@ class AppWorms(application.Application):
         self.just_shown = True
 
     def draw(self, ctx):
-        if self.bufn == 0 or self.bufn == 1:
+        if self.bufn <= 5:
+            # TODO (q3k) bug: we have to do this, otherwise we have horrible blinking
+
             ctx.rgb(*ui.BLUE).rectangle(
                 -ui.WIDTH / 2, -ui.HEIGHT / 2, ui.WIDTH, ui.HEIGHT
             ).fill()
+            ctx.rgb(1, 1, 1)
+
+            ctx.rgb(*ui.BLUE).rectangle(
+                -ui.WIDTH / 2, -ui.HEIGHT / 2, ui.WIDTH, ui.HEIGHT
+            ).fill()
+            ctx.rgb(1, 1, 1)
+
+            ctx.rgb(*ui.BLUE).rectangle(
+                -ui.WIDTH / 2, -ui.HEIGHT / 2, ui.WIDTH, ui.HEIGHT
+            ).fill()
+
             ctx.text_align = ctx.CENTER
             ctx.text_baseline = ctx.MIDDLE
             ctx.move_to(0, 0).rgb(*ui.WHITE).text("touch me :)")
@@ -63,10 +76,10 @@ class AppWorms(application.Application):
         super().think(ins, delta_ms)
 
         # Simulation is currently locked to FPS.
-        if self.bufn > 3:
+        if self.bufn > 7:
             for w in self.worms:
                 w.move()
-            self.bufn = 2
+            self.bufn = 6
         for index, petal in enumerate(self.input.captouch.petals):
             if petal.pressed or petal.repeated:
                 self.worms.append(Worm(tau * index / 10 + math.pi))
@@ -74,7 +87,7 @@ class AppWorms(application.Application):
     def handle_input(self, data):
         worms = self.worms
         worms.append(Worm(data.get("index", 0) * 2 * math.pi / 10 + math.pi))
-        if len(worms) > 10:
+        while len(worms) > 10:
             worms.pop(0)
 
 

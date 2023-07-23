@@ -3,7 +3,6 @@ from hardware import *
 import captouch
 import leds
 
-
 chords = [
     [-4, 0, 3, 8, 10],
     [-3, 0, 5, 7, 12],
@@ -13,11 +12,13 @@ chords = [
 ]
 
 
-from st3m.application import Application
+from st4m.application import Application
 
 
 class HarmonicApp(Application):
-    def on_init(self):
+    def __init__(self, name):
+        super().__init__(name)
+
         self.color_intensity = 0
         self.chord_index = None
         self.chord = None
@@ -52,10 +53,7 @@ class HarmonicApp(Application):
             self.chord = chords[i]
             leds.update()
 
-    def on_foreground(self):
-        pass
-
-    def on_draw(self, ctx):
+    def draw(self, ctx):
         i = self.color_intensity
         ctx.rgb(i, i, i).rectangle(-120, -120, 240, 240).fill()
 
@@ -63,7 +61,8 @@ class HarmonicApp(Application):
         scope_draw(ctx)
         ctx.fill()
 
-    def main_foreground(self):
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        super().think(ins, delta_ms)
         if self.color_intensity > 0:
             self.color_intensity -= self.color_intensity / 20
         cts = captouch.read()
