@@ -54,7 +54,7 @@ melodic._view_manager = vm
 nick._view_manager = vm
 captouch._view_manager = vm
 
-menu_music = SunMenu(
+menu_music = SimpleMenu(
     [
         MenuItemBack(),
         MenuItemForeground("Harmonic", harmonic),
@@ -66,7 +66,7 @@ menu_music = SunMenu(
     vm,
 )
 
-menu_apps = SunMenu(
+menu_apps = SimpleMenu(
     [
         MenuItemBack(),
         MenuItemForeground("captouch", captouch),
@@ -76,7 +76,7 @@ menu_apps = SunMenu(
 )
 
 
-menu_badge = SunMenu(
+menu_badge = SimpleMenu(
     [
         MenuItemBack(),
         MenuItemForeground("nick", nick),

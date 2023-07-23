@@ -72,7 +72,6 @@ class ScrollController(st4m.Responder):
             self._current_position = 0
             self._velocity = 0
             return
-
         if self.wrap:
             self._target_position = self._target_position % self._nitems
         else:
@@ -248,13 +247,19 @@ class GestureScrollController(ScrollController):
 
         self._velocity = speed
 
-        self._current_position = (
-            self._current_position + self._velocity * delta_ms
-        ) % self._nitems
+        self._current_position = self._current_position + self._velocity * delta_ms
+
+        if self.wrap:
+            self._current_position = self._current_position % self._nitems
+        elif round(self._current_position) < 0:
+            self._current_position = 0
+        elif round(self._current_position) >= self._nitems:
+            self._current_position = self._nitems - 1
 
         if phase != self._petal._input.UP:
             return
 
+        pos = round(self._current_position)
         microstep = round(self._current_position) - self._current_position
         # print("micro:", microstep)
         # print("v", self._velocity)
