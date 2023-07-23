@@ -70,3 +70,15 @@ build-p6:
     expose_as: 'Proto 6 ELF'
     paths: ['build/flow3r.elf']
     expire_in: 5 hours
+
+pages:
+  stage: build
+  script:
+    - cd docs
+    - make html
+    - mv _build/html ../public
+  artifacts:
+    paths: ['public']
+  # only for main branch public docs
+  #rules:
+  #  - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
