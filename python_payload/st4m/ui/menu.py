@@ -101,7 +101,7 @@ class MenuController(ViewWithInputState):
 
     def __init__(self, items: List[MenuItem], vm: Optional[ViewManager]) -> None:
         self._items = items
-        self._scroll_controller = GestureScrollController(0)
+        self._scroll_controller = GestureScrollController(2)
         self._scroll_controller.set_item_count(len(items))
         self._view_manager = vm
 
