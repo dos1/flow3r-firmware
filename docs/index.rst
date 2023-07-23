@@ -22,6 +22,7 @@ Welcome to flow3r's documentation!
 
    api/audio.rst
    api/badge_link.rst
+   api/captouch.rst
    api/hardware.rst
    api/kernel.rst
    api/synth.rst

@@ -136,4 +136,4 @@ class Jack(Protocol):
         ...
 
 left: Jack
-right: JackKhizqrU9ANxlu5sP
+right: Jack
