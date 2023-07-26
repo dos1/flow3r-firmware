@@ -15,6 +15,7 @@ Welcome to flow3r's documentation!
    badge/programming.rst
    badge/firmware.rst
    badge/badge_link.rst
+   badge/bl00mbox.rst
 
 .. toctree::
    :maxdepth: 1
@@ -25,7 +26,6 @@ Welcome to flow3r's documentation!
    api/captouch.rst
    api/hardware.rst
    api/kernel.rst
-   api/synth.rst
    api/ctx.rst
 
 

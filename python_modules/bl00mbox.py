@@ -16,6 +16,15 @@ class OutputMixer():
             ret += "\n" + con.__repr__()
         return ret
 
+    @property
+    def value(self):
+        return len(self.connections)
+    @value.setter
+    def value(self, val):
+        if isinstance(val, SignalOutput):
+            val.value = self
+    
+
 class Signal:
     def __init__(self, bud, signal_num):
         self._bud = bud
