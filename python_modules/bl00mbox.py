@@ -6,17 +6,18 @@ import math
 import bl00mbox_patches as patches
 import bl00mbox_helpers as helpers
 
-class OutputMixer():
+class ChannelMixer():
     def __init__(self, channel_num):
         self.channel_num = channel_num
         self.connections = []
         pass
     def __repr__(self):
-        ret = "[CHANNEL OUTPUT]"
+        ret = "[channel mixer]"
         if len(self.connections) > 0:
             ret += "\nconnections:" 
         for con in self.connections:
-            ret += "\n" + con.__repr__()
+            ret += "\n ^== " + con.name
+            ret +=  " in [bud " + str(con._bud.bud_num) + "] " + con._bud.name
         return ret
 
     @property
@@ -38,8 +39,29 @@ class Signal:
         self.hints = ''
 
     def __repr__(self):
-        ret = "[" + str(self._signal_num) + "] "
-        ret += self.name + ": " + str(self.value) + " (" + self.hints + ")"
+        ret = self.name + " [" + self.hints + "]: " 
+        conret = []
+        direction = " <?> "
+        if isinstance(self, SignalInput):
+            direction = " <= "
+            if len(self.connections):
+                ret += str(self.connections[0].value)
+            else:
+                ret += str(self.value)
+        elif isinstance(self, SignalOutput):
+            direction = " => "
+            ret += str(self.value)
+            
+        for con in self.connections:
+            if isinstance(con, Signal):
+                conret += [direction + con.name + " in [bud " + str(con._bud.bud_num) + "] " +con._bud.name ]
+            if isinstance(con, ChannelMixer):
+                conret += [" ==> [channel mixer]"]
+        nl = "\n"
+        if len(conret) > 1:
+            ret += "\n"
+            nl += "  "
+        ret += nl.join(conret)
         return ret
 
     @property
@@ -51,7 +73,7 @@ class SignalOutput(Signal):
     def value(self, val):
         if isinstance(val, SignalInput):
             val.value = self
-        elif isinstance(val, OutputMixer):
+        elif isinstance(val, ChannelMixer):
             if val.channel_num == self._bud.channel_num:
                 if sys_bl00mbox.channel_connect_signal_to_output_mixer(self._bud.channel_num, self._bud.bud_num, self._signal_num):
                     self.connections += [val]
@@ -103,7 +125,7 @@ class SignalInputPitch(SignalInput):
 
     def __repr__(self):
         ret = SignalInput.__repr__(self)
-        ret += " " + str(self.tone) + "semitones/" + str(self.freq) + "Hz"
+        ret += " / " + str(self.tone) + " semitones / " + str(self.freq) + "Hz"
         return ret
     
 
@@ -134,18 +156,16 @@ class Bud:
         self.plugin_id = plugin_id
         self.bud_num = sys_bl00mbox.channel_new_bud(self.channel_num, self.plugin_id)
         channel.buds += [self]
-        self.name = "trad_osc"
+        self.name = sys_bl00mbox.channel_bud_get_name(self.channel_num, self.bud_num)
         self.nick = nick
         self.signals = SignalList(self)
 
     def __repr__(self):
-        ret = "[BUD]"
+        ret = "[bud " + str(self.bud_num) + "] " + self.name
         if self.nick != "":
             ret += " \"" + self.nick + "\" "
-        ret += "\nplugin: " + self.name + " (" + str(self.plugin_id) + ")"
-        ret += "\nsignals:"
         for sig in self.signals._list:
-            ret += "\n  " + repr(sig)
+            ret += "\n  " + "\n  ".join(repr(sig).split("\n"))
         return ret
 
 class Channel:
@@ -155,15 +175,15 @@ class Channel:
         self.nick = nick
         #self.volume = sys_bl00mbox.channel_get_volume(self.channel_num)
         self.volume = 3000
-        self.output = OutputMixer(self.channel_num)
+        self.mixer = ChannelMixer(self.channel_num)
     
     def __repr__(self):
-        ret = "[CHANNEL]"
+        ret = "[channel " + str(self.channel_num) + "]"
         if self.nick != "":
             ret += " \"" + self.nick + "\" "
         ret += "\nvolume: " + str(sys_bl00mbox.channel_get_volume(self.channel_num))
         ret += "\nbuds: " + str(len(self.buds))
-        ret += "\noutput mixer connections: " + str(len(self.output.connections))
+        ret += "\noutput mixer connections: " + str(len(self.mixer.connections))
         return ret
 
     def new_bud(self, plugin_id):

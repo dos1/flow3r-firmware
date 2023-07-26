@@ -14,17 +14,17 @@ class tinysynth(bl00mboxPatch):
         self.osc = chan.new_bud(420)
         self.env = chan.new_bud(42)
         self.amp = chan.new_bud(69)
-        self.amp.signals.output.value = chan.output
+        self.amp.signals.output.value = chan.mixer
         self.amp.signals.gain.value = self.env.signals.output
         self.amp.signals.input.value = self.osc.signals.output
         self.env.signals.sustain.value = 0
         self.env.signals.decay.value = 500
 
     def __repr__(self):
-        ret = "[PATCH] tinysynth"
-        ret += "\n" + repr(self.osc)
-        ret += "\n" + repr(self.env)
-        ret += "\n" + repr(self.amp)
+        ret = "[patch] tinysynth"
+        ret += "\n  " + "\n  ".join(repr(self.osc).split("\n"))
+        ret += "\n  " + "\n  ".join(repr(self.env).split("\n"))
+        ret += "\n  " + "\n  ".join(repr(self.amp).split("\n"))
         return ret    
 
     def tone(self, val):
@@ -67,7 +67,7 @@ class tinysynth_fm(tinysynth):
         ret = ret.split("\n")
         ret[0] += "_fm"
         ret = "\n".join(ret)
-        ret += "\n" + repr(self.mod_osc)
+        ret += "\n  " + "\n  ".join(repr(self.mod_osc).split("\n"))
         return ret
 
     def fm(self,val):

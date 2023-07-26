@@ -180,6 +180,14 @@ uint16_t bl00mbox_channel_bud_get_num_signals(uint8_t channel, uint32_t bud_inde
     return bud->plugin->len_signals;
 }
 
+char * bl00mbox_channel_bud_get_name(uint8_t channel, uint32_t bud_index){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return false;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return false;
+    return bud->plugin->descriptor->name;
+}
+
 char * bl00mbox_channel_bud_get_signal_name(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index){
     bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
     if(chan == NULL) return false;

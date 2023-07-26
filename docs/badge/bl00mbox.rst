@@ -25,7 +25,7 @@ Upcoming features
 4) Proper channel management (we're faking it rn, all is on Channel 0). Medium urgency.
 
 
-Basic usage
+Using patches
 -------------
 
 In bl00mbox all sound sources live in a channel. This allows for easy 
@@ -36,6 +36,38 @@ with a channel instance, but you can also spawn one directly:
 
     import bl00mbox
     blm = bl00mbox.Channel()
+    blm.volume = 5000
+
+The easiest way to get sound is to use patches. These are "macroscopic" units
+that directly connect to the output and provide a compact UI. Here's how to
+create one:
+
+.. code-block:: python
+
+    # no enter, just tab for autocomplete to see patches
+    bl00mbox.patches.
+    # create a patch instance
+    tiny = blm.new_patch(bl00mbox.patches.tinysynth_fm)
+    # play it!
+    tiny.start()
+    # try autocomplete here too!
+    tiny.
+    # patches come with very individual parameters!
+    tiny.fm_waveform(tiny.SAW)
+    tiny.start()
+
+.. note::
+    Tone! While your first instinct might be to use a .freq() property to tune
+    an oscillator, there might be an easier way: .tone() interprets its input
+    as semitones away from A440. In practice this means that by using .tone(int)
+    you can easily get the usual equidistant 12-tone thing. An Db direclty below
+    A440 for example can be expressed as .tone(-8), or shifted an octave higher
+    as .tone(-8+12).
+
+Using buds
+----------
+
+If we inspect tiny we can see a verbose printout. 
 
 To create sound, we can load a bud (basically a radspa plugin with some wrapper
 around) from a radspa plugin descriptor. For this you have to find the ID number
