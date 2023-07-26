@@ -109,7 +109,7 @@ value. Actually, it works the other way around too! Multiple inputs can stream
 from the same output, however each input streams only from one output.
 
 .. note::
-    A special case is the channel output mixer (an input signal) which only fakes
+    A special case is the channel mixer (an input signal) which only fakes
     being a bl00mbox signal and can accept multiple outputs.
 
 .. code-block:: python
@@ -117,7 +117,7 @@ from the same output, however each input streams only from one output.
     # assign an output to an input...
     env.signals.input.value = osc.signals.output
     # ...or an input to an output!
-    env.signals.output.value = blm.output
+    env.signals.output.value = blm.mixer
 
 The trigger of the envelope has a special helper function that triggers a volume
 response:
@@ -140,11 +140,11 @@ Example 1: auto bassline
     blm.volume = 10000
     osc1 = blm.new_bud(420)
     env1 = blm.new_bud(42)
-    env1.signals.output.value = c.output
+    env1.signals.output.value = blm.mixer
     env1.signals.input.value = osc1.signals.output
 
     osc2 = blm.new_bud(420)
-    env2 = c.new_bud(42)
+    env2 = blm.new_bud(42)
     env2.signals.input.value = osc2.signals.output
 
     amp1 = blm.new_bud(69)
@@ -184,5 +184,5 @@ Example 1: auto bassline
     amp3.signals.gain.value = 31000
 
     amp3.signals.output.value = osc2.signals.pitch
-    osc2.signals.output.value = c.output
+    osc2.signals.output.value = blm.mixer
 

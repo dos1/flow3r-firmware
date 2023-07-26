@@ -56,9 +56,11 @@ class tinysynth_fm(tinysynth):
         tinysynth.__init__(self, chan)
         self.mod_osc = chan.new_bud(420)
         self.fm_mult = 2**.5
-        self.detune = 7
-        self.tone(self.osc.signals.pitch.tone)
+        self.tone(self.osc.signals.pitch.tone - 17)
         self.mod_osc.signals.output.value = self.osc.signals.lin_fm
+        self.decay(5000)
+        self.attack(20)
+        self.fm_waveform(self.SAW)
 
     def fm_waveform(self,val):
         self.mod_osc.signals.waveform.value = val
