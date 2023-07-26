@@ -4,7 +4,9 @@ import math
 # badge23
 from st3m import event, application, ui
 from st3m.system import hardware, audio
-from bl00mbox import tinysynth
+import bl00mbox
+blm = bl00mbox.Channel()
+from bl00mbox_patches import tinysynth
 
 popcorn = [9, 7, 9, 5, 0, 5, -3, 999]
 
@@ -17,8 +19,8 @@ class AppSparabo(application.Application):
 
         audio.set_volume_dB(0)
 
-        self.synth = tinysynth(440)
-        self.synth.decay_ms(250)
+        self.synth = blm.new_patch(tinysynth)
+        self.synth.decay(250)
 
         print("here")
         self.sequencer = event.Sequence(

@@ -1,7 +1,8 @@
-from bl00mbox import tinysynth
+import bl00mbox
+blm = bl00mbox.Channel()
+from bl00mbox_patches import tinysynth
 from hardware import *
 import leds
-
 
 chords = [
     [-4, 0, 3, 8, 10],
@@ -20,27 +21,30 @@ class HarmonicApp(Application):
         self.color_intensity = 0
         self.chord_index = None
         self.chord = None
-        self.synths = [tinysynth(440) for i in range(15)]
+        self.synths = [blm.new_patch(tinysynth) for i in range(5)]
+        '''
         for i, synth in enumerate(self.synths):
-            synth.decay_ms(100)
+            synth.decay(100)
             synth.sustain(0.5)
             if i < 5:
-                synth.waveform(1)
-                synth.volume(0.5)
-                synth.release_ms(1200)
+                synth.waveform(-1)
+                #synth.volume(0.5)
+                synth.release(1200)
             elif i < 10:
-                synth.waveform(1)
-                synth.attack_ms(300)
+                synth.waveform(-1)
+                synth.attack(300)
                 synth.volume(0.1)
                 synth.sustain(0.9)
-                synth.release_ms(2400)
+                synth.release(2400)
             else:
-                synth.waveform(1)
-                synth.attack_ms(500)
+                synth.waveform(-1)
+                synth.attack(500)
                 synth.volume(0.03)
                 synth.sustain(0.9)
-                synth.release_ms(800)
+                synth.release(800)
+        '''
         self._set_chord(3)
+        self.prev_captouch = [0]*10
 
     def _set_chord(self, i):
         hue = int(72 * (i + 0.5)) % 360
@@ -76,27 +80,18 @@ class HarmonicApp(Application):
                     else:
                         k = int(i / 2)
                         self.synths[k].tone(self.chord[k])
-                        self.synths[k+5].tone(12+self.chord[k])
-                        self.synths[k+10].tone(7+self.chord[k])
+                        #self.synths[k+5].tone(12+self.chord[k])
+                        #self.synths[k+10].tone(7+self.chord[k])
                         self.synths[k].start()
-                        self.synths[k+5].start()
-                        self.synths[k+10].start()
+                        #self.synths[k+5].start()
+                        #self.synths[k+10].start()
                         self.color_intensity = 1.0
                 else:
-                    k = int(i / 2)
-                    self.synths[k].tone(self.chord[k])
-                    self.synths[k + 5].tone(12 + self.chord[k])
-                    self.synths[k + 10].tone(7 + self.chord[k])
-                    self.synths[k].start()
-                    self.synths[k + 5].start()
-                    self.synths[k + 10].start()
-                    self.color_intensity = 1.0
-            else:
-                if (1 + i) % 2:
-                    k = int(i / 2)
-                    self.synths[k].stop()
-                    self.synths[k + 5].stop()
-                    self.synths[k + 10].stop()
+                    if (1 + i) % 2:
+                        k = int(i / 2)
+                        self.synths[k].stop()
+                        #self.synths[k + 5].stop()
+                        #self.synths[k + 10].stop()
 
 
 app = HarmonicApp("harmonic")

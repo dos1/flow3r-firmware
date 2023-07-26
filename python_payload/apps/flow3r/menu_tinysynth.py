@@ -1,9 +1,11 @@
-from bl00mbox import tinysynth
+import bl00mbox
+blm = bl00mbox.Channel()
+from bl00mbox_patches import tinysynth
 
 from st3m import menu, event, control, ui
 from st3m.system import hardware, audio
 
-synth = tinysynth(440)
+synth = blm.new_patch(tinysynth)
 synth.sustain(1)
 
 

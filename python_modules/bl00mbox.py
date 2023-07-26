@@ -1,7 +1,10 @@
 import sys_bl00mbox
-import math
 #note1: consider the 'sys_bl00mbox' api super unstable for now pls :3
 #note2: we're trying to keep the 'bl00mbox' api somewhat slow moving tho
+import math
+
+import bl00mbox_patches as patches
+import bl00mbox_helpers as helpers
 
 class OutputMixer():
     def __init__(self, channel_num):
@@ -64,8 +67,8 @@ class SignalInput(Signal):
         elif isinstance(val, SignalInput):
             #TODO
             pass
-        elif type(val) == int:
-            sys_bl00mbox.channel_bud_set_signal_value(self._bud.channel_num, self._bud.bud_num, self._signal_num, val)
+        elif (type(val) == int) or (type(val) == float):
+            sys_bl00mbox.channel_bud_set_signal_value(self._bud.channel_num, self._bud.bud_num, self._signal_num, int(val))
 
 class SignalInputTrigger(SignalInput):
     def start(self, velocity = 32767):
@@ -95,7 +98,7 @@ class SignalInputPitch(SignalInput):
         return 440 * (2**(tone/12))
     @freq.setter
     def freq(self, val):
-        tone = 12 * math.log(val / 440,2)
+        tone = 12 * math.log(val / 440 ,2)
         self.value = (32767-2400*6) + 200 * tone
 
     def __repr__(self):
@@ -166,6 +169,10 @@ class Channel:
     def new_bud(self, plugin_id):
         bud = Bud(self, plugin_id)
         return bud
+    
+    def new_patch(self, patch):
+        #if isinstance(patch, patches.bl00mboxPatch):
+        return patch(self)
 
     @property
     def volume(self):
