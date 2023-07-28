@@ -2,6 +2,9 @@ class tinysynth:
     def __init__(self, a):
         pass
 
+    def decay_ms(self, a):
+        pass
+
     def decay(self, a):
         pass
 
@@ -15,4 +18,16 @@ class tinysynth:
         pass
 
     def sustain(self, a):
+        pass
+
+    def attack_ms(self, a):
+        pass
+
+    def release_ms(self, a):
+        pass
+
+    def volume(self, a):
+        pass
+
+    def stop(self):
         pass
