@@ -54,7 +54,6 @@ class AppCaptouchCalibrator(application.Application):
     def get_formatted_data(self, petal_index):
         s = f"P{petal_index}"
         for pad_index, pad_data in self.calib_data[petal_index]["pads"].items():
-            print(pad_index, pad_data)
             if pad_data["min"] == pad_data["max"]:
                 continue
             s += f" p{pad_index}:{pad_data['min']}-{pad_data['max']}"

@@ -56,7 +56,6 @@ class AppCaptouchTest(application.Application):
         for pad_index in range(4):
             v = hardware.captouch_get_petal_pad_raw(petal_index, pad_index)
             pad_data = self.calib_data[str(petal_index)]["pads"][str(pad_index)]
-            print(v, pad_data)
             vmin = pad_data["min"]
             vmax = pad_data["max"]
 

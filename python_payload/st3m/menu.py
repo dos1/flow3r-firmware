@@ -267,7 +267,6 @@ def on_scroll_captouch(d):
 
     if z == -1:
         diff = time.ticks_diff(time.ticks_ms(), last)
-        print(diff)
         if diff < 300:
             active_menu.enter_menu()
 

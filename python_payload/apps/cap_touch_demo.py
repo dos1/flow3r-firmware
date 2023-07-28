@@ -69,7 +69,6 @@ class CapTouchDemo(application.Application):
             self.dots.append(Dot(size, x.imag, x.real))
 
     def on_draw(self, ctx):
-        print(self.last_calib)
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
         for i, dot in enumerate(self.dots):
             dot.draw(i, ctx)
