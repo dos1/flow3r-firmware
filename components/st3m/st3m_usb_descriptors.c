@@ -9,7 +9,7 @@ static const char *const _manufacturer = "flow3r.garden";
 static const char *const _product_app = "flow3r";
 static const char *const _product_disk = "flow3r (disk mode)";
 static const char *const _cdc_repl = "MicroPython REPL";
-static char _serial[32 + 1] = {0};
+static char _serial[32 + 1] = { 0 };
 
 typedef struct {
     const tusb_desc_device_t dev;

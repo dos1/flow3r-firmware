@@ -25,7 +25,8 @@ void flow3r_bsp_audio_init(void) {
         .intr_alloc_flags = 0,  // default interrupt priority
         .dma_buf_count = FLOW3R_BSP_AUDIO_DMA_BUFFER_COUNT,
         .dma_buf_len = FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE,
-        .use_apll = false};
+        .use_apll = false
+    };
     static const i2s_pin_config_t pin_config = {
         .bck_io_num = 10,
         .mck_io_num = 18,

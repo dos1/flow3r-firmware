@@ -17,30 +17,36 @@
 
 #define AFE_INCR_CAP 1000
 
-static const uint8_t top_map[] = {0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4};
+static const uint8_t top_map[] = { 0, 0, 0, 2, 2, 2, 6, 6, 6, 4, 4, 4 };
 static const uint8_t top_stages = 12;
-static const uint8_t bot_map[] = {1, 1, 3, 3, 5, 7, 7, 9, 9, 8, 8, 8};
+static const uint8_t bot_map[] = { 1, 1, 3, 3, 5, 7, 7, 9, 9, 8, 8, 8 };
 static const uint8_t bot_stages = 12;
-static const uint8_t bot_stage_config[] = {0, 1, 2, 3,  5,  6,
-                                           7, 8, 9, 10, 11, 12};
+static const uint8_t bot_stage_config[] = { 0, 1, 2, 3,  5,  6,
+                                            7, 8, 9, 10, 11, 12 };
 #define DEFAULT_THRES_TOP 8000
 #define DEFAULT_THRES_BOT 12000
 
 #if defined(CONFIG_FLOW3R_HW_GEN_P4)
-static const uint8_t top_segment_map[] = {1, 3, 2, 2, 3, 1,
-                                          1, 3, 2, 1, 3, 2};  // PETAL_PAD_*
-static const uint8_t bot_segment_map[] = {3, 0, 3, 0, 0, 0,
-                                          3, 0, 3, 1, 2, 3};  // PETAL_PAD_*
+static const uint8_t top_segment_map[] = {
+    1, 3, 2, 2, 3, 1, 1, 3, 2, 1, 3, 2
+};  // PETAL_PAD_*
+static const uint8_t bot_segment_map[] = {
+    3, 0, 3, 0, 0, 0, 3, 0, 3, 1, 2, 3
+};  // PETAL_PAD_*
 #elif defined(CONFIG_FLOW3R_HW_GEN_P6)
-static const uint8_t top_segment_map[] = {1, 3, 2, 2, 3, 1,
-                                          1, 3, 2, 1, 3, 2};  // PETAL_PAD_*
-static const uint8_t bot_segment_map[] = {3, 0, 3, 0, 0, 0,
-                                          3, 0, 3, 1, 2, 3};  // PETAL_PAD_*
+static const uint8_t top_segment_map[] = {
+    1, 3, 2, 2, 3, 1, 1, 3, 2, 1, 3, 2
+};  // PETAL_PAD_*
+static const uint8_t bot_segment_map[] = {
+    3, 0, 3, 0, 0, 0, 3, 0, 3, 1, 2, 3
+};  // PETAL_PAD_*
 #elif defined(CONFIG_FLOW3R_HW_GEN_P3)
-static const uint8_t top_segment_map[] = {0, 1, 2, 2, 1, 0,
-                                          0, 1, 2, 2, 1, 0};  // PETAL_PAD_*
-static const uint8_t bot_segment_map[] = {3, 0, 3, 0, 0, 0,
-                                          3, 0, 3, 0, 2, 1};  // PETAL_PAD_*
+static const uint8_t top_segment_map[] = {
+    0, 1, 2, 2, 1, 0, 0, 1, 2, 2, 1, 0
+};  // PETAL_PAD_*
+static const uint8_t bot_segment_map[] = {
+    3, 0, 3, 0, 0, 0, 3, 0, 3, 0, 2, 1
+};  // PETAL_PAD_*
 #endif
 
 static const char *TAG = "captouch";
@@ -84,20 +90,20 @@ struct ad714x_chip {
 static struct ad714x_chip chip_top_rev5 = {
     .addr = &flow3r_i2c_addresses.touch_top,
     .gpio = 15,
-    .pos_afe_offsets = {4, 2, 2, 2, 2, 3, 4, 2, 2, 2, 2, 0},
+    .pos_afe_offsets = { 4, 2, 2, 2, 2, 3, 4, 2, 2, 2, 2, 0 },
     .stages = top_stages,
 };
 
 static struct ad714x_chip chip_bot_rev5 = {
     .addr = &flow3r_i2c_addresses.touch_bottom,
     .gpio = 15,
-    .pos_afe_offsets = {3, 2, 1, 1, 1, 1, 1, 1, 2, 3, 3, 3},
+    .pos_afe_offsets = { 3, 2, 1, 1, 1, 1, 1, 1, 2, 3, 3, 3 },
     .stages = bot_stages,
 };
 
 static esp_err_t ad714x_i2c_write(const struct ad714x_chip *chip,
                                   const uint16_t reg, const uint16_t data) {
-    const uint8_t tx[] = {reg >> 8, reg & 0xFF, data >> 8, data & 0xFF};
+    const uint8_t tx[] = { reg >> 8, reg & 0xFF, data >> 8, data & 0xFF };
     ESP_LOGD(TAG, "AD7147 write reg %X-> %X", reg, data);
     return flow3r_bsp_i2c_write_to_device(*chip->addr, tx, sizeof(tx),
                                           TIMEOUT_MS / portTICK_PERIOD_MS);
@@ -106,7 +112,7 @@ static esp_err_t ad714x_i2c_write(const struct ad714x_chip *chip,
 static esp_err_t ad714x_i2c_read(const struct ad714x_chip *chip,
                                  const uint16_t reg, uint16_t *data,
                                  const size_t len) {
-    const uint8_t tx[] = {reg >> 8, reg & 0xFF};
+    const uint8_t tx[] = { reg >> 8, reg & 0xFF };
     uint8_t rx[len * 2];
     esp_err_t ret = flow3r_bsp_i2c_write_read_device(
         *chip->addr, tx, sizeof(tx), rx, sizeof(rx),
@@ -251,9 +257,9 @@ static void ad714x_set_device_config(
 
 static struct ad7147_stage_config ad714x_default_config(void) {
     return (struct ad7147_stage_config){
-        .cinX_connection_setup = {CIN_BIAS, CIN_BIAS, CIN_BIAS, CIN_BIAS,
-                                  CIN_BIAS, CIN_BIAS, CIN_BIAS, CIN_BIAS,
-                                  CIN_BIAS, CIN_BIAS, CIN_BIAS, CIN_BIAS},
+        .cinX_connection_setup = { CIN_BIAS, CIN_BIAS, CIN_BIAS, CIN_BIAS,
+                                   CIN_BIAS, CIN_BIAS, CIN_BIAS, CIN_BIAS,
+                                   CIN_BIAS, CIN_BIAS, CIN_BIAS, CIN_BIAS },
         .se_connection_setup = 0b01,
         .pos_afe_offset = 0,
     };
@@ -511,12 +517,12 @@ void captouch_set_calibration_afe_target(uint16_t target) {
 void captouch_read_cycle() {
     static uint8_t calib_cycle = 0;
     static uint8_t calib_div = 1;
-    static uint32_t ambient_acc[2][12] = {{
-                                              0,
-                                          },
-                                          {
-                                              0,
-                                          }};
+    static uint32_t ambient_acc[2][12] = { {
+                                               0,
+                                           },
+                                           {
+                                               0,
+                                           } };
     if (calib_cycles) {
         if (calib_cycle == 0) {  // last cycle has finished, setup new
             calib_cycle = calib_cycles;

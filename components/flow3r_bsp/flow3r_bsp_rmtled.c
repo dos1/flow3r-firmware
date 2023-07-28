@@ -41,7 +41,7 @@ typedef struct {
     uint32_t ws2812_t1l_ticks;
 } flow3r_bsp_rmtled_t;
 
-static flow3r_bsp_rmtled_t rmtled = {0};
+static flow3r_bsp_rmtled_t rmtled = { 0 };
 
 static void IRAM_ATTR _rmtled_adapter(const void *src, rmt_item32_t *dest,
                                       size_t src_size, size_t wanted_num,
@@ -52,10 +52,12 @@ static void IRAM_ATTR _rmtled_adapter(const void *src, rmt_item32_t *dest,
         *item_num = 0;
         return;
     }
-    const rmt_item32_t bit0 = {{{rmtled.ws2812_t0h_ticks, 1,
-                                 rmtled.ws2812_t0l_ticks, 0}}};  // Logical 0
-    const rmt_item32_t bit1 = {{{rmtled.ws2812_t1h_ticks, 1,
-                                 rmtled.ws2812_t1l_ticks, 0}}};  // Logical 1
+    const rmt_item32_t bit0 = {
+        { { rmtled.ws2812_t0h_ticks, 1, rmtled.ws2812_t0l_ticks, 0 } }
+    };  // Logical 0
+    const rmt_item32_t bit1 = {
+        { { rmtled.ws2812_t1h_ticks, 1, rmtled.ws2812_t1l_ticks, 0 } }
+    };  // Logical 1
     size_t size = 0;
     size_t num = 0;
     uint8_t *psrc = (uint8_t *)src;

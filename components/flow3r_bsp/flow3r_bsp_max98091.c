@@ -12,7 +12,7 @@
 static const char *TAG = "flow3r-bsp-max98091";
 
 static uint8_t max98091_read(const uint8_t reg) {
-    const uint8_t tx[] = {reg};
+    const uint8_t tx[] = { reg };
     uint8_t rx[1];
     flow3r_bsp_i2c_write_read_device(flow3r_i2c_addresses.codec, tx, sizeof(tx),
                                      rx, sizeof(rx),
@@ -22,7 +22,7 @@ static uint8_t max98091_read(const uint8_t reg) {
 }
 
 static esp_err_t max98091_write(const uint8_t reg, const uint8_t data) {
-    const uint8_t tx[] = {reg, data};
+    const uint8_t tx[] = { reg, data };
     return flow3r_bsp_i2c_write_to_device(flow3r_i2c_addresses.codec, tx,
                                           sizeof(tx),
                                           TIMEOUT_MS / portTICK_PERIOD_MS);
@@ -167,14 +167,17 @@ typedef struct {
 
 static const uint8_t speaker_map_len = 40;
 static const volume_step_t speaker_map[] = {
-    {0x3F, +14},   {0x3E, +13.5}, {0x3D, +13},   {0x3C, +12.5}, {0x3B, +12},
-    {0x3A, +11.5}, {0x39, +11},   {0x38, +10.5}, {0x37, +10},   {0x36, +9.5},
-    {0x35, +9},    {0x34, +8},    {0x33, +7},    {0x32, +6},    {0x31, +5},
-    {0x30, +4},    {0x2F, +3},    {0x2E, +2},    {0x2D, +1},    {0x2C, +0},
-    {0x2B, -1},    {0x2A, -2},    {0x29, -3},    {0x28, -4},    {0x27, -5},
-    {0x26, -6},    {0x25, -8},    {0x24, -10},   {0x23, -12},   {0x22, -14},
-    {0x21, -17},   {0x20, -20},   {0x1F, -23},   {0x1E, -26},   {0x1D, -29},
-    {0x1C, -32},   {0x1B, -36},   {0x1A, -40},   {0x19, -44},   {0x18, -48}};
+    { 0x3F, +14 }, { 0x3E, +13.5 }, { 0x3D, +13 }, { 0x3C, +12.5 },
+    { 0x3B, +12 }, { 0x3A, +11.5 }, { 0x39, +11 }, { 0x38, +10.5 },
+    { 0x37, +10 }, { 0x36, +9.5 },  { 0x35, +9 },  { 0x34, +8 },
+    { 0x33, +7 },  { 0x32, +6 },    { 0x31, +5 },  { 0x30, +4 },
+    { 0x2F, +3 },  { 0x2E, +2 },    { 0x2D, +1 },  { 0x2C, +0 },
+    { 0x2B, -1 },  { 0x2A, -2 },    { 0x29, -3 },  { 0x28, -4 },
+    { 0x27, -5 },  { 0x26, -6 },    { 0x25, -8 },  { 0x24, -10 },
+    { 0x23, -12 }, { 0x22, -14 },   { 0x21, -17 }, { 0x20, -20 },
+    { 0x1F, -23 }, { 0x1E, -26 },   { 0x1D, -29 }, { 0x1C, -32 },
+    { 0x1B, -36 }, { 0x1A, -40 },   { 0x19, -44 }, { 0x18, -48 }
+};
 
 static const volume_step_t *find_speaker_volume(float vol_dB) {
     uint8_t map_index = speaker_map_len - 1;
@@ -187,13 +190,14 @@ static const volume_step_t *find_speaker_volume(float vol_dB) {
 
 static const uint8_t headphones_map_len = 32;
 static const volume_step_t headphones_map[] = {
-    {0x1F, +3},  {0x1E, +2.5}, {0x1D, +2},  {0x1C, +1.5}, {0x1B, +1},
-    {0x1A, +0},  {0x19, -1},   {0x18, -2},  {0x17, -3},   {0x16, -4},
-    {0x15, -5},  {0x14, -7},   {0x13, -9},  {0x12, -11},  {0x11, -13},
-    {0x10, -15}, {0x0F, -17},  {0x0E, -19}, {0x0D, -22},  {0x0C, -25},
-    {0x0B, -28}, {0x0A, -31},  {0x09, -34}, {0x08, -37},  {0x07, -40},
-    {0x06, -43}, {0x06, -47},  {0x04, -51}, {0x03, -55},  {0x02, -59},
-    {0x01, -63}, {0x00, -67}};
+    { 0x1F, +3 },  { 0x1E, +2.5 }, { 0x1D, +2 },  { 0x1C, +1.5 }, { 0x1B, +1 },
+    { 0x1A, +0 },  { 0x19, -1 },   { 0x18, -2 },  { 0x17, -3 },   { 0x16, -4 },
+    { 0x15, -5 },  { 0x14, -7 },   { 0x13, -9 },  { 0x12, -11 },  { 0x11, -13 },
+    { 0x10, -15 }, { 0x0F, -17 },  { 0x0E, -19 }, { 0x0D, -22 },  { 0x0C, -25 },
+    { 0x0B, -28 }, { 0x0A, -31 },  { 0x09, -34 }, { 0x08, -37 },  { 0x07, -40 },
+    { 0x06, -43 }, { 0x06, -47 },  { 0x04, -51 }, { 0x03, -55 },  { 0x02, -59 },
+    { 0x01, -63 }, { 0x00, -67 }
+};
 
 static const volume_step_t *find_headphones_volume(float vol_dB) {
     uint8_t map_index = headphones_map_len - 1;

@@ -7,7 +7,7 @@
 
 #include "esp_log.h"
 
-static st3m_usb_app_conf_t _conf = {0};
+static st3m_usb_app_conf_t _conf = { 0 };
 static SemaphoreHandle_t _write_mu;
 
 void st3m_usb_cdc_init(void) { _write_mu = xSemaphoreCreateMutex(); }

@@ -129,17 +129,17 @@ STATIC mp_obj_t tinysynth_deinit(mp_obj_t self_in) {
 MP_DEFINE_CONST_FUN_OBJ_1(tinysynth_deinit_obj, tinysynth_deinit);
 
 STATIC const mp_rom_map_elem_t tinysynth_locals_dict_table[] = {
-    {MP_ROM_QSTR(MP_QSTR_start), MP_ROM_PTR(&tinysynth_start_obj)},
-    {MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&tinysynth_stop_obj)},
-    {MP_ROM_QSTR(MP_QSTR_freq), MP_ROM_PTR(&tinysynth_freq_obj)},
-    {MP_ROM_QSTR(MP_QSTR_tone), MP_ROM_PTR(&tinysynth_tone_obj)},
-    {MP_ROM_QSTR(MP_QSTR_waveform), MP_ROM_PTR(&tinysynth_waveform_obj)},
-    {MP_ROM_QSTR(MP_QSTR_attack_ms), MP_ROM_PTR(&tinysynth_attack_ms_obj)},
-    {MP_ROM_QSTR(MP_QSTR_decay_ms), MP_ROM_PTR(&tinysynth_decay_ms_obj)},
-    {MP_ROM_QSTR(MP_QSTR_volume), MP_ROM_PTR(&tinysynth_sustain_obj)},
-    {MP_ROM_QSTR(MP_QSTR_sustain), MP_ROM_PTR(&tinysynth_sustain_obj)},
-    {MP_ROM_QSTR(MP_QSTR_release_ms), MP_ROM_PTR(&tinysynth_release_ms_obj)},
-    {MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&tinysynth_deinit_obj)},
+    { MP_ROM_QSTR(MP_QSTR_start), MP_ROM_PTR(&tinysynth_start_obj) },
+    { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&tinysynth_stop_obj) },
+    { MP_ROM_QSTR(MP_QSTR_freq), MP_ROM_PTR(&tinysynth_freq_obj) },
+    { MP_ROM_QSTR(MP_QSTR_tone), MP_ROM_PTR(&tinysynth_tone_obj) },
+    { MP_ROM_QSTR(MP_QSTR_waveform), MP_ROM_PTR(&tinysynth_waveform_obj) },
+    { MP_ROM_QSTR(MP_QSTR_attack_ms), MP_ROM_PTR(&tinysynth_attack_ms_obj) },
+    { MP_ROM_QSTR(MP_QSTR_decay_ms), MP_ROM_PTR(&tinysynth_decay_ms_obj) },
+    { MP_ROM_QSTR(MP_QSTR_volume), MP_ROM_PTR(&tinysynth_sustain_obj) },
+    { MP_ROM_QSTR(MP_QSTR_sustain), MP_ROM_PTR(&tinysynth_sustain_obj) },
+    { MP_ROM_QSTR(MP_QSTR_release_ms), MP_ROM_PTR(&tinysynth_release_ms_obj) },
+    { MP_ROM_QSTR(MP_QSTR___del__), MP_ROM_PTR(&tinysynth_deinit_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(tinysynth_locals_dict, tinysynth_locals_dict_table);
@@ -149,14 +149,14 @@ MP_DEFINE_CONST_OBJ_TYPE(synth_tinysynth_type, MP_QSTR_bl00mbox,
                          tinysynth_print, locals_dict, &tinysynth_locals_dict);
 
 STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
-    {MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_bl00mbox)},
-    {MP_OBJ_NEW_QSTR(MP_QSTR_tinysynth), (mp_obj_t)&synth_tinysynth_type},
+    { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_bl00mbox) },
+    { MP_OBJ_NEW_QSTR(MP_QSTR_tinysynth), (mp_obj_t)&synth_tinysynth_type },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_bl00mbox_globals, bl00mbox_globals_table);
 
 const mp_obj_module_t bl00mbox_user_cmodule = {
-    .base = {&mp_type_module},
+    .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&mp_module_bl00mbox_globals,
 };
 

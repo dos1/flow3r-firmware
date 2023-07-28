@@ -7,7 +7,7 @@
 #include "esp_log.h"
 #include "tusb.h"
 
-static st3m_usb_msc_conf_t _conf = {0};
+static st3m_usb_msc_conf_t _conf = { 0 };
 
 void st3m_usb_msc_set_conf(st3m_usb_msc_conf_t *conf) {
     assert(conf->block_count != 0);

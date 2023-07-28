@@ -290,22 +290,22 @@ STATIC mp_obj_t mp_heap_stats(void) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_heap_stats_obj, mp_heap_stats);
 
 STATIC const mp_rom_map_elem_t globals_table[] = {
-    {MP_ROM_QSTR(MP_QSTR_scheduler_snapshot),
-     MP_ROM_PTR(&mp_scheduler_snapshot_obj)},
-    {MP_ROM_QSTR(MP_QSTR_heap_stats), MP_ROM_PTR(&mp_heap_stats_obj)},
+    { MP_ROM_QSTR(MP_QSTR_scheduler_snapshot),
+      MP_ROM_PTR(&mp_scheduler_snapshot_obj) },
+    { MP_ROM_QSTR(MP_QSTR_heap_stats), MP_ROM_PTR(&mp_heap_stats_obj) },
 
-    {MP_ROM_QSTR(MP_QSTR_RUNNING), MP_ROM_INT(eRunning)},
-    {MP_ROM_QSTR(MP_QSTR_READY), MP_ROM_INT(eReady)},
-    {MP_ROM_QSTR(MP_QSTR_BLOCKED), MP_ROM_INT(eBlocked)},
-    {MP_ROM_QSTR(MP_QSTR_SUSPENDED), MP_ROM_INT(eSuspended)},
-    {MP_ROM_QSTR(MP_QSTR_DELETED), MP_ROM_INT(eDeleted)},
-    {MP_ROM_QSTR(MP_QSTR_INVALID), MP_ROM_INT(eInvalid)},
+    { MP_ROM_QSTR(MP_QSTR_RUNNING), MP_ROM_INT(eRunning) },
+    { MP_ROM_QSTR(MP_QSTR_READY), MP_ROM_INT(eReady) },
+    { MP_ROM_QSTR(MP_QSTR_BLOCKED), MP_ROM_INT(eBlocked) },
+    { MP_ROM_QSTR(MP_QSTR_SUSPENDED), MP_ROM_INT(eSuspended) },
+    { MP_ROM_QSTR(MP_QSTR_DELETED), MP_ROM_INT(eDeleted) },
+    { MP_ROM_QSTR(MP_QSTR_INVALID), MP_ROM_INT(eInvalid) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(globals, globals_table);
 
 const mp_obj_module_t mp_module_kernel_user_cmodule = {
-    .base = {&mp_type_module},
+    .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&globals,
 };
 

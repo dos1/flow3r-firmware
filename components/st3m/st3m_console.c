@@ -39,9 +39,9 @@ static st3m_console_state_t _state = {
     .txbuf = NULL,
     .rxbuf = NULL,
 
-    .fstdin = {0},
-    .fstdout = {0},
-    .fstderr = {0},
+    .fstdin = { 0 },
+    .fstdout = { 0 },
+    .fstderr = { 0 },
 
     .cdc_last_read = 0,
     .cdc_first_read_at = 0,

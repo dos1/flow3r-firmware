@@ -192,11 +192,11 @@ static esp_err_t _portexp_update(void) {
 #endif
 
 static esp_err_t _iopin_esp32_init(const flow3r_bsp_iopin_t *iopin) {
-    gpio_config_t cfg = {.pin_bit_mask = 1 << iopin->pin,
-                         .mode = GPIO_MODE_INPUT,
-                         .pull_up_en = GPIO_PULLUP_DISABLE,
-                         .pull_down_en = GPIO_PULLDOWN_DISABLE,
-                         .intr_type = GPIO_INTR_DISABLE};
+    gpio_config_t cfg = { .pin_bit_mask = 1 << iopin->pin,
+                          .mode = GPIO_MODE_INPUT,
+                          .pull_up_en = GPIO_PULLUP_DISABLE,
+                          .pull_down_en = GPIO_PULLDOWN_DISABLE,
+                          .intr_type = GPIO_INTR_DISABLE };
     if (iopin->output) {
         // Untested, so unimplemented.
         return ESP_ERR_NOT_SUPPORTED;

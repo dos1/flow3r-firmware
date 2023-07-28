@@ -16,21 +16,21 @@ const flow3r_i2c_addressdef flow3r_i2c_addresses = {
     .codec = 0x10,
     .touch_top = 0x2d,
     .touch_bottom = 0x2c,
-    .portexp = {0x6e, 0x6d},
+    .portexp = { 0x6e, 0x6d },
 };
 #elif defined(CONFIG_FLOW3R_HW_GEN_P4)
 const flow3r_i2c_addressdef flow3r_i2c_addresses = {
     .codec = 0x10,
     .touch_top = 0x2c,
     .touch_bottom = 0x2d,
-    .portexp = {0x6e, 0x6d},
+    .portexp = { 0x6e, 0x6d },
 };
 #elif defined(CONFIG_FLOW3R_HW_GEN_P6)
 const flow3r_i2c_addressdef flow3r_i2c_addresses = {
     .codec = 0x10,
     .touch_top = 0x2c,
     .touch_bottom = 0x2d,
-    .portexp = {0x6e, 0x6d},
+    .portexp = { 0x6e, 0x6d },
 };
 #else
 #error "i2c not implemented for this badge generation"

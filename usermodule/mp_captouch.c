@@ -156,14 +156,15 @@ STATIC mp_obj_t mp_captouch_read(void) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_captouch_read_obj, mp_captouch_read);
 
 STATIC const mp_rom_map_elem_t globals_table[] = {
-    {MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&mp_captouch_read_obj)},
-    {MP_ROM_QSTR(MP_QSTR_calibration_active),
-     MP_ROM_PTR(&mp_captouch_calibration_active_obj)}};
+    { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&mp_captouch_read_obj) },
+    { MP_ROM_QSTR(MP_QSTR_calibration_active),
+      MP_ROM_PTR(&mp_captouch_calibration_active_obj) }
+};
 
 STATIC MP_DEFINE_CONST_DICT(globals, globals_table);
 
 const mp_obj_module_t mp_module_captouch_user_cmodule = {
-    .base = {&mp_type_module},
+    .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&globals,
 };
 

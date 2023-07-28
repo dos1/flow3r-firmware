@@ -495,7 +495,7 @@ static mp_obj_t mp_ctx_tinyvg_get_size(mp_obj_t self_in, mp_obj_t buffer_in) {
     ctx_tinyvg_get_size(buffer_info.buf, buffer_info.len, &width, &height);
     mp_obj_t mp_w = MP_OBJ_NEW_SMALL_INT(width);
     mp_obj_t mp_h = MP_OBJ_NEW_SMALL_INT(height);
-    mp_obj_t tup[] = {mp_w, mp_h};
+    mp_obj_t tup[] = { mp_w, mp_h };
     return mp_obj_new_tuple(2, tup);
 }
 MP_DEFINE_CONST_FUN_OBJ_2(mp_ctx_tinyvg_get_size_obj, mp_ctx_tinyvg_get_size);
@@ -517,10 +517,10 @@ MP_DEFINE_CONST_FUN_OBJ_2(mp_ctx_tinyvg_draw_obj, mp_ctx_tinyvg_draw);
 static void mp_ctx_set_pixels(Ctx *ctx, void *user_data, int x_in, int y_in,
                               int width_in, int height_in, void *buf_in,
                               int buf_size) {
-    mp_obj_t args[5] = {
-        mp_obj_new_int(x_in), mp_obj_new_int(y_in), mp_obj_new_int(width_in),
-        mp_obj_new_int(height_in),
-        mp_obj_new_memoryview(BYTEARRAY_TYPECODE, buf_size, buf_in)};
+    mp_obj_t args[5] = { mp_obj_new_int(x_in), mp_obj_new_int(y_in),
+                         mp_obj_new_int(width_in), mp_obj_new_int(height_in),
+                         mp_obj_new_memoryview(BYTEARRAY_TYPECODE, buf_size,
+                                               buf_in) };
     mp_call_function_n_kw(user_data, 5, 0, args);
 }
 
@@ -554,20 +554,26 @@ static mp_obj_t mp_ctx_make_new(const mp_obj_type_t *type, size_t n_args,
         ARG_userdata
     };
     static const mp_arg_t allowed_args[] = {
-        {MP_QSTR_width, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0}},
-        {MP_QSTR_height, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0}},
-        {MP_QSTR_stride, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0}},
-        {MP_QSTR_format, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0}},
-        {MP_QSTR_buffer, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
-        {MP_QSTR_memory_budget,
-         MP_ARG_KW_ONLY | MP_ARG_INT,
-         {.u_int = 24 * 1024}},
-        {MP_QSTR_flags, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 0}},
-        {MP_QSTR_set_pixels,
-         MP_ARG_KW_ONLY | MP_ARG_OBJ,
-         {.u_obj = MP_OBJ_NULL}},
-        {MP_QSTR_update, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
-        {MP_QSTR_userdata, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL}},
+        { MP_QSTR_width, MP_ARG_KW_ONLY | MP_ARG_INT, { .u_int = 0 } },
+        { MP_QSTR_height, MP_ARG_KW_ONLY | MP_ARG_INT, { .u_int = 0 } },
+        { MP_QSTR_stride, MP_ARG_KW_ONLY | MP_ARG_INT, { .u_int = 0 } },
+        { MP_QSTR_format, MP_ARG_KW_ONLY | MP_ARG_INT, { .u_int = 0 } },
+        { MP_QSTR_buffer,
+          MP_ARG_KW_ONLY | MP_ARG_OBJ,
+          { .u_obj = MP_OBJ_NULL } },
+        { MP_QSTR_memory_budget,
+          MP_ARG_KW_ONLY | MP_ARG_INT,
+          { .u_int = 24 * 1024 } },
+        { MP_QSTR_flags, MP_ARG_KW_ONLY | MP_ARG_INT, { .u_int = 0 } },
+        { MP_QSTR_set_pixels,
+          MP_ARG_KW_ONLY | MP_ARG_OBJ,
+          { .u_obj = MP_OBJ_NULL } },
+        { MP_QSTR_update,
+          MP_ARG_KW_ONLY | MP_ARG_OBJ,
+          { .u_obj = MP_OBJ_NULL } },
+        { MP_QSTR_userdata,
+          MP_ARG_KW_ONLY | MP_ARG_OBJ,
+          { .u_obj = MP_OBJ_NULL } },
     };
     mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
     mp_arg_parse_all_kw_array(n_args, n_kw, all_args,
@@ -967,8 +973,8 @@ const mp_obj_type_t mp_ctx_type = {
 
 /* The globals table for this module */
 static const mp_rom_map_elem_t mp_ctx_module_globals_table[] = {
-    {MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_ctx_module)},
-    {MP_ROM_QSTR(MP_QSTR_Context), MP_ROM_PTR(&mp_ctx_type)},
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_ctx_module) },
+    { MP_ROM_QSTR(MP_QSTR_Context), MP_ROM_PTR(&mp_ctx_type) },
 
     MP_CTX_INT_CONSTANT(FORMAT, GRAY8),
     MP_CTX_INT_CONSTANT(FORMAT, GRAYA8),
@@ -1004,7 +1010,7 @@ static const mp_rom_map_elem_t mp_ctx_module_globals_table[] = {
 static MP_DEFINE_CONST_DICT(mp_ctx_module_globals, mp_ctx_module_globals_table);
 
 const mp_obj_module_t mp_module_ctx = {
-    .base = {&mp_type_module},
+    .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&mp_ctx_module_globals,
 };
 

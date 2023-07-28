@@ -209,9 +209,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(badgelink_jack_disable_obj,
 // Shared between Jack and JackPin.
 STATIC const mp_rom_map_elem_t badgelink_jack_locals_dict_table[] = {
     // instance methods
-    {MP_ROM_QSTR(MP_QSTR_enable), MP_ROM_PTR(&badgelink_jack_enable_obj)},
-    {MP_ROM_QSTR(MP_QSTR_disable), MP_ROM_PTR(&badgelink_jack_disable_obj)},
-    {MP_ROM_QSTR(MP_QSTR_active), MP_ROM_PTR(&badgelink_jack_active_obj)},
+    { MP_ROM_QSTR(MP_QSTR_enable), MP_ROM_PTR(&badgelink_jack_enable_obj) },
+    { MP_ROM_QSTR(MP_QSTR_disable), MP_ROM_PTR(&badgelink_jack_disable_obj) },
+    { MP_ROM_QSTR(MP_QSTR_active), MP_ROM_PTR(&badgelink_jack_active_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(badgelink_jack_locals_dict,
@@ -227,16 +227,16 @@ MP_DEFINE_CONST_OBJ_TYPE(badgelink_jack_type, MP_QSTR_Jack, MP_TYPE_FLAG_NONE,
                          locals_dict, &badgelink_jack_locals_dict);
 
 STATIC const mp_rom_map_elem_t mp_module_badge_link_globals_table[] = {
-    {MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_link)},
-    {MP_ROM_QSTR(MP_QSTR_left), MP_ROM_PTR(&left)},
-    {MP_ROM_QSTR(MP_QSTR_right), MP_ROM_PTR(&right)},
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_link) },
+    { MP_ROM_QSTR(MP_QSTR_left), MP_ROM_PTR(&left) },
+    { MP_ROM_QSTR(MP_QSTR_right), MP_ROM_PTR(&right) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_badge_link_globals,
                             mp_module_badge_link_globals_table);
 
 const mp_obj_module_t mp_module_badge_link = {
-    .base = {&mp_type_module},
+    .base = { &mp_type_module },
     .globals = (mp_obj_dict_t *)&mp_module_badge_link_globals,
 };
 
