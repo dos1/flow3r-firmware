@@ -27,7 +27,15 @@ micropython
 st3m
 	st3m (pronounced: stem) is the main framework and standard library for code
 	running on the badge. Its implementation is split into a C part (another
-	ESP-IDF component) and Micropython code (which lives in ``/flash/sys``).
+	ESP-IDF component, sometimes call C-st3m) and Micropython code (which lives
+	in ``/flash/sys`` on the badge and in ``/python_payload`` in the repository,
+	somtimes called Py-st3m).
+
+recovery
+	The `Recovery Mode`_ firmware is a smaller version of the default firmware, and
+	doesn't contain an audio stack or a Python interpreter. It provides enough
+	functionality to allow you to recover from bricks, or to update your
+	firmware.
 
 Filesystem
 ----------
@@ -60,15 +68,17 @@ This is the SPI flash partition layout we use:
 +--------------+--------+---------------------------------------+
 | ``phy_init`` | 4KiB   | Unused PHY data partition.            |
 +--------------+--------+---------------------------------------+
-| ``factory``  | 5.9MiB | Main badge firmware (``flow3r.bin``). |
+| ``recovery`` | 512KiB | Recovery firmare (``recovery.bin``).  |
 +--------------+--------+---------------------------------------+
-| ``vfs``      | 10MiB  | FAT32 filesystem (with [#WL]_ layer). |
+| ``factory``  | 3MiB   | Main badge firmware (``flow3r.bin``). |
++--------------+--------+---------------------------------------+
+| ``vfs``      | 12MiB  | FAT32 filesystem (with [#WL]_ layer). |
 +--------------+--------+---------------------------------------+
 
 Accessing files from a PC
-------------------------------------
+-------------------------
 
-If the badge is running correctly, you can access the filesystem over the micropython REPL:
+If the badge is running correctly, you can access the filesystem over the micropython REPL, using tools like mpremote.
 
 ::
 
@@ -119,8 +129,8 @@ The badge boot process is the following:
 
 
 
-Recovery
---------
+When Things Break
+-----------------
 
 If you brick your badge by corrupting or messing up the files on the internal
 flash partition, you can always recover by somehow getting the badge into disk
@@ -132,11 +142,33 @@ be restored to a stock state by the badge firmware.
 by pressing buttons as indicated in various crash screens.
 
 If the above is not possible, you can also start a limited Disk Mode from the
-:ref:`Bootloader`. The :ref:`Bootloader` can also be used to reflash the badge
+:ref:`Recovery Mode`. The :ref:`Recovery Mode` can also be used to reflash the badge
 firmware `partition`_ in case it got corrupted.
 
 However, if something's really broken, you will have to perform a low-level
-flash via the ESP32 BootROM - see below.
+flash_ via the ESP32 BootROM - see below.
+
+.. _`recovery mode`:
+
+Recovery Mode
+-------------
+
+Recovery Mode is a special mode in which the badge can get started which can
+help you perform simple fixes and update your firmware.
+
+To start Recovery Mode:
+
+1. Make sure the badge has a power source: either a charged battery or USB power.
+2. Turn off the badge by sliding the power switch to the left.
+3. Start holding down the right trigger / shoulder button.
+4. Turn on the badge by sliding the power switch to the right.
+
+You should be greeted with a purple screen from which multiple actions can be selected:
+
+1. **Reboot**: reboots the badge back into the current (non-recovery) firmware.
+2. **Disk Mode**: mounts the internal SPI flash FAT partition as a USB mass storage. This is effectively a copy of the :ref:`Disk Mode` from the main firmware.
+3. **Format FAT partition**: fully wipes the internal SPI flash, which should let you recover from most cases of bricking. On next reboot, the badge will re-populate the FAT partition with :ref:`st3m` files and should start up normally.
+4. **Update firmware**: flashes a file from the FAT partition onto the main firmware partition_. This can be used to update your badge to the newest firmware (**TODO**) or to an alternative firmware.
 
 .. _flash:
 
@@ -149,23 +181,16 @@ left shoulder button held. The badge screen will stay off, but when connected
 over USB it should show up as an ``Espressif USB/JTAG bridge``.
 
 Compared to recovery modes above, this options requires the use of specialized
-software.
+software: `esptool.py <https://github.com/espressif/esptool>`_, available from
+most Linux distribution package managers.
 
-Then use ``esptool.py`` (available from most Linux distribution package
-managers), download a release (TODO: link) and run the following:
+Instructions on how to run ``esptool.py`` are given with every firmware update release tarball.
 
-::
+Updating Firmware
+-----------------
 
-	esptool.py \
-		-p /dev/ttyACM0 -b 460800 \
-		--before default_reset --after no_reset \
-		--chip esp32s3 write_flash -e \
-		--flash_mode dio --flash_size 16MB --flash_freq 80m \
-		0x0 bootloader.bin \
-		0x8000 partition-table.bin \
-		0x10000 flow3r.bin
+Download a release from **TODO**, extract the tarball and follow instructions in the README. There will be notes on how to perform updates through either :ref:`Disk Mode`, `Recovery Mode`_ or through a low-level flash_.
 
-This will erase the entire internal SPI flash, and then program the bootloader,
-partition table and main firmware.
+Or, if you're at CCCamp2023, visit one of our firmware update stations.
 
 .. [#WL] Wear leveling, to protect internal flash from death by repeat sector write.

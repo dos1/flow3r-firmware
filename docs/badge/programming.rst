@@ -10,6 +10,9 @@ already have all the tools required to get started. However, while the tools to
 program the badge might be the same as for stock Micropython on ESP32, our APIs
 are quite different.
 
+If you haven't used Micrpython, don't worry. It's not that difficult other than
+wrapping your head around file access.
+
 The :ref:`st3m` framework is the main Python codebase you'll be writing against.
 Instead of using standard Micropython libraries like ``machine`` or low level
 display drivers, you'll be writing applications that implement st3m classes like
@@ -25,9 +28,23 @@ it to a PC and it should appear as a serial device. On Linux systems, this
 device will be usually called ``/dev/ttyACM0``.
 
 You can then use any terminal emulator program (like picocom, GNU screen, etc)
-to access the badge's runtime logs. Even better, get `mpremote
-<https://docs.micropython.org/en/latest/reference/mpremote.html>`_, as it has
-extra features that make file transfer to Micropython a breeze.
+to access the badge's runtime logs. Even better, use a dedicated
+micropython-specific program, as that will actually let you transfer files.
+These are the tools we've tested and are known to work:
+
++---------------+-----------------------+
+| Tool          | Platforms             |
++===============+=======================+
+| mpremote_     | Linux, macOS, Windows | 
++---------------+-----------------------+
+| `Micro REPL`_ | Android               |
++---------------+-----------------------+
+
+.. _mpremote: https://docs.micropython.org/en/latest/reference/mpremote.html
+.. _`Micro REPL`: https://github.com/Ma7moud3ly/micro-repl
+
+In the rest of these docs we'll use mpremote. But you should be able to follow
+along with any of the aforementioned tools.
 
 After connecting your badge and making sure it runs:
 
@@ -109,7 +126,7 @@ present) as a pendrive. The selected device will then appear as a pendrive on
 your system, and will stay until it is ejected. The serial connection will
 disconnect for the duration of the badge being in disk mode.
 
-Disk Mode can also be enabled when the badge is in :ref:`Bootloader mode`.
+Disk Mode can also be enabled when the badge is in :ref:`Recovery mode`.
 
 Writing Applications
 --------------------
