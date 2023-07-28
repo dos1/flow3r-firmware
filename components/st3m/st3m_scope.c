@@ -6,8 +6,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/atomic.h"
 
-#include "ctx.h"
+// clang-format off
 #include "ctx_config.h"
+#include "ctx.h"
+// clang-format on
 
 st3m_scope_t scope = {
     0,

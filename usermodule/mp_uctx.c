@@ -8,8 +8,10 @@
 #include "py/objarray.h"
 #include "py/runtime.h"
 
-#include "ctx.h"
+// clang-format off
 #include "ctx_config.h"
+#include "ctx.h"
+// clang-format on
 
 typedef struct _mp_ctx_obj_t {
     mp_obj_base_t base;

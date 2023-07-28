@@ -9,8 +9,10 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 
-#include "ctx.h"
+// clang-format off
 #include "ctx_config.h"
+#include "ctx.h"
+// clang-format on
 
 #include "flow3r_bsp.h"
 #include "st3m_counter.h"

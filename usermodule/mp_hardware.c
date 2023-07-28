@@ -19,8 +19,10 @@
 #include "st3m_scope.h"
 #include "st3m_usb.h"
 
-#include "ctx.h"
+// clang-format off
 #include "ctx_config.h"
+#include "ctx.h"
+// clang-format on
 
 mp_obj_t mp_ctx_from_ctx(Ctx *ctx);
 

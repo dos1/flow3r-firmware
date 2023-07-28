@@ -2,8 +2,10 @@
 
 #include "freertos/FreeRTOS.h"
 
-#include "ctx.h"
+// clang-format off
 #include "ctx_config.h"
+#include "ctx.h"
+// clang-format on
 
 // Each buffer  takes ~116kB SPIRAM. While one framebuffer is being blitted, the
 // other one is being written to by the rasterizer.
