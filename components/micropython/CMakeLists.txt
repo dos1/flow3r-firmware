@@ -129,7 +129,7 @@ set(IDF_COMPONENTS
     xtensa
 )
 
-set(MICROPY_FROZEN_MANIFEST ${PROJECT_DIR}/manifest.py)
+set(MICROPY_FROZEN_MANIFEST ${COMPONENT_DIR}/manifest.py)
 set(MICROPY_CROSS_FLAGS -march=xtensawin)
 
 idf_component_register(
