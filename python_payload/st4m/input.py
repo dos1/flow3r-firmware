@@ -2,6 +2,7 @@ from st4m.goose import List, Optional, Enum
 from st4m.ui.ctx import Ctx
 
 import hardware
+import captouch
 
 
 class InputState:
@@ -25,7 +26,8 @@ class InputState:
         Build InputState from current hardware state. Should only be used by the
         Reactor.
         """
-        petal_pressed = [hardware.get_captouch(i) for i in range(10)]
+        cts = captouch.read()
+        petal_pressed = [cts.petals[i].pressed for i in range(10)]
         left_button = hardware.left_button_get()
         right_button = hardware.right_button_get()
 
