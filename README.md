@@ -18,7 +18,7 @@ Please transfer all .py files in python_payload/ for using the demo payload.
 
 ## How to install dependencies
 
-Pay attention to install version 5.1. To be sure follow the generic instructions below.
+Pay attention to install version 5.1 **WITH OUR PATCHES**. To be sure follow the generic instructions below.
 
 ### Generic
 
@@ -30,6 +30,7 @@ $ git clone https://github.com/espressif/esp-idf.git
 $ cd esp-idf
 $ git checkout v5.1
 $ git submodule update --init --recursive
+$ patch -p1 < flow3r/third_party/b03c8912c73fa59061d97a2f5fd5acddcc3fa356.patch
 
 $ cd esp-idf
 $ ./install.sh
