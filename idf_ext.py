@@ -57,7 +57,6 @@ def action_extensions(base_actions, project_path=os.getcwd()):
         global_args.define_cache_entry += [
             'SDKCONFIG_DEFAULTS=' + sdkconfig_generated_path,
         ]
-        print(global_args.define_cache_entry)
 
     # Add global options
     extensions = {
