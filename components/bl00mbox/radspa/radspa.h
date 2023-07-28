@@ -45,16 +45,18 @@ struct _radspa_signal_t;
 struct _radspa_t;
 
 typedef struct _radspa_descriptor_t{
-    char name[32];
+    char * name;
     uint32_t id; // unique id number
-    char description[255];
+    char * description;
     struct _radspa_t * (* create_plugin_instance)(uint32_t init_var);
     void (* destroy_plugin_instance)(struct _radspa_t * plugin); // point to radspa_t
 } radspa_descriptor_t;
 
 typedef struct _radspa_signal_t{
     uint32_t hints;
-    char name[32]; //name
+    char * name; //name
+    char * description; //name
+    char * unit; //name
 
     int16_t * buffer; // full buffer of num_samples. may be NULL.
 

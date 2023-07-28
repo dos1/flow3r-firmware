@@ -59,6 +59,21 @@ radspa_descriptor_t * bl00mbox_plugin_registry_get_descriptor_from_index(uint32_
     return p->descriptor;
 }
 
+radspa_descriptor_t * bl00mbox_plugin_registry_get_id_from_index(uint32_t index){
+    /// returns pointer to descriptor of registry entry at given index.
+    /// returns NULL if out of range.
+    if(index >= bl00mbox_plugin_registry_len) return NULL;
+    bl00mbox_plugin_registry_t * p = bl00mbox_plugin_registry;
+    for(uint16_t i = 0; i < index; i++){
+        p = p->next;
+        if(p == NULL){
+            printf("bl00mbox: plugin list length error");
+            abort();
+        }
+    }
+    return p->descriptor;
+}
+
 /* REGISTER PLUGINS HERE!
  * - include .c file to SRCS in bl00mbox/CMakeLists.txt
  * - include .h file directory to INCLUDE_DIRS in bl00mbox/CMakeLists.txt

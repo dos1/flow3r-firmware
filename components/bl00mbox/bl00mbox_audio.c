@@ -11,7 +11,7 @@
 
 static bool is_initialized = false;
 
-#define BL00MBOX_DEFAULT_CHANNEL_VOLUME 10000
+#define BL00MBOX_DEFAULT_CHANNEL_VOLUME 3000
 #define BL00MBOX_CHANNELS 32
 static bool bl00mbox_audio_run = true;
 void bl00mbox_audio_enable(){ bl00mbox_audio_run = true; }

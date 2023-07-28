@@ -1,9 +1,10 @@
 import math
 
-class bl00mboxPatch():
-    pass
+class _Patch():
+    def bl00mbox_patch_marker(self):
+        return True
 
-class tinysynth(bl00mboxPatch):
+class tinysynth(_Patch):
     def __init__(self, chan):
         self.channel = chan
         self.SINE = -32767

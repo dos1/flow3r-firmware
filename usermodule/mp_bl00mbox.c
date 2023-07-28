@@ -158,33 +158,29 @@ MP_DEFINE_CONST_OBJ_TYPE(synth_tinysynth_type, MP_QSTR_bl00mbox,
 
 #endif
 
-STATIC mp_obj_t mp_plugin_registry_print_index(mp_obj_t index) {
-    /// prints name and ID
+STATIC mp_obj_t mp_plugin_index_get_id(mp_obj_t index) {
+    /// prints name
     radspa_descriptor_t * desc = bl00mbox_plugin_registry_get_descriptor_from_index(mp_obj_get_int(index));
     if(desc == NULL) return mp_const_none;
-    uint32_t tmplen = 20 + strlen(desc->name);
-    char * tmp = malloc(tmplen*sizeof(char));
-    if(tmp == NULL) return mp_const_none;
-    snprintf(tmp, tmplen, "[ID: %lu] %s", desc->id, desc->name); 
-    mp_obj_t ret = mp_obj_new_str(tmp, strlen(tmp));
-    free(tmp);
-    return ret;
+    return mp_obj_new_int(desc->id);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_plugin_registry_print_index_obj, mp_plugin_registry_print_index);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_plugin_index_get_id_obj, mp_plugin_index_get_id);
 
-STATIC mp_obj_t mp_plugin_registry_print_id(mp_obj_t id) {
-    /// prints name and description
-    radspa_descriptor_t * desc = bl00mbox_plugin_registry_get_descriptor_from_id(mp_obj_get_int(id));
+STATIC mp_obj_t mp_plugin_index_get_name(mp_obj_t index) {
+    /// prints name
+    radspa_descriptor_t * desc = bl00mbox_plugin_registry_get_descriptor_from_index(mp_obj_get_int(index));
     if(desc == NULL) return mp_const_none;
-    uint32_t tmplen = 10 + strlen(desc->name) + strlen(desc->description);
-    char * tmp = malloc(tmplen*sizeof(char));
-    if(tmp == NULL) return mp_const_none;
-    snprintf(tmp, tmplen, "%s: %s", desc->name, desc->description); 
-    mp_obj_t ret = mp_obj_new_str(tmp, strlen(tmp));
-    free(tmp);
-    return ret;
+    return mp_obj_new_str(desc->name, strlen(desc->name));
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_plugin_registry_print_id_obj, mp_plugin_registry_print_id);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_plugin_index_get_name_obj, mp_plugin_index_get_name);
+
+STATIC mp_obj_t mp_plugin_index_get_description(mp_obj_t index) {
+    /// prints name
+    radspa_descriptor_t * desc = bl00mbox_plugin_registry_get_descriptor_from_index(mp_obj_get_int(index));
+    if(desc == NULL) return mp_const_none;
+    return mp_obj_new_str(desc->description, strlen(desc->description));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_plugin_index_get_description_obj, mp_plugin_index_get_description);
 
 STATIC mp_obj_t mp_plugin_registry_num_plugins(void) {
     return mp_obj_new_int(bl00mbox_plugin_registry_get_plugin_num());
@@ -307,8 +303,9 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_channel_connect_signal_obj, 5, 5, 
 STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_sys_bl00mbox) },
     { MP_ROM_QSTR(MP_QSTR_plugin_registry_num_plugins), MP_ROM_PTR(&mp_plugin_registry_num_plugins_obj) },
-    { MP_ROM_QSTR(MP_QSTR_plugin_registry_print_index), MP_ROM_PTR(&mp_plugin_registry_print_index_obj) },
-    { MP_ROM_QSTR(MP_QSTR_plugin_registry_print_id), MP_ROM_PTR(&mp_plugin_registry_print_id_obj) },
+    { MP_ROM_QSTR(MP_QSTR_plugin_index_get_id), MP_ROM_PTR(&mp_plugin_index_get_id_obj) },
+    { MP_ROM_QSTR(MP_QSTR_plugin_index_get_name), MP_ROM_PTR(&mp_plugin_index_get_name_obj) },
+    { MP_ROM_QSTR(MP_QSTR_plugin_index_get_description), MP_ROM_PTR(&mp_plugin_index_get_description_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_channel_get_free), MP_ROM_PTR(&mp_channel_get_free_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_get_foreground), MP_ROM_PTR(&mp_channel_get_foreground_obj) },

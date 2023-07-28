@@ -4,7 +4,9 @@ import sys_bl00mbox
 import math
 
 import bl00mbox_patches as patches
-import bl00mbox_helpers as helpers
+from bl00mbox_patches import _Patch as PatchType
+from bl00mbox_plugins import plugins
+from bl00mbox_plugins import _Plugin as PluginType
 
 class ChannelMixer():
     def __init__(self, channel_num):
@@ -13,10 +15,9 @@ class ChannelMixer():
         pass
     def __repr__(self):
         ret = "[channel mixer]"
-        if len(self.connections) > 0:
-            ret += "\nconnections:" 
+        ret += " (" + str(len(self.connections)) +" connections)" 
         for con in self.connections:
-            ret += "\n ^== " + con.name
+            ret += "\n  " + con.name
             ret +=  " in [bud " + str(con._bud.bud_num) + "] " + con._bud.name
         return ret
 
@@ -168,7 +169,7 @@ class Bud:
             ret += "\n  " + "\n  ".join(repr(sig).split("\n"))
         return ret
 
-class Channel:
+class Channel():
     def __init__(self, nick = ""):
         self.channel_num = sys_bl00mbox.channel_get_free()
         self.buds = []
@@ -179,19 +180,33 @@ class Channel:
     def __repr__(self):
         ret = "[channel " + str(self.channel_num) + "]"
         if self.nick != "":
-            ret += " \"" + self.nick + "\" "
-        ret += "\nvolume: " + str(sys_bl00mbox.channel_get_volume(self.channel_num))
-        ret += "\nbuds: " + str(len(self.buds))
-        ret += "\noutput mixer connections: " + str(len(self.mixer.connections))
+            ret += " \"" + self.nick + "\""
+        if sys_bl00mbox.channel_get_foreground() == self.channel_num:
+            ret += " (foreground)"
+        ret += "\n  volume: " + str(sys_bl00mbox.channel_get_volume(self.channel_num))
+        ret += "\n  buds: " + str(len(self.buds))
+        ret += "\n  " + "\n  ".join(repr(self.mixer).split("\n"))
         return ret
 
-    def new_bud(self, plugin_id):
-        bud = Bud(self, plugin_id)
-        return bud
+    def new_bud(self, thing):
+        if isinstance(thing, PluginType):
+            return Bud(self, thing.plugin_id)
+        if type(thing) == int:
+            return Bud(self, thing)
     
     def new_patch(self, patch):
-        #if isinstance(patch, patches.bl00mboxPatch):
         return patch(self)
+
+    @staticmethod
+    def state():
+        return "[channel list]\n  foreground: [channel " + str(sys_bl00mbox.channel_get_foreground()) +"]"
+
+    def new(self, thing):
+        if type(thing) == type:
+            if issubclass(thing, PatchType):
+                return self.new_patch(thing)
+        if isinstance(thing, PluginType) or (type(thing) == int):
+            return self.new_bud(thing)
 
     @property
     def volume(self):
@@ -200,19 +215,3 @@ class Channel:
     @volume.setter
     def volume(self, value):
         sys_bl00mbox.channel_set_volume(self.channel_num, value)
-
-
-class PluginRegistry:
-    @staticmethod
-    def print_plugin_list():
-        for index in range(sys_bl00mbox.plugin_registry_num_plugins()):
-            print(sys_bl00mbox.plugin_registry_print_index(index))
-    @staticmethod
-    def print_plugin_info(plugin_id):
-        print(sys_bl00mbox.plugin_registry_print_id(plugin_id))
-
-
-class ChannelStats():
-    @staticmethod
-    def foreground():
-        return "foreground: [channel " + str(sys_bl00mbox.channel_get_foreground()) +"]"

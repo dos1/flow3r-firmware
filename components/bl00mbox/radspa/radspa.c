@@ -16,7 +16,7 @@ radspa_signal_t * radspa_signal_get_by_index(radspa_t * plugin, uint16_t signal_
 void radspa_signal_set(radspa_t * plugin, uint8_t signal_index, char * name, uint32_t hints, int16_t value){
     radspa_signal_t * sig = radspa_signal_get_by_index(plugin, signal_index);
     if(sig == NULL) return;
-    strcpy(sig->name, name);
+    sig->name = name;
     sig->hints = hints;
     sig->value = value;
 }
@@ -24,7 +24,7 @@ void radspa_signal_set(radspa_t * plugin, uint8_t signal_index, char * name, uin
 int16_t radspa_signal_add(radspa_t * plugin, char * name, uint32_t hints, int16_t value){
     radspa_signal_t * sig = malloc(sizeof(radspa_signal_t));
     if(sig == NULL) return -1; // allocation failed
-    strcpy(sig->name, name);
+    sig->name = name;
     sig->hints = hints;
     sig->buffer = NULL;
     sig->next = NULL;
