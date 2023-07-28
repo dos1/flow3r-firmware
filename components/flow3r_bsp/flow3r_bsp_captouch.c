@@ -17,6 +17,45 @@ typedef struct {
     petal_kind_t pad_kind;
 } pad_mapping_t;
 
+#if defined(CONFIG_FLOW3R_HW_GEN_P3)
+static const pad_mapping_t _map_top[12] = {
+    { 0, petal_pad_tip },  // 0
+    { 0, petal_pad_ccw },  // 1
+    { 0, petal_pad_cw },   // 2
+    { 2, petal_pad_cw },   // 3
+    { 2, petal_pad_ccw },  // 4
+    { 2, petal_pad_tip },  // 5
+    { 6, petal_pad_tip },  // 6
+    { 6, petal_pad_ccw },  // 7
+    { 6, petal_pad_cw },   // 8
+    { 4, petal_pad_cw },   // 9
+    { 4, petal_pad_ccw },  // 10
+    { 4, petal_pad_tip },  // 11
+};
+static const pad_mapping_t _map_bot[13] = {
+    { 1, petal_pad_base },  // 0
+    { 1, petal_pad_tip },   // 1
+
+    { 3, petal_pad_base },  // 2
+    { 3, petal_pad_tip },   // 3
+
+    { 5, petal_pad_base },  // 4
+    { 5, petal_pad_tip },   // 5
+
+    { 7, petal_pad_tip },   // 6
+    { 7, petal_pad_base },  // 7
+
+    { 9, petal_pad_tip },   // 8
+    { 9, petal_pad_base },  // 9
+
+    { 8, petal_pad_tip },  // 10
+    { 8, petal_pad_cw },   // 11
+    { 8, petal_pad_ccw },  // 12
+};
+static gpio_num_t _interrupt_gpio_top = GPIO_NUM_15;
+static gpio_num_t _interrupt_gpio_bot = GPIO_NUM_15;
+static bool _interrupt_shared = true;
+#elif defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P6)
 static const pad_mapping_t _map_top[12] = {
     { 0, petal_pad_ccw },   // 0
     { 0, petal_pad_base },  // 1
@@ -31,21 +70,6 @@ static const pad_mapping_t _map_top[12] = {
     { 4, petal_pad_base },  // 10
     { 4, petal_pad_cw },    // 11
 };
-
-static ad7147_chip_t _top = {
-    .name = "top",
-    .nchannels = 12,
-    .sequences = {
-        {
-            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-        },
-        {
-            -1, -1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1, -1,
-        },
-    },
-};
-
 static const pad_mapping_t _map_bot[13] = {
     { 1, petal_pad_base },  // 0
     { 1, petal_pad_tip },   // 1
@@ -65,6 +89,33 @@ static const pad_mapping_t _map_bot[13] = {
     { 8, petal_pad_ccw },   // 10
     { 8, petal_pad_cw },    // 11
     { 8, petal_pad_base },  // 12
+};
+#if defined(CONFIG_FLOW3R_HW_GEN_P4)
+static gpio_num_t _interrupt_gpio_top = GPIO_NUM_15;
+static gpio_num_t _interrupt_gpio_bot = GPIO_NUM_15;
+static bool _interrupt_shared = true;
+#else
+static gpio_num_t _interrupt_gpio_top = GPIO_NUM_15;
+static gpio_num_t _interrupt_gpio_bot = GPIO_NUM_16;
+static bool _interrupt_shared = false;
+#endif
+
+#else
+#error "captouch not implemented for this badge generation"
+#endif
+
+static ad7147_chip_t _top = {
+    .name = "top",
+    .nchannels = 12,
+    .sequences = {
+        {
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+        },
+        {
+            -1, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1,
+        },
+    },
 };
 
 static ad7147_chip_t _bot = {
@@ -108,9 +159,6 @@ static ad7147_chip_t _bot = {
         },
     },
 };
-
-static gpio_num_t _interrupt_gpio_top = GPIO_NUM_15;
-static gpio_num_t _interrupt_gpio_bot = GPIO_NUM_16;
 
 static flow3r_bsp_captouch_callback_t _callback = NULL;
 
@@ -168,6 +216,14 @@ static void _task(void *data) {
             ESP_LOGE(TAG, "Queue receive failed");
             return;
         }
+        bool top = !bot;
+
+        if (_interrupt_shared) {
+            // No way to know which captouch chip triggered the interrupt, so
+            // process both.
+            top = true;
+            bot = true;
+        }
 
         if (bot) {
             if ((ret = flow3r_bsp_ad7147_chip_process(&_bot)) != ESP_OK) {
@@ -181,7 +237,8 @@ static void _task(void *data) {
             } else {
                 bot_ok = true;
             }
-        } else {
+        }
+        if (top) {
             if ((ret = flow3r_bsp_ad7147_chip_process(&_top)) != ESP_OK) {
                 if (top_ok) {
                     ESP_LOGE(TAG,
@@ -265,10 +322,14 @@ esp_err_t flow3r_bsp_captouch_init(flow3r_bsp_captouch_callback_t callback) {
         ESP_LOGE(TAG, "Failed to add bottom captouch ISR");
         return ret;
     }
-    if ((ret = _gpio_interrupt_setup(_interrupt_gpio_top, _top_isr)) !=
-        ESP_OK) {
-        ESP_LOGE(TAG, "Failed to add top captouch ISR");
-        return ret;
+    if (!_interrupt_shared) {
+        // On badges with shared interrupts, only install the 'bot' ISR as a
+        // shared ISR.
+        if ((ret = _gpio_interrupt_setup(_interrupt_gpio_top, _top_isr)) !=
+            ESP_OK) {
+            ESP_LOGE(TAG, "Failed to add top captouch ISR");
+            return ret;
+        }
     }
 
     xTaskCreate(&_task, "captouch", 4096, NULL, configMAX_PRIORITIES - 1, NULL);

@@ -4,6 +4,7 @@
 #include "esp_log.h"
 
 #include "flow3r_bsp_captouch.h"
+#include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
@@ -77,7 +78,11 @@ typedef struct {
 } st3m_captouch_petal_pad_t;
 
 typedef struct {
+#if defined(CONFIG_FLOW3R_HW_GEN_P3)
+    st3m_captouch_petal_pad_t tip;
+#else
     st3m_captouch_petal_pad_t base;
+#endif
     st3m_captouch_petal_pad_t cw;
     st3m_captouch_petal_pad_t ccw;
     bool pressed;
@@ -112,12 +117,20 @@ static void _on_data(const flow3r_bsp_captouch_state_t *st) {
     xSemaphoreTake(_mu, portMAX_DELAY);
     memcpy(&_state, st, sizeof(flow3r_bsp_captouch_state_t));
     for (size_t i = 0; i < 5; i++) {
+#if defined(CONFIG_FLOW3R_HW_GEN_P3)
+        _pad_feed(&_state.top[i].tip, _state.raw.petals[i * 2].tip.raw, true);
+#else
         _pad_feed(&_state.top[i].base, _state.raw.petals[i * 2].base.raw, true);
+#endif
         _pad_feed(&_state.top[i].cw, _state.raw.petals[i * 2].cw.raw, true);
         _pad_feed(&_state.top[i].ccw, _state.raw.petals[i * 2].ccw.raw, true);
-        _state.top[i].pressed = _state.top[i].base.pressed ||
-                                _state.top[i].cw.pressed ||
-                                _state.top[i].ccw.pressed;
+        _state.top[i].pressed =
+#if defined(CONFIG_FLOW3R_HW_GEN_P3)
+            _state.top[i].tip.pressed ||
+#else
+            _state.top[i].base.pressed ||
+#endif
+            _state.top[i].cw.pressed || _state.top[i].ccw.pressed;
     }
     for (size_t i = 0; i < 5; i++) {
         _pad_feed(&_state.bottom[i].base, _state.raw.petals[i * 2 + 1].base.raw,
@@ -176,10 +189,18 @@ void read_captouch_ex(captouch_state_t *state) {
     memset(state, 0, sizeof(captouch_state_t));
     xSemaphoreTake(_mu, portMAX_DELAY);
     for (size_t i = 0; i < 5; i++) {
+#if defined(CONFIG_FLOW3R_HW_GEN_P3)
+        bool base = _state.top[i].tip.pressed;
+#else
         bool base = _state.top[i].base.pressed;
+#endif
         bool cw = _state.top[i].cw.pressed;
         bool ccw = _state.top[i].ccw.pressed;
+#if defined(CONFIG_FLOW3R_HW_GEN_P3)
+        state->petals[i * 2].pads.tip_pressed = base;
+#else
         state->petals[i * 2].pads.base_pressed = base;
+#endif
         state->petals[i * 2].pads.cw_pressed = cw;
         state->petals[i * 2].pads.ccw_pressed = ccw;
         state->petals[i * 2].pressed = base || cw || ccw;
@@ -244,6 +265,15 @@ int32_t captouch_get_petal_phi(uint8_t petal) {
 int32_t captouch_get_petal_rad(uint8_t petal) {
     bool top = (petal % 2) == 0;
     if (top) {
+#if defined(CONFIG_FLOW3R_HW_GEN_P3)
+        size_t ix = petal / 2;
+        xSemaphoreTake(_mu, portMAX_DELAY);
+        int32_t left = ringbuffer_avg(&_state.top[ix].ccw.rb);
+        int32_t right = ringbuffer_avg(&_state.top[ix].cw.rb);
+        int32_t tip = ringbuffer_avg(&_state.top[ix].tip.rb);
+        xSemaphoreGive(_mu);
+        return tip - (left + right) / 2;
+#else
         size_t ix = petal / 2;
         xSemaphoreTake(_mu, portMAX_DELAY);
         int32_t left = ringbuffer_avg(&_state.top[ix].ccw.rb);
@@ -251,6 +281,7 @@ int32_t captouch_get_petal_rad(uint8_t petal) {
         int32_t base = ringbuffer_avg(&_state.top[ix].base.rb);
         xSemaphoreGive(_mu);
         return (left + right) / 2 - base;
+#endif
     } else {
         size_t ix = (petal - 1) / 2;
         xSemaphoreTake(_mu, portMAX_DELAY);
