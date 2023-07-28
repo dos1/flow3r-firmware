@@ -16,7 +16,7 @@ set(MICROPY_QSTRDEFS_PORT "${MICROPY_PORT_DIR}/qstrdefsport.h")
 
 include("${MICROPY_DIR}/py/py.cmake")
 
-set(USER_C_MODULES "${PROJECT_DIR}/usermodule/micropython.cmake")
+set(USER_C_MODULES "${COMPONENT_DIR}/usermodule/micropython.cmake")
 
 if(NOT CMAKE_BUILD_EARLY_EXPANSION)
     # Enable extmod components that will be configured by extmod.cmake.
