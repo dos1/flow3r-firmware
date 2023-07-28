@@ -6,5 +6,5 @@
 void bl00mbox_init(){
     bl00mbox_plugin_registry_init();
     st3m_audio_set_player_function(bl00mbox_audio_render);
-    bl00mbox_channel_enable(0);
+    bl00mbox_channels_init();
 }

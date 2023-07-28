@@ -192,6 +192,15 @@ STATIC mp_obj_t mp_plugin_registry_num_plugins(void) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_plugin_registry_num_plugins_obj, mp_plugin_registry_num_plugins);
 
 
+STATIC mp_obj_t mp_channel_get_free() {
+    return mp_obj_new_int(bl00mbox_channel_get_free_index());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_channel_get_free_obj, mp_channel_get_free);
+
+STATIC mp_obj_t mp_channel_get_foreground() {
+    return mp_obj_new_int(bl00mbox_channel_get_foreground_index());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_channel_get_foreground_obj, mp_channel_get_foreground);
 
 STATIC mp_obj_t mp_channel_enable(mp_obj_t chan) {
     bl00mbox_channel_enable(mp_obj_get_int(chan));
@@ -301,6 +310,8 @@ STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_plugin_registry_print_index), MP_ROM_PTR(&mp_plugin_registry_print_index_obj) },
     { MP_ROM_QSTR(MP_QSTR_plugin_registry_print_id), MP_ROM_PTR(&mp_plugin_registry_print_id_obj) },
 
+    { MP_ROM_QSTR(MP_QSTR_channel_get_free), MP_ROM_PTR(&mp_channel_get_free_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_get_foreground), MP_ROM_PTR(&mp_channel_get_foreground_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_enable), MP_ROM_PTR(&mp_channel_enable_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_disable), MP_ROM_PTR(&mp_channel_disable_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_set_volume), MP_ROM_PTR(&mp_channel_set_volume_obj) },

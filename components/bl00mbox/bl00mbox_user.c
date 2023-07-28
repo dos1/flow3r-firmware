@@ -66,6 +66,7 @@ bl00mbox_bud_t * bl00mbox_channel_new_bud(uint8_t channel, uint32_t id, uint32_t
         while(last->chan_next != NULL){ last = last->chan_next; } 
         last->chan_next = bud;
     }
+    bl00mbox_channel_event(channel);
     return bud;
 }
 
@@ -108,6 +109,7 @@ bool bl00mbox_channel_connect_signal_to_output_mixer(uint8_t channel, uint32_t b
         while(last_root->next != NULL){ last_root = last_root->next; }
         last_root->next = root;
     }
+    bl00mbox_channel_event(channel);
     return true;
 }
 
@@ -140,6 +142,7 @@ bool bl00mbox_channel_connect_signal(uint8_t channel, uint32_t bud_rx_index, uin
         conn->output_subscribers++;
         rx->buffer = tx->buffer;
     }
+    bl00mbox_channel_event(channel);
     return true;
 }
 #if 0
@@ -207,6 +210,7 @@ bool bl00mbox_channel_bud_set_signal_value(uint8_t channel, uint32_t bud_index, 
     if(sig == NULL) return false;
 
     sig->value = value; 
+    bl00mbox_channel_event(channel);
     return true;
 }
 

@@ -170,11 +170,10 @@ class Bud:
 
 class Channel:
     def __init__(self, nick = ""):
-        self.channel_num = 0
+        self.channel_num = sys_bl00mbox.channel_get_free()
         self.buds = []
         self.nick = nick
-        #self.volume = sys_bl00mbox.channel_get_volume(self.channel_num)
-        self.volume = 3000
+        self.volume = sys_bl00mbox.channel_get_volume(self.channel_num)
         self.mixer = ChannelMixer(self.channel_num)
     
     def __repr__(self):
@@ -202,6 +201,7 @@ class Channel:
     def volume(self, value):
         sys_bl00mbox.channel_set_volume(self.channel_num, value)
 
+
 class PluginRegistry:
     @staticmethod
     def print_plugin_list():
@@ -210,3 +210,9 @@ class PluginRegistry:
     @staticmethod
     def print_plugin_info(plugin_id):
         print(sys_bl00mbox.plugin_registry_print_id(plugin_id))
+
+
+class ChannelStats():
+    @staticmethod
+    def foreground():
+        return "foreground: [channel " + str(sys_bl00mbox.channel_get_foreground()) +"]"

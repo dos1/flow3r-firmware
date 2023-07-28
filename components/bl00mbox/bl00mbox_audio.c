@@ -11,6 +11,7 @@
 
 static bool is_initialized = false;
 
+#define BL00MBOX_DEFAULT_CHANNEL_VOLUME 10000
 #define BL00MBOX_CHANNELS 32
 static bool bl00mbox_audio_run = true;
 void bl00mbox_audio_enable(){ bl00mbox_audio_run = true; }
@@ -20,6 +21,7 @@ static uint32_t render_pass_id;
 
 // fixed-length list of channels
 static bl00mbox_channel_t channels[BL00MBOX_CHANNELS];
+static int8_t last_chan_event = 0;
 // foregrounded channel is always rendered
 // note: regardless of settings the system channel 0 is always rendered
 static uint8_t bl00mbox_channel_foreground = 0;
@@ -28,9 +30,38 @@ static bool bl00mbox_channel_background_active[BL00MBOX_CHANNELS] = {0,};
 void bl00mbox_audio_channel_background_enable(uint8_t chan){ bl00mbox_channel_background_active[chan] = true; }
 void bl00mbox_audio_channel_background_disable(uint8_t chan){ bl00mbox_channel_background_active[chan] = false; }
 
+void bl00mbox_channel_event(uint8_t chan){
+    last_chan_event = chan;
+}
+
 bl00mbox_channel_t * bl00mbox_get_channel(uint8_t chan){
     if(chan >= BL00MBOX_CHANNELS) return NULL;
     return &(channels[chan]);
+}
+
+uint8_t bl00mbox_channel_get_foreground_index(){
+    return bl00mbox_channel_foreground;
+}
+
+uint8_t bl00mbox_channel_get_free_index(){
+    uint8_t ret = 1;
+    for(; ret < BL00MBOX_CHANNELS; ret++){
+        if(bl00mbox_get_channel(ret)->is_free){
+            bl00mbox_get_channel(ret)->is_free = false;
+            break;
+        }
+    }
+    last_chan_event = ret;
+    return ret;
+}
+
+void bl00mbox_channels_init(){
+    for(uint8_t i = 0; i < BL00MBOX_CHANNELS; i++){
+        bl00mbox_channel_t * chan = bl00mbox_get_channel(i);
+        chan->volume = BL00MBOX_DEFAULT_CHANNEL_VOLUME;
+        chan->is_active = true;
+        chan->is_free = true;
+    }
 }
 
 void bl00mbox_channel_enable(uint8_t chan){
@@ -103,6 +134,8 @@ static void bl00mbox_audio_channel_render(bl00mbox_channel_t * chan, int16_t * o
 }
 
 void bl00mbox_audio_render(int16_t * rx, int16_t * tx, uint16_t len){
+    //if(!is_initialized) return;
+    bl00mbox_channel_foreground = last_chan_event;
     if(!bl00mbox_audio_run){
         memset(tx, 0, len*sizeof(int16_t)); // mute
         return;

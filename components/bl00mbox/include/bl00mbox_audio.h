@@ -33,7 +33,7 @@ typedef struct _bl00mbox_channel_root_t{
 
 typedef struct{
     bool is_active; // rendering can be skipped if false
-    char name[32];
+    bool is_free;
     int32_t volume;
     struct _bl00mbox_channel_root_t * root_list; // list of all roots associated with channels
     uint32_t render_pass_id; // may be used by host to determine whether recomputation is necessary
@@ -47,3 +47,9 @@ void bl00mbox_channel_enable(uint8_t chan);
 void bl00mbox_channel_disable(uint8_t chan);
 void bl00mbox_channel_set_volume(uint8_t chan, uint16_t volume);
 int16_t bl00mbox_channel_get_volume(uint8_t chan);
+void bl00mbox_channel_event(uint8_t chan);
+uint8_t bl00mbox_channel_get_free_index();
+void bl00mbox_channels_init();
+uint8_t bl00mbox_channel_get_foreground_index();
+
+
