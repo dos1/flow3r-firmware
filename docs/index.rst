@@ -14,6 +14,7 @@ Welcome to flow3r's documentation!
    badge/usage.rst
    badge/programming.rst
    badge/firmware.rst
+   badge/firmware-development.rst
    badge/badge_link.rst
 
 .. toctree::
