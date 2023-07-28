@@ -1,6 +1,6 @@
 import bl00mbox
 blm = bl00mbox.Channel()
-from bl00mbox_patches import tinysynth
+from bl00mbox_patches import tinysynth_fm
 
 from hardware import *
 import leds
@@ -67,7 +67,7 @@ def run():
 def init():
     global synths
     for i in range(1):
-        synths += [blm.new_patch(tinysynth)]
+        synths += [blm.new_patch(tinysynth_fm)]
     for synth in synths:
         synth.decay(100)
 

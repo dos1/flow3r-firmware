@@ -25,6 +25,9 @@ typedef struct {
     uint32_t    decay;
     uint32_t    sustain;
     uint32_t    release;
+    uint16_t    attack_prev_ms;
+    uint16_t    decay_prev_ms;
+    uint16_t    release_prev_ms;
     uint32_t    gate;
     uint32_t    velocity;
     uint8_t     env_phase;

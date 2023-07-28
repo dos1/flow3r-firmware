@@ -198,13 +198,19 @@ static int16_t trad_env_run_single(trad_env_data_t * env){
 }
 
 #define SAMPLE_RATE_SORRY 48000
-#define TRAD_ENV_UNDERSAMPLING 2
+#define TRAD_ENV_UNDERSAMPLING 5
 
 
-uint32_t trad_env_time_ms_to_val_rise(uint16_t time_ms, uint32_t val){
+static inline uint32_t trad_env_time_ms_to_val_rise(uint16_t time_ms, uint32_t val){
     if(!time_ms) return UINT32_MAX;
     uint32_t div = time_ms * ((SAMPLE_RATE_SORRY)/1000);
     return val/div;
+}
+
+static inline uint32_t uint32_sat_leftshift(uint32_t input, uint16_t left){
+    if(!left) return input; // nothing to do
+    if(input >> (32-left)) return UINT32_MAX; // sat
+    return input << left;
 }
 
 
@@ -224,11 +230,9 @@ void trad_env_run(radspa_t * trad_env, uint16_t num_samples, uint32_t render_pas
     int16_t ret = output_sig->value;
 
     for(uint16_t i = 0; i < num_samples; i++){
-        int16_t input = radspa_signal_get_value(input_sig, i, num_samples, render_pass_id);
         static int16_t env = 0;
 
-        //if(!(i%(1<<TRAD_ENV_UNDERSAMPLING))){
-        if(1){
+        if(!(i%(1<<TRAD_ENV_UNDERSAMPLING))){
             int16_t trigger = radspa_signal_get_value(trigger_sig, i, num_samples, render_pass_id);
             if(!trigger){
                 if(plugin_data->env_phase != TRAD_ENV_PHASE_OFF){
@@ -257,7 +261,10 @@ void trad_env_run(radspa_t * trad_env, uint16_t num_samples, uint32_t render_pas
                         attack_sig = radspa_signal_get_by_index(trad_env, TRAD_ENV_ATTACK);
                     }
                     time_ms = radspa_signal_get_value(attack_sig, i, num_samples, render_pass_id);
-                    plugin_data->attack = trad_env_time_ms_to_val_rise(time_ms, UINT32_MAX);
+                    if(time_ms != plugin_data->attack_prev_ms){
+                        plugin_data->attack = uint32_sat_leftshift(trad_env_time_ms_to_val_rise(time_ms, UINT32_MAX), TRAD_ENV_UNDERSAMPLING);
+                        plugin_data->attack_prev_ms = time_ms;
+                    }
                     break;
                 case TRAD_ENV_PHASE_DECAY:
                     if(sustain_sig == NULL){
@@ -276,7 +283,10 @@ void trad_env_run(radspa_t * trad_env, uint16_t num_samples, uint32_t render_pas
                         decay_sig = radspa_signal_get_by_index(trad_env, TRAD_ENV_DECAY);
                     }
                     time_ms = radspa_signal_get_value(decay_sig, i, num_samples, render_pass_id);
-                    plugin_data->decay = trad_env_time_ms_to_val_rise(time_ms, UINT32_MAX);
+                    if(time_ms != plugin_data->decay_prev_ms){
+                        plugin_data->decay = uint32_sat_leftshift(trad_env_time_ms_to_val_rise(time_ms, UINT32_MAX-plugin_data->sustain), TRAD_ENV_UNDERSAMPLING);
+                        plugin_data->decay_prev_ms = time_ms;
+                    }
                     break;
                 case TRAD_ENV_PHASE_SUSTAIN:
                     if(sustain_sig == NULL){
@@ -302,14 +312,22 @@ void trad_env_run(radspa_t * trad_env, uint16_t num_samples, uint32_t render_pas
                         release_sig = radspa_signal_get_by_index(trad_env, TRAD_ENV_RELEASE);
                     }
                     time_ms = radspa_signal_get_value(release_sig, i, num_samples, render_pass_id);
-                    plugin_data->release = trad_env_time_ms_to_val_rise(time_ms, plugin_data->sustain);
+                    if(time_ms != plugin_data->release_prev_ms){
+                        plugin_data->release = uint32_sat_leftshift(trad_env_time_ms_to_val_rise(time_ms, plugin_data->sustain), TRAD_ENV_UNDERSAMPLING);
+                        plugin_data->release_prev_ms = time_ms;
+                    }
                     break;
             }
             env = trad_env_run_single(plugin_data);
         }
+        if(env){
+            int16_t input = radspa_signal_get_value(input_sig, i, num_samples, render_pass_id);
+            ret = i16_mult_shift(env, input);
+        } else {
+            ret = 0;
+        }
         if(phase_sig->buffer != NULL) (phase_sig->buffer)[i] = plugin_data->env_phase;
-        ret = i16_mult_shift(env, input);
-        if(output_sig->buffer != NULL) (output_sig->buffer)[i] = i16_mult_shift(env, input);
+        if(output_sig->buffer != NULL) (output_sig->buffer)[i] = ret;
     }
     phase_sig->value = plugin_data->env_phase;
     output_sig->value = ret;

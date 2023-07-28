@@ -21,10 +21,10 @@ class HarmonicApp(Application):
         self.color_intensity = 0
         self.chord_index = None
         self.chord = None
-        self.synths = [blm.new_patch(tinysynth) for i in range(5)]
-        '''
+        self.synths = [blm.new_patch(tinysynth) for i in range(10)]
         for i, synth in enumerate(self.synths):
             synth.decay(100)
+            '''
             synth.sustain(0.5)
             if i < 5:
                 synth.waveform(-1)
@@ -80,18 +80,26 @@ class HarmonicApp(Application):
                     else:
                         k = int(i / 2)
                         self.synths[k].tone(self.chord[k])
-                        #self.synths[k+5].tone(12+self.chord[k])
-                        #self.synths[k+10].tone(7+self.chord[k])
+                        if len(self.synths) >= 10:
+                            self.synths[k+5].tone(12+self.chord[k])
+                        if len(self.synths) >= 15:
+                            self.synths[k+10].tone(7+self.chord[k])
                         self.synths[k].start()
-                        #self.synths[k+5].start()
-                        #self.synths[k+10].start()
+                        if len(self.synths) >= 10:
+                            self.synths[k+5].start()
+                        if len(self.synths) >= 15:
+                            self.synths[k+10].start()
                         self.color_intensity = 1.0
+                '''
                 else:
                     if (1 + i) % 2:
                         k = int(i / 2)
                         self.synths[k].stop()
-                        #self.synths[k + 5].stop()
-                        #self.synths[k + 10].stop()
+                        if len(self.synths) >= 10:
+                            self.synths[k + 5].stop()
+                        if len(self.synths) >= 15:
+                            self.synths[k + 10].stop()
+                '''
 
 
 app = HarmonicApp("harmonic")
