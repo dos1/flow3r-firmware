@@ -34,5 +34,6 @@ in with nixpkgs; rec {
     python3Packages.wasmer-compiler-cranelift
     emscripten
     ncurses5
+    esp-gdb
   ];
 }
