@@ -275,11 +275,6 @@ STATIC const machine_pin_obj_t machine_pin_obj[GPIO_NUM_MAX] = {
 STATIC const machine_pin_irq_obj_t machine_pin_irq_object[GPIO_NUM_MAX];
 
 void machine_pins_init(void) {
-    static bool did_install = false;
-    if (!did_install) {
-        gpio_install_isr_service(0);
-        did_install = true;
-    }
     memset(&MP_STATE_PORT(machine_pin_irq_handler[0]), 0, sizeof(MP_STATE_PORT(machine_pin_irq_handler)));
 }
 

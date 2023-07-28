@@ -63,6 +63,7 @@ set(MICROPY_SOURCE_PORT
     ${MICROPY_PORT_DIR}/machine_uart.c
     ${MICROPY_PORT_DIR}/machine_adc.c
     ${MICROPY_PORT_DIR}/machine_adcblock.c
+    ${MICROPY_PORT_DIR}/machine_i2c.c
     ${MICROPY_PORT_DIR}/modmachine.c
     ${MICROPY_PORT_DIR}/network_common.c
     ${MICROPY_PORT_DIR}/network_lan.c
