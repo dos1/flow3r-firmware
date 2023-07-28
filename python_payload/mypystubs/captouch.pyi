@@ -58,6 +58,20 @@ class CaptouchPetalState(Protocol):
         State of individual pads of the petal.
         """
         ...
+    @property
+    def position(seld) -> Tuple[int, int]:
+        """
+        Polar coordinates of touch on petal in the form of a (distance, angle)
+        tuple.
+
+        The units are arbitrary, but centered around (0, 0).
+
+        An increase in distance means the touch is further away from the centre
+        of the badge.
+
+        An increase in angle means the touch is more counter-clockwise.
+        """
+        ...
 
 class CaptouchState(Protocol):
     """
@@ -87,5 +101,12 @@ def read() -> CaptouchState:
 def calibration_active() -> bool:
     """
     Returns true if the captouch system is current recalibrating.
+    """
+    ...
+
+def calibration_request() -> None:
+    """
+    Attempts to start calibration of captouch controllers. No-op if a
+    calibration is already active.
     """
     ...

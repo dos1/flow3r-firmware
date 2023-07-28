@@ -1,4 +1,5 @@
 import hardware as _hardware
+import captouch as _captouch
 
 
 class NamedObject:
@@ -36,4 +37,5 @@ except ModuleNotFoundError:
 
 
 hardware = _hardware
+captouch = _captouch
 audio = _audio

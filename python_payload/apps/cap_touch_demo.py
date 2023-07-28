@@ -7,7 +7,8 @@ import cmath
 import math
 import time
 
-import hardware
+import captouch
+
 from st3m import utils, application, ui, event
 
 
@@ -50,19 +51,15 @@ class CapTouchDemo(application.Application):
 
     def main_foreground(self):
         self.dots = []
+        cps = captouch.read()
         for i in range(10):
-            size = (hardware.get_captouch(i) * 4) + 4
-            size += int(
-                max(
-                    0,
-                    sum(
-                        [hardware.captouch_get_petal_pad(i, x) for x in range(0, 3 + 1)]
-                    )
-                    / 8000,
-                )
-            )
-            x = 70 + (hardware.captouch_get_petal_rad(i) / 1000)
-            x += (hardware.captouch_get_petal_phi(i) / 600) * 1j
+            petal = cps.petals[i]
+            (rad, phi) = petal.position
+            size = 4
+            if petal.pressed:
+                size += 4
+            x = 70 + (rad / 1000)
+            x += (phi / 600) * 1j
             rot = cmath.exp(2j * math.pi * i / 10)
             x = x * rot
 
@@ -78,7 +75,7 @@ class CapTouchDemo(application.Application):
 
     def do_autocalib(self, data):
         log.info("Performing captouch autocalibration")
-        hardware.captouch_autocalib()
+        captouch.calibration_request()
         self.last_calib = 50
 
 

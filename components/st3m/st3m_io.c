@@ -113,16 +113,10 @@ uint8_t st3m_io_badge_link_enable(uint8_t pin_mask) {
     return st3m_io_badge_link_set(pin_mask, 1);
 }
 
-// Imports from badge23, will be removed once captouch gets moved to bsp/st3m.
-void captouch_read_cycle(void);
-void captouch_init(void);
-void captouch_force_calibration(void);
-
 static void _task(void *data) {
     TickType_t last_wake = xTaskGetTickCount();
     while (1) {
         vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(10));  // 100 Hz
-        captouch_read_cycle();
         _update_button_state();
     }
 }
@@ -135,8 +129,6 @@ void st3m_io_init(void) {
         }
     }
 
-    captouch_init();
-    captouch_force_calibration();
     st3m_io_badge_link_disable(BADGE_LINK_PIN_MASK_ALL);
 
     xTaskCreate(&_task, "io", 4096, NULL, configMAX_PRIORITIES - 1, NULL);

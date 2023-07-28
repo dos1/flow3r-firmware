@@ -1,5 +1,6 @@
 from bl00mbox import tinysynth
 from hardware import *
+import captouch
 import leds
 
 
@@ -65,8 +66,9 @@ class HarmonicApp(Application):
     def main_foreground(self):
         if self.color_intensity > 0:
             self.color_intensity -= self.color_intensity / 20
+        cts = captouch.read()
         for i in range(10):
-            if get_captouch(i):
+            if cts.petals[i].pressed:
                 if i % 2:
                     k = int((i - 1) / 2)
                     self._set_chord(k)

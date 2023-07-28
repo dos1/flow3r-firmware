@@ -1,5 +1,6 @@
 from bl00mbox import tinysynth
 from hardware import *
+import captouch
 import leds
 
 octave = 0
@@ -40,8 +41,9 @@ def run():
     global scale
     global octave
     global synths
+    cts = captouch.read()
     for i in range(10):
-        if get_captouch(i):
+        if cts.petals[i].pressed:
             if i == 4:
                 octave = -1
                 adjust_playing_field_to_octave()

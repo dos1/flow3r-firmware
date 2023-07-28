@@ -1,5 +1,5 @@
 class tinysynth:
-    def __init__(self, a, b):
+    def __init__(self, a):
         pass
 
     def decay(self, a):
@@ -12,4 +12,7 @@ class tinysynth:
         pass
 
     def start(self):
+        pass
+
+    def sustain(self, a):
         pass

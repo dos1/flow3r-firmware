@@ -3,7 +3,7 @@ from st3m import logging
 log = logging.Log(__name__, level=logging.INFO)
 log.info("import")
 
-from st3m.system import hardware
+from st3m.system import hardware, captouch
 
 import kernel
 import time
@@ -124,14 +124,17 @@ class Engine:
         )
 
         # captouch
+        cps = captouch.read()
         for i in range(0, 10):
+            petal = cps.petals[i]
+            (radius, angle) = petal.position
             input_state.append(
                 {
                     "type": "captouch",
                     "index": i,
-                    "value": hardware.get_captouch(i),
-                    "radius": hardware.captouch_get_petal_rad(i),
-                    "angle": hardware.captouch_get_petal_phi(i),
+                    "value": petal.pressed,
+                    "radius": radius,
+                    "angle": angle,
                 }
             )
 

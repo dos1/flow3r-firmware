@@ -422,14 +422,6 @@ def init_done():
     return True
 
 
-def captouch_autocalib():
-    pass
-
-
-def captouch_calibration_active():
-    return False
-
-
 import ctx
 
 
@@ -532,25 +524,6 @@ def menu_button_set_left(_broken):
 
 def menu_button_get_left():
     return menu_button_left
-
-
-def get_captouch(a):
-    _sim.process_events()
-    _sim.render_gui_lazy()
-    return _sim.petals.state_for_petal(a)
-
-
-# TODO(iggy/q3k do proper positional captouch)
-def captouch_get_petal_rad(a):
-    return 0
-
-
-def captouch_get_petal_phi(a):
-    return 0
-
-
-def captouch_get_petal_pad(i, x):
-    return 0
 
 
 def freertos_sleep(ms):

@@ -15,6 +15,8 @@ idf_component_register(
         st3m_usb.c
         st3m_console.c
         st3m_mode.c
+        st3m_captouch.c
+        st3m_ringbuffer.c
     INCLUDE_DIRS
         .
     REQUIRES

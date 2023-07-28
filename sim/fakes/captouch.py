@@ -29,6 +29,7 @@ class CaptouchPetalState:
     def __init__(self, ix: int, pads: CaptouchPetalPadsState):
         self._pads = pads
         self._ix = ix
+        self.position = (0, 0)
 
     @property
     def pressed(self) -> bool:
@@ -85,3 +86,7 @@ def read() -> CaptouchState:
 
 def calibration_active() -> bool:
     return False
+
+
+def calibration_request() -> None:
+    return

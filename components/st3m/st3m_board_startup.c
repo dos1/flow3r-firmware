@@ -1,6 +1,7 @@
 #include "bl00mbox.h"
 #include "flow3r_bsp.h"
 #include "st3m_audio.h"
+#include "st3m_captouch.h"
 #include "st3m_console.h"
 #include "st3m_fs.h"
 #include "st3m_gfx.h"
@@ -67,6 +68,7 @@ void st3m_board_startup(void) {
     st3m_mode_update_display(NULL);
     st3m_leds_init();
     st3m_io_init();
+    st3m_captouch_init();
 
     st3m_mode_set(st3m_mode_kind_starting, "micropython");
     st3m_mode_update_display(NULL);
