@@ -90,7 +90,6 @@ set(MICROPY_SOURCE_QSTR
 )
 
 set(IDF_COMPONENTS
-    badge23
     flow3r_bsp
     st3m
     ctx
