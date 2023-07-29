@@ -3,7 +3,6 @@
 #include "st3m_audio.h"
 #include "st3m_captouch.h"
 #include "st3m_console.h"
-#include "st3m_fs.h"
 #include "st3m_gfx.h"
 #include "st3m_io.h"
 #include "st3m_leds.h"
@@ -11,12 +10,14 @@
 #include "st3m_scope.h"
 #include "st3m_usb.h"
 
+#include "fs.h"
+
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
 // Called by micropython via MICROPY_BOARD_STARTUP.
-void st3m_board_startup(void) {
+void flow3r_startup(void) {
     // Initialize display first as that gives us a nice splash screen.
     st3m_gfx_init();
     // Submit splash a couple of times to make sure we've fully flushed out the

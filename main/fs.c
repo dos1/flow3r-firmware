@@ -1,4 +1,5 @@
-#include "st3m_fs.h"
+#include "fs.h"
+
 #include "st3m_mode.h"
 #include "st3m_sys_data.h"
 #include "st3m_tar.h"

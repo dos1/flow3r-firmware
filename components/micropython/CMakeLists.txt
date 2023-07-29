@@ -181,3 +181,5 @@ target_compile_definitions(${COMPONENT_TARGET} PUBLIC
 )
 
 include("${MICROPY_DIR}/py/mkrules.cmake")
+
+target_link_libraries(${COMPONENT_LIB} INTERFACE "-u flow3r_startup")
