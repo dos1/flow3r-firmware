@@ -135,10 +135,10 @@ radspa_t * trad_env_create(uint32_t init_var){
     radspa_signal_set(trad_env, TRAD_ENV_PHASE, "phase", RADSPA_SIGNAL_HINT_OUTPUT, 0);
     radspa_signal_set(trad_env, TRAD_ENV_INPUT, "input", RADSPA_SIGNAL_HINT_INPUT, 32767);
     radspa_signal_set(trad_env, TRAD_ENV_TRIGGER, "trigger", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_TRIGGER, 0);
-    radspa_signal_set(trad_env, TRAD_ENV_ATTACK, "attack (ms)", RADSPA_SIGNAL_HINT_INPUT, 250);
+    radspa_signal_set(trad_env, TRAD_ENV_ATTACK, "attack (ms)", RADSPA_SIGNAL_HINT_INPUT, 100);
     radspa_signal_set(trad_env, TRAD_ENV_DECAY, "decay (ms)", RADSPA_SIGNAL_HINT_INPUT, 250);
     radspa_signal_set(trad_env, TRAD_ENV_SUSTAIN, "sustain", RADSPA_SIGNAL_HINT_INPUT, 16000);
-    radspa_signal_set(trad_env, TRAD_ENV_RELEASE, "release (ms)", RADSPA_SIGNAL_HINT_INPUT, 500);
+    radspa_signal_set(trad_env, TRAD_ENV_RELEASE, "release (ms)", RADSPA_SIGNAL_HINT_INPUT, 50);
     radspa_signal_set(trad_env, TRAD_ENV_GATE, "gate", RADSPA_SIGNAL_HINT_INPUT,0);
 
     trad_env_data_t * data = trad_env->plugin_data;
@@ -188,10 +188,12 @@ static int16_t trad_env_run_single(trad_env_data_t * env){
                 env->env_phase = TRAD_ENV_PHASE_OFF;
             }
             env->env_counter = tmp;
+            /*
             if(env->env_counter < env->gate){
                 env->env_counter = 0;
                 env->env_phase = TRAD_ENV_PHASE_OFF;
             }
+            */
             break;
     }
     return env->env_counter >> 17;
@@ -237,6 +239,7 @@ void trad_env_run(radspa_t * trad_env, uint16_t num_samples, uint32_t render_pas
             if(!trigger){
                 if(plugin_data->env_phase != TRAD_ENV_PHASE_OFF){
                     plugin_data->env_phase = TRAD_ENV_PHASE_RELEASE;
+                    plugin_data->release_init_val = plugin_data->env_counter;
                 }
             } else if(trigger > 0 ){
                 if(plugin_data->trigger <= 0)
@@ -274,7 +277,7 @@ void trad_env_run(radspa_t * trad_env, uint16_t num_samples, uint32_t render_pas
                     plugin_data->sustain = sus<<17;
 
                     if(gate_sig == NULL){
-                        gate_sig = radspa_signal_get_by_index(trad_env, TRAD_ENV_SUSTAIN);
+                        gate_sig = radspa_signal_get_by_index(trad_env, TRAD_ENV_GATE);
                     }
                     sus = radspa_signal_get_value(gate_sig, i, num_samples, render_pass_id);
                     plugin_data->gate = sus<<17;
@@ -296,14 +299,8 @@ void trad_env_run(radspa_t * trad_env, uint16_t num_samples, uint32_t render_pas
                     plugin_data->sustain = sus<<17;
                     break;
                 case TRAD_ENV_PHASE_RELEASE:
-                    if(sustain_sig == NULL){
-                        sustain_sig = radspa_signal_get_by_index(trad_env, TRAD_ENV_SUSTAIN);
-                    }
-                    sus = radspa_signal_get_value(sustain_sig, i, num_samples, render_pass_id);
-                    plugin_data->sustain = sus<<17;
-
                     if(gate_sig == NULL){
-                        gate_sig = radspa_signal_get_by_index(trad_env, TRAD_ENV_SUSTAIN);
+                        gate_sig = radspa_signal_get_by_index(trad_env, TRAD_ENV_GATE);
                     }
                     sus = radspa_signal_get_value(gate_sig, i, num_samples, render_pass_id);
                     plugin_data->gate = sus<<17;
@@ -313,7 +310,7 @@ void trad_env_run(radspa_t * trad_env, uint16_t num_samples, uint32_t render_pas
                     }
                     time_ms = radspa_signal_get_value(release_sig, i, num_samples, render_pass_id);
                     if(time_ms != plugin_data->release_prev_ms){
-                        plugin_data->release = uint32_sat_leftshift(trad_env_time_ms_to_val_rise(time_ms, plugin_data->sustain), TRAD_ENV_UNDERSAMPLING);
+                        plugin_data->release = uint32_sat_leftshift(trad_env_time_ms_to_val_rise(time_ms, plugin_data->release_init_val), TRAD_ENV_UNDERSAMPLING);
                         plugin_data->release_prev_ms = time_ms;
                     }
                     break;

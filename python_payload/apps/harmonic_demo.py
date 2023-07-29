@@ -1,6 +1,5 @@
 import bl00mbox
 blm = bl00mbox.Channel()
-from bl00mbox_patches import tinysynth
 from hardware import *
 import leds
 
@@ -21,28 +20,27 @@ class HarmonicApp(Application):
         self.color_intensity = 0
         self.chord_index = None
         self.chord = None
-        self.synths = [blm.new_patch(tinysynth) for i in range(10)]
+        self.synths = [blm.new(bl00mbox.patches.tinysynth) for i in range(5)]
+        self.synths += [blm.new(bl00mbox.patches.tinysynth_fm) for i in range(5)]
         for i, synth in enumerate(self.synths):
             synth.decay(100)
-            '''
             synth.sustain(0.5)
             if i < 5:
                 synth.waveform(-1)
-                #synth.volume(0.5)
+                synth.volume(0.5)
                 synth.release(1200)
             elif i < 10:
                 synth.waveform(-1)
                 synth.attack(300)
                 synth.volume(0.1)
                 synth.sustain(0.9)
-                synth.release(2400)
+                synth.release(800)
+                synth.fm(2)
             else:
                 synth.waveform(-1)
                 synth.attack(500)
                 synth.volume(0.03)
                 synth.sustain(0.9)
-                synth.release(800)
-        '''
         self._set_chord(3)
         self.prev_captouch = [0]*10
 
@@ -90,7 +88,6 @@ class HarmonicApp(Application):
                         if len(self.synths) >= 15:
                             self.synths[k+10].start()
                         self.color_intensity = 1.0
-                '''
                 else:
                     if (1 + i) % 2:
                         k = int(i / 2)
@@ -99,7 +96,6 @@ class HarmonicApp(Application):
                             self.synths[k + 5].stop()
                         if len(self.synths) >= 15:
                             self.synths[k + 10].stop()
-                '''
 
 
 app = HarmonicApp("harmonic")
