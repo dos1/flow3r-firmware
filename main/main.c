@@ -15,6 +15,7 @@
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "nvs_flash.h"
 
 // Called by micropython via MICROPY_BOARD_STARTUP.
 void flow3r_startup(void) {
@@ -70,6 +71,13 @@ void flow3r_startup(void) {
     st3m_leds_init();
     st3m_io_init();
     st3m_captouch_init();
+    st3m_mode_set(st3m_mode_kind_starting, "nvs");
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
+        ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        nvs_flash_erase();
+        nvs_flash_init();
+    }
 
     st3m_mode_set(st3m_mode_kind_starting, "micropython");
     st3m_mode_update_display(NULL);
