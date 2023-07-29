@@ -1,6 +1,7 @@
 idf_component_register(
     SRCS
 		flow3r_bsp_audio.c
+		flow3r_bsp_imu.c
 		flow3r_bsp_display.c
 		flow3r_bsp_gc9a01.c
 		flow3r_bsp_hwconfig.c
@@ -18,4 +19,5 @@ idf_component_register(
     REQUIRES
 		driver
 		vfs
+		bmi270
 )
