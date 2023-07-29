@@ -86,10 +86,13 @@
 #define CTX_MAX_FONTS 10
 
 #include "Arimo-Regular.h"
+#define CTX_FONT_0 CTX_STATIC_FONT(Arimo_Regular)
+
+#if defined(CONFIG_FLOW3R_CTX_FLAVOUR_FULL)
+
 #include "Arimo-Bold.h"
 #include "Arimo-Italic.h"
 #include "Arimo-BoldItalic.h"
-#define CTX_FONT_0 CTX_STATIC_FONT(Arimo_Regular)
 #define CTX_FONT_1 CTX_STATIC_FONT(Arimo_Bold)
 #define CTX_FONT_2 CTX_STATIC_FONT(Arimo_Italic)
 #define CTX_FONT_3 CTX_STATIC_FONT(Arimo_BoldItalic)
@@ -100,3 +103,5 @@
 #define CTX_FONT_4 CTX_STATIC_FONT(CampFont1)
 #define CTX_FONT_5 CTX_STATIC_FONT(CampFont2)
 #define CTX_FONT_6 CTX_STATIC_FONT(CampFont3)
+
+#endif
