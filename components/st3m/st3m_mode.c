@@ -34,6 +34,7 @@ void st3m_mode_set(st3m_mode_kind_t kind, const char *message) {
     }
 
     _mode.kind = kind;
+    _mode.shown = false;
     xSemaphoreGive(_mu);
 }
 
@@ -61,21 +62,23 @@ void st3m_mode_update_display(bool *restartable) {
         case st3m_mode_kind_disk:
             st3m_gfx_splash("Disk Mode");
             break;
-        case st3m_mode_kind_repl: {
-            const char *lines[] = {
-                "Send Ctrl-D over USB",
-                "or press left shoulder button",
-                "to restart.",
-                NULL,
-            };
-            st3m_gfx_textview_t tv = {
-                .title = "In REPL",
-                .lines = lines,
-            };
-            st3m_gfx_show_textview(&tv);
-            if (restartable != NULL) *restartable = true;
+        case st3m_mode_kind_repl:
+            if (!_mode.shown) {
+                _mode.shown = true;
+                const char *lines[] = {
+                    "Send Ctrl-D over USB",
+                    "or press left shoulder button",
+                    "to restart.",
+                    NULL,
+                };
+                st3m_gfx_textview_t tv = {
+                    .title = "In REPL",
+                    .lines = lines,
+                };
+                st3m_gfx_show_textview(&tv);
+                if (restartable != NULL) *restartable = true;
+            }
             break;
-        }
         case st3m_mode_kind_fatal: {
             const char *msg = _mode.message;
             if (msg == NULL) {

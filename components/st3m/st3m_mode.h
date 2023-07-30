@@ -16,6 +16,9 @@ typedef struct {
 
     // Valid if mode != app.
     char *message;
+
+    // Valid if mode == repl.
+    bool shown;
 } st3m_mode_t;
 
 // Must be called exactly once before using any other st3m_mode_* functions.
