@@ -16,8 +16,24 @@ STATIC mp_obj_t mp_imu_acc_read(void) {
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_imu_acc_read_obj, mp_imu_acc_read);
 
+STATIC mp_obj_t mp_imu_pressure_read(void) {
+    static float pressure, temperature;
+
+    // Will not overwrite old data if there is an error
+    st3m_imu_read_pressure(&pressure, &temperature);
+
+    mp_obj_t items[] = { mp_obj_new_float(pressure),
+                         mp_obj_new_float(temperature) };
+    return mp_obj_new_tuple(2, items);
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_imu_pressure_read_obj,
+                                 mp_imu_pressure_read);
+
 STATIC const mp_rom_map_elem_t globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_acc_read), MP_ROM_PTR(&mp_imu_acc_read_obj) },
+    { MP_ROM_QSTR(MP_QSTR_pressure_read),
+      MP_ROM_PTR(&mp_imu_pressure_read_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(globals, globals_table);
