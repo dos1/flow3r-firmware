@@ -10370,14 +10370,17 @@ static int8_t do_gtrigger_test(uint8_t gyro_st_crt, struct bmi2_dev *dev)
                 rslt = get_st_running(&st_status, dev);
             }
 
-            /* CRT is not running and Max burst length is zero */
-            if (st_status == 0)
+            if (rslt == BMI2_OK)
             {
-                rslt = gyro_crt_test(max_burst_length, gyro_st_crt, dev);
-            }
-            else
-            {
-                rslt = BMI2_E_ST_ALREADY_RUNNING;
+                /* CRT is not running and Max burst length is zero */
+                if (st_status == 0)
+                {
+                    rslt = gyro_crt_test(max_burst_length, gyro_st_crt, dev);
+                }
+                else
+                {
+                    rslt = BMI2_E_ST_ALREADY_RUNNING;
+                }
             }
 
             if (rslt == BMI2_OK)
@@ -10928,57 +10931,60 @@ int8_t bmi2_nvm_prog(struct bmi2_dev *dev)
     {
         rslt = bmi2_get_status(&status, dev);
 
-        cmd_rdy = BMI2_GET_BITS(status, BMI2_CMD_RDY);
-        if (cmd_rdy)
+        if (rslt == BMI2_OK)
         {
-            rslt = set_nvm_prep_prog(BMI2_ENABLE, dev);
-            if (rslt == BMI2_OK)
+            cmd_rdy = BMI2_GET_BITS(status, BMI2_CMD_RDY);
+            if (cmd_rdy)
             {
-                dev->delay_us(40000, dev->intf_ptr);
-
-                /* Set the NVM_CONF.nvm_prog_en bit in order to enable the NVM
-                 * programming */
-                reg_data = BMI2_NVM_UNLOCK_ENABLE;
-                rslt = bmi2_set_regs(BMI2_NVM_CONF_ADDR, &reg_data, 1, dev);
+                rslt = set_nvm_prep_prog(BMI2_ENABLE, dev);
                 if (rslt == BMI2_OK)
                 {
-                    /* Send NVM prog command to command register */
-                    reg_data = BMI2_NVM_PROG_CMD;
-                    rslt = bmi2_set_regs(BMI2_CMD_REG_ADDR, &reg_data, 1, dev);
-                }
+                    dev->delay_us(40000, dev->intf_ptr);
 
-                /* Wait till write operation is completed */
-                if (rslt == BMI2_OK)
-                {
-                    while (write_timeout--)
+                    /* Set the NVM_CONF.nvm_prog_en bit in order to enable the NVM
+                    * programming */
+                    reg_data = BMI2_NVM_UNLOCK_ENABLE;
+                    rslt = bmi2_set_regs(BMI2_NVM_CONF_ADDR, &reg_data, 1, dev);
+                    if (rslt == BMI2_OK)
                     {
-                        rslt = bmi2_get_status(&status, dev);
-                        if (rslt == BMI2_OK)
+                        /* Send NVM prog command to command register */
+                        reg_data = BMI2_NVM_PROG_CMD;
+                        rslt = bmi2_set_regs(BMI2_CMD_REG_ADDR, &reg_data, 1, dev);
+                    }
+
+                    /* Wait till write operation is completed */
+                    if (rslt == BMI2_OK)
+                    {
+                        while (write_timeout--)
                         {
-                            cmd_rdy = BMI2_GET_BITS(status, BMI2_CMD_RDY);
-
-                            /* Nvm is complete once cmd_rdy is 1, break if 1 */
-                            if (cmd_rdy)
+                            rslt = bmi2_get_status(&status, dev);
+                            if (rslt == BMI2_OK)
                             {
-                                break;
-                            }
+                                cmd_rdy = BMI2_GET_BITS(status, BMI2_CMD_RDY);
 
-                            /* Wait till cmd_rdy becomes 1 indicating
-                             * nvm process completes */
-                            dev->delay_us(20000, dev->intf_ptr);
+                                /* Nvm is complete once cmd_rdy is 1, break if 1 */
+                                if (cmd_rdy)
+                                {
+                                    break;
+                                }
+
+                                /* Wait till cmd_rdy becomes 1 indicating
+                                * nvm process completes */
+                                dev->delay_us(20000, dev->intf_ptr);
+                            }
                         }
                     }
-                }
 
-                if ((rslt == BMI2_OK) && (cmd_rdy != BMI2_TRUE))
-                {
-                    rslt = BMI2_E_WRITE_CYCLE_ONGOING;
+                    if ((rslt == BMI2_OK) && (cmd_rdy != BMI2_TRUE))
+                    {
+                        rslt = BMI2_E_WRITE_CYCLE_ONGOING;
+                    }
                 }
             }
-        }
-        else
-        {
-            rslt = BMI2_E_WRITE_CYCLE_ONGOING;
+            else
+            {
+                rslt = BMI2_E_WRITE_CYCLE_ONGOING;
+            }
         }
     }
 
