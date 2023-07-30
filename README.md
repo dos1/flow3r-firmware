@@ -30,9 +30,8 @@ $ git clone https://github.com/espressif/esp-idf.git
 $ cd esp-idf
 $ git checkout v5.1
 $ git submodule update --init --recursive
-$ patch -p1 < flow3r/third_party/b03c8912c73fa59061d97a2f5fd5acddcc3fa356.patch
+$ patch -p1 < PathToYourFlow3rFirmwareRepo/third_party/b03c8912c73fa59061d97a2f5fd5acddcc3fa356.patch
 
-$ cd esp-idf
 $ ./install.sh
 $ source export.sh
 ```
