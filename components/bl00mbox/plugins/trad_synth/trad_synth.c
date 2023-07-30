@@ -135,11 +135,14 @@ radspa_t * trad_env_create(uint32_t init_var){
     radspa_signal_set(trad_env, TRAD_ENV_PHASE, "phase", RADSPA_SIGNAL_HINT_OUTPUT, 0);
     radspa_signal_set(trad_env, TRAD_ENV_INPUT, "input", RADSPA_SIGNAL_HINT_INPUT, 32767);
     radspa_signal_set(trad_env, TRAD_ENV_TRIGGER, "trigger", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_TRIGGER, 0);
-    radspa_signal_set(trad_env, TRAD_ENV_ATTACK, "attack (ms)", RADSPA_SIGNAL_HINT_INPUT, 100);
-    radspa_signal_set(trad_env, TRAD_ENV_DECAY, "decay (ms)", RADSPA_SIGNAL_HINT_INPUT, 250);
+    radspa_signal_set(trad_env, TRAD_ENV_ATTACK, "attack", RADSPA_SIGNAL_HINT_INPUT, 100);
+    radspa_signal_set(trad_env, TRAD_ENV_DECAY, "decay", RADSPA_SIGNAL_HINT_INPUT, 250);
     radspa_signal_set(trad_env, TRAD_ENV_SUSTAIN, "sustain", RADSPA_SIGNAL_HINT_INPUT, 16000);
-    radspa_signal_set(trad_env, TRAD_ENV_RELEASE, "release (ms)", RADSPA_SIGNAL_HINT_INPUT, 50);
+    radspa_signal_set(trad_env, TRAD_ENV_RELEASE, "release", RADSPA_SIGNAL_HINT_INPUT, 50);
     radspa_signal_set(trad_env, TRAD_ENV_GATE, "gate", RADSPA_SIGNAL_HINT_INPUT,0);
+    radspa_signal_get_by_index(trad_env, TRAD_ENV_ATTACK)->unit = "ms";
+    radspa_signal_get_by_index(trad_env, TRAD_ENV_DECAY)->unit = "ms";
+    radspa_signal_get_by_index(trad_env, TRAD_ENV_SUSTAIN)->unit = "ms";
 
     trad_env_data_t * data = trad_env->plugin_data;
     data->trigger = 0;

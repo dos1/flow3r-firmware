@@ -3,11 +3,11 @@ idf_component_register(
         bl00mbox.c
         bl00mbox_audio.c
         bl00mbox_user.c
-        bl00mbox_utils.c
         bl00mbox_plugin_registry.c
         radspa/radspa.c
         plugins/trad_synth/trad_synth.c
         plugins/tools/ampliverter.c
+        plugins/tools/delay.c
     INCLUDE_DIRS
         include
         plugins/trad_synth

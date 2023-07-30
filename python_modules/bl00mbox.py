@@ -35,12 +35,16 @@ class Signal:
         self._bud = bud
         self._signal_num = signal_num
         self.name = sys_bl00mbox.channel_bud_get_signal_name(bud.channel_num, bud.bud_num, signal_num)
+        self.unit = sys_bl00mbox.channel_bud_get_signal_unit(bud.channel_num, bud.bud_num, signal_num)
         self.connections = []
         self._value = sys_bl00mbox.channel_bud_get_signal_value(bud.channel_num, bud.bud_num, signal_num)
         self.hints = ''
 
     def __repr__(self):
-        ret = self.name + " [" + self.hints + "]: " 
+        ret = self.name
+        if len(self.unit):
+            ret += " [" + self.unit + "]" 
+        ret += " [" + self.hints + "]: " 
         conret = []
         direction = " <?> "
         if isinstance(self, SignalInput):

@@ -260,6 +260,18 @@ STATIC mp_obj_t mp_channel_bud_get_signal_name(mp_obj_t chan, mp_obj_t bud, mp_o
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_bud_get_signal_name_obj, mp_channel_bud_get_signal_name);
 
+STATIC mp_obj_t mp_channel_bud_get_signal_description(mp_obj_t chan, mp_obj_t bud, mp_obj_t signal) {
+    char * description = bl00mbox_channel_bud_get_signal_description(mp_obj_get_int(chan), mp_obj_get_int(bud), mp_obj_get_int(signal));
+    return mp_obj_new_str(description, strlen(description));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_bud_get_signal_description_obj, mp_channel_bud_get_signal_description);
+
+STATIC mp_obj_t mp_channel_bud_get_signal_unit(mp_obj_t chan, mp_obj_t bud, mp_obj_t signal) {
+    char * unit = bl00mbox_channel_bud_get_signal_unit(mp_obj_get_int(chan), mp_obj_get_int(bud), mp_obj_get_int(signal));
+    return mp_obj_new_str(unit, strlen(unit));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_bud_get_signal_unit_obj, mp_channel_bud_get_signal_unit);
+
 STATIC mp_obj_t mp_channel_bud_set_signal_value(size_t n_args, const mp_obj_t *args) {
     bool success = bl00mbox_channel_bud_set_signal_value(
             mp_obj_get_int(args[0]), //chan
@@ -288,6 +300,11 @@ STATIC mp_obj_t mp_channel_bud_get_signal_hints(mp_obj_t chan, mp_obj_t bud, mp_
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_bud_get_signal_hints_obj, mp_channel_bud_get_signal_hints);
 
+STATIC mp_obj_t mp_channel_disconnect_signal(mp_obj_t chan, mp_obj_t bud, mp_obj_t signal) {
+    bool ret = bl00mbox_channel_disconnect_signal_rx(mp_obj_get_int(chan), mp_obj_get_int(bud), mp_obj_get_int(signal));
+    return mp_obj_new_bool(ret);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_disconnect_signal_obj, mp_channel_disconnect_signal);
 
 STATIC mp_obj_t mp_channel_connect_signal(size_t n_args, const mp_obj_t *args) {
     bool success = bl00mbox_channel_connect_signal(
@@ -321,11 +338,14 @@ STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_num_signals), MP_ROM_PTR(&mp_channel_bud_get_num_signals_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_name), MP_ROM_PTR(&mp_channel_bud_get_name_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_signal_name), MP_ROM_PTR(&mp_channel_bud_get_signal_name_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_bud_get_signal_description), MP_ROM_PTR(&mp_channel_bud_get_signal_description_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_bud_get_signal_unit), MP_ROM_PTR(&mp_channel_bud_get_signal_unit_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_bud_set_signal_value), MP_ROM_PTR(&mp_channel_bud_set_signal_value_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_signal_value), MP_ROM_PTR(&mp_channel_bud_get_signal_value_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_signal_hints), MP_ROM_PTR(&mp_channel_bud_get_signal_hints_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_channel_connect_signal), MP_ROM_PTR(&mp_channel_connect_signal_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_disconnect_signal), MP_ROM_PTR(&mp_channel_disconnect_signal_obj) },
     //{ MP_OBJ_NEW_QSTR(MP_QSTR_tinysynth), (mp_obj_t)&synth_tinysynth_type },
 };
 

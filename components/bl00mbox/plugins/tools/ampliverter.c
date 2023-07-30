@@ -31,6 +31,8 @@ void ampliverter_run(radspa_t * ampliverter, uint16_t num_samples, uint32_t rend
     radspa_signal_t * gain_sig = radspa_signal_get_by_index(ampliverter, AMPLIVERTER_GAIN);
     radspa_signal_t * bias_sig = radspa_signal_get_by_index(ampliverter, AMPLIVERTER_BIAS);
     
+
+    static int16_t ret = 0;
     for(uint16_t i = 0; i < num_samples; i++){
         // step 2: render the outputs. most of the time a simple for loop will be fine.
         // using radspa_signal_get_value is required to automatically switch between static
@@ -41,17 +43,18 @@ void ampliverter_run(radspa_t * ampliverter, uint16_t num_samples, uint32_t rend
         if(gain == 0){
             // make sure that the output buffer exists by comparing to NULL!
             // (here done earlier outside of the loop)
-            (output_sig->buffer)[i] = bias;
+            ret = bias;
         } else {
-            int16_t ret = radspa_signal_get_value(input_sig, i, num_samples, render_pass_id);
+            ret = radspa_signal_get_value(input_sig, i, num_samples, render_pass_id);
             // the helper functions make sure that potential future float versions behave
             // as intended
             ret = i16_mult_shift(ret, gain);
             ret = i16_add_sat(ret, bias);
-            (output_sig->buffer)[i] = ret;
         }
+        (output_sig->buffer)[i] = ret;
 
     }
+    output_sig->value = ret;
 }
 
 radspa_t * ampliverter_create(uint32_t init_var){

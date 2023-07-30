@@ -24,6 +24,7 @@ typedef struct _bl00mbox_connection_source_t{
     uint32_t signal_index; // signal of source_bud that renders to buffer
     uint8_t output_subscribers;
     uint8_t channel;
+    struct _bl00mbox_connection_source_t * chan_next; //for linked list in bl00mbox_channel_t;
 } bl00mbox_connection_source_t;
 
 typedef struct _bl00mbox_channel_root_t{
@@ -38,6 +39,7 @@ typedef struct{
     struct _bl00mbox_channel_root_t * root_list; // list of all roots associated with channels
     uint32_t render_pass_id; // may be used by host to determine whether recomputation is necessary
     struct _bl00mbox_bud_t * buds; // linked list with all channel buds
+    struct _bl00mbox_connection_source_t * connections; // linked list with all channel connections
 } bl00mbox_channel_t;
 
 bl00mbox_channel_t * bl00mbox_get_channel(uint8_t chan);

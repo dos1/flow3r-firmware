@@ -22,10 +22,12 @@ void radspa_signal_set(radspa_t * plugin, uint8_t signal_index, char * name, uin
 }
 
 int16_t radspa_signal_add(radspa_t * plugin, char * name, uint32_t hints, int16_t value){
-    radspa_signal_t * sig = malloc(sizeof(radspa_signal_t));
+    radspa_signal_t * sig = calloc(1,sizeof(radspa_signal_t));
     if(sig == NULL) return -1; // allocation failed
     sig->name = name;
     sig->hints = hints;
+    sig->unit = "";
+    sig->description = "";
     sig->buffer = NULL;
     sig->next = NULL;
     sig->value = value;
@@ -64,10 +66,10 @@ int16_t radspa_signal_get_value(radspa_signal_t * sig, int16_t index, uint16_t n
 }
 
 radspa_t * radspa_standard_plugin_create(radspa_descriptor_t * desc, uint8_t num_signals, size_t plugin_data_size){
-    radspa_t * ret = malloc(sizeof(radspa_t));
+    radspa_t * ret = calloc(1, sizeof(radspa_t));
     if(ret == NULL) return NULL;
     if(plugin_data_size){
-        ret->plugin_data = malloc(plugin_data_size);
+        ret->plugin_data = calloc(1,plugin_data_size);
         if(ret->plugin_data == NULL){
             free(ret);
             return NULL;

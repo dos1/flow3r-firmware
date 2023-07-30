@@ -89,10 +89,12 @@ radspa_descriptor_t * bl00mbox_plugin_registry_get_id_from_index(uint32_t index)
 
 #include "trad_synth.h"
 #include "ampliverter.h"
+#include "delay.h"
 void bl00mbox_plugin_registry_init(void){
     if(bl00mbox_plugin_registry_is_initialized) return;
     plugin_add(&trad_osc_desc);
     plugin_add(&ampliverter_desc);
     plugin_add(&trad_env_desc);   
+    plugin_add(&delay_desc);   
 }
 

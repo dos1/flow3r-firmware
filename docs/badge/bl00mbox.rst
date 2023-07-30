@@ -67,21 +67,19 @@ create one:
 Using buds
 ----------
 
-If we inspect tiny we can see a verbose printout. 
-
 To create sound, we can load a bud (basically a radspa plugin with some wrapper
 around) from a radspa plugin descriptor. For this you have to find the ID number
 of the plugin descriptor first. bl00mbox provides a plugin registry for this:
 
 .. code-block:: python
 
-    # print all plugins
-    bl00mbox.PluginRegistry.print_plugin_list()
-    # print details about specific plugin from its ID
-    bl00mbox.PluginRegistry.print_plugin_info(420)
-    # create a new bud from a plugin ID
-    osc = blm.new_bud(420)
-    env = blm.new_bud(42)
+    # use autocomplete to see plugins
+    bl00mbox.plugins
+    # print details about specific plugin
+    bl00mbox.plugins.ampliverter
+    # create a new bud
+    osc = blm.new(bl00mbox.plugins.trad_osc)
+    env = blm.new(bl00mbox.plugins.trad_env)
 
 You can inspect properties of the new bud. Note how some signals are
 inputs and others are outputs and that there are subtypes such as /trigger:
