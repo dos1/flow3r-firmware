@@ -38,8 +38,9 @@ mypy:
 format:
   stage: check
   script:
+    - "git clean -fdx"
     - "bash tools/format.sh"
-    - "[ -z \"$(git status --porcelain -u no)\" ] || (echo 'Differences found, please run tools/format.sh.' && git diff HEAD && exit 1)"
+    - "[ -z \"$(git status --porcelain)\" ] || (echo 'Differences found, please run tools/format.sh.' && git diff HEAD && exit 1)"
 
 build-p3:
   stage: build
