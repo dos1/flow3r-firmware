@@ -70,15 +70,32 @@ bl00mbox_bud_t * bl00mbox_channel_new_bud(uint8_t channel, uint32_t id, uint32_t
     return bud;
 }
 
-static void bl00mbox_add_connection_to_channel_list(uint8_t channel, bl00mbox_connection_source_t * conn){
+static void bl00mbox_add_connection_to_channel_list(uint8_t channel, bl00mbox_connection_t * conn){
     bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
-    bl00mbox_connection_source_t * chan_conn = chan->connections;
+    bl00mbox_connection_t * chan_conn = chan->connections;
     if(chan_conn == NULL){
         chan_conn = conn;
     } else {
         while(chan_conn->chan_next != NULL){ chan_conn = chan_conn->chan_next; }
         chan_conn->chan_next = conn;
     }
+}
+
+static bool bl00mbox_add_signal_to_connection_list(bl00mbox_connection_t * conn, bl00mbox_bud_t * bud, uint8_t signal_index){
+    bl00mbox_connection_signal_t * con_sig = malloc(sizeof(bl00mbox_connection_signal_t));
+    if(con_sig == NULL) return false;
+    con_sig->bud = bud;
+    con_sig->signal_index = signal_index;
+    con_sig->next = NULL;
+
+    bl00mbox_connection_signal_t * sub = conn->subscribers;
+    if(sub == NULL){
+        conn->subscribers = con_sig;
+    } else {
+        while(sub->next != NULL){ sub = sub->next; }
+        sub->next = con_sig;
+    }
+    return true;
 }
 
 bool bl00mbox_channel_connect_signal_to_output_mixer(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index){
@@ -92,9 +109,9 @@ bool bl00mbox_channel_connect_signal_to_output_mixer(uint8_t channel, uint32_t b
     bl00mbox_channel_root_t * root = malloc(sizeof(bl00mbox_channel_root_t));
     if(root == NULL) return false;
 
-    bl00mbox_connection_source_t * conn;
+    bl00mbox_connection_t * conn;
     if(tx->buffer == NULL){ // doesn't feed a buffer yet
-        conn = malloc(sizeof(bl00mbox_connection_source_t));
+        conn = malloc(sizeof(bl00mbox_connection_t));
         if(conn == NULL){
             free(root);
             return false;
@@ -107,7 +124,7 @@ bool bl00mbox_channel_connect_signal_to_output_mixer(uint8_t channel, uint32_t b
         tx->buffer = conn->buffer;
         bl00mbox_add_connection_to_channel_list(channel, conn);
     } else {
-        conn = (bl00mbox_connection_source_t *) tx->buffer; // buffer sits on top of struct
+        conn = (bl00mbox_connection_t *) tx->buffer; // buffer sits on top of struct
     }
     conn->output_subscribers++;
 
@@ -136,9 +153,9 @@ bool bl00mbox_channel_connect_signal(uint8_t channel, uint32_t bud_rx_index, uin
     radspa_signal_t * tx = radspa_signal_get_by_index(bud_tx->plugin, bud_tx_signal_index);
     if(tx == NULL || rx == NULL) return false; // signal index doesn't exist
     
-    bl00mbox_connection_source_t * conn;
+    bl00mbox_connection_t * conn;
     if(tx->buffer == NULL){ // doesn't feed a buffer yet
-        conn = malloc(sizeof(bl00mbox_connection_source_t));
+        conn = malloc(sizeof(bl00mbox_connection_t));
         if(conn == NULL) return false; // no ram for connection
         // set up new connection
         conn->signal_index = bud_tx_signal_index;
@@ -148,11 +165,13 @@ bool bl00mbox_channel_connect_signal(uint8_t channel, uint32_t bud_rx_index, uin
         tx->buffer = conn->buffer;
         bl00mbox_add_connection_to_channel_list(channel, conn);
     } else {
-        conn = (bl00mbox_connection_source_t *) tx->buffer; // buffer sits on top of struct
+        conn = (bl00mbox_connection_t *) tx->buffer; // buffer sits on top of struct
     }
     
     if(rx->buffer != tx->buffer){
         conn->output_subscribers++;
+        //bool ret = bl00mbox_add_signal_to_connection_list(conn, bud_rx, bud_rx_signal_index);
+
         rx->buffer = tx->buffer;
     }
     bl00mbox_channel_event(channel);
@@ -166,7 +185,7 @@ bool bl00mbox_channel_disconnect_signal_rx(uint8_t channel, uint32_t bud_rx_inde
     radspa_signal_t * rx = radspa_signal_get_by_index(bud_rx->plugin, bud_rx_signal_index);
     if(rx == NULL) return false; // signal index doesn't exist
     
-    bl00mbox_connection_source_t * conn = (bl00mbox_connection_source_t *) rx->buffer; // buffer sits on top of struct
+    bl00mbox_connection_t * conn = (bl00mbox_connection_t *) rx->buffer; // buffer sits on top of struct
     if(conn == NULL) return false; //not connected
     
     bl00mbox_bud_t * bud_tx = conn->source_bud;

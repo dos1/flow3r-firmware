@@ -168,7 +168,7 @@ void bl00mbox_audio_render(int16_t * rx, int16_t * tx, uint16_t len){
 // radspa requirement helper functions
 
 bool radspa_host_request_buffer_render(int16_t * buf, uint16_t num_samples){
-    bl00mbox_bud_t * bud = ((bl00mbox_connection_source_t *) buf)->source_bud;
+    bl00mbox_bud_t * bud = ((bl00mbox_connection_t *) buf)->source_bud;
     bl00mbox_audio_bud_render(bud, num_samples);
     return 1;
 }

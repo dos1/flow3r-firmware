@@ -9,12 +9,15 @@ radspa_descriptor_t delay_desc = {
     .destroy_plugin_instance = radspa_standard_plugin_destroy
 };
 
-#define DELAY_NUM_SIGNALS 5
+#define DELAY_NUM_SIGNALS 7
 #define DELAY_OUTPUT 0
 #define DELAY_INPUT 1
 #define DELAY_TIME 2
 #define DELAY_FEEDBACK 3
 #define DELAY_LEVEL 4
+#define DELAY_DRY_VOL 5
+#define DELAY_REC_VOL 6
+
 
 void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
     radspa_signal_t * output_sig = radspa_signal_get_by_index(delay, DELAY_OUTPUT);
@@ -24,6 +27,8 @@ void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
     radspa_signal_t * time_sig = radspa_signal_get_by_index(delay, DELAY_TIME);
     radspa_signal_t * feedback_sig = radspa_signal_get_by_index(delay, DELAY_FEEDBACK);
     radspa_signal_t * level_sig = radspa_signal_get_by_index(delay, DELAY_LEVEL);
+    radspa_signal_t * dry_vol_sig = radspa_signal_get_by_index(delay, DELAY_DRY_VOL);
+    radspa_signal_t * rec_vol_sig = radspa_signal_get_by_index(delay, DELAY_REC_VOL);
 
     static int16_t ret = 0;
     
@@ -39,7 +44,7 @@ void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
         } else {
             data->read_head_position++;
         }
-        while(data->read_head_position <= data->buffer_size) data->read_head_position -= data->buffer_size;
+        while(data->read_head_position >= data->buffer_size) data->read_head_position -= data->buffer_size;
 
         int16_t * buf = &(data->buffer);
     
@@ -49,9 +54,12 @@ void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
         int16_t fb = radspa_signal_get_value(feedback_sig, i, num_samples, render_pass_id);
         int16_t level = radspa_signal_get_value(level_sig, i, num_samples, render_pass_id);
 
-        buf[data->write_head_position] = i16_add_sat(dry,i16_mult_shift(wet,fb));
+        int16_t dry_vol = radspa_signal_get_value(dry_vol_sig, i, num_samples, render_pass_id);
+        int16_t rec_vol = radspa_signal_get_value(rec_vol_sig, i, num_samples, render_pass_id);
+
+        buf[data->write_head_position] = i16_add_sat(i16_mult_shift(rec_vol, dry), i16_mult_shift(wet,fb));
         
-        ret = i16_add_sat(dry, i16_mult_shift(wet,level));
+        ret = i16_add_sat(i16_mult_shift(dry_vol,dry), i16_mult_shift(wet,level));
 
         (output_sig->buffer)[i] = ret;
     }
@@ -62,7 +70,7 @@ radspa_t * delay_create(uint32_t real_init_var){
     uint32_t init_var = 500; //TODO
 
     uint32_t buffer_size = init_var*(48000/1000);
-    uint32_t delay_data_size = buffer_size * sizeof(int16_t) + sizeof(delay_data_t); - sizeof(int16_t);
+    uint32_t delay_data_size = (buffer_size * sizeof(int16_t)) + sizeof(delay_data_t) - sizeof(int16_t);
     radspa_t * delay = radspa_standard_plugin_create(&delay_desc, DELAY_NUM_SIGNALS, delay_data_size);
     if(delay == NULL) return NULL;
     delay_data_t * plugin_data = delay->plugin_data;
@@ -74,5 +82,7 @@ radspa_t * delay_create(uint32_t real_init_var){
     radspa_signal_set(delay, DELAY_TIME, "time", RADSPA_SIGNAL_HINT_INPUT, 200);
     radspa_signal_set(delay, DELAY_FEEDBACK, "feedback", RADSPA_SIGNAL_HINT_INPUT, 16000);
     radspa_signal_set(delay, DELAY_LEVEL, "level", RADSPA_SIGNAL_HINT_INPUT, 16000);
+    radspa_signal_set(delay, DELAY_DRY_VOL, "dry_vol", RADSPA_SIGNAL_HINT_INPUT, 32767);
+    radspa_signal_set(delay, DELAY_REC_VOL, "rec_vol", RADSPA_SIGNAL_HINT_INPUT, 32767);
     return delay;
 }
