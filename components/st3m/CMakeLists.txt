@@ -18,6 +18,7 @@ idf_component_register(
         st3m_ringbuffer.c
         st3m_tar.c
         st3m_fs.c
+        st3m_fs_flash.c
     INCLUDE_DIRS
         .
     REQUIRES

@@ -1,5 +1,6 @@
 #include "st3m_fs.h"
 
+#include "st3m_fs_flash.h"
 #include "st3m_mode.h"
 #include "st3m_sys_data.h"
 #include "st3m_tar.h"
@@ -36,9 +37,6 @@ static struct dirent _root_dirents[4] = {
         .d_type = DT_DIR,
     },
 };
-
-// Handle of the wear levelling library instance
-static wl_handle_t s_wl_handle = WL_INVALID_HANDLE;
 
 static int _root_vfs_close(int fd) { return 0; }
 
@@ -117,23 +115,15 @@ static esp_vfs_t _root_vfs = {
 void st3m_fs_init(void) {
     esp_err_t err;
 
+    st3m_fs_flash_init();
+
     if ((err = esp_vfs_register("", &_root_vfs, NULL)) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to mount root VFS: %s", esp_err_to_name(err));
         return;
     }
 
-    const esp_vfs_fat_mount_config_t mount_config = {
-        .max_files = 4,
-        .format_if_mount_failed = true,
-        .allocation_unit_size = CONFIG_WL_SECTOR_SIZE
-    };
-
-    err = esp_vfs_fat_spiflash_mount("/flash", "vfs", &mount_config,
-                                     &s_wl_handle);
-    if (err != ESP_OK) {
+    if ((err = st3m_fs_flash_mount()) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to mount FAT FS: %s", esp_err_to_name(err));
         return;
     }
-
-    ESP_LOGI(TAG, "Mounted Flash VFS Partition at /flash");
 }

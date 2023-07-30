@@ -4,10 +4,13 @@
 #include "freertos/task.h"
 
 #include "flow3r_bsp.h"
+#include "st3m_fs.h"
+#include "st3m_fs_flash.h"
 #include "st3m_gfx.h"
 #include "st3m_io.h"
 #include "st3m_usb.h"
 
+#include "rec_fatal.h"
 #include "rec_gui.h"
 #include "rec_vfs.h"
 
@@ -37,7 +40,10 @@ static void _main_disk_mode(void) {
 
 static void _main_erase_fat32(void) {
     rec_erasing_draw();
-    rec_vfs_wl_erase();
+    esp_err_t ret = st3m_fs_flash_erase();
+    if (ret != ESP_OK) {
+        rec_fatal("Erase failed");
+    }
     _cur_menu = &_erasedone_menu;
     _cur_menu->selected = 0;
 }
@@ -99,8 +105,7 @@ void app_main(void) {
     flow3r_bsp_display_set_backlight(100);
     flow3r_bsp_i2c_init();
     st3m_io_init();
-
-    rec_vfs_wl_init();
+    st3m_fs_init();
 
     TickType_t last_wake;
     last_wake = xTaskGetTickCount();

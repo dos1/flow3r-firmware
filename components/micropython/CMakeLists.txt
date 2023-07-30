@@ -37,15 +37,6 @@ set(MICROPY_SOURCE_SHARED
     ${MICROPY_DIR}/shared/runtime/pyexec.c
 )
 
-set(MICROPY_SOURCE_LIB
-    ${MICROPY_DIR}/lib/littlefs/lfs1.c
-    ${MICROPY_DIR}/lib/littlefs/lfs1_util.c
-    ${MICROPY_DIR}/lib/littlefs/lfs2.c
-    ${MICROPY_DIR}/lib/littlefs/lfs2_util.c
-    ${MICROPY_DIR}/lib/oofatfs/ff.c
-    ${MICROPY_DIR}/lib/oofatfs/ffunicode.c
-)
-
 set(MICROPY_SOURCE_DRIVERS
     ${MICROPY_DIR}/drivers/bus/softspi.c
     ${MICROPY_DIR}/drivers/dht/dht.c
@@ -85,7 +76,6 @@ set(MICROPY_SOURCE_QSTR
     "${MICROPY_SOURCE_EXTMOD}"
     "${MICROPY_SOURCE_USERMOD}"
     "${MICROPY_SOURCE_SHARED}"
-    "${MICROPY_SOURCE_LIB}"
     "${MICROPY_SOURCE_PORT}"
 )
 
@@ -138,7 +128,6 @@ idf_component_register(
         ${MICROPY_SOURCE_EXTMOD}
         ${MICROPY_SOURCE_USERMOD}
         ${MICROPY_SOURCE_SHARED}
-        ${MICROPY_SOURCE_LIB}
         ${MICROPY_SOURCE_DRIVERS}
         ${MICROPY_SOURCE_PORT}
     INCLUDE_DIRS
