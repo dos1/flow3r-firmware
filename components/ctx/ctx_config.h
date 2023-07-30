@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "sdkconfig.h"
 
 #define CTX_TINYVG    1
 #define CTX_TVG_STDIO 0
