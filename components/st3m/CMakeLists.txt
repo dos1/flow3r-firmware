@@ -6,6 +6,7 @@ idf_component_register(
         st3m_scope.c
         st3m_leds.c
         st3m_colors.c
+        st3m_imu.c
         st3m_io.c
         st3m_usb_cdc.c
         st3m_usb_descriptors.c

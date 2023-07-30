@@ -27,8 +27,8 @@ static int8_t set_accel_config(struct bmi2_dev *bmi);
 static float lsb_to_mps(int16_t val, float g_range, uint8_t bit_width);
 
 // TODO: expose this, once we also expose the range of the acc
-static esp_err_t flow3r_bsp_imu_read_acc(flow3r_bsp_imu_t *imu, int *x,
-                                            int *y, int *z);
+static esp_err_t flow3r_bsp_imu_read_acc(flow3r_bsp_imu_t *imu, int *x, int *y,
+                                         int *z);
 
 BMI2_INTF_RETURN_TYPE bmi2_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
                                     uint32_t len, void *intf_ptr) {
@@ -126,8 +126,8 @@ esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu) {
     return ESP_OK;
 }
 
-static esp_err_t flow3r_bsp_imu_read_acc(flow3r_bsp_imu_t *imu, int *x,
-                                            int *y, int *z) {
+static esp_err_t flow3r_bsp_imu_read_acc(flow3r_bsp_imu_t *imu, int *x, int *y,
+                                         int *z) {
     struct bmi2_sens_data sens_data = {
         0,
     };
@@ -135,17 +135,20 @@ static esp_err_t flow3r_bsp_imu_read_acc(flow3r_bsp_imu_t *imu, int *x,
     int8_t rslt = bmi2_get_sensor_data(&sens_data, &(imu->bmi));
     bmi2_error_codes_print_result(rslt);
 
-    if ((rslt == BMI2_OK) && (sens_data.status & BMI2_DRDY_ACC)) {
-        *x = sens_data.acc.x;
-        *y = sens_data.acc.y;
-        *z = sens_data.acc.z;
-        return ESP_OK;
+    if (rslt == BMI2_OK) {
+        if (sens_data.status & BMI2_DRDY_ACC) {
+            *x = sens_data.acc.x;
+            *y = sens_data.acc.y;
+            *z = sens_data.acc.z;
+            return ESP_OK;
+        }
+        return ESP_ERR_NOT_FOUND;
     }
     return ESP_FAIL;
 }
 
-esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x,
-                                         float *y, float *z) {
+esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x, float *y,
+                                      float *z) {
     int ix, iy, iz;
 
     esp_err_t res = flow3r_bsp_imu_read_acc(imu, &ix, &iy, &iz);

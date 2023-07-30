@@ -15,5 +15,5 @@ typedef struct {
 } flow3r_bsp_imu_t;
 
 esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu);
-esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x,
-                                         float *y, float *z);
+esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x, float *y,
+                                      float *z);

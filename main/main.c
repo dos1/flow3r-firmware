@@ -4,6 +4,7 @@
 #include "st3m_captouch.h"
 #include "st3m_console.h"
 #include "st3m_gfx.h"
+#include "st3m_imu.h"
 #include "st3m_io.h"
 #include "st3m_leds.h"
 #include "st3m_mode.h"
@@ -71,6 +72,7 @@ void flow3r_startup(void) {
     st3m_leds_init();
     st3m_io_init();
     st3m_captouch_init();
+    st3m_imu_init();
     st3m_mode_set(st3m_mode_kind_starting, "nvs");
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES ||
