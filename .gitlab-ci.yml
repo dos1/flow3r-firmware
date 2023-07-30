@@ -12,11 +12,8 @@ default:
 
 clang-tidy:
   stage: check
-  variables:
-    IDF_TOOLCHAIN: "clang"
   script:
-    - "idf.py build"
-    - "idf.py clang-check"
+    - "bash tools/clang-tidy.sh"
     - "python3 tools/codequal-report.py clang-tidy warnings.txt > cqual.json"
   artifacts:
     when: always
