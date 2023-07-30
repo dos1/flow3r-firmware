@@ -115,7 +115,22 @@ void gc_collect(void);
                    (float)mp_obj_get_float(args[3]),                     \
                    (float)mp_obj_get_float(args[4]),                     \
                    (float)mp_obj_get_float(args[5]),                     \
-                   (int)mp_obj_get_float(args[6]));                      \
+                   (float)mp_obj_get_float(args[6]));                    \
+        return self;                                                     \
+    }                                                                    \
+    MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_ctx_##name##_obj, 7, 7,       \
+                                        mp_ctx_##name);
+
+#define MP_CTX_COMMON_FUN_6FI(name)                                      \
+    static mp_obj_t mp_ctx_##name(size_t n_args, const mp_obj_t *args) { \
+        assert(n_args == 7);                                             \
+        mp_ctx_obj_t *self = MP_OBJ_TO_PTR(args[0]);                     \
+        ctx_##name(self->ctx, (float)mp_obj_get_float(args[1]),          \
+                   (float)mp_obj_get_float(args[2]),                     \
+                   (float)mp_obj_get_float(args[3]),                     \
+                   (float)mp_obj_get_float(args[4]),                     \
+                   (float)mp_obj_get_float(args[5]),                     \
+                   mp_obj_get_int(args[6]));                             \
         return self;                                                     \
     }                                                                    \
     MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_ctx_##name##_obj, 7, 7,       \
@@ -222,7 +237,7 @@ MP_CTX_COMMON_FUN_4F(rel_quad_to);
 MP_CTX_COMMON_FUN_5F(rel_arc_to);
 MP_CTX_COMMON_FUN_4F(rectangle);
 MP_CTX_COMMON_FUN_5F(round_rectangle);
-MP_CTX_COMMON_FUN_6F(arc);
+MP_CTX_COMMON_FUN_6FI(arc);
 MP_CTX_COMMON_FUN_0(close_path);
 
 MP_CTX_COMMON_FUN_0(preserve);
