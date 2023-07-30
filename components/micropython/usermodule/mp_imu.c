@@ -4,20 +4,14 @@
 #include "py/runtime.h"
 
 STATIC mp_obj_t mp_imu_acc_read(void) {
-    float x, y, z;
+    static float x, y, z;
 
-    esp_err_t ret = st3m_imu_read_acc_mps(&x, &y, &z);
+    // Will not overwrite old data if there is an error
+    st3m_imu_read_acc_mps(&x, &y, &z);
 
-    if (ret == ESP_OK) {
-        mp_obj_t items[3] = { mp_obj_new_float(x), mp_obj_new_float(y),
-                              mp_obj_new_float(z) };
-        return mp_obj_new_tuple(3, items);
-    } else if (ret == ESP_ERR_NOT_FOUND) {
-        return mp_const_none;
-    }
-
-    // TODO: raise exception here
-    return mp_const_none;
+    mp_obj_t items[3] = { mp_obj_new_float(x), mp_obj_new_float(y),
+                          mp_obj_new_float(z) };
+    return mp_obj_new_tuple(3, items);
 }
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_imu_acc_read_obj, mp_imu_acc_read);
