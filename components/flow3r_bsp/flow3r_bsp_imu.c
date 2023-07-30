@@ -10,9 +10,9 @@ static const char *TAG = "flow3r-imu";
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
+#include <inttypes.h>
 #include <math.h>
 #include <string.h>
-#include <inttypes.h>
 
 /*! Macro that defines read write length */
 #define READ_WRITE_LEN 256
@@ -59,7 +59,7 @@ BMI2_INTF_RETURN_TYPE bmi2_i2c_write(uint8_t reg_addr, const uint8_t *reg_data,
     tx[0] = reg_addr;
     memcpy(tx + 1, reg_data, len);
 
-    ESP_LOGD(TAG, "bhi write to %02X / %02X %"PRIu32" bytes, %u total)",
+    ESP_LOGD(TAG, "bhi write to %02X / %02X %" PRIu32 " bytes, %u total)",
              imu->dev_addr, reg_addr, len, sizeof(tx));
     esp_err_t ret = flow3r_bsp_i2c_write_to_device(
         imu->dev_addr, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
