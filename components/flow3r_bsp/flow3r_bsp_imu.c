@@ -23,46 +23,50 @@ static const char *TAG = "flow3r-imu";
 #define GRAVITY_EARTH (9.80665f)
 
 static void bmi2_error_codes_print_result(int8_t rslt);
+static void bmp5_error_codes_print_result(const char api_name[], int8_t rslt);
 static int8_t set_accel_config(struct bmi2_dev *bmi);
+static int8_t set_bmp_config(
+    struct bmp5_osr_odr_press_config *osr_odr_press_cfg, struct bmp5_dev *dev);
 static float lsb_to_mps(int16_t val, float g_range, uint8_t bit_width);
 
 // TODO: expose this, once we also expose the range of the acc
 static esp_err_t flow3r_bsp_imu_read_acc(flow3r_bsp_imu_t *imu, int *x, int *y,
                                          int *z);
 
-BMI2_INTF_RETURN_TYPE bmi2_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
-                                    uint32_t len, void *intf_ptr) {
+static BMI2_INTF_RETURN_TYPE bmi2_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
+                                           uint32_t len, void *intf_ptr) {
     flow3r_bsp_imu_t *imu = (flow3r_bsp_imu_t *)intf_ptr;
 
     uint8_t tx[] = { reg_addr };
 
-    ESP_LOGD(TAG, "bhi read from %02X", imu->dev_addr);
+    ESP_LOGD(TAG, "bhi read register %02X (%" PRIu32 " bytes)", reg_addr, len);
+
     esp_err_t ret = flow3r_bsp_i2c_write_read_device(
-        imu->dev_addr, tx, sizeof(tx), reg_data, len,
+        imu->bmi_dev_addr, tx, sizeof(tx), reg_data, len,
         TIMEOUT_MS / portTICK_PERIOD_MS);
 
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "i2c read/write fail: %s", esp_err_to_name(ret));
         return BMI2_E_COM_FAIL;
     }
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, reg_data, len, ESP_LOG_DEBUG);
     return BMI2_OK;
 }
 
-/*!
- * I2C write function map to COINES platform
- */
-BMI2_INTF_RETURN_TYPE bmi2_i2c_write(uint8_t reg_addr, const uint8_t *reg_data,
-                                     uint32_t len, void *intf_ptr) {
+static BMI2_INTF_RETURN_TYPE bmi2_i2c_write(uint8_t reg_addr,
+                                            const uint8_t *reg_data,
+                                            uint32_t len, void *intf_ptr) {
     flow3r_bsp_imu_t *imu = (flow3r_bsp_imu_t *)intf_ptr;
 
     uint8_t tx[len + 1];
     tx[0] = reg_addr;
     memcpy(tx + 1, reg_data, len);
 
-    ESP_LOGD(TAG, "bhi write to %02X / %02X %" PRIu32 " bytes, %u total)",
-             imu->dev_addr, reg_addr, len, sizeof(tx));
+    ESP_LOGD(TAG, "bhi write to register %02X (%" PRIu32 " bytes)", reg_addr,
+             len);
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, reg_data, len, ESP_LOG_DEBUG);
     esp_err_t ret = flow3r_bsp_i2c_write_to_device(
-        imu->dev_addr, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
+        imu->bmi_dev_addr, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
 
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "i2c write fail: %s", esp_err_to_name(ret));
@@ -72,7 +76,37 @@ BMI2_INTF_RETURN_TYPE bmi2_i2c_write(uint8_t reg_addr, const uint8_t *reg_data,
     return BMI2_OK;
 }
 
-void bmi2_delay_us(uint32_t period, void *intf_ptr) {
+static BMP5_INTF_RET_TYPE bmp5_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
+                                        uint32_t length, void *intf_ptr) {
+    flow3r_bsp_imu_t *imu = (flow3r_bsp_imu_t *)intf_ptr;
+
+    ESP_LOGD(TAG, "bmp read register %02x (%" PRIu32 " bytes) to %p", reg_addr,
+             length, reg_data);
+    int8_t rslt =
+        bmi2_read_aux_man_mode(reg_addr, reg_data, (uint16_t)length, &imu->bmi);
+    bmi2_error_codes_print_result(rslt);
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, reg_data, length, ESP_LOG_DEBUG);
+
+    return rslt;
+}
+
+static BMP5_INTF_RET_TYPE bmp5_i2c_write(uint8_t reg_addr,
+                                         const uint8_t *reg_data,
+                                         uint32_t length, void *intf_ptr) {
+    flow3r_bsp_imu_t *imu = (flow3r_bsp_imu_t *)intf_ptr;
+
+    ESP_LOGD(TAG, "bmp write to %02X (%" PRIu32 " bytes) from %p", reg_addr,
+             length, reg_data);
+    ESP_LOG_BUFFER_HEX_LEVEL(TAG, reg_data, length, ESP_LOG_DEBUG);
+
+    int8_t rslt = bmi2_write_aux_man_mode(reg_addr, reg_data, (uint16_t)length,
+                                          &imu->bmi);
+    bmi2_error_codes_print_result(rslt);
+
+    return rslt;
+}
+
+static void bmi2_delay_us(uint32_t period, void *intf_ptr) {
     int period_ms = (period + 999) / 1000;
     int port_ms = period_ms + portTICK_PERIOD_MS - 1;
     int port_ticks = port_ms / portTICK_PERIOD_MS;
@@ -85,7 +119,7 @@ void bmi2_delay_us(uint32_t period, void *intf_ptr) {
 esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu) {
     memset(imu, 0, sizeof(*imu));
 
-    imu->dev_addr = BMI2_I2C_PRIM_ADDR;
+    imu->bmi_dev_addr = BMI2_I2C_PRIM_ADDR;
     imu->bmi.intf = BMI2_I2C_INTF;
     imu->bmi.read = bmi2_i2c_read;
     imu->bmi.write = bmi2_i2c_write;
@@ -110,8 +144,8 @@ esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu) {
     bmi2_error_codes_print_result(rslt);
     if (rslt != BMI2_OK) return ESP_FAIL;
 
-    uint8_t sensor_list = BMI2_ACCEL;
-    rslt = bmi2_sensor_enable(&sensor_list, 1, &(imu->bmi));
+    uint8_t sensor_list[] = { BMI2_ACCEL, BMI2_AUX };
+    rslt = bmi2_sensor_enable(sensor_list, sizeof(sensor_list), &(imu->bmi));
     bmi2_error_codes_print_result(rslt);
     if (rslt != BMI2_OK) return ESP_FAIL;
 
@@ -122,6 +156,45 @@ esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu) {
     rslt = bmi2_get_sensor_config(&config, 1, &(imu->bmi));
     bmi2_error_codes_print_result(rslt);
     if (rslt != BMI2_OK) return ESP_FAIL;
+
+    rslt = bmi2_set_adv_power_save(BMI2_DISABLE, &imu->bmi);
+    bmi2_error_codes_print_result(rslt);
+    if (rslt != BMI2_OK) return ESP_FAIL;
+
+    // Configure the BMI270 to interface with the BMP581
+    config.type = BMI2_AUX;
+    config.cfg.aux.odr = 50;  // in auto mode read the BMP with 50 Hz
+    config.cfg.aux.aux_en = BMI2_ENABLE;
+    // The address select pin of the BMP is NC on the flow3r
+    // TODO: figure out if the BMP always defaults to this address
+    config.cfg.aux.i2c_device_addr = BMP5_I2C_ADDR_PRIM + 1;
+    config.cfg.aux.fcu_write_en = BMI2_DISABLE;
+    config.cfg.aux.manual_en = BMI2_ENABLE;
+
+    // In auto mode read 6 bytes from the base address
+    config.cfg.aux.read_addr = BMP5_REG_TEMP_DATA_XLSB;
+    config.cfg.aux.aux_rd_burst = BMI2_AUX_READ_LEN_2;  // 6 bytes
+
+    // In manual mode read 6 bytes
+    config.cfg.aux.man_rd_burst = BMI2_AUX_READ_LEN_2;  // 6 bytes
+
+    rslt = bmi2_set_sensor_config(&config, 1, &imu->bmi);
+    bmi2_error_codes_print_result(rslt);
+
+    // bmp5_i2c_* functions proxy through the BMI270
+    imu->bmp_dev_addr = BMP5_I2C_ADDR_PRIM;
+    imu->bmp.read = bmp5_i2c_read;
+    imu->bmp.write = bmp5_i2c_write;
+    imu->bmp.intf = BMP5_I2C_INTF;
+    imu->bmp.delay_us = bmi2_delay_us;
+    imu->bmp.intf_ptr = ((void *)imu);
+
+    rslt = bmp5_init(&imu->bmp);
+    bmp5_error_codes_print_result("bmp5_init", rslt);
+    if (rslt != BMP5_OK) return ESP_FAIL;
+
+    rslt = set_bmp_config(&imu->osr_odr_press_cfg, &imu->bmp);
+    if (rslt != BMP5_OK) return ESP_FAIL;
 
     return ESP_OK;
 }
@@ -161,6 +234,33 @@ esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x, float *y,
     }
 
     return res;
+}
+
+esp_err_t flow3r_bsp_imu_read_pressure(flow3r_bsp_imu_t *imu, float *pressure,
+                                       float *temperature) {
+    int8_t rslt = 0;
+    uint8_t int_status;
+    struct bmp5_sensor_data sensor_data;
+
+#ifdef BMP5_USE_FIXED_POINT
+#error BMP5 fixed point not implemented
+#endif
+
+    rslt = bmp5_get_interrupt_status(&int_status, &imu->bmp);
+    bmp5_error_codes_print_result("bmp5_get_interrupt_status", rslt);
+    if (rslt != BMP5_OK) return ESP_FAIL;
+
+    if (int_status & BMP5_INT_ASSERTED_DRDY) {
+        rslt = bmp5_get_sensor_data(&sensor_data, &imu->osr_odr_press_cfg,
+                                    &imu->bmp);
+        bmp5_error_codes_print_result("bmp5_get_sensor_data", rslt);
+        if (rslt != BMP5_OK) return ESP_FAIL;
+
+        *pressure = sensor_data.pressure;
+        *temperature = sensor_data.temperature;
+        return ESP_OK;
+    }
+    return ESP_ERR_NOT_FOUND;
 }
 
 /*!
@@ -443,6 +543,32 @@ static void bmi2_error_codes_print_result(int8_t rslt) {
     }
 }
 
+static void bmp5_error_codes_print_result(const char api_name[], int8_t rslt) {
+    if (rslt != BMP5_OK) {
+        if (rslt == BMP5_E_NULL_PTR) {
+            ESP_LOGE(TAG, "%s: Error [%d] : Null pointer", api_name, rslt);
+        } else if (rslt == BMP5_E_COM_FAIL) {
+            ESP_LOGE(TAG, "%s: Error [%d] : Communication failure", api_name,
+                     rslt);
+        } else if (rslt == BMP5_E_DEV_NOT_FOUND) {
+            ESP_LOGE(TAG, "%s: Error [%d] : Device not found", api_name, rslt);
+        } else if (rslt == BMP5_E_INVALID_CHIP_ID) {
+            ESP_LOGE(TAG, "%s: Error [%d] : Invalid chip id", api_name, rslt);
+        } else if (rslt == BMP5_E_POWER_UP) {
+            ESP_LOGE(TAG, "%s: Error [%d] : Power up error", api_name, rslt);
+        } else if (rslt == BMP5_E_POR_SOFTRESET) {
+            ESP_LOGE(TAG, "%s: Error [%d] : Power-on reset/softreset failure",
+                     api_name, rslt);
+        } else if (rslt == BMP5_E_INVALID_POWERMODE) {
+            ESP_LOGE(TAG, "%s: Error [%d] : Invalid powermode", api_name, rslt);
+        } else {
+            /* For more error codes refer "*_defs.h" */
+            ESP_LOGE(TAG, "%s: Error [%d] : Unknown error code", api_name,
+                     rslt);
+        }
+    }
+}
+
 static int8_t set_accel_config(struct bmi2_dev *bmi) {
     int8_t rslt;
     struct bmi2_sens_config config;
@@ -480,6 +606,68 @@ static int8_t set_accel_config(struct bmi2_dev *bmi) {
         /* Map data ready interrupt to interrupt pin. */
         rslt = bmi2_map_data_int(BMI2_DRDY_INT, BMI2_INT1, bmi);
         bmi2_error_codes_print_result(rslt);
+    }
+
+    return rslt;
+}
+
+static int8_t set_bmp_config(
+    struct bmp5_osr_odr_press_config *osr_odr_press_cfg, struct bmp5_dev *dev) {
+    int8_t rslt;
+    struct bmp5_iir_config set_iir_cfg;
+    struct bmp5_int_source_select int_source_select;
+
+    rslt = bmp5_set_power_mode(BMP5_POWERMODE_STANDBY, dev);
+    bmp5_error_codes_print_result("bmp5_set_power_mode1", rslt);
+
+    if (rslt == BMP5_OK) {
+        /* Get default odr */
+        rslt = bmp5_get_osr_odr_press_config(osr_odr_press_cfg, dev);
+        bmp5_error_codes_print_result("bmp5_get_osr_odr_press_config", rslt);
+
+        if (rslt == BMP5_OK) {
+            /* Set ODR as 50Hz */
+            osr_odr_press_cfg->odr = BMP5_ODR_50_HZ;
+
+            /* Enable pressure */
+            osr_odr_press_cfg->press_en = BMP5_ENABLE;
+
+            /* Set Over-sampling rate with respect to odr */
+            osr_odr_press_cfg->osr_t = BMP5_OVERSAMPLING_64X;
+            osr_odr_press_cfg->osr_p = BMP5_OVERSAMPLING_4X;
+
+            rslt = bmp5_set_osr_odr_press_config(osr_odr_press_cfg, dev);
+            bmp5_error_codes_print_result("bmp5_set_osr_odr_press_config",
+                                          rslt);
+        }
+
+        if (rslt == BMP5_OK) {
+            set_iir_cfg.set_iir_t = BMP5_IIR_FILTER_COEFF_1;
+            set_iir_cfg.set_iir_p = BMP5_IIR_FILTER_COEFF_1;
+            set_iir_cfg.shdw_set_iir_t = BMP5_ENABLE;
+            set_iir_cfg.shdw_set_iir_p = BMP5_ENABLE;
+
+            rslt = bmp5_set_iir_config(&set_iir_cfg, dev);
+            bmp5_error_codes_print_result("bmp5_set_iir_config", rslt);
+        }
+
+        if (rslt == BMP5_OK) {
+            rslt = bmp5_configure_interrupt(BMP5_PULSED, BMP5_ACTIVE_HIGH,
+                                            BMP5_INTR_PUSH_PULL,
+                                            BMP5_INTR_ENABLE, dev);
+            bmp5_error_codes_print_result("bmp5_configure_interrupt", rslt);
+
+            if (rslt == BMP5_OK) {
+                /* Note : Select INT_SOURCE after configuring interrupt */
+                int_source_select.drdy_en = BMP5_ENABLE;
+                rslt = bmp5_int_source_select(&int_source_select, dev);
+                bmp5_error_codes_print_result("bmp5_int_source_select", rslt);
+            }
+        }
+
+        /* Set powermode as normal */
+        rslt = bmp5_set_power_mode(BMP5_POWERMODE_NORMAL, dev);
+        bmp5_error_codes_print_result("bmp5_set_power_mode", rslt);
     }
 
     return rslt;

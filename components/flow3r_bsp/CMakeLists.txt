@@ -20,4 +20,5 @@ idf_component_register(
 		driver
 		vfs
 		bmi270
+		bmp581
 )

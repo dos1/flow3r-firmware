@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bmi2_defs.h"
+#include "bmp5.h"
 
 #include "flow3r_bsp_i2c.h"
 
@@ -11,7 +12,10 @@
 
 typedef struct {
     struct bmi2_dev bmi;
-    uint8_t dev_addr;
+    struct bmp5_dev bmp;
+    uint8_t bmi_dev_addr;
+    uint8_t bmp_dev_addr;
+    struct bmp5_osr_odr_press_config osr_odr_press_cfg;
 } flow3r_bsp_imu_t;
 
 // Init the IMU to default settings
@@ -26,3 +30,6 @@ esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu);
 // Return values in m/s.
 esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x, float *y,
                                       float *z);
+
+esp_err_t flow3r_bsp_imu_read_pressure(flow3r_bsp_imu_t *imu, float *pressure,
+                                       float *temperature);
