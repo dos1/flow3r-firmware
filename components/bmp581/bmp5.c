@@ -1114,6 +1114,10 @@ int8_t bmp5_get_fifo_len(uint16_t *fifo_len, struct bmp5_fifo *fifo, struct bmp5
                  */
                 *fifo_len = fifo->fifo_count * 6;
             }
+            else
+            {
+                return BMP5_E_FIFO_FRAME_EMPTY;
+            }
         }
     }
     else
