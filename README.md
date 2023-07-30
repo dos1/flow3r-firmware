@@ -38,6 +38,17 @@ $ source export.sh
 best put something like "alias espidf='source ~/esp-idf/export.sh'" in your .bashrc etc,
 you need to run it in every new terminal and adding it to autostart did bother us
 
+Alternatively, we have a fork of esp-idf in this gitlab (TODO: update to new
+gitlab url and new org name when that's a thing)
+
+```
+$ cd ~
+$ git clone git@git.card10.badge.events.ccc.de:badge23/esp-idf.git
+$ cd esp-idf
+$ git checkout v5.1-flow3r
+$ git submodule update --init --recursive
+```
+
 ### Nix(OS)
 
 ```
