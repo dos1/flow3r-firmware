@@ -19,6 +19,7 @@ idf_component_register(
         st3m_tar.c
         st3m_fs.c
         st3m_fs_flash.c
+        st3m_fs_sd.c
     INCLUDE_DIRS
         .
     REQUIRES

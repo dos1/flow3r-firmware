@@ -1,6 +1,7 @@
 #include "st3m_fs.h"
 
 #include "st3m_fs_flash.h"
+#include "st3m_fs_sd.h"
 #include "st3m_mode.h"
 #include "st3m_sys_data.h"
 #include "st3m_tar.h"
@@ -116,6 +117,26 @@ void st3m_fs_init(void) {
     esp_err_t err;
 
     st3m_fs_flash_init();
+    err = st3m_fs_sd_init();
+    if (err == ESP_OK) {
+        st3m_fs_sd_props_t props;
+        err = st3m_fs_sd_probe(&props);
+        if (err != ESP_OK) {
+            ESP_LOGW(TAG, "Failed to detect SD card: %s", esp_err_to_name(err));
+        } else {
+            uint64_t sector_size = props.sector_size;
+            uint64_t sector_count = props.sector_count;
+            uint64_t bytes = sector_size * sector_count;
+            // Overflows 32 bits at 4 PiB.
+            uint64_t mib = bytes >> 20;
+            if (mib > (1ULL << 32)) {
+                ESP_LOGW(TAG,
+                         "SD card has bogus size. Or you are in the future.");
+            }
+            ESP_LOGI(TAG, "SD card probed: %d MiB (%d sectors of %d bytes)",
+                     (unsigned int)mib, props.sector_count, props.sector_size);
+        }
+    }
 
     if ((err = esp_vfs_register("", &_root_vfs, NULL)) != ESP_OK) {
         ESP_LOGE(TAG, "Failed to mount root VFS: %s", esp_err_to_name(err));
