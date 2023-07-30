@@ -60,7 +60,7 @@ void flow3r_startup(void) {
     flow3r_bsp_i2c_init();
     st3m_mode_set(st3m_mode_kind_starting, "fs");
     st3m_mode_update_display(NULL);
-    st3m_fs_init();
+    flow3r_fs_init();
     st3m_mode_set(st3m_mode_kind_starting, "audio");
     st3m_mode_update_display(NULL);
     st3m_scope_init();

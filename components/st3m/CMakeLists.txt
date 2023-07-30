@@ -16,6 +16,7 @@ idf_component_register(
         st3m_captouch.c
         st3m_ringbuffer.c
         st3m_tar.c
+        st3m_fs.c
     INCLUDE_DIRS
         .
     REQUIRES
