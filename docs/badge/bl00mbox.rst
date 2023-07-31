@@ -47,7 +47,7 @@ create one:
     # no enter, just tab for autocomplete to see patches
     bl00mbox.patches.
     # create a patch instance
-    tiny = blm.new_patch(bl00mbox.patches.tinysynth_fm)
+    tiny = blm.new(bl00mbox.patches.tinysynth_fm)
     # play it!
     tiny.start()
     # try autocomplete here too!
@@ -79,7 +79,7 @@ of the plugin descriptor first. bl00mbox provides a plugin registry for this:
     bl00mbox.plugins.ampliverter
     # create a new bud
     osc = blm.new(bl00mbox.plugins.trad_osc)
-    env = blm.new(bl00mbox.plugins.trad_env)
+    env = blm.new(bl00mbox.plugins.trad_envelope)
 
 You can inspect properties of the new bud. Note how some signals are
 inputs and others are outputs and that there are subtypes such as /trigger:
@@ -97,8 +97,8 @@ types come with additional helper functions to make your life easier:
 .. code-block:: python
 
     # assign raw value to an input signal
-    env.signals.sustain.value = 0
-    env.signals.decay.value = 2000
+    env.signals.sustain = 0
+    env.signals.decay = 2000
     # assign the same signal with a /pitch helper function to 440Hz (broken atm)
     osc.signals.pitch.freq = 460
 
@@ -113,9 +113,9 @@ from the same output, however each input streams only from one output.
 .. code-block:: python
 
     # assign an output to an input...
-    env.signals.input.value = osc.signals.output
+    env.signals.input = osc.signals.output
     # ...or an input to an output!
-    env.signals.output.value = blm.mixer
+    env.signals.output = blm.mixer
 
 The trigger of the envelope has a special helper function that triggers a volume
 response:
@@ -136,51 +136,49 @@ Example 1: auto bassline
 
     blm = bl00mbox.Channel()
     blm.volume = 10000
-    osc1 = blm.new_bud(420)
-    env1 = blm.new_bud(42)
-    env1.signals.output.value = blm.mixer
-    env1.signals.input.value = osc1.signals.output
+    osc1 = blm.new(bl00mbox.plugins.trad_osc)
+    env1 = blm.new(bl00mbox.plugins.trad_envelope)
+    env1.signals.output = blm.mixer
+    env1.signals.input = osc1.signals.output
 
-    osc2 = blm.new_bud(420)
-    env2 = blm.new_bud(42)
-    env2.signals.input.value = osc2.signals.output
+    osc2 = blm.new(bl00mbox.plugins.trad_osc)
+    env2 = blm.new(bl00mbox.plugins.trad_envelope)
+    env2.signals.input = osc2.signals.output
 
-    amp1 = blm.new_bud(69)
-    amp1.signals.input.value = env2.signals.output
-    amp1.signals.output.value = osc1.signals.lin_fm
+    env2.signals.output = osc1.signals.lin_fm
 
-    env1.signals.sustain.value = 0
-    env2.signals.sustain.value = 0
-    env1.signals.attack.value = 10
-    env2.signals.attack.value = 100
-    env1.signals.decay.value = 800
-    env2.signals.decay.value = 800
+    env1.signals.sustain = 0
+    env2.signals.sustain = 0
+    env1.signals.attack = 10
+    env2.signals.attack = 100
+    env1.signals.decay = 800
+    env2.signals.decay = 800
 
     osc1.signals.pitch.tone = -12
     osc2.signals.pitch.tone = -24
 
-    osc3 = blm.new_bud(420)
-    osc3.signals.waveform.value = 0
+    osc3 = blm.new(bl00mbox.plugins.trad_osc)
+    osc3.signals.waveform = 0
     osc3.signals.pitch.tone = -100
-    osc3.signals.output.value = env1.signals.trigger
-    osc3.signals.output.value = env2.signals.trigger
+    osc3.signals.output = env1.signals.trigger
+    osc3.signals.output = env2.signals.trigger
 
-    osc4 = blm.new_bud(420)
-    osc4.signals.waveform.value = 32767
+    osc4 = blm.new(bl00mbox.plugins.trad_osc)
+    osc4.signals.waveform = 32767
     osc4.signals.pitch.tone = -124
 
-    amp2 = blm.new_bud(69)
-    amp2.signals.input.value = osc4.signals.output
-    amp2.signals.bias.value = 18376 - 2400
-    amp2.signals.gain.value = 300
+    amp1 = blm.new(bl00mbox.plugins.ampliverter)
+    amp1.signals.input = osc4.signals.output
+    amp1.signals.bias = 18376 - 2400
+    amp1.signals.gain = 300
 
-    amp2.signals.output.value = osc1.signals.pitch
+    amp1.signals.output = osc1.signals.pitch
 
-    amp3 = blm.new_bud(69)
-    amp3.signals.input.value = amp2.signals.output
-    amp3.signals.bias.value = - 2400
-    amp3.signals.gain.value = 31000
+    amp2 = blm.new(bl00mbox.plugins.ampliverter)
+    amp2.signals.input = amp1.signals.output
+    amp2.signals.bias = - 2400
+    amp2.signals.gain = 31000
 
-    amp3.signals.output.value = osc2.signals.pitch
-    osc2.signals.output.value = blm.mixer
+    amp2.signals.output = osc2.signals.pitch
+    osc2.signals.output = blm.mixer
 

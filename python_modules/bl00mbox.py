@@ -88,6 +88,11 @@ class SignalInput(Signal):
     @Signal.value.setter
     def value(self, val):
         if isinstance(val, SignalOutput):
+            if len(self.connections):
+                if sys_bl00mbox.channel_disconnect_signal(self._bud.channel_num, self._bud.bud_num, self._signal_num):
+                    self.connections = []
+                else:
+                    return
             if sys_bl00mbox.channel_connect_signal(self._bud.channel_num, self._bud.bud_num, self._signal_num, val._bud.bud_num, val._signal_num):
                 self.connections += [val]
                 val.connections += [self]
@@ -95,6 +100,11 @@ class SignalInput(Signal):
             #TODO
             pass
         elif (type(val) == int) or (type(val) == float):
+            if len(self.connections):
+                if sys_bl00mbox.channel_disconnect_signal(self._bud.channel_num, self._bud.bud_num, self._signal_num):
+                    self.connections = []
+                else:
+                    return
             sys_bl00mbox.channel_bud_set_signal_value(self._bud.channel_num, self._bud.bud_num, self._signal_num, int(val))
 
 class SignalInputTrigger(SignalInput):
@@ -154,6 +164,12 @@ class SignalList:
                     signal.hints = "input"
             self._list += [signal]
             setattr(self, signal.name.split(' ')[0], signal)
+    def __setattr__(self, key, value):
+            current_value = getattr(self, key, None)
+            if isinstance(current_value, Signal):
+                current_value.value = value
+                return
+            super().__setattr__(key, value)
 
 class Bud:
     def __init__(self, channel, plugin_id, nick = ""):
