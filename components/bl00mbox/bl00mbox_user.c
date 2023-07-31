@@ -142,6 +142,40 @@ bool bl00mbox_channel_connect_signal_to_output_mixer(uint8_t channel, uint32_t b
     return true;
 }
 
+bool bl00mbox_channel_disconnect_signal_from_output_mixer(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index){
+    //TODO
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return false;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return false;
+    radspa_signal_t * tx = radspa_signal_get_by_index(bud->plugin, bud_signal_index);
+    if(tx == NULL) return false;
+#if 0
+    bl00mbox_channel_root_t * root = malloc(sizeof(bl00mbox_channel_root_t));
+    if(root == NULL) return false;
+
+    bl00mbox_connection_t * conn;
+    if(tx->buffer == NULL) return false;
+    conn = (bl00mbox_connection_t *) tx->buffer; // buffer sits on top of struct
+    tx->buffer = conn->buffer;
+    conn->output_subscribers++;
+
+    root->con = conn;
+    root->next = NULL;
+    
+    if(chan->root_list == NULL){
+        chan->root_list = root;
+    } else {
+        bl00mbox_channel_root_t * last_root = chan->root_list;
+        while(last_root->next != NULL){ last_root = last_root->next; }
+        last_root->next = root;
+    }
+    bl00mbox_channel_event(channel);
+    return true;
+#endif
+    return false;
+}
+
 bool bl00mbox_channel_connect_signal(uint8_t channel, uint32_t bud_rx_index, uint32_t bud_rx_signal_index,
                                                uint32_t bud_tx_index, uint32_t bud_tx_signal_index){
 
