@@ -64,7 +64,7 @@ radspa_t * ampliverter_create(uint32_t init_var){
     // and plugin data. there is no plugin data in this case, but sizeof(void) is invalid sooo we're
     // taking the next smallest thing (char) ig? we're not good at C.
     // providing the descriptor address is required to make sure it is not forgotten.
-    radspa_t * ampliverter = radspa_standard_plugin_create(&ampliverter_desc, AMPLIVERTER_NUM_SIGNALS, sizeof(char));
+    radspa_t * ampliverter = radspa_standard_plugin_create(&ampliverter_desc, AMPLIVERTER_NUM_SIGNALS, sizeof(char), 0);
     if(ampliverter == NULL) return NULL;
 
     // step 2: define run function

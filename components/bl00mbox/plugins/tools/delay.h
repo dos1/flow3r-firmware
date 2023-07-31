@@ -4,10 +4,8 @@
 typedef struct {
     uint32_t read_head_position;
     uint32_t write_head_position;
-    uint32_t buffer_size;
     uint32_t max_delay;
     uint32_t time_prev;
-    int16_t buffer;
 } delay_data_t;
 
 extern radspa_descriptor_t delay_desc;

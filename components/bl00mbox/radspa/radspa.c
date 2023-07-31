@@ -65,7 +65,7 @@ int16_t radspa_signal_get_value(radspa_signal_t * sig, int16_t index, uint16_t n
     return sig->value;
 }
 
-radspa_t * radspa_standard_plugin_create(radspa_descriptor_t * desc, uint8_t num_signals, size_t plugin_data_size){
+radspa_t * radspa_standard_plugin_create(radspa_descriptor_t * desc, uint8_t num_signals, size_t plugin_data_size, uint32_t plugin_table_size){
     radspa_t * ret = calloc(1, sizeof(radspa_t));
     if(ret == NULL) return NULL;
     if(plugin_data_size){
@@ -79,6 +79,7 @@ radspa_t * radspa_standard_plugin_create(radspa_descriptor_t * desc, uint8_t num
     ret->len_signals = 0;
     ret->render = NULL;
     ret->descriptor = desc;
+    ret->plugin_table_len = plugin_table_size;
 
     bool init_failed = false;
     for(uint8_t i = 0; i < num_signals; i++){
@@ -86,6 +87,13 @@ radspa_t * radspa_standard_plugin_create(radspa_descriptor_t * desc, uint8_t num
             init_failed = true;
             break;
         }
+    }
+
+    if(ret->plugin_table_len){
+        ret->plugin_table = calloc(plugin_table_size, sizeof(int16_t));
+        if(ret->plugin_table == NULL) init_failed = true;
+    } else {
+        ret->plugin_table = NULL;
     }
 
     if(init_failed){
@@ -102,6 +110,7 @@ void radspa_standard_plugin_destroy(radspa_t * plugin){
         free(sig);
         sig = NULL;
     }
+    if(plugin->plugin_table != NULL) free(plugin->plugin_table);
     free(plugin->plugin_data);
     free(plugin);
 }

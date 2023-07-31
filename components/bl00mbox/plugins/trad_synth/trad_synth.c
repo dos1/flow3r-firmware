@@ -20,7 +20,7 @@ radspa_descriptor_t trad_osc_desc = {
 #define TRAD_OSC_LIN_FM 3
 
 radspa_t * trad_osc_create(uint32_t init_var){
-    radspa_t * trad_osc = radspa_standard_plugin_create(&trad_osc_desc, TRAD_OSC_NUM_SIGNALS, sizeof(trad_osc_data_t));
+    radspa_t * trad_osc = radspa_standard_plugin_create(&trad_osc_desc, TRAD_OSC_NUM_SIGNALS, sizeof(trad_osc_data_t), 0);
     trad_osc->render = trad_osc_run;
     radspa_signal_set(trad_osc, TRAD_OSC_OUTPUT, "output", RADSPA_SIGNAL_HINT_OUTPUT, 0);
     radspa_signal_set(trad_osc, TRAD_OSC_PITCH, "pitch", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_SCT, 18367);
@@ -129,7 +129,7 @@ radspa_descriptor_t trad_env_desc = {
 #define TRAD_ENV_PHASE_RELEASE 4
 
 radspa_t * trad_env_create(uint32_t init_var){
-    radspa_t * trad_env = radspa_standard_plugin_create(&trad_env_desc, TRAD_ENV_NUM_SIGNALS, sizeof(trad_env_data_t));
+    radspa_t * trad_env = radspa_standard_plugin_create(&trad_env_desc, TRAD_ENV_NUM_SIGNALS, sizeof(trad_env_data_t),0);
     trad_env->render = trad_env_run;
     radspa_signal_set(trad_env, TRAD_ENV_OUTPUT, "output", RADSPA_SIGNAL_HINT_OUTPUT, 0);
     radspa_signal_set(trad_env, TRAD_ENV_PHASE, "phase", RADSPA_SIGNAL_HINT_OUTPUT, 0);
@@ -237,26 +237,26 @@ void trad_env_run(radspa_t * trad_env, uint16_t num_samples, uint32_t render_pas
     for(uint16_t i = 0; i < num_samples; i++){
         static int16_t env = 0;
 
-        if(!(i%(1<<TRAD_ENV_UNDERSAMPLING))){
-            int16_t trigger = radspa_signal_get_value(trigger_sig, i, num_samples, render_pass_id);
-            if(!trigger){
-                if(plugin_data->env_phase != TRAD_ENV_PHASE_OFF){
-                    plugin_data->env_phase = TRAD_ENV_PHASE_RELEASE;
-                    plugin_data->release_init_val = plugin_data->env_counter;
-                }
-            } else if(trigger > 0 ){
-                if(plugin_data->trigger <= 0)
-                plugin_data->env_phase = TRAD_ENV_PHASE_ATTACK;
-                uint32_t vel = trigger;
-                plugin_data->velocity = vel << 17;
-            } else if(trigger < 0 ){
-                if(plugin_data->trigger >= 0)
-                plugin_data->env_phase = TRAD_ENV_PHASE_ATTACK;
-                uint32_t vel = -trigger;
-                plugin_data->velocity = vel << 17;
+        int16_t trigger = radspa_signal_get_value(trigger_sig, i, num_samples, render_pass_id);
+        if(!trigger){
+            if(plugin_data->env_phase != TRAD_ENV_PHASE_OFF){
+                plugin_data->env_phase = TRAD_ENV_PHASE_RELEASE;
+                plugin_data->release_init_val = plugin_data->env_counter;
             }
-            plugin_data->trigger = trigger;
+        } else if(trigger > 0 ){
+            if(plugin_data->trigger <= 0)
+            plugin_data->env_phase = TRAD_ENV_PHASE_ATTACK;
+            uint32_t vel = trigger;
+            plugin_data->velocity = vel << 17;
+        } else if(trigger < 0 ){
+            if(plugin_data->trigger >= 0)
+            plugin_data->env_phase = TRAD_ENV_PHASE_ATTACK;
+            uint32_t vel = -trigger;
+            plugin_data->velocity = vel << 17;
+        }
+        plugin_data->trigger = trigger;
 
+        if(!(i%(1<<TRAD_ENV_UNDERSAMPLING))){
             uint16_t time_ms;
             uint32_t sus;
             switch(plugin_data->env_phase){

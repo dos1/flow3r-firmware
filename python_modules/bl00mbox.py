@@ -180,6 +180,7 @@ class Bud:
         self.name = sys_bl00mbox.channel_bud_get_name(self.channel_num, self.bud_num)
         self.nick = nick
         self.signals = SignalList(self)
+        sys_bl00mbox.channel_bud_get_table_len(self.channel_num, self.bud_num)
 
     def __repr__(self):
         ret = "[bud " + str(self.bud_num) + "] " + self.name
@@ -188,6 +189,19 @@ class Bud:
         for sig in self.signals._list:
             ret += "\n  " + "\n  ".join(repr(sig).split("\n"))
         return ret
+
+    @property
+    def table(self):
+        ret = []
+        for x in range(sys_bl00mbox.channel_bud_get_table_len(self.channel_num, self.bud_num)):
+            ret += [sys_bl00mbox.channel_bud_get_table_value(self.channel_num, self.bud_num, x)]
+        return ret
+    @table.setter
+    def table(self, stuff):
+        if len(stuff) > sys_bl00mbox.channel_bud_get_table_len(self.channel_num, self.bud_num):
+            return
+        for x, y in enumerate(stuff):
+            sys_bl00mbox.channel_bud_set_table_value(self.channel_num, self.bud_num, x, y)
 
 class Channel():
     def __init__(self, nick = ""):

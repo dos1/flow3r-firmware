@@ -8,6 +8,7 @@ idf_component_register(
         plugins/trad_synth/trad_synth.c
         plugins/tools/ampliverter.c
         plugins/tools/delay.c
+        plugins/tools/sequence_timer.c
         plugins/tools/filter.c
     INCLUDE_DIRS
         include

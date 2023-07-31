@@ -126,7 +126,7 @@ void filter_run(radspa_t * filter, uint16_t num_samples, uint32_t render_pass_id
 }
 
 radspa_t * filter_create(uint32_t real_init_var){
-    radspa_t * filter = radspa_standard_plugin_create(&filter_desc, FILTER_NUM_SIGNALS, sizeof(filter_data_t));
+    radspa_t * filter = radspa_standard_plugin_create(&filter_desc, FILTER_NUM_SIGNALS, sizeof(filter_data_t), 0);
     if(filter == NULL) return NULL;
     filter->render = filter_run;
     radspa_signal_set(filter, FILTER_OUTPUT, "output", RADSPA_SIGNAL_HINT_OUTPUT, 0);

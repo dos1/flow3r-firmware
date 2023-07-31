@@ -19,3 +19,7 @@ char * bl00mbox_channel_bud_get_signal_unit(uint8_t channel, uint32_t bud_index,
 bool bl00mbox_channel_bud_set_signal_value(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index, int16_t value);
 int16_t bl00mbox_channel_bud_get_signal_value(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index);
 uint32_t bl00mbox_channel_bud_get_signal_hints(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index);
+
+bool bl00mbox_channel_bud_set_table_value(uint8_t channel, uint32_t bud_index, uint32_t table_index, int16_t value);
+int16_t bl00mbox_channel_bud_get_table_value(uint8_t channel, uint32_t bud_index, uint32_t table_index);
+int16_t bl00mbox_channel_bud_get_table_len(uint8_t channel, uint32_t bud_index);

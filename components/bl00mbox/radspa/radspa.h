@@ -83,6 +83,8 @@ typedef struct _radspa_t{
 
 
     void * plugin_data; // internal data for the plugin to use. should not be accessed from outside.
+    uint32_t plugin_table_len;
+    int16_t * plugin_table;
 } radspa_t;
 
 // HELPER FUNCTIONS
@@ -94,7 +96,7 @@ bool radspa_render(radspa_t * plugin, uint16_t num_samples, uint32_t render_pass
 // adds signal to plugin instance struct. typically used to initiate a plugin instance.
 int16_t radspa_signal_add(radspa_t * plugin, char * name, uint32_t hints, int16_t value);
 
-radspa_t * radspa_standard_plugin_create(radspa_descriptor_t * desc, uint8_t num_signals, size_t plugin_data_size);
+radspa_t * radspa_standard_plugin_create(radspa_descriptor_t * desc, uint8_t num_signals, size_t plugin_data_size, uint32_t plugin_table_size);
 void radspa_standard_plugin_destroy(radspa_t * plugin);
 void radspa_signal_set(radspa_t * plugin, uint8_t signal_index, char * name, uint32_t hints, int16_t value);
 
