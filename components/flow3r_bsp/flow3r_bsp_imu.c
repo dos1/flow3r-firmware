@@ -82,9 +82,19 @@ static BMP5_INTF_RET_TYPE bmp5_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
 
     ESP_LOGD(TAG, "bmp read register %02x (%" PRIu32 " bytes) to %p", reg_addr,
              length, reg_data);
-    int8_t rslt =
-        bmi2_read_aux_man_mode(reg_addr, reg_data, (uint16_t)length, &imu->bmi);
+
+    int8_t rslt;
+
+    if (reg_addr == BMP5_REG_TEMP_DATA_XLSB && length == 6) {
+        rslt = bmi2_i2c_read(BMI2_AUX_X_LSB_ADDR, reg_data, length, intf_ptr);
+    } else {
+        rslt = bmi2_read_aux_man_mode(reg_addr, reg_data, (uint16_t)length,
+                                      &imu->bmi);
+    }
+
     bmi2_error_codes_print_result(rslt);
+    if (rslt != BMI2_OK) return BMP5_E_COM_FAIL;
+
     ESP_LOG_BUFFER_HEX_LEVEL(TAG, reg_data, length, ESP_LOG_DEBUG);
 
     return rslt;
@@ -163,7 +173,8 @@ esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu) {
 
     // Configure the BMI270 to interface with the BMP581
     config.type = BMI2_AUX;
-    config.cfg.aux.odr = 50;  // in auto mode read the BMP with 50 Hz
+    config.cfg.aux.odr =
+        BMI2_AUX_ODR_50HZ;  // in auto mode read the BMP with 50 Hz
     config.cfg.aux.aux_en = BMI2_ENABLE;
     // The address select pin of the BMP is NC on the flow3r
     // TODO: figure out if the BMP always defaults to this address
@@ -195,6 +206,11 @@ esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu) {
 
     rslt = set_bmp_config(&imu->osr_odr_press_cfg, &imu->bmp);
     if (rslt != BMP5_OK) return ESP_FAIL;
+
+    // Enable auto mode
+    config.cfg.aux.manual_en = BMI2_DISABLE;
+    rslt = bmi2_set_sensor_config(&config, 1, &imu->bmi);
+    bmi2_error_codes_print_result(rslt);
 
     return ESP_OK;
 }
@@ -239,28 +255,20 @@ esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x, float *y,
 esp_err_t flow3r_bsp_imu_read_pressure(flow3r_bsp_imu_t *imu, float *pressure,
                                        float *temperature) {
     int8_t rslt = 0;
-    uint8_t int_status;
     struct bmp5_sensor_data sensor_data;
 
 #ifdef BMP5_USE_FIXED_POINT
 #error BMP5 fixed point not implemented
 #endif
 
-    rslt = bmp5_get_interrupt_status(&int_status, &imu->bmp);
-    bmp5_error_codes_print_result("bmp5_get_interrupt_status", rslt);
+    rslt =
+        bmp5_get_sensor_data(&sensor_data, &imu->osr_odr_press_cfg, &imu->bmp);
+    bmp5_error_codes_print_result("bmp5_get_sensor_data", rslt);
     if (rslt != BMP5_OK) return ESP_FAIL;
 
-    if (int_status & BMP5_INT_ASSERTED_DRDY) {
-        rslt = bmp5_get_sensor_data(&sensor_data, &imu->osr_odr_press_cfg,
-                                    &imu->bmp);
-        bmp5_error_codes_print_result("bmp5_get_sensor_data", rslt);
-        if (rslt != BMP5_OK) return ESP_FAIL;
-
-        *pressure = sensor_data.pressure;
-        *temperature = sensor_data.temperature;
-        return ESP_OK;
-    }
-    return ESP_ERR_NOT_FOUND;
+    *pressure = sensor_data.pressure;
+    *temperature = sensor_data.temperature;
+    return ESP_OK;
 }
 
 /*!
