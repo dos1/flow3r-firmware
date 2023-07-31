@@ -16,6 +16,19 @@ STATIC mp_obj_t mp_imu_acc_read(void) {
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_imu_acc_read_obj, mp_imu_acc_read);
 
+STATIC mp_obj_t mp_imu_gyro_read(void) {
+    static float x, y, z;
+
+    // Will not overwrite old data if there is an error
+    st3m_imu_read_gyro_dps(&x, &y, &z);
+
+    mp_obj_t items[3] = { mp_obj_new_float(x), mp_obj_new_float(y),
+                          mp_obj_new_float(z) };
+    return mp_obj_new_tuple(3, items);
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_imu_gyro_read_obj, mp_imu_gyro_read);
+
 STATIC mp_obj_t mp_imu_pressure_read(void) {
     static float pressure, temperature;
 
@@ -32,6 +45,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_imu_pressure_read_obj,
 
 STATIC const mp_rom_map_elem_t globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_acc_read), MP_ROM_PTR(&mp_imu_acc_read_obj) },
+    { MP_ROM_QSTR(MP_QSTR_gyro_read), MP_ROM_PTR(&mp_imu_gyro_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_pressure_read),
       MP_ROM_PTR(&mp_imu_pressure_read_obj) },
 };

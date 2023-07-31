@@ -25,14 +25,17 @@ static const char *TAG = "flow3r-imu";
 static void bmi2_error_codes_print_result(int8_t rslt);
 static void bmp5_error_codes_print_result(const char api_name[], int8_t rslt);
 static int8_t set_accel_config(struct bmi2_dev *bmi);
+static int8_t set_gyro_config(struct bmi2_dev *bmi);
 static int8_t set_bmp_config(
     struct bmp5_osr_odr_press_config *osr_odr_press_cfg, struct bmp5_dev *dev);
 static float lsb_to_mps(int16_t val, float g_range, uint8_t bit_width);
+static float lsb_to_dps(int16_t val, float dps, uint8_t bit_width);
 
-// TODO: expose this, once we also expose the range of the acc
+// TODO: expose this, once we also expose the range of the acc / gyro
 static esp_err_t flow3r_bsp_imu_read_acc(flow3r_bsp_imu_t *imu, int *x, int *y,
                                          int *z);
-
+static esp_err_t flow3r_bsp_imu_read_gyro(flow3r_bsp_imu_t *imu, int *x, int *y,
+                                          int *z);
 static BMI2_INTF_RETURN_TYPE bmi2_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
                                            uint32_t len, void *intf_ptr) {
     flow3r_bsp_imu_t *imu = (flow3r_bsp_imu_t *)intf_ptr;
@@ -150,11 +153,14 @@ esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu) {
     if (rslt != BMI2_OK) return ESP_FAIL;
 
     rslt = set_accel_config(&(imu->bmi));
-
     bmi2_error_codes_print_result(rslt);
     if (rslt != BMI2_OK) return ESP_FAIL;
 
-    uint8_t sensor_list[] = { BMI2_ACCEL, BMI2_AUX };
+    rslt = set_gyro_config(&(imu->bmi));
+    bmi2_error_codes_print_result(rslt);
+    if (rslt != BMI2_OK) return ESP_FAIL;
+
+    uint8_t sensor_list[] = { BMI2_ACCEL, BMI2_GYRO, BMI2_AUX };
     rslt = bmi2_sensor_enable(sensor_list, sizeof(sensor_list), &(imu->bmi));
     bmi2_error_codes_print_result(rslt);
     if (rslt != BMI2_OK) return ESP_FAIL;
@@ -247,6 +253,43 @@ esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x, float *y,
         *x = lsb_to_mps(ix, 2.f, imu->bmi.resolution);
         *y = lsb_to_mps(iy, 2.f, imu->bmi.resolution);
         *z = lsb_to_mps(iz, 2.f, imu->bmi.resolution);
+    }
+
+    return res;
+}
+
+static esp_err_t flow3r_bsp_imu_read_gyro(flow3r_bsp_imu_t *imu, int *x, int *y,
+                                          int *z) {
+    struct bmi2_sens_data sens_data = {
+        0,
+    };
+
+    int8_t rslt = bmi2_get_sensor_data(&sens_data, &(imu->bmi));
+    bmi2_error_codes_print_result(rslt);
+
+    if (rslt == BMI2_OK) {
+        if (sens_data.status & BMI2_DRDY_ACC) {
+            *x = sens_data.gyr.x;
+            *y = sens_data.gyr.y;
+            *z = sens_data.gyr.z;
+            return ESP_OK;
+        }
+        return ESP_ERR_NOT_FOUND;
+    }
+    return ESP_FAIL;
+}
+
+esp_err_t flow3r_bsp_imu_read_gyro_dps(flow3r_bsp_imu_t *imu, float *x,
+                                       float *y, float *z) {
+    int ix, iy, iz;
+
+    esp_err_t res = flow3r_bsp_imu_read_gyro(imu, &ix, &iy, &iz);
+
+    if (res == ESP_OK) {
+        // TODO: un-hardcode the 2000 dps range
+        *x = lsb_to_dps(ix, 2000.f, imu->bmi.resolution);
+        *y = lsb_to_dps(iy, 2000.f, imu->bmi.resolution);
+        *z = lsb_to_dps(iz, 2000.f, imu->bmi.resolution);
     }
 
     return res;
@@ -619,6 +662,40 @@ static int8_t set_accel_config(struct bmi2_dev *bmi) {
     return rslt;
 }
 
+static int8_t set_gyro_config(struct bmi2_dev *bmi) {
+    int8_t rslt;
+    struct bmi2_sens_config config;
+
+    config.type = BMI2_GYRO;
+
+    /* Get default configurations for the type of feature selected. */
+    rslt = bmi2_get_sensor_config(&config, 1, bmi);
+    bmi2_error_codes_print_result(rslt);
+
+    if (rslt == BMI2_OK) {
+        // Output Data Rate
+        config.cfg.gyr.odr = BMI2_GYR_ODR_100HZ;
+
+        // Measurement Range. By default the range is 2000 deg per second.
+        config.cfg.gyr.range = BMI2_GYR_RANGE_2000;
+
+        config.cfg.gyr.bwp = BMI2_GYR_NORMAL_MODE;
+
+        // Full performance mode
+        config.cfg.gyr.filter_perf = BMI2_PERF_OPT_MODE;
+        config.cfg.gyr.noise_perf = BMI2_POWER_OPT_MODE;
+
+        rslt = bmi2_set_sensor_config(&config, 1, bmi);
+        bmi2_error_codes_print_result(rslt);
+
+        /* Map data ready interrupt to interrupt pin. */
+        rslt = bmi2_map_data_int(BMI2_DRDY_INT, BMI2_INT1, bmi);
+        bmi2_error_codes_print_result(rslt);
+    }
+
+    return rslt;
+}
+
 static int8_t set_bmp_config(
     struct bmp5_osr_odr_press_config *osr_odr_press_cfg, struct bmp5_dev *dev) {
     int8_t rslt;
@@ -688,4 +765,14 @@ static float lsb_to_mps(int16_t val, float g_range, uint8_t bit_width) {
     float half_scale = (float)((pow((double)power, (double)bit_width) / 2.0f));
 
     return (GRAVITY_EARTH * val * g_range) / half_scale;
+}
+
+// Convert lsb to degree per second for 16 bit gyro at
+// range 125, 250, 500, 1000 or 2000dps.
+static float lsb_to_dps(int16_t val, float dps, uint8_t bit_width) {
+    double power = 2;
+
+    float half_scale = (float)((pow((double)power, (double)bit_width) / 2.0f));
+
+    return (dps / (half_scale)) * (val);
 }

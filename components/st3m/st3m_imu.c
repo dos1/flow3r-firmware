@@ -23,6 +23,10 @@ esp_err_t st3m_imu_read_acc_mps(float *x, float *y, float *z) {
     return flow3r_bsp_imu_read_acc_mps(&imu, x, y, z);
 }
 
+esp_err_t st3m_imu_read_gyro_dps(float *x, float *y, float *z) {
+    return flow3r_bsp_imu_read_gyro_dps(&imu, x, y, z);
+}
+
 esp_err_t st3m_imu_read_pressure(float *pressure, float *temperature) {
     return flow3r_bsp_imu_read_pressure(&imu, pressure, temperature);
 }

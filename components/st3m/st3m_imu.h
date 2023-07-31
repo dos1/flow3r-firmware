@@ -8,4 +8,5 @@
 void st3m_imu_init(void);
 
 esp_err_t st3m_imu_read_acc_mps(float *x, float *y, float *z);
+esp_err_t st3m_imu_read_gyro_dps(float *x, float *y, float *z);
 esp_err_t st3m_imu_read_pressure(float *pressure, float *temperature);

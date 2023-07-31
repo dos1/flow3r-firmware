@@ -30,7 +30,13 @@ esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu);
 // Return values in m/s**2.
 esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x, float *y,
                                       float *z);
-
+// Query the IMU for a gyroscope reading.
+//
+// This directly calls the I2C bus and need to lock the bus for that.
+// Returns ESP_ERR_NOT_FOUND if there is no new reading available.
+// Return values in deg/s.
+esp_err_t flow3r_bsp_imu_read_gyro_dps(flow3r_bsp_imu_t *imu, float *x,
+                                       float *y, float *z);
 // Query the IMU for a pressure sensor reading.
 //
 // Return cached data if no new reading is available.
