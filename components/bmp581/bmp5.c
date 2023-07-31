@@ -513,15 +513,11 @@ int8_t bmp5_get_power_mode(enum bmp5_powermode *powermode, struct bmp5_dev *dev)
                     /* If deep_dis = 0(BMP5_DEEP_ENABLED) then deepstandby mode is enabled.
                      * If deep_dis = 1(BMP5_DEEP_DISABLED) then deepstandby mode is disabled
                      */
+                    *powermode = BMP5_POWERMODE_STANDBY;
                     if (deep_dis == BMP5_DEEP_ENABLED)
                     {
                         rslt = check_deepstandby_mode(powermode, dev);
                     }
-                    else
-                    {
-                        *powermode = BMP5_POWERMODE_STANDBY;
-                    }
-
                     break;
                 case BMP5_POWERMODE_NORMAL:
                     *powermode = BMP5_POWERMODE_NORMAL;
@@ -1389,17 +1385,20 @@ int8_t bmp5_nvm_write(uint8_t nvm_addr, const uint16_t *nvm_data, struct bmp5_de
             /* Check if NVM ready status = 1, NVM error status = 0 and NVM command error status = 0 */
             rslt = get_nvm_status(&nvm_status, dev);
 
-            if ((nvm_status & BMP5_INT_NVM_RDY) && (!(nvm_status & BMP5_INT_NVM_ERR)) &&
-                (!(nvm_status & BMP5_INT_NVM_CMD_ERR)))
+            if (rslt == BMP5_OK)
             {
-                /* Reset NVM prog_en */
-                reg_data = BMP5_SET_BIT_VAL_0(reg_data, BMP5_NVM_PROG_EN);
+                if ((nvm_status & BMP5_INT_NVM_RDY) && (!(nvm_status & BMP5_INT_NVM_ERR)) &&
+                    (!(nvm_status & BMP5_INT_NVM_CMD_ERR)))
+                {
+                    /* Reset NVM prog_en */
+                    reg_data = BMP5_SET_BIT_VAL_0(reg_data, BMP5_NVM_PROG_EN);
 
-                rslt = bmp5_set_regs(BMP5_REG_NVM_ADDR, &reg_data, 1, dev);
-            }
-            else
-            {
-                rslt = BMP5_E_NVM_NOT_READY;
+                    rslt = bmp5_set_regs(BMP5_REG_NVM_ADDR, &reg_data, 1, dev);
+                }
+                else
+                {
+                    rslt = BMP5_E_NVM_NOT_READY;
+                }
             }
         }
 
@@ -1518,25 +1517,25 @@ static int8_t check_deepstandby_mode(enum bmp5_powermode *powermode, struct bmp5
     struct bmp5_osr_odr_press_config osr_odr_press_cfg = { 0 };
 
     rslt = bmp5_get_regs(BMP5_REG_FIFO_SEL, &fifo_frame_sel, 1, dev);
-    fifo_frame_sel = BMP5_GET_BITS_POS_0(fifo_frame_sel, BMP5_FIFO_FRAME_SEL);
 
     if (rslt == BMP5_OK)
     {
+        fifo_frame_sel = BMP5_GET_BITS_POS_0(fifo_frame_sel, BMP5_FIFO_FRAME_SEL);
         rslt = bmp5_get_osr_odr_press_config(&osr_odr_press_cfg, dev);
 
         if (rslt == BMP5_OK)
         {
             rslt = bmp5_get_iir_config(&iir_cfg, dev);
-        }
-    }
 
-    /* As per datasheet odr should be less than 5Hz. But register value for 5Hz is less than 4Hz and so,
-     * thus in this below condition odr is checked whether greater than 5Hz macro.
-     */
-    if ((osr_odr_press_cfg.odr > BMP5_ODR_05_HZ) && (fifo_frame_sel == BMP5_DISABLE) &&
-        (iir_cfg.set_iir_t == BMP5_IIR_FILTER_BYPASS) && (iir_cfg.set_iir_p == BMP5_IIR_FILTER_BYPASS))
-    {
-        *powermode = BMP5_POWERMODE_DEEP_STANDBY;
+            /* As per datasheet odr should be less than 5Hz. But register value for 5Hz is less than 4Hz and so,
+            * thus in this below condition odr is checked whether greater than 5Hz macro.
+            */
+            if ((osr_odr_press_cfg.odr > BMP5_ODR_05_HZ) && (fifo_frame_sel == BMP5_DISABLE) &&
+                (iir_cfg.set_iir_t == BMP5_IIR_FILTER_BYPASS) && (iir_cfg.set_iir_p == BMP5_IIR_FILTER_BYPASS))
+            {
+                *powermode = BMP5_POWERMODE_DEEP_STANDBY;
+            }
+        }
     }
 
     return rslt;
@@ -2047,32 +2046,35 @@ static int8_t set_nvm_addr(uint8_t nvm_addr, uint8_t prog_en, struct bmp5_dev *d
     /* Check if NVM ready status = 1 */
     rslt = get_nvm_status(&nvm_status, dev);
 
-    if (nvm_status & BMP5_INT_NVM_RDY)
+    if (rslt == BMP5_OK)
     {
-        rslt = bmp5_get_regs(BMP5_REG_NVM_ADDR, &reg_data, 1, dev);
-
-        if (rslt == BMP5_OK)
+        if (nvm_status & BMP5_INT_NVM_RDY)
         {
-            /* Write the NVM address */
-            reg_data = BMP5_SET_BITS_POS_0(reg_data, BMP5_NVM_ADDR, nvm_addr);
+            rslt = bmp5_get_regs(BMP5_REG_NVM_ADDR, &reg_data, 1, dev);
 
-            if (prog_en == BMP5_ENABLE)
+            if (rslt == BMP5_OK)
             {
-                /* Set bit nvm_prog_en as 1 if NVM write is selected */
-                reg_data = BMP5_SET_BITSLICE(reg_data, BMP5_NVM_PROG_EN, prog_en);
-            }
-            else
-            {
-                /* Set bit nvm_prog_en as 0 if NVM read is selected */
-                reg_data = BMP5_SET_BIT_VAL_0(reg_data, BMP5_NVM_PROG_EN);
-            }
+                /* Write the NVM address */
+                reg_data = BMP5_SET_BITS_POS_0(reg_data, BMP5_NVM_ADDR, nvm_addr);
 
-            rslt = bmp5_set_regs(BMP5_REG_NVM_ADDR, &reg_data, 1, dev);
+                if (prog_en == BMP5_ENABLE)
+                {
+                    /* Set bit nvm_prog_en as 1 if NVM write is selected */
+                    reg_data = BMP5_SET_BITSLICE(reg_data, BMP5_NVM_PROG_EN, prog_en);
+                }
+                else
+                {
+                    /* Set bit nvm_prog_en as 0 if NVM read is selected */
+                    reg_data = BMP5_SET_BIT_VAL_0(reg_data, BMP5_NVM_PROG_EN);
+                }
+
+                rslt = bmp5_set_regs(BMP5_REG_NVM_ADDR, &reg_data, 1, dev);
+            }
         }
-    }
-    else
-    {
-        rslt = BMP5_E_NVM_NOT_READY;
+        else
+        {
+            rslt = BMP5_E_NVM_NOT_READY;
+        }
     }
 
     return rslt;
@@ -2091,18 +2093,24 @@ static int8_t get_nvm_data(uint16_t *nvm_data, struct bmp5_dev *dev)
     {
         rslt = get_nvm_status(&nvm_status, dev);
 
-        /* Check if NVM ready status = 1, NVM error status = 0 and NVM command error status = 0 */
-        if ((nvm_status & BMP5_INT_NVM_RDY) && (!(nvm_status & BMP5_INT_NVM_ERR)) &&
-            (!(nvm_status & BMP5_INT_NVM_CMD_ERR)))
+        if (rslt == BMP5_OK)
         {
-            /* Read the NVM data from the register address */
-            rslt = bmp5_get_regs(BMP5_REG_NVM_DATA_LSB, nvmdata, 2, dev);
+            /* Check if NVM ready status = 1, NVM error status = 0 and NVM command error status = 0 */
+            if ((nvm_status & BMP5_INT_NVM_RDY) && (!(nvm_status & BMP5_INT_NVM_ERR)) &&
+                (!(nvm_status & BMP5_INT_NVM_CMD_ERR)))
+            {
+                /* Read the NVM data from the register address */
+                rslt = bmp5_get_regs(BMP5_REG_NVM_DATA_LSB, nvmdata, 2, dev);
 
-            (*nvm_data) = (uint16_t)((nvmdata[1] << 8) | nvmdata[0]);
-        }
-        else
-        {
-            rslt = BMP5_E_NVM_NOT_READY;
+                if (rslt == BMP5_OK)
+                {
+                    (*nvm_data) = (uint16_t)((nvmdata[1] << 8) | nvmdata[0]);
+                }
+            }
+            else
+            {
+                rslt = BMP5_E_NVM_NOT_READY;
+            }
         }
     }
     else
