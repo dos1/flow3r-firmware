@@ -17,6 +17,7 @@
 
 #include "esp_app_desc.h"
 #include "esp_app_format.h"
+#include "esp_partition.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -91,6 +92,35 @@ static void _list_select(void) {
     // TODO: copy selected image over to app partition
     _cur_menu = &_main_menu;
     _cur_menu->selected = 0;
+
+    // app,      app,  ota_0,   0x90000, 0x300000,
+    const esp_partition_t *p = esp_partition_find_first(
+        ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, "app");
+
+    if (p == NULL) {
+        ESP_LOGE(TAG, "app partition not found");
+        return;
+    }
+
+    printf("erase size: %lu\n", p->erase_size);
+    uint8_t buf[p->erase_size];
+    size_t n;
+    size_t offset = 0;
+
+    char path[128] = "/flash/hello.bin";
+    FILE *f = fopen(path, "rb");
+
+    do {
+        n = fread(buf, 1, sizeof(buf), f);
+        if (n > 0) {
+            esp_partition_erase_range(p, offset, sizeof(buf));
+            esp_partition_write(p, offset, buf, n);
+            offset += n;
+            printf("wrote %u bytes\n", offset);
+        }
+    } while (n == sizeof(buf));
+
+    fclose(f);
 }
 
 typedef struct {
@@ -162,7 +192,7 @@ static void _main_list(void) {
 }
 
 static menu_entry_t _main_menu_entries[] = {
-    { .label = "List Images", .enter = _main_list },
+    { .label = "Flash Firmware Image", .enter = _main_list },
     { .label = "Reboot", .enter = _main_reboot },
     { .label = "Disk Mode (Flash)", .enter = _main_disk_mode_flash },
     { .label = "Disk Mode (SD)", .enter = _main_disk_mode_sd },
