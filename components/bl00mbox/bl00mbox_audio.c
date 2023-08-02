@@ -30,6 +30,40 @@ static bool bl00mbox_channel_background_active[BL00MBOX_CHANNELS] = {0,};
 void bl00mbox_audio_channel_background_enable(uint8_t chan){ bl00mbox_channel_background_active[chan] = true; }
 void bl00mbox_audio_channel_background_disable(uint8_t chan){ bl00mbox_channel_background_active[chan] = false; }
 
+
+static void ** ptr_to_be_set_by_audio_task = NULL;
+static void * ptr_to_be_set_by_audio_task_target = NULL;
+static volatile bool ptr_set_request_pending = false;
+static uint64_t bl00mbox_audio_waitfor_timeout = 0ULL;
+
+bool bl00mbox_audio_waitfor_pointer_change(void ** ptr, void * new_val){
+    /// takes pointer to pointer that is to be set null
+    ptr_to_be_set_by_audio_task = ptr;
+    ptr_to_be_set_by_audio_task_target = new_val;
+    ptr_set_request_pending = true;
+
+    volatile uint64_t timeout = 0; // cute
+    while(ptr_set_request_pending){
+        timeout++;
+        // TODO: nop
+        if(bl00mbox_audio_waitfor_timeout && (timeout = bl00mbox_audio_waitfor_timeout)){
+            return false;
+        }
+    }
+    return true;
+}
+
+bool bl00mbox_audio_do_pointer_change(){
+    if(ptr_set_request_pending){
+        (* ptr_to_be_set_by_audio_task) = ptr_to_be_set_by_audio_task_target;
+        ptr_to_be_set_by_audio_task_target = NULL;
+        ptr_to_be_set_by_audio_task = NULL;
+        ptr_set_request_pending = false;
+        return true;
+    }
+    return false;
+}
+
 void bl00mbox_channel_event(uint8_t chan){
     last_chan_event = chan;
 }
@@ -134,6 +168,8 @@ static void bl00mbox_audio_channel_render(bl00mbox_channel_t * chan, int16_t * o
 }
 
 void bl00mbox_audio_render(int16_t * rx, int16_t * tx, uint16_t len){
+    bl00mbox_audio_do_pointer_change();
+
     //if(!is_initialized) return;
     bl00mbox_channel_foreground = last_chan_event;
     if(!bl00mbox_audio_run){

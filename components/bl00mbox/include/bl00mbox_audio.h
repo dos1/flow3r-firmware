@@ -18,18 +18,19 @@ typedef struct _bl00mbox_bud_t{
     struct _bl00mbox_bud_t * chan_next; //for linked list in bl00mbox_channel_t
 } bl00mbox_bud_t;
 
-typedef struct _bl00mbox_connection_signal_t{
-    struct _bl00mbox_bud_t * bud;
+typedef struct _bl00mbox_connection_subscriber_t{
+    uint8_t type; // 0: standard signal input, 1: output mixer
+    uint8_t channel;
+    uint32_t bud_index;
     uint32_t signal_index;
-    struct _bl00mbox_connection_signal_t * next;
-} bl00mbox_connection_signal_t;
+    struct _bl00mbox_connection_subscriber_t * next;
+} bl00mbox_connection_subscriber_t;
 
-typedef struct _bl00mbox_connection_t{
+typedef struct _bl00mbox_connection_t{ //child of bl00mbox_ll_t
     int16_t buffer[BL00MBOX_MAX_BUFFER_LEN]; // MUST stay on top of struct bc type casting!
     struct _bl00mbox_bud_t * source_bud;
     uint32_t signal_index; // signal of source_bud that renders to buffer
-    uint8_t output_subscribers;
-    bl00mbox_connection_signal_t * subscribers;
+    struct _bl00mbox_connection_subscriber_t * subs;
     uint8_t channel;
     struct _bl00mbox_connection_t * chan_next; //for linked list in bl00mbox_channel_t;
 } bl00mbox_connection_t;
@@ -61,4 +62,5 @@ uint8_t bl00mbox_channel_get_free_index();
 void bl00mbox_channels_init();
 uint8_t bl00mbox_channel_get_foreground_index();
 
+bool bl00mbox_audio_waitfor_pointer_change(void ** ptr, void * new_val);
 

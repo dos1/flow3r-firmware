@@ -18,7 +18,6 @@ radspa_descriptor_t delay_desc = {
 #define DELAY_DRY_VOL 5
 #define DELAY_REC_VOL 6
 
-
 void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
     radspa_signal_t * output_sig = radspa_signal_get_by_index(delay, DELAY_OUTPUT);
     if(output_sig->buffer == NULL) return;
@@ -60,7 +59,9 @@ void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
         int16_t dry_vol = radspa_signal_get_value(dry_vol_sig, i, num_samples, render_pass_id);
         int16_t rec_vol = radspa_signal_get_value(rec_vol_sig, i, num_samples, render_pass_id);
 
-        buf[data->write_head_position] = i16_add_sat(i16_mult_shift(rec_vol, dry), i16_mult_shift(wet,fb));
+        if(rec_vol){
+            buf[data->write_head_position] = i16_add_sat(i16_mult_shift(rec_vol, dry), i16_mult_shift(wet,fb));
+        }
         
         ret = i16_add_sat(i16_mult_shift(dry_vol,dry), i16_mult_shift(wet,level));
 
@@ -69,8 +70,8 @@ void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
     output_sig->value = ret;
 }
 
-radspa_t * delay_create(uint32_t real_init_var){
-    uint32_t init_var = 500; //TODO
+radspa_t * delay_create(uint32_t init_var){
+    if(init_var == 0) init_var = 500*48;
     uint32_t buffer_size = init_var*(48000/1000);
     radspa_t * delay = radspa_standard_plugin_create(&delay_desc, DELAY_NUM_SIGNALS, sizeof(delay_data_t), buffer_size);
 

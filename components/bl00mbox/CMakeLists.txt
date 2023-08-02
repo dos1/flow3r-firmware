@@ -7,6 +7,7 @@ idf_component_register(
         radspa/radspa.c
         plugins/trad_synth/trad_synth.c
         plugins/tools/ampliverter.c
+        plugins/tools/sampler.c
         plugins/tools/delay.c
         plugins/tools/sequence_timer.c
         plugins/tools/filter.c
@@ -14,6 +15,7 @@ idf_component_register(
         include
         plugins/trad_synth
         plugins/tools
+        plugins
         radspa
     REQUIRES
         st3m

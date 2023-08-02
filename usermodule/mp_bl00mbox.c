@@ -37,6 +37,7 @@ STATIC mp_obj_t mp_plugin_registry_num_plugins(void) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_plugin_registry_num_plugins_obj, mp_plugin_registry_num_plugins);
 
 
+
 STATIC mp_obj_t mp_channel_get_free() {
     return mp_obj_new_int(bl00mbox_channel_get_free_index());
 }
@@ -70,18 +71,22 @@ STATIC mp_obj_t mp_channel_get_volume(mp_obj_t chan) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_channel_get_volume_obj, mp_channel_get_volume);
 
-
 STATIC mp_obj_t mp_channel_buds_num(mp_obj_t chan) {
     return mp_obj_new_int(bl00mbox_channel_buds_num(mp_obj_get_int(chan)));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_channel_buds_num_obj, mp_channel_buds_num);
 
-STATIC mp_obj_t mp_channel_new_bud(mp_obj_t chan, mp_obj_t id) {
-    bl00mbox_bud_t * bud = bl00mbox_channel_new_bud(mp_obj_get_int(chan), mp_obj_get_int(id), 0);
+STATIC mp_obj_t mp_channel_conns_num(mp_obj_t chan) {
+    return mp_obj_new_int(bl00mbox_channel_conns_num(mp_obj_get_int(chan)));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_channel_conns_num_obj, mp_channel_conns_num);
+
+STATIC mp_obj_t mp_channel_new_bud(mp_obj_t chan, mp_obj_t id, mp_obj_t init_var) {
+    bl00mbox_bud_t * bud = bl00mbox_channel_new_bud(mp_obj_get_int(chan), mp_obj_get_int(id), mp_obj_get_int(init_var));
     if(bud == NULL) return mp_const_none;
     return mp_obj_new_int(bud->index);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_channel_new_bud_obj, mp_channel_new_bud);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_new_bud_obj, mp_channel_new_bud);
 
 STATIC mp_obj_t mp_channel_connect_signal_to_output_mixer(mp_obj_t chan, mp_obj_t bud_index, mp_obj_t bud_signal_index) {
     bool success = bl00mbox_channel_connect_signal_to_output_mixer(
@@ -89,6 +94,12 @@ STATIC mp_obj_t mp_channel_connect_signal_to_output_mixer(mp_obj_t chan, mp_obj_
     return mp_obj_new_bool(success);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_connect_signal_to_output_mixer_obj, mp_channel_connect_signal_to_output_mixer);
+
+STATIC mp_obj_t mp_channel_disconnect_signal_from_output_mixer(mp_obj_t chan, mp_obj_t bud, mp_obj_t signal) {
+    bool ret = bl00mbox_channel_disconnect_signal_from_output_mixer(mp_obj_get_int(chan), mp_obj_get_int(bud), mp_obj_get_int(signal));
+    return mp_obj_new_bool(ret);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_disconnect_signal_from_output_mixer_obj, mp_channel_disconnect_signal_from_output_mixer);
 
 
 STATIC mp_obj_t mp_channel_bud_get_num_signals(mp_obj_t chan, mp_obj_t bud) {
@@ -209,8 +220,10 @@ STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_channel_get_volume), MP_ROM_PTR(&mp_channel_get_volume_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_channel_buds_num), MP_ROM_PTR(&mp_channel_buds_num_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_conns_num), MP_ROM_PTR(&mp_channel_conns_num_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_new_bud), MP_ROM_PTR(&mp_channel_new_bud_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_connect_signal_to_output_mixer), MP_ROM_PTR(&mp_channel_connect_signal_to_output_mixer_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_disconnect_signal_from_output_mixer), MP_ROM_PTR(&mp_channel_disconnect_signal_from_output_mixer_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_num_signals), MP_ROM_PTR(&mp_channel_bud_get_num_signals_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_name), MP_ROM_PTR(&mp_channel_bud_get_name_obj) },

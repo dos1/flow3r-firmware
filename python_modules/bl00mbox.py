@@ -172,10 +172,10 @@ class SignalList:
             super().__setattr__(key, value)
 
 class Bud:
-    def __init__(self, channel, plugin_id, nick = ""):
+    def __init__(self, channel, plugin_id, init_var = 0, nick = ""):
         self.channel_num = channel.channel_num
         self.plugin_id = plugin_id
-        self.bud_num = sys_bl00mbox.channel_new_bud(self.channel_num, self.plugin_id)
+        self.bud_num = sys_bl00mbox.channel_new_bud(self.channel_num, self.plugin_id, init_var)
         channel.buds += [self]
         self.name = sys_bl00mbox.channel_bud_get_name(self.channel_num, self.bud_num)
         self.nick = nick
@@ -218,29 +218,40 @@ class Channel():
         if sys_bl00mbox.channel_get_foreground() == self.channel_num:
             ret += " (foreground)"
         ret += "\n  volume: " + str(sys_bl00mbox.channel_get_volume(self.channel_num))
-        ret += "\n  buds: " + str(len(self.buds))
+        b = sys_bl00mbox.channel_buds_num(self.channel_num);
+        ret += "\n  buds: " + str(b)
+        if len(self.buds) != b:
+            ret += " (desync" + str(len(self.buds)) + ")"
+        c = sys_bl00mbox.channel_conns_num(self.channel_num);
+        ret += "\n  links: " + str(c)
         ret += "\n  " + "\n  ".join(repr(self.mixer).split("\n"))
         return ret
 
-    def new_bud(self, thing):
+    def new_bud(self, thing, init_var = None):
+        bud_init_var = 0
+        if (type(init_var) == int) or (type(init_var) == float):
+            bud_init_var = int(init_var)
         if isinstance(thing, PluginType):
-            return Bud(self, thing.plugin_id)
+            return Bud(self, thing.plugin_id, bud_init_var)
         if type(thing) == int:
-            return Bud(self, thing)
+            return Bud(self, thing, bud_init_var)
     
-    def new_patch(self, patch):
-        return patch(self)
+    def new_patch(self, patch, init_var = None):
+        if init_var == None:
+            return patch(self)
+        else:
+            return patch(self, init_var)
 
     @staticmethod
     def state():
         return "[channel list]\n  foreground: [channel " + str(sys_bl00mbox.channel_get_foreground()) +"]"
 
-    def new(self, thing):
+    def new(self, thing, init_var = None):
         if type(thing) == type:
             if issubclass(thing, PatchType):
-                return self.new_patch(thing)
+                return self.new_patch(thing, init_var)
         if isinstance(thing, PluginType) or (type(thing) == int):
-            return self.new_bud(thing)
+            return self.new_bud(thing, init_var)
 
     @property
     def volume(self):

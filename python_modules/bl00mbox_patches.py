@@ -1,4 +1,5 @@
 import math
+import wave
 
 class _Patch():
     def bl00mbox_patch_marker(self):
@@ -90,3 +91,26 @@ class tinysynth_fm(tinysynth):
     
     def _update_mod_osc(self):
         self.mod_osc.signals.pitch.freq = self.fm_mult * self.osc.signals.pitch.freq
+
+class sampler(_Patch):
+    """needs a wave file with path relative to samples/"""
+    def __init__(self, chan, file):
+        f = wave.open('samples/' + file, 'r')
+        frames = f.getnframes()
+        self.sampler = chan.new_bud(696969, 1+(frames//48))
+        self.sampler.signals.output = chan.mixer
+
+        table = []
+        for i in range(23000):
+            frame = f.readframes(1)
+            value = int.from_bytes(frame[0:2], 'little')
+            table += [value]
+
+        self.sampler.table = table
+    def start(self):
+        self.sampler.signals.trigger.start()
+    def stop(self):
+        self.sampler.signals.trigger.stop()
+
+
+
