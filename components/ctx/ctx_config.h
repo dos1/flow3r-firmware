@@ -26,11 +26,11 @@
 #define CTX_ENABLE_RGB565             1
 #define CTX_ENABLE_RGB565_BYTESWAPPED 1
 #define CTX_ENABLE_CBRLE              0
+#define CTX_ENABLE_CM                 0
 #define CTX_BITPACK_PACKER            0
 #define CTX_COMPOSITING_GROUPS        0
 #define CTX_RENDERSTREAM_STATIC       0
 #define CTX_GRADIENT_CACHE            1
-#define CTX_ENABLE_CLIP               1
 #define CTX_MIN_JOURNAL_SIZE        512  // grows dynamically
 #define CTX_MIN_EDGE_LIST_SIZE      512  // is also max and limits complexity
                                          // of paths that can be filled
@@ -48,16 +48,28 @@
 #define CTX_ENABLE_SHADOW_BLUR  0
 #define CTX_FONTS_FROM_FILE     0
 #define CTX_MAX_KEYDB          16
-#define CTX_FRAGMENT_SPECIALIZE 1
-#define CTX_FAST_FILL_RECT      1
 #define CTX_MAX_TEXTURES        1
 #define CTX_PARSER_MAXLEN       512
 #define CTX_PARSER_FIXED_TEMP   1
 #define CTX_CURRENT_PATH        1
-#define CTX_BLENDING_AND_COMPOSITING 1
 #define CTX_STRINGPOOL_SIZE        256
 #define CTX_AUDIO                    0
 #define CTX_CLIENTS                  0
+
+#if defined(CONFIG_FLOW3R_CTX_FLAVOUR_FULL)
+#define CTX_ENABLE_CLIP                 1
+#define CTX_FRAGMENT_SPECIALIZE         1
+#define CTX_FAST_FILL_RECT              1
+#define CTX_BLENDING_AND_COMPOSITING    1
+#else
+#define CTX_ENABLE_CLIP                 0
+#define CTX_FRAGMENT_SPECIALIZE         0
+#define CTX_FAST_FILL_RECT              0
+#define CTX_BLENDING_AND_COMPOSITING    0
+#define CTX_FORCE_INLINES               0
+#define CTX_INLINED_GRADIENTS           0
+#endif
+
 
 #define CTX_RAW_KB_EVENTS          0
 #define CTX_MATH                   0
