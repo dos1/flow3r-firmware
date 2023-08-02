@@ -15,6 +15,13 @@
 #include "rec_gui.h"
 #include "rec_vfs.h"
 
+#include "esp_app_desc.h"
+#include "esp_app_format.h"
+
+#include <dirent.h>
+#include <errno.h>
+#include <stdio.h>
+
 static const char *TAG = "flow3r-recovery";
 
 static menu_t *_cur_menu = NULL;
@@ -22,6 +29,8 @@ static menu_t _main_menu;
 static menu_t _list_menu;
 static menu_t _diskmode_menu;
 static menu_t _erasedone_menu;
+
+static menu_entry_t _list_menu_entries[];
 
 static bool _usb_initialized = false;
 
@@ -73,14 +82,83 @@ static void _diskmode_exit(void) {
     st3m_usb_mode_switch(&usb_mode);
 }
 
-static void _main_list(void) {
-    _cur_menu = &_list_menu;
-    _cur_menu->selected = 0;
-}
-
 static void _list_exit(void) {
     _cur_menu = &_main_menu;
     _cur_menu->selected = 0;
+}
+
+static void _list_select(void) {
+    // TODO: copy selected image over to app partition
+    _cur_menu = &_main_menu;
+    _cur_menu->selected = 0;
+}
+
+typedef struct {
+    esp_image_header_t image;
+    esp_image_segment_header_t segment;
+    esp_app_desc_t app;
+} esp32_standard_header_t;
+
+static void _main_list(void) {
+    _cur_menu = &_list_menu;
+    _cur_menu->selected = 0;
+
+    int entries = 1;
+
+    struct dirent *pDirent;
+    DIR *pDir;
+
+    // TODO: also consider the SD card
+    pDir = opendir("/flash");
+    if (pDir != NULL) {
+        while (((pDirent = readdir(pDir)) != NULL) && (entries < 64)) {
+            ESP_LOGI(TAG, "Checking header of %s", pDirent->d_name);
+
+            char *s = pDirent->d_name;
+            int l = strlen(pDirent->d_name);
+
+            if (l > 4 && strcmp(".bin", &s[l - 4]) == 0) {
+                esp32_standard_header_t hdr;
+
+                char path[128];
+                snprintf(path, sizeof(path) / sizeof(char), "/flash/%s",
+                         pDirent->d_name);
+                FILE *f = fopen(path, "rb");
+                if (f == NULL) {
+                    ESP_LOGW(TAG, "fopen failed: %s", strerror(errno));
+                    continue;
+                }
+
+                size_t n = fread(&hdr, 1, sizeof(hdr), f);
+                fclose(f);
+                if (n != sizeof(hdr)) {
+                    ESP_LOGW(TAG, "only read %d of %d bytes", n, sizeof(hdr));
+                    continue;
+                }
+
+                if (hdr.image.magic != ESP_IMAGE_HEADER_MAGIC ||
+                    hdr.image.chip_id != ESP_CHIP_ID_ESP32S3 ||
+                    hdr.app.magic_word != ESP_APP_DESC_MAGIC_WORD) {
+                    continue;
+                }
+
+                // TODO have this in a global list, so the select function
+                // can get the actual path
+                size_t n = strlen(pDirent->d_name) + 2 +
+                           strlen(hdr.app.project_name) + 1;
+                char *label = malloc(n);
+                snprintf(label, n, "%s: %s", pDirent->d_name,
+                         hdr.app.project_name);
+                _list_menu_entries[entries].label = label;
+                _list_menu_entries[entries].enter = _list_select;
+                entries++;
+            }
+        }
+        closedir(pDir);
+    } else {
+        ESP_LOGE(TAG, "Opening /flash failed");
+    }
+    _list_menu.entries_count = entries;
 }
 
 static menu_entry_t _main_menu_entries[] = {
