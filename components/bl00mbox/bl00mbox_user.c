@@ -7,6 +7,7 @@
 #include <string.h>
 
 #include "bl00mbox_audio.h"
+#include "bl00mbox_user.h"
 #include "bl00mbox_plugin_registry.h"
 
 static uint64_t bl00mbox_bud_index = 0;
@@ -138,6 +139,57 @@ bl00mbox_bud_t * bl00mbox_channel_new_bud(uint8_t channel, uint32_t id, uint32_t
     return bud;
 }
 
+bool bl00mbox_channel_delete_bud(uint8_t channel, uint32_t bud_index){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return false;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return false;
+
+    // disconnect all signals
+    uint16_t num_signals = bl00mbox_channel_bud_get_num_signals(channel, bud_index);
+    for(uint16_t i = 0; i < num_signals; i++){
+        bl00mbox_channel_disconnect_signal(channel, bud_index, i);
+    }
+
+    // pop from channel bud list
+    bl00mbox_bud_t * seek = chan->buds;
+    bool free_later = false;
+    if(chan->buds != NULL){
+        bl00mbox_bud_t * prev = NULL;
+        while(seek != NULL){
+            if(seek->index == bud_index){
+                break;
+            }
+            prev = seek;
+            seek = seek->chan_next;
+        }
+        if(seek != NULL){
+            if(prev != NULL){
+                bl00mbox_audio_waitfor_pointer_change(&(prev->chan_next), seek->chan_next);
+            } else {
+                bl00mbox_audio_waitfor_pointer_change(&(chan->buds), seek->chan_next);
+            }
+            free_later = true;
+        }
+    }
+
+    bud->plugin->descriptor->destroy_plugin_instance(bud->plugin);
+    if(free_later) free(seek);
+    return true;
+}
+
+bool bl00mbox_channel_clear(uint8_t channel){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return false;
+    bl00mbox_bud_t * bud = chan->buds;
+    while(bud != NULL){
+        bl00mbox_bud_t * bud_next = bud->chan_next;
+        bl00mbox_channel_delete_bud(channel, bud->index);
+        bud = bud_next;
+    }
+    return true;
+}
+
 bool bl00mbox_channel_connect_signal_to_output_mixer(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index){
     bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
     if(chan == NULL) return false;
@@ -212,6 +264,7 @@ bool bl00mbox_channel_disconnect_signal_from_output_mixer(uint8_t channel, uint3
     if(tx == NULL) return false;
     if(tx->buffer == NULL) return false;
     if(!(tx->hints & RADSPA_SIGNAL_HINT_OUTPUT)) return false;
+
     bl00mbox_connection_t * conn = (bl00mbox_connection_t *) tx->buffer; // buffer sits on top of struct
     if(conn == NULL) return false; //not connected
 
@@ -227,7 +280,7 @@ bool bl00mbox_channel_disconnect_signal_from_output_mixer(uint8_t channel, uint3
         if(rt_prev == NULL){
             bl00mbox_audio_waitfor_pointer_change(&(chan->root_list), rt->next);
         } else {
-            bl00mbox_audio_waitfor_pointer_change(&(rt_prev), rt->next);
+            bl00mbox_audio_waitfor_pointer_change(&(rt_prev->next), rt->next);
         }
         free(rt);
     }
@@ -256,7 +309,6 @@ bool bl00mbox_channel_disconnect_signal_from_output_mixer(uint8_t channel, uint3
     bl00mbox_channel_event(channel);
     return true;
 }
-
 
 bool bl00mbox_channel_disconnect_signal_rx(uint8_t channel, uint32_t bud_rx_index, uint32_t bud_rx_signal_index){
     bl00mbox_bud_t * bud_rx = bl00mbox_channel_get_bud_by_index(channel, bud_rx_index);
@@ -302,6 +354,46 @@ bool bl00mbox_channel_disconnect_signal_rx(uint8_t channel, uint32_t bud_rx_inde
     weak_delete_connection(conn);
     bl00mbox_channel_event(channel);
     return true;
+}
+
+bool bl00mbox_channel_disconnect_signal_tx(uint8_t channel, uint32_t bud_tx_index, uint32_t bud_tx_signal_index){
+    bl00mbox_bud_t * bud_tx = bl00mbox_channel_get_bud_by_index(channel, bud_tx_index);
+    if(bud_tx == NULL) return false; // bud index doesn't exist
+
+    radspa_signal_t * tx = radspa_signal_get_by_index(bud_tx->plugin, bud_tx_signal_index);
+    if(tx == NULL) return false; // signal index doesn't exist
+    if(tx->buffer ==  NULL) return false;
+    if(!(tx->hints & RADSPA_SIGNAL_HINT_OUTPUT)) return false;
+    
+    bl00mbox_connection_t * conn = (bl00mbox_connection_t *) tx->buffer; // buffer sits on top of struct
+    if(conn == NULL) return false; //not connected
+    
+    while(conn->subs != NULL){
+        switch(conn->subs->type){
+            case 0:
+                bl00mbox_channel_disconnect_signal_rx(channel, conn->subs->bud_index, conn->subs->signal_index);
+                break;
+            case 1:
+                bl00mbox_channel_disconnect_signal_from_output_mixer(channel, conn->subs->bud_index, conn->subs->signal_index);
+                break;
+        }
+    }
+    bl00mbox_channel_event(channel);
+    return true;
+}
+
+bool bl00mbox_channel_disconnect_signal(uint8_t channel, uint32_t bud_index, uint32_t signal_index){
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return false; // bud index doesn't exist
+    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, signal_index);
+    if(sig == NULL) return false; // signal index doesn't exist
+    if(sig->buffer ==  NULL) return false;
+    
+    bool ret = false;
+    if(bl00mbox_channel_disconnect_signal_rx(channel, bud_index, signal_index)) ret = true;
+    if(bl00mbox_channel_disconnect_signal_tx(channel, bud_index, signal_index)) ret = true;
+    if(bl00mbox_channel_disconnect_signal_from_output_mixer(channel, bud_index, signal_index)) ret = true;
+    return ret;
 }
 
 bool bl00mbox_channel_connect_signal(uint8_t channel, uint32_t bud_rx_index, uint32_t bud_rx_signal_index,

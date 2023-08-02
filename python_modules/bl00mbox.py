@@ -76,7 +76,12 @@ class Signal:
 class SignalOutput(Signal):
     @Signal.value.setter
     def value(self, val):
-        if isinstance(val, SignalInput):
+        if val == None:
+            if sys_bl00mbox.channel_disconnect_signal_tx(self._bud.channel_num, self._bud.bud_num, self._signal_num):
+                for x in self.connections:
+                    x.connections.remove(self)
+                self.connections = []
+        elif isinstance(val, SignalInput):
             val.value = self
         elif isinstance(val, ChannelMixer):
             if val.channel_num == self._bud.channel_num:
@@ -89,7 +94,8 @@ class SignalInput(Signal):
     def value(self, val):
         if isinstance(val, SignalOutput):
             if len(self.connections):
-                if sys_bl00mbox.channel_disconnect_signal(self._bud.channel_num, self._bud.bud_num, self._signal_num):
+                if sys_bl00mbox.channel_disconnect_signal_rx(self._bud.channel_num, self._bud.bud_num, self._signal_num):
+                    self.connections[0].connections.remove(self)
                     self.connections = []
                 else:
                     return
@@ -101,7 +107,8 @@ class SignalInput(Signal):
             pass
         elif (type(val) == int) or (type(val) == float):
             if len(self.connections):
-                if sys_bl00mbox.channel_disconnect_signal(self._bud.channel_num, self._bud.bud_num, self._signal_num):
+                if sys_bl00mbox.channel_disconnect_signal_rx(self._bud.channel_num, self._bud.bud_num, self._signal_num):
+                    self.connections[0].connections.remove(self)
                     self.connections = []
                 else:
                     return
@@ -190,6 +197,9 @@ class Bud:
             ret += "\n  " + "\n  ".join(repr(sig).split("\n"))
         return ret
 
+    def __del__(self):
+        sys_bl00mbox.channel_delete_bud(self.channel_num, self.bud_num)
+
     @property
     def table(self):
         ret = []
@@ -226,6 +236,9 @@ class Channel():
         ret += "\n  links: " + str(c)
         ret += "\n  " + "\n  ".join(repr(self.mixer).split("\n"))
         return ret
+
+    def clear(self):
+        sys_bl00mbox.channel_clear(self.channel_num)
 
     def new_bud(self, thing, init_var = None):
         bud_init_var = 0

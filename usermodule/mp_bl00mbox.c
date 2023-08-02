@@ -37,6 +37,10 @@ STATIC mp_obj_t mp_plugin_registry_num_plugins(void) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_plugin_registry_num_plugins_obj, mp_plugin_registry_num_plugins);
 
 
+STATIC mp_obj_t mp_channel_clear(mp_obj_t index) {
+    return mp_obj_new_bool(bl00mbox_channel_clear(mp_obj_get_int(index)));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_channel_clear_obj, mp_channel_clear);
 
 STATIC mp_obj_t mp_channel_get_free() {
     return mp_obj_new_int(bl00mbox_channel_get_free_index());
@@ -87,6 +91,12 @@ STATIC mp_obj_t mp_channel_new_bud(mp_obj_t chan, mp_obj_t id, mp_obj_t init_var
     return mp_obj_new_int(bud->index);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_new_bud_obj, mp_channel_new_bud);
+
+STATIC mp_obj_t mp_channel_delete_bud(mp_obj_t chan, mp_obj_t bud) {
+    bool ret = bl00mbox_channel_delete_bud(mp_obj_get_int(chan), mp_obj_get_int(bud));
+    return mp_obj_new_bool(ret);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_channel_delete_bud_obj, mp_channel_delete_bud);
 
 STATIC mp_obj_t mp_channel_connect_signal_to_output_mixer(mp_obj_t chan, mp_obj_t bud_index, mp_obj_t bud_signal_index) {
     bool success = bl00mbox_channel_connect_signal_to_output_mixer(
@@ -188,11 +198,17 @@ STATIC mp_obj_t mp_channel_bud_get_signal_hints(mp_obj_t chan, mp_obj_t bud, mp_
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_bud_get_signal_hints_obj, mp_channel_bud_get_signal_hints);
 
-STATIC mp_obj_t mp_channel_disconnect_signal(mp_obj_t chan, mp_obj_t bud, mp_obj_t signal) {
+STATIC mp_obj_t mp_channel_disconnect_signal_rx(mp_obj_t chan, mp_obj_t bud, mp_obj_t signal) {
     bool ret = bl00mbox_channel_disconnect_signal_rx(mp_obj_get_int(chan), mp_obj_get_int(bud), mp_obj_get_int(signal));
     return mp_obj_new_bool(ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_disconnect_signal_obj, mp_channel_disconnect_signal);
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_disconnect_signal_rx_obj, mp_channel_disconnect_signal_rx);
+
+STATIC mp_obj_t mp_channel_disconnect_signal_tx(mp_obj_t chan, mp_obj_t bud, mp_obj_t signal) {
+    bool ret = bl00mbox_channel_disconnect_signal_tx(mp_obj_get_int(chan), mp_obj_get_int(bud), mp_obj_get_int(signal));
+    return mp_obj_new_bool(ret);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_disconnect_signal_tx_obj, mp_channel_disconnect_signal_tx);
 
 STATIC mp_obj_t mp_channel_connect_signal(size_t n_args, const mp_obj_t *args) {
     bool success = bl00mbox_channel_connect_signal(
@@ -212,6 +228,7 @@ STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_plugin_index_get_name), MP_ROM_PTR(&mp_plugin_index_get_name_obj) },
     { MP_ROM_QSTR(MP_QSTR_plugin_index_get_description), MP_ROM_PTR(&mp_plugin_index_get_description_obj) },
 
+    { MP_ROM_QSTR(MP_QSTR_channel_clear), MP_ROM_PTR(&mp_channel_clear_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_get_free), MP_ROM_PTR(&mp_channel_get_free_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_get_foreground), MP_ROM_PTR(&mp_channel_get_foreground_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_enable), MP_ROM_PTR(&mp_channel_enable_obj) },
@@ -222,6 +239,7 @@ STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_channel_buds_num), MP_ROM_PTR(&mp_channel_buds_num_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_conns_num), MP_ROM_PTR(&mp_channel_conns_num_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_new_bud), MP_ROM_PTR(&mp_channel_new_bud_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_delete_bud), MP_ROM_PTR(&mp_channel_delete_bud_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_connect_signal_to_output_mixer), MP_ROM_PTR(&mp_channel_connect_signal_to_output_mixer_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_disconnect_signal_from_output_mixer), MP_ROM_PTR(&mp_channel_disconnect_signal_from_output_mixer_obj) },
 
@@ -238,7 +256,8 @@ STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_table_len), MP_ROM_PTR(&mp_channel_bud_get_table_len_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_channel_connect_signal), MP_ROM_PTR(&mp_channel_connect_signal_obj) },
-    { MP_ROM_QSTR(MP_QSTR_channel_disconnect_signal), MP_ROM_PTR(&mp_channel_disconnect_signal_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_disconnect_signal_rx), MP_ROM_PTR(&mp_channel_disconnect_signal_rx_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_disconnect_signal_tx), MP_ROM_PTR(&mp_channel_disconnect_signal_tx_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_bl00mbox_globals, bl00mbox_globals_table);
