@@ -19,6 +19,7 @@ static const char *TAG = "flow3r-recovery";
 
 static menu_t *_cur_menu = NULL;
 static menu_t _main_menu;
+static menu_t _list_menu;
 static menu_t _diskmode_menu;
 static menu_t _erasedone_menu;
 
@@ -72,7 +73,18 @@ static void _diskmode_exit(void) {
     st3m_usb_mode_switch(&usb_mode);
 }
 
+static void _main_list(void) {
+    _cur_menu = &_list_menu;
+    _cur_menu->selected = 0;
+}
+
+static void _list_exit(void) {
+    _cur_menu = &_main_menu;
+    _cur_menu->selected = 0;
+}
+
 static menu_entry_t _main_menu_entries[] = {
+    { .label = "List Images", .enter = _main_list },
     { .label = "Reboot", .enter = _main_reboot },
     { .label = "Disk Mode (Flash)", .enter = _main_disk_mode_flash },
     { .label = "Disk Mode (SD)", .enter = _main_disk_mode_sd },
@@ -81,7 +93,7 @@ static menu_entry_t _main_menu_entries[] = {
 
 static menu_t _main_menu = {
     .entries = _main_menu_entries,
-    .entries_count = 4,
+    .entries_count = 5,
     .selected = 0,
 };
 
@@ -94,6 +106,16 @@ static menu_t _diskmode_menu = {
         "Connect the badge to a PC to\naccess the internal flash\nFAT32 "
         "partition.",
     .entries = _diskmode_menu_entries,
+    .entries_count = 1,
+    .selected = 0,
+};
+
+static menu_entry_t _list_menu_entries[64] = {
+    { .label = "Exit", .enter = _list_exit },
+};
+
+static menu_t _list_menu = {
+    .entries = _list_menu_entries,
     .entries_count = 1,
     .selected = 0,
 };
@@ -123,7 +145,7 @@ void app_main(void) {
     st3m_fs_init();
 
     if (st3m_fs_sd_get_status() != st3m_fs_sd_status_probed) {
-        _main_menu_entries[2].disabled = true;
+        _main_menu_entries[3].disabled = true;
     }
 
     TickType_t last_wake;
