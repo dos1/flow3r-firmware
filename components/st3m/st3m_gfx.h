@@ -9,7 +9,13 @@
 
 // Each buffer  takes ~116kB SPIRAM. While one framebuffer is being blitted, the
 // other one is being written to by the rasterizer.
+#if defined(CONFIG_FLOW3R_CTX_FLAVOUR_FULL)
 #define ST3M_GFX_NBUFFERS 2
+#else
+// Reduce frame buffer count for the bootloader so they fit inside internal RAM
+#define ST3M_GFX_NBUFFERS 1
+#endif
+
 // More ctx drawlists than buffers so that micropython doesn't get starved when
 // pipeline runs in lockstep.
 #define ST3M_GFX_NCTX 2
