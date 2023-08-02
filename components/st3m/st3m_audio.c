@@ -296,11 +296,16 @@ static void _audio_player_task(void *data) {
 
     while (true) {
         count = 0;
-        flow3r_bsp_audio_read(buffer_rx, sizeof(buffer_rx), &count, 1000);
+        esp_err_t ret =
+            flow3r_bsp_audio_read(buffer_rx, sizeof(buffer_rx), &count, 1000);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "audio_read: %s", esp_err_to_name(ret));
+            abort();
+        }
         if (count != sizeof(buffer_rx)) {
             ESP_LOGE(TAG, "audio_read: count (%d) != length (%d)\n", count,
                      sizeof(buffer_rx));
-            abort();
+            continue;
         }
 
         LOCK;
