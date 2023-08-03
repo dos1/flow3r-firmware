@@ -27,7 +27,7 @@ mypy:
     MYPYPATH: python_payload/mypystubs
   script:
     - "set +e +o pipefail"
-    - "mypy python_payload/main_st4m.py --strict --no-color-output > warnings.txt; result=$?"
+    - "mypy python_payload/main.py --strict --no-color-output > warnings.txt; result=$?"
     - "python3 tools/codequal-report.py mypy warnings.txt > cqual.json"
     - "set -e -o pipefail"
     - "[ $result == 0 ]"
