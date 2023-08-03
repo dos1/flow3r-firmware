@@ -26,7 +26,7 @@ ts_end = time.time()
 log.info(f"boot took {ts_end-ts_start} seconds")
 
 # TODO persistent settings
-from st3m.system import audio, captouch
+from st4m.system import audio, captouch
 
 log.info("calibrating captouch, reset volume")
 captouch.calibration_request()
