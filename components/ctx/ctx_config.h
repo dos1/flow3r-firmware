@@ -1,7 +1,12 @@
 #pragma once
 
 #include <stdint.h>
+
+#ifdef SIMULATOR
+#define CONFIG_FLOW3R_CTX_FLAVOUR_FULL
+#else
 #include "sdkconfig.h"
+#endif
 
 #define CTX_TINYVG    1
 #define CTX_TVG_STDIO 0
