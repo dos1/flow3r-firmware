@@ -31,8 +31,9 @@ class UnderscoreFinder(importlib.abc.MetaPathFinder):
         if fullname in ["json"]:
             sys_path_saved = sys.path
             sys.path = sys_path_orig
-            return self.pathfinder.find_spec(fullname, path, target)
+            res = self.pathfinder.find_spec(fullname, path, target)
             sys.path = sys_path_saved
+            return res
 
 
 # sys.meta_path.insert(0, Hook())
@@ -50,9 +51,7 @@ sys.meta_path = [pathfinder, underscore]
 # Clean up whatever might have already been imported as `time`.
 import time
 
-print("aaaa", time)
 importlib.reload(time)
-print("bbbb", time)
 
 sys.path_importer_cache.clear()
 importlib.invalidate_caches()
