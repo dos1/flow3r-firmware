@@ -1,11 +1,11 @@
-from st4m.goose import Optional, List, ABCBase, abstractmethod
-from st4m.ui.view import ViewManager
-from st4m.ui.elements.visuals import Sun, GroupRing, FlowerIcon
-from st4m.ui.menu import MenuController, MenuItem
+from st3m.goose import Optional, List, ABCBase, abstractmethod
+from st3m.ui.view import ViewManager
+from st3m.ui.elements.visuals import Sun, GroupRing, FlowerIcon
+from st3m.ui.menu import MenuController, MenuItem
 
-from st4m import Ctx, InputState
+from st3m import Ctx, InputState
 
-from st4m.utils import lerp, tau
+from st3m.utils import lerp, tau
 import math
 
 

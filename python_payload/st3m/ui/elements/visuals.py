@@ -1,7 +1,7 @@
-from st4m.utils import xy_from_polar, tau
-from st4m.property import PUSH_RED, GO_GREEN, BLACK
-from st4m.goose import List, Optional
-from st4m import Responder, Ctx, InputState
+from st3m.utils import xy_from_polar, tau
+from st3m.property import PUSH_RED, GO_GREEN, BLACK
+from st3m.goose import List, Optional
+from st3m import Responder, Ctx, InputState
 
 
 import random

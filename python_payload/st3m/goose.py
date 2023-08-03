@@ -1,5 +1,5 @@
 """
-Goose implements Goose Typing (tm), a set of shims which allows the st4m
+Goose implements Goose Typing (tm), a set of shims which allows the st3m
 codebase to use both Python type annotations, Abstract Base Classes and run
 under Micropython.
 """

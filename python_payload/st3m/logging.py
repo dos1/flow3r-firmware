@@ -1,6 +1,6 @@
 import sys
 import time
-from st4m.goose import Enum
+from st3m.goose import Enum
 
 
 class Level(Enum):

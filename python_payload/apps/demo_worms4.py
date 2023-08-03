@@ -4,11 +4,11 @@ import time
 import math
 
 # flow3r imports
-from st4m import application
-from st4m import Ctx, InputState
-from st4m.property import BLUE, WHITE
-from st4m.goose import Optional
-from st4m.utils import xy_from_polar
+from st3m import application
+from st3m import Ctx, InputState
+from st3m.property import BLUE, WHITE
+from st3m.goose import Optional
+from st3m.utils import xy_from_polar
 
 
 tau = 2 * math.pi

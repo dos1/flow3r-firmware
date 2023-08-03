@@ -1,6 +1,6 @@
-from st4m.goose import ABCBase, abstractmethod, List, Optional
-from st4m.input import InputState
-from st4m.ui.ctx import Ctx
+from st3m.goose import ABCBase, abstractmethod, List, Optional
+from st3m.input import InputState
+from st3m.ui.ctx import Ctx
 
 import time, hardware
 
@@ -50,7 +50,7 @@ class Responder(ABCBase):
 
 class Reactor:
     """
-    The Reactor is the main Micropython scheduler of the st4m system and any
+    The Reactor is the main Micropython scheduler of the st3m system and any
     running payloads.
 
     It will attempt to run a top Responder with a fixed tickrate a framerate

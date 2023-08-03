@@ -3,9 +3,9 @@ from hardware import *
 import captouch
 import leds
 
-from st4m.goose import List
-from st4m.input import InputState
-from st4m.ui.ctx import Ctx
+from st3m.goose import List
+from st3m.input import InputState
+from st3m.ui.ctx import Ctx
 
 octave = 0
 synths: List[tinysynth] = []
@@ -78,7 +78,7 @@ def foreground() -> None:
     adjust_playing_field_to_octave()
 
 
-from st4m.application import Application
+from st3m.application import Application
 
 
 # TODO(q3k): properly port this app

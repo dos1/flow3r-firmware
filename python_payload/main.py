@@ -2,23 +2,23 @@ import time, gc
 
 ts_start = time.time()
 
-from st4m import logging
+from st3m import logging
 
 log = logging.Log(__name__, level=logging.INFO)
 log.info(f"starting main")
 log.info(f"free memory: {gc.mem_free()}")
 
-import st4m
+import st3m
 
-from st4m.goose import Optional, List, ABCBase, abstractmethod
-from st4m.ui.view import View, ViewManager, ViewTransitionBlend
-from st4m.ui.menu import (
+from st3m.goose import Optional, List, ABCBase, abstractmethod
+from st3m.ui.view import View, ViewManager, ViewTransitionBlend
+from st3m.ui.menu import (
     MenuItemBack,
     MenuItemForeground,
     MenuItemNoop,
 )
 
-from st4m.ui.elements.menus import FlowerMenu, SimpleMenu, SunMenu
+from st3m.ui.elements.menus import FlowerMenu, SimpleMenu, SunMenu
 
 log.info("import apps done")
 log.info(f"free memory: {gc.mem_free()}")
@@ -26,7 +26,7 @@ ts_end = time.time()
 log.info(f"boot took {ts_end-ts_start} seconds")
 
 # TODO persistent settings
-from st4m.system import audio, captouch
+from st3m.system import audio, captouch
 
 log.info("calibrating captouch, reset volume")
 captouch.calibration_request()
@@ -95,7 +95,7 @@ menu_main = SunMenu(
 
 vm.push(menu_main)
 
-reactor = st4m.Reactor()
+reactor = st3m.Reactor()
 reactor.set_top(vm)
 # reactor.set_top(pr)
 reactor.run()

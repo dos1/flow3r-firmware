@@ -1,11 +1,11 @@
-import st4m
+import st3m
 
-from st4m.input import InputState
-from st4m.ui.ctx import Ctx
-from st4m import Responder
+from st3m.input import InputState
+from st3m.ui.ctx import Ctx
+from st3m import Responder
 
 
-class ScrollController(st4m.Responder):
+class ScrollController(st3m.Responder):
     """
     ScrolLController is a controller for physically scrollable one-dimensional
     lists.

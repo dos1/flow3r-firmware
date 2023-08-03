@@ -3,9 +3,9 @@ import captouch
 import leds
 import hardware
 
-from st4m.ui.ctx import Ctx
-from st4m.goose import List
-from st4m.input import InputState
+from st3m.ui.ctx import Ctx
+from st3m.goose import List
+from st3m.input import InputState
 
 chords = [
     [-4, 0, 3, 8, 10],
@@ -16,7 +16,7 @@ chords = [
 ]
 
 
-from st4m.application import Application
+from st3m.application import Application
 
 
 class HarmonicApp(Application):

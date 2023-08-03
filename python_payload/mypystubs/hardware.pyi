@@ -1,6 +1,6 @@
 import time
 
-from st4m.ui.ctx import Ctx
+from st3m.ui.ctx import Ctx
 
 def freertos_sleep(ms: int) -> None: ...
 def get_ctx() -> Ctx: ...

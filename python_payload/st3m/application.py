@@ -1,6 +1,6 @@
-from st4m.ui.view import ViewWithInputState, ViewTransitionSwipeRight, ViewManager
-from st4m.input import InputState
-from st4m.goose import Optional
+from st3m.ui.view import ViewWithInputState, ViewTransitionSwipeRight, ViewManager
+from st3m.input import InputState
+from st3m.goose import Optional
 
 
 class Application(ViewWithInputState):

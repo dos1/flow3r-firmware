@@ -1,7 +1,7 @@
-from st4m import application, logging
-from st4m.goose import List
-from st4m.ui.ctx import Ctx
-from st4m.input import InputState
+from st3m import application, logging
+from st3m.goose import List
+from st3m.ui.ctx import Ctx
+from st3m.input import InputState
 
 log = logging.Log(__name__, level=logging.INFO)
 log.info("import")

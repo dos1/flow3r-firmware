@@ -1,14 +1,14 @@
-from st4m.goose import ABCBase, abstractmethod, List
+from st3m.goose import ABCBase, abstractmethod, List
 
 
 class Ctx(ABCBase):
     """
-    Ctx is the rendering/rasterization API used by st4m.
+    Ctx is the rendering/rasterization API used by st3m.
 
     It's a WebCanvas-style vector API, with an implicit pen which can be moved
     and can draw lines, arcs, text, etc.
 
-    In st4m, the Ctx object is backed by a drawlist generator. That is, any
+    In st3m, the Ctx object is backed by a drawlist generator. That is, any
     operation performed on the ctx object will cause an entry to be added to an
     in-memory draw list. Then, when the rasterizer is ready, it will rasterize
     said drawlist to pixels in a separate thread.
