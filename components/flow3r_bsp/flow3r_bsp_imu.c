@@ -30,11 +30,6 @@ static int8_t set_bmp_config(
 static float lsb_to_mps(int16_t val, float g_range, uint8_t bit_width);
 static float lsb_to_dps(int16_t val, float dps, uint8_t bit_width);
 
-// TODO: expose this, once we also expose the range of the acc / gyro
-static esp_err_t flow3r_bsp_imu_read_acc(flow3r_bsp_imu_t *imu, int *x, int *y,
-                                         int *z);
-static esp_err_t flow3r_bsp_imu_read_gyro(flow3r_bsp_imu_t *imu, int *x, int *y,
-                                          int *z);
 static BMI2_INTF_RETURN_TYPE bmi2_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
                                            uint32_t len, void *intf_ptr) {
     flow3r_bsp_imu_t *imu = (flow3r_bsp_imu_t *)intf_ptr;
@@ -226,8 +221,8 @@ esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu) {
     return ESP_OK;
 }
 
-static esp_err_t flow3r_bsp_imu_read_acc(flow3r_bsp_imu_t *imu, int *x, int *y,
-                                         int *z) {
+esp_err_t flow3r_bsp_imu_read_acc(flow3r_bsp_imu_t *imu, int *x, int *y,
+                                  int *z) {
     struct bmi2_sens_data sens_data = {
         0,
     };
@@ -262,8 +257,8 @@ esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x, float *y,
     return res;
 }
 
-static esp_err_t flow3r_bsp_imu_read_gyro(flow3r_bsp_imu_t *imu, int *x, int *y,
-                                          int *z) {
+esp_err_t flow3r_bsp_imu_read_gyro(flow3r_bsp_imu_t *imu, int *x, int *y,
+                                   int *z) {
     struct bmi2_sens_data sens_data = {
         0,
     };
