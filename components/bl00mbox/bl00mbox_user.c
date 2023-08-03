@@ -10,7 +10,23 @@
 #include "bl00mbox_user.h"
 #include "bl00mbox_plugin_registry.h"
 
-static uint64_t bl00mbox_bud_index = 0;
+static uint64_t bl00mbox_bud_index = 1;
+
+uint64_t bl00mbox_channel_get_bud_by_list_pos(uint8_t channel, uint32_t pos){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    uint16_t ret = 0;
+    if(chan->buds != NULL){
+        bl00mbox_bud_t * last = chan->buds;
+        if(pos == ret) return last->index;
+        ret++;
+        while(last->chan_next != NULL){
+            last = last->chan_next;
+            if(pos == ret) return last->index;
+            ret++;
+        } 
+    }
+    return 0;
+}
 
 uint16_t bl00mbox_channel_buds_num(uint8_t channel){
     bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
@@ -389,11 +405,11 @@ bool bl00mbox_channel_disconnect_signal(uint8_t channel, uint32_t bud_index, uin
     if(sig == NULL) return false; // signal index doesn't exist
     if(sig->buffer ==  NULL) return false;
     
-    bool ret = false;
-    if(bl00mbox_channel_disconnect_signal_rx(channel, bud_index, signal_index)) ret = true;
-    if(bl00mbox_channel_disconnect_signal_tx(channel, bud_index, signal_index)) ret = true;
-    if(bl00mbox_channel_disconnect_signal_from_output_mixer(channel, bud_index, signal_index)) ret = true;
-    return ret;
+    bl00mbox_channel_disconnect_signal_rx(channel, bud_index, signal_index);
+    bl00mbox_channel_disconnect_signal_tx(channel, bud_index, signal_index);
+    bl00mbox_channel_disconnect_signal_from_output_mixer(channel, bud_index, signal_index);
+    if(sig->buffer ==  NULL) return true;
+    return false;
 }
 
 bool bl00mbox_channel_connect_signal(uint8_t channel, uint32_t bud_rx_index, uint32_t bud_rx_signal_index,
@@ -450,12 +466,15 @@ bool bl00mbox_channel_connect_signal(uint8_t channel, uint32_t bud_rx_index, uin
     return true;
 }
 
-uint16_t bl00mbox_channel_bud_get_num_signals(uint8_t channel, uint32_t bud_index){
+bool bl00mbox_channel_bud_exists(uint8_t channel, uint32_t bud_index){
     bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
     if(chan == NULL) return false;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
-    if(bud == NULL) return false;
-    return bud->plugin->len_signals;
+    if(bud == NULL){
+        return false;
+    } else {
+    return true;
+    }
 }
 
 char * bl00mbox_channel_bud_get_name(uint8_t channel, uint32_t bud_index){
@@ -465,6 +484,31 @@ char * bl00mbox_channel_bud_get_name(uint8_t channel, uint32_t bud_index){
     if(bud == NULL) return false;
     return bud->plugin->descriptor->name;
 }
+
+char * bl00mbox_channel_bud_get_description(uint8_t channel, uint32_t bud_index){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return false;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return false;
+    return bud->plugin->descriptor->description;
+}
+
+uint32_t bl00mbox_channel_bud_get_plugin_id(uint8_t channel, uint32_t bud_index){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return false;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return false;
+    return bud->plugin->descriptor->id;
+}
+
+uint16_t bl00mbox_channel_bud_get_num_signals(uint8_t channel, uint32_t bud_index){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return false;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return false;
+    return bud->plugin->len_signals;
+}
+
 
 char * bl00mbox_channel_bud_get_signal_name(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index){
     bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);

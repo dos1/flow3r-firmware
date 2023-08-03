@@ -8,6 +8,9 @@ from bl00mbox_patches import _Patch as PatchType
 from bl00mbox_plugins import plugins
 from bl00mbox_plugins import _Plugin as PluginType
 
+class Bl00mboxError(Exception):
+    pass
+
 class ChannelMixer():
     def __init__(self, channel_num):
         self.channel_num = channel_num
@@ -34,13 +37,14 @@ class Signal:
     def __init__(self, bud, signal_num):
         self._bud = bud
         self._signal_num = signal_num
-        self.name = sys_bl00mbox.channel_bud_get_signal_name(bud.channel_num, bud.bud_num, signal_num)
-        self.unit = sys_bl00mbox.channel_bud_get_signal_unit(bud.channel_num, bud.bud_num, signal_num)
+        self._name = sys_bl00mbox.channel_bud_get_signal_name(bud.channel_num, bud.bud_num, signal_num)
+        self._description = sys_bl00mbox.channel_bud_get_signal_description(bud.channel_num, bud.bud_num, signal_num)
+        self._unit = sys_bl00mbox.channel_bud_get_signal_unit(bud.channel_num, bud.bud_num, signal_num)
         self.connections = []
-        self._value = sys_bl00mbox.channel_bud_get_signal_value(bud.channel_num, bud.bud_num, signal_num)
-        self.hints = ''
+        self._hints = ''
 
     def __repr__(self):
+        self._bud._check_existence()
         ret = self.name
         if len(self.unit):
             ret += " [" + self.unit + "]" 
@@ -70,7 +74,24 @@ class Signal:
         return ret
 
     @property
+    def name(self):
+        return self._name
+
+    @property
+    def description(self):
+        return self._description
+
+    @property
+    def unit(self):
+        return self._unit
+
+    @property
+    def hints(self):
+        return self._hints
+
+    @property
     def value(self):
+        self._bud._check_existence()
         return sys_bl00mbox.channel_bud_get_signal_value(self._bud.channel_num, self._bud.bud_num, self._signal_num)
 
 class SignalOutput(Signal):
@@ -92,6 +113,7 @@ class SignalOutput(Signal):
 class SignalInput(Signal):
     @Signal.value.setter
     def value(self, val):
+        self._bud._check_existence()
         if isinstance(val, SignalOutput):
             if len(self.connections):
                 if sys_bl00mbox.channel_disconnect_signal_rx(self._bud.channel_num, self._bud.bud_num, self._signal_num):
@@ -126,8 +148,6 @@ class SignalInputTrigger(SignalInput):
 class SignalInputPitch(SignalInput):
     def __init__(self, bud, signal_num):
         SignalInput.__init__(self, bud, signal_num);
-        self._pitch = (self._value - (32767 - 2400 * 6))/2400
-        self._freq = 440 * (2**(self._pitch/12))
 
     @property
     def tone(self):
@@ -158,47 +178,71 @@ class SignalList:
             hints = sys_bl00mbox.channel_bud_get_signal_hints(bud.channel_num, bud.bud_num, signal_num)
             if hints & 2: 
                 signal = SignalOutput(bud, signal_num)
-                signal.hints = "output"
+                signal._hints = "output"
             elif hints & 1:
                 if hints & 4:
                     signal = SignalInputTrigger(bud, signal_num)
-                    signal.hints = "input/trigger"
+                    signal._hints = "input/trigger"
                 elif hints & 32:
                     signal = SignalInputPitch(bud, signal_num)
-                    signal.hints = "input/pitch"
+                    signal._hints = "input/pitch"
                 else:
                     signal = SignalInput(bud, signal_num)
-                    signal.hints = "input"
+                    signal._hints = "input"
             self._list += [signal]
             setattr(self, signal.name.split(' ')[0], signal)
+
     def __setattr__(self, key, value):
-            current_value = getattr(self, key, None)
-            if isinstance(current_value, Signal):
-                current_value.value = value
-                return
-            super().__setattr__(key, value)
+        current_value = getattr(self, key, None)
+        if isinstance(current_value, Signal):
+            current_value.value = value
+            return
+        super().__setattr__(key, value)
 
 class Bud:
-    def __init__(self, channel, plugin_id, init_var = 0, nick = ""):
-        self.channel_num = channel.channel_num
-        self.plugin_id = plugin_id
-        self.bud_num = sys_bl00mbox.channel_new_bud(self.channel_num, self.plugin_id, init_var)
-        channel.buds += [self]
-        self.name = sys_bl00mbox.channel_bud_get_name(self.channel_num, self.bud_num)
-        self.nick = nick
-        self.signals = SignalList(self)
-        sys_bl00mbox.channel_bud_get_table_len(self.channel_num, self.bud_num)
+    def __init__(self, channel, plugin_id, init_var = 0, bud_num = None):
+        self._channel_num = channel.channel_num
+        if bud_num == None:
+            self._plugin_id = plugin_id
+            self._bud_num = sys_bl00mbox.channel_new_bud(self.channel_num, self.plugin_id, init_var)
+            if self._bud_num == None:
+                raise Bl00mboxError("bud init failed")
+        else:
+            self._bud_num = bud_num
+            self._check_existence()
+            self._name = sys_bl00mbox.channel_bud_get_plugin_id(self.channel_num, self.bud_num)
+        self._name = sys_bl00mbox.channel_bud_get_name(self.channel_num, self.bud_num)
+        self._signals = SignalList(self)
 
     def __repr__(self):
+        self._check_existence()
         ret = "[bud " + str(self.bud_num) + "] " + self.name
-        if self.nick != "":
-            ret += " \"" + self.nick + "\" "
         for sig in self.signals._list:
             ret += "\n  " + "\n  ".join(repr(sig).split("\n"))
         return ret
 
     def __del__(self):
+        self._check_existence()
         sys_bl00mbox.channel_delete_bud(self.channel_num, self.bud_num)
+
+    def _check_existence(self):
+        if not sys_bl00mbox.channel_bud_exists(self.channel_num, self.bud_num):
+            raise Bl00mboxError("bud has been deleted")
+    @property
+    def channel_num(self):
+        return self._channel_num
+    @property
+    def plugin_id(self):
+        return self._plugin_id
+    @property
+    def name(self):
+        return self._name
+    @property
+    def bud_num(self):
+        return self._bud_num
+    @property
+    def signals(self):
+        return self._signals
 
     @property
     def table(self):
@@ -206,6 +250,7 @@ class Bud:
         for x in range(sys_bl00mbox.channel_bud_get_table_len(self.channel_num, self.bud_num)):
             ret += [sys_bl00mbox.channel_bud_get_table_value(self.channel_num, self.bud_num, x)]
         return ret
+
     @table.setter
     def table(self, stuff):
         if len(stuff) > sys_bl00mbox.channel_bud_get_table_len(self.channel_num, self.bud_num):
@@ -214,20 +259,15 @@ class Bud:
             sys_bl00mbox.channel_bud_set_table_value(self.channel_num, self.bud_num, x, y)
 
 class Channel():
-    def __init__(self, nick = ""):
-        self.channel_num = sys_bl00mbox.channel_get_free()
-        self.buds = []
-        self.nick = nick
-        self.volume = sys_bl00mbox.channel_get_volume(self.channel_num)
+    def __init__(self, num = None):
+        self._channel_num = sys_bl00mbox.channel_get_free()
         self.mixer = ChannelMixer(self.channel_num)
     
     def __repr__(self):
         ret = "[channel " + str(self.channel_num) + "]"
-        if self.nick != "":
-            ret += " \"" + self.nick + "\""
         if sys_bl00mbox.channel_get_foreground() == self.channel_num:
             ret += " (foreground)"
-        ret += "\n  volume: " + str(sys_bl00mbox.channel_get_volume(self.channel_num))
+        ret += "\n  volume: " + str(self.volume)
         b = sys_bl00mbox.channel_buds_num(self.channel_num);
         ret += "\n  buds: " + str(b)
         if len(self.buds) != b:
@@ -244,10 +284,12 @@ class Channel():
         bud_init_var = 0
         if (type(init_var) == int) or (type(init_var) == float):
             bud_init_var = int(init_var)
+        bud = None
         if isinstance(thing, PluginType):
-            return Bud(self, thing.plugin_id, bud_init_var)
+            bud = Bud(self, thing.plugin_id, bud_init_var)
         if type(thing) == int:
-            return Bud(self, thing, bud_init_var)
+            bud = Bud(self, thing, bud_init_var)
+        return bud;
     
     def new_patch(self, patch, init_var = None):
         if init_var == None:
@@ -267,9 +309,21 @@ class Channel():
             return self.new_bud(thing, init_var)
 
     @property
+    def buds(self):
+        buds = []
+        for i in range(sys_bl00mbox.channel_buds_num(self.channel_num)):
+            bud = sys_bl00mbox.channel_get_bud_by_list_pos(self.channel_num, i)
+            buds += [bud]
+        return buds
+
+    @property
     def volume(self):
         return sys_bl00mbox.channel_get_volume(self.channel_num)
 
     @volume.setter
     def volume(self, value):
         sys_bl00mbox.channel_set_volume(self.channel_num, value)
+
+    @property
+    def channel_num(self):
+        return self._channel_num

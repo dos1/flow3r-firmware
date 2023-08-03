@@ -107,8 +107,8 @@ void radspa_standard_plugin_destroy(radspa_t * plugin){
     radspa_signal_t * sig = plugin->signals;
     while(sig != NULL){
         radspa_signal_t * sig_next = sig->next;
-        //free(sig);
-        sig = sig->next;
+        free(sig);
+        sig = sig_next;
     }
     if(plugin->plugin_table != NULL) free(plugin->plugin_table);
     if(plugin->plugin_data != NULL) free(plugin->plugin_data);

@@ -12,7 +12,7 @@ struct _bl00mbox_channel_t;
 
 typedef struct _bl00mbox_bud_t{
     radspa_t * plugin; // plugin
-    uint32_t index; // unique index number for bud
+    uint64_t index; // unique index number for bud
     uint32_t render_pass_id; // may be used by host to determine whether recomputation is necessary
     uint8_t channel; // index of channel that owns the plugin
     struct _bl00mbox_bud_t * chan_next; //for linked list in bl00mbox_channel_t
