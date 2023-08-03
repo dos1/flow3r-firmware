@@ -121,9 +121,4 @@ void st3m_fs_init(void) {
         ESP_LOGE(TAG, "Failed to mount root VFS: %s", esp_err_to_name(err));
         return;
     }
-
-    if ((err = st3m_fs_flash_mount()) != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to mount FAT FS: %s", esp_err_to_name(err));
-        return;
-    }
 }

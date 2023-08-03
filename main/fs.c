@@ -1,6 +1,7 @@
 #include "fs.h"
 
 #include "st3m_fs.h"
+#include "st3m_fs_flash.h"
 #include "st3m_mode.h"
 #include "st3m_sys_data.h"
 #include "st3m_tar.h"
@@ -41,6 +42,12 @@ static void _extract_sys_data(void) {
 
 void flow3r_fs_init(void) {
     st3m_fs_init();
+
+    esp_err_t err;
+    if ((err = st3m_fs_flash_mount()) != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to mount FAT FS: %s", esp_err_to_name(err));
+        return;
+    }
 
     bool have_mpy = false;
     struct stat st;
