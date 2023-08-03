@@ -6,6 +6,7 @@
 #include "flow3r_bsp.h"
 #include "st3m_fs.h"
 #include "st3m_fs_flash.h"
+#include "st3m_fs_sd.h"
 #include "st3m_gfx.h"
 #include "st3m_io.h"
 #include "st3m_usb.h"
@@ -25,7 +26,7 @@ static bool _usb_initialized = false;
 
 static void _main_reboot(void) { esp_restart(); }
 
-static void _main_disk_mode(void) {
+static void _main_disk_mode_flash(void) {
     _cur_menu = &_diskmode_menu;
     _cur_menu->selected = 0;
 
@@ -35,7 +36,20 @@ static void _main_disk_mode(void) {
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 
-    rec_vfs_wl_msc_start();
+    rec_vfs_wl_msc_start_flash();
+}
+
+static void _main_disk_mode_sd(void) {
+    _cur_menu = &_diskmode_menu;
+    _cur_menu->selected = 0;
+
+    if (!_usb_initialized) {
+        _usb_initialized = true;
+        st3m_usb_init();
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
+
+    rec_vfs_wl_msc_start_sd();
 }
 
 static void _main_erase_fat32(void) {
@@ -60,13 +74,14 @@ static void _diskmode_exit(void) {
 
 static menu_entry_t _main_menu_entries[] = {
     { .label = "Reboot", .enter = _main_reboot },
-    { .label = "Disk Mode", .enter = _main_disk_mode },
+    { .label = "Disk Mode (Flash)", .enter = _main_disk_mode_flash },
+    { .label = "Disk Mode (SD)", .enter = _main_disk_mode_sd },
     { .label = "Erase FAT32", .enter = _main_erase_fat32 },
 };
 
 static menu_t _main_menu = {
     .entries = _main_menu_entries,
-    .entries_count = 3,
+    .entries_count = 4,
     .selected = 0,
 };
 
@@ -106,6 +121,10 @@ void app_main(void) {
     flow3r_bsp_i2c_init();
     st3m_io_init();
     st3m_fs_init();
+
+    if (st3m_fs_sd_get_status() != st3m_fs_sd_status_probed) {
+        _main_menu_entries[2].disabled = true;
+    }
 
     TickType_t last_wake;
     last_wake = xTaskGetTickCount();
