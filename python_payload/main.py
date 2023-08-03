@@ -2,7 +2,7 @@ import time, gc
 
 ts_start = time.time()
 
-from st3m import logging
+from st4m import logging
 
 log = logging.Log(__name__, level=logging.INFO)
 log.info(f"starting main")

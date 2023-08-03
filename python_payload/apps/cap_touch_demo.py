@@ -1,5 +1,4 @@
-from st3m import logging
-from st4m import application
+from st4m import application, logging
 from st4m.goose import List
 from st4m.ui.ctx import Ctx
 from st4m.input import InputState
