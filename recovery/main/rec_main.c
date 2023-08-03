@@ -34,6 +34,12 @@ static menu_t _erasedone_menu;
 static menu_entry_t _list_menu_entries[];
 
 static bool _usb_initialized = false;
+typedef struct {
+    char path[64];
+    char label[64];
+} image_entry_t;
+
+static image_entry_t image_list[64];
 
 static void _main_reboot(void) { esp_restart(); }
 
@@ -89,26 +95,24 @@ static void _list_exit(void) {
 }
 
 static void _list_select(void) {
-    // TODO: copy selected image over to app partition
-    _cur_menu = &_main_menu;
-    _cur_menu->selected = 0;
-
     // app,      app,  ota_0,   0x90000, 0x300000,
     const esp_partition_t *p = esp_partition_find_first(
         ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, "app");
 
     if (p == NULL) {
-        ESP_LOGE(TAG, "app partition not found");
-        return;
+        rec_fatal("App partition not found");
     }
 
-    printf("erase size: %lu\n", p->erase_size);
-    uint8_t buf[p->erase_size];
+    uint8_t buf[p->erase_size];  // Erase size of internal flash is 4096
     size_t n;
     size_t offset = 0;
 
-    char path[128] = "/flash/hello.bin";
-    FILE *f = fopen(path, "rb");
+    ESP_LOGI(TAG, "Opening %s", image_list[_cur_menu->selected].path);
+    FILE *f = fopen(image_list[_cur_menu->selected].path, "rb");
+    if (f == NULL) {
+        ESP_LOGW(TAG, "fopen failed: %s", strerror(errno));
+        rec_fatal("Could not open file :(");
+    }
 
     do {
         n = fread(buf, 1, sizeof(buf), f);
@@ -116,11 +120,14 @@ static void _list_select(void) {
             esp_partition_erase_range(p, offset, sizeof(buf));
             esp_partition_write(p, offset, buf, n);
             offset += n;
-            printf("wrote %u bytes\n", offset);
+            ESP_LOGI(TAG, "wrote %u bytes", offset);
         }
     } while (n == sizeof(buf));
 
     fclose(f);
+
+    _cur_menu = &_main_menu;
+    _cur_menu->selected = 0;
 }
 
 typedef struct {
@@ -133,15 +140,15 @@ static void _main_list(void) {
     _cur_menu = &_list_menu;
     _cur_menu->selected = 0;
 
-    int entries = 1;
+    int entry = 1;
 
     struct dirent *pDirent;
     DIR *pDir;
 
-    // TODO: also consider the SD card
+    // TODO(schneider): also consider the SD card
     pDir = opendir("/flash");
     if (pDir != NULL) {
-        while (((pDirent = readdir(pDir)) != NULL) && (entries < 64)) {
+        while (((pDirent = readdir(pDir)) != NULL) && (entry < 64)) {
             ESP_LOGI(TAG, "Checking header of %s", pDirent->d_name);
 
             char *s = pDirent->d_name;
@@ -150,7 +157,7 @@ static void _main_list(void) {
             if (l > 4 && strcmp(".bin", &s[l - 4]) == 0) {
                 esp32_standard_header_t hdr;
 
-                char path[128];
+                char path[64];
                 snprintf(path, sizeof(path) / sizeof(char), "/flash/%s",
                          pDirent->d_name);
                 FILE *f = fopen(path, "rb");
@@ -172,23 +179,21 @@ static void _main_list(void) {
                     continue;
                 }
 
-                // TODO have this in a global list, so the select function
-                // can get the actual path
-                size_t n = strlen(pDirent->d_name) + 2 +
-                           strlen(hdr.app.project_name) + 1;
-                char *label = malloc(n);
-                snprintf(label, n, "%s: %s", pDirent->d_name,
-                         hdr.app.project_name);
-                _list_menu_entries[entries].label = label;
-                _list_menu_entries[entries].enter = _list_select;
-                entries++;
+                image_entry_t *ie = &image_list[entry];
+                snprintf(ie->label, sizeof(ie->label), "%s: %s",
+                         pDirent->d_name, hdr.app.project_name);
+                snprintf(ie->path, sizeof(ie->path), "%s", path);
+
+                _list_menu_entries[entry].label = ie->label;
+                _list_menu_entries[entry].enter = _list_select;
+                entry++;
             }
         }
         closedir(pDir);
     } else {
         ESP_LOGE(TAG, "Opening /flash failed");
     }
-    _list_menu.entries_count = entries;
+    _list_menu.entries_count = entry;
 }
 
 static menu_entry_t _main_menu_entries[] = {
