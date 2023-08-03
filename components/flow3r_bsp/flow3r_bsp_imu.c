@@ -88,7 +88,11 @@ static BMP5_INTF_RET_TYPE bmp5_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
 
     int8_t rslt;
 
-    if (reg_addr == BMP5_REG_TEMP_DATA_XLSB && length == 6) {
+    // The BMI270 is configured to automatically fetch the sensor readings
+    // from the BMP581. We can read them directly from BMI270 memory, avoiding
+    // extra I2C transactions.
+    if (reg_addr >= BMP5_REG_TEMP_DATA_XLSB &&
+        reg_addr + length <= BMP5_REG_TEMP_DATA_XLSB + 6) {
         rslt = bmi2_i2c_read(BMI2_AUX_X_LSB_ADDR, reg_data, length, intf_ptr);
     } else {
         rslt = bmi2_read_aux_man_mode(reg_addr, reg_data, (uint16_t)length,
