@@ -2,6 +2,7 @@
 
 #include "st3m_fs.h"
 #include "st3m_fs_flash.h"
+#include "st3m_fs_sd.h"
 #include "st3m_mode.h"
 #include "st3m_sys_data.h"
 #include "st3m_tar.h"
@@ -59,5 +60,10 @@ void flow3r_fs_init(void) {
         st3m_mode_set(st3m_mode_kind_starting, "Installing /flash/sys...");
         ESP_LOGI(TAG, "No %s on flash, preparing sys directory...", sysflag);
         _extract_sys_data();
+    }
+
+    esp_err_t ret = st3m_fs_sd_mount();
+    if (ret != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to mount SD card: %s", esp_err_to_name(ret));
     }
 }
