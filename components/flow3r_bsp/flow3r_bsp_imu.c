@@ -183,7 +183,7 @@ esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu) {
         BMI2_AUX_ODR_50HZ;  // in auto mode read the BMP with 50 Hz
     config.cfg.aux.aux_en = BMI2_ENABLE;
     // The address select pin of the BMP is NC on the flow3r
-    // TODO: figure out if the BMP always defaults to this address
+    // TODO(schneider): figure out if the BMP always defaults to this address
     config.cfg.aux.i2c_device_addr = BMP5_I2C_ADDR_PRIM + 1;
     config.cfg.aux.fcu_write_en = BMI2_DISABLE;
     config.cfg.aux.manual_en = BMI2_ENABLE;
