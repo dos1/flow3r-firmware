@@ -17,8 +17,7 @@ static const char *TAG = "flow3r-imu";
 /*! Macro that defines read write length */
 #define READ_WRITE_LEN 256
 
-// TODO: unhardcode
-#define TIMEOUT_MS 1000
+#define I2C_TIMEOUT_MS 1000
 
 #define GRAVITY_EARTH (9.80665f)
 
