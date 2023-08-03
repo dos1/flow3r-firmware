@@ -1,7 +1,11 @@
 from bl00mbox import tinysynth
-from hardware import *
 import captouch
 import leds
+import hardware
+
+from st4m.ui.ctx import Ctx
+from st4m.goose import List
+from st4m.input import InputState
 
 chords = [
     [-4, 0, 3, 8, 10],
@@ -16,12 +20,12 @@ from st4m.application import Application
 
 
 class HarmonicApp(Application):
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         super().__init__(name)
 
-        self.color_intensity = 0
-        self.chord_index = None
-        self.chord = None
+        self.color_intensity = 0.0
+        self.chord_index = 0
+        self.chord: List[int] = []
         self.synths = [tinysynth(440) for i in range(15)]
         for i, synth in enumerate(self.synths):
             synth.decay_ms(100)
@@ -44,7 +48,7 @@ class HarmonicApp(Application):
                 synth.release_ms(800)
         self._set_chord(3)
 
-    def _set_chord(self, i):
+    def _set_chord(self, i: int) -> None:
         hue = int(72 * (i + 0.5)) % 360
         if i != self.chord_index:
             self.chord_index = i
@@ -53,12 +57,12 @@ class HarmonicApp(Application):
             self.chord = chords[i]
             leds.update()
 
-    def draw(self, ctx):
+    def draw(self, ctx: Ctx) -> None:
         i = self.color_intensity
         ctx.rgb(i, i, i).rectangle(-120, -120, 240, 240).fill()
 
         ctx.rgb(0, 0, 0)
-        scope_draw(ctx)
+        hardware.scope_draw(ctx)
         ctx.fill()
 
     def think(self, ins: InputState, delta_ms: int) -> None:

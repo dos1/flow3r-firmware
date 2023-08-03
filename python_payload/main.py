@@ -44,7 +44,7 @@ from apps.demo_worms4 import app as worms
 from apps.harmonic_demo import app as harmonic
 from apps.melodic_demo import app as melodic
 from apps.nick import app as nick
-from apps.cap_touch_demo import app as captouch
+from apps.cap_touch_demo import app as captouch_demo
 
 
 # Set the view_managers for the apps, otherwise leaving the app (back) will not work
@@ -52,7 +52,7 @@ worms._view_manager = vm
 harmonic._view_manager = vm
 melodic._view_manager = vm
 nick._view_manager = vm
-captouch._view_manager = vm
+captouch_demo._view_manager = vm
 
 menu_music = SimpleMenu(
     [
@@ -69,7 +69,7 @@ menu_music = SimpleMenu(
 menu_apps = SimpleMenu(
     [
         MenuItemBack(),
-        MenuItemForeground("captouch", captouch),
+        MenuItemForeground("captouch", captouch_demo),
         MenuItemForeground("worms", worms),
     ],
     vm,

@@ -1,11 +1,11 @@
-from st4m.utils import xy_from_polar
+from st4m.utils import xy_from_polar, tau
 from st4m.property import PUSH_RED, GO_GREEN, BLACK
+from st4m.goose import List, Optional
 from st4m import Responder, Ctx, InputState
 
 
 import random
 import math
-from st4m.vector import tau
 
 
 class Sun(Responder):
@@ -52,26 +52,25 @@ class Sun(Responder):
 
 
 class GroupRing(Responder):
-    def __init__(self, r=100, x=0, y=0):
+    def __init__(self, r: float = 100, x: float = 0, y: float = 0) -> None:
         self.r = r
         self.x = x
         self.y = y
-        self.items_ring = []
-        self.item_center = None
-        self.angle_offset = 0
+        self.items_ring: List[Responder] = []
+        self.item_center: Optional[Responder] = None
+        self.angle_offset = 0.0
         self.ts = 0.0
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.ts += delta_ms
-        self.item_center.think(ins, delta_ms)
+        if self.item_center is not None:
+            self.item_center.think(ins, delta_ms)
         for item in self.items_ring:
             item.think(ins, delta_ms)
 
     def draw(self, ctx: Ctx) -> None:
         if self.item_center:
-            self.item_center.has_highlight = False
             self.item_center.draw(ctx)
-            # self.items_ring[0].draw(ctx)
 
         # ctx.save()
         for index, item in enumerate(self.items_ring):
@@ -91,7 +90,7 @@ class FlowerIcon(Responder):
     A flower icon
     """
 
-    def __init__(self, label="?") -> None:
+    def __init__(self, label: str = "?") -> None:
         self.x = 0.0
         self.y = 0.0
         self.size = 50.0
@@ -114,7 +113,7 @@ class FlowerIcon(Responder):
     def draw(self, ctx: Ctx) -> None:
         x = self.x
         y = self.y
-        petal_size = 0
+        petal_size = 0.0
         if self.petal_count:
             petal_size = 2.3 * self.size / self.petal_count + self.size_offset
 

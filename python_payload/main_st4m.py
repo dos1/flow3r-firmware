@@ -47,6 +47,7 @@ menu_apps = SimpleMenu(
     vm,
 )
 
+
 class USBIcon(Responder):
     """
     Found in the bargain bin at an Aldi Süd.

@@ -1,14 +1,15 @@
-from st4m.ui.view import ViewWithInputState, ViewTransitionSwipeRight
+from st4m.ui.view import ViewWithInputState, ViewTransitionSwipeRight, ViewManager
 from st4m.input import InputState
+from st4m.goose import Optional
 
 
 class Application(ViewWithInputState):
-    def __init__(self, name: str = __name__):
+    def __init__(self, name: str = __name__) -> None:
         self._name = name
-        self._view_manager = None
+        self._view_manager: Optional[ViewManager] = None
         super().__init__()
 
-    def on_exit(self):
+    def on_exit(self) -> None:
         pass
 
     def think(self, ins: InputState, delta_ms: int) -> None:

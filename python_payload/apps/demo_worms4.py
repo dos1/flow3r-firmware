@@ -4,9 +4,11 @@ import time
 import math
 
 # flow3r imports
-from st3m import event, ui
 from st4m import application
 from st4m import Ctx, InputState
+from st4m.property import BLUE, WHITE
+from st4m.goose import Optional
+from st4m.utils import xy_from_polar
 
 
 tau = 2 * math.pi
@@ -14,7 +16,7 @@ tau = 2 * math.pi
 
 # Subclass Application
 class AppWorms(application.Application):
-    def __init__(self, name):
+    def __init__(self, name: str) -> None:
         super().__init__(name)
 
         # HACK: we work against double buffering by keeping note of how many
@@ -38,32 +40,26 @@ class AppWorms(application.Application):
 
         self.just_shown = True
 
-    def on_enter(self):
+    def on_enter(self) -> None:
         # print("on foreground")
         super().on_enter()
         self.just_shown = True
 
-    def draw(self, ctx):
+    def draw(self, ctx: Ctx) -> None:
         if self.bufn <= 5:
             # TODO (q3k) bug: we have to do this, otherwise we have horrible blinking
 
-            ctx.rgb(*ui.BLUE).rectangle(
-                -ui.WIDTH / 2, -ui.HEIGHT / 2, ui.WIDTH, ui.HEIGHT
-            ).fill()
+            ctx.rgb(*BLUE).rectangle(-120, -120, 240, 240).fill()
             ctx.rgb(1, 1, 1)
 
-            ctx.rgb(*ui.BLUE).rectangle(
-                -ui.WIDTH / 2, -ui.HEIGHT / 2, ui.WIDTH, ui.HEIGHT
-            ).fill()
+            ctx.rgb(*BLUE).rectangle(-120, -120, 240, 240).fill()
             ctx.rgb(1, 1, 1)
 
-            ctx.rgb(*ui.BLUE).rectangle(
-                -ui.WIDTH / 2, -ui.HEIGHT / 2, ui.WIDTH, ui.HEIGHT
-            ).fill()
+            ctx.rgb(*BLUE).rectangle(-120, -120, 240, 240).fill()
 
             ctx.text_align = ctx.CENTER
             ctx.text_baseline = ctx.MIDDLE
-            ctx.move_to(0, 0).rgb(*ui.WHITE).text("touch me :)")
+            ctx.move_to(0, 0).rgb(*WHITE).text("touch me :)")
             self.bufn += 1
 
             return
@@ -83,32 +79,32 @@ class AppWorms(application.Application):
         for index, petal in enumerate(self.input.captouch.petals):
             if petal.pressed or petal.repeated:
                 self.worms.append(Worm(tau * index / 10 + math.pi))
+        while len(self.worms) > 10:
+            self.worms.pop(0)
 
-    def handle_input(self, data):
-        worms = self.worms
-        worms.append(Worm(data.get("index", 0) * 2 * math.pi / 10 + math.pi))
-        while len(worms) > 10:
-            worms.pop(0)
+
+def randrgb() -> tuple[float, float, float]:
+    return (random.random(), random.random(), random.random())
 
 
 class Worm:
-    def __init__(self, direction=None):
-        self.color = ui.randrgb()
+    def __init__(self, direction: Optional[float] = None) -> None:
+        self.color = randrgb()
 
-        if direction:
+        if direction is not None:
             self.direction = direction
         else:
             self.direction = random.random() * math.pi * 2
 
         self.size = 50
         self.speed = self.size / 5
-        (x, y) = ui.xy_from_polar(100, self.direction)
+        (x, y) = xy_from_polar(100, self.direction)
         self.x = x
         self.y = y
         # (self.dx,self.dy) = xy_from_polar(1,self.direction)
         self._lastdist = 0.0
 
-    def draw(self, ctx):
+    def draw(self, ctx: Ctx) -> None:
         ctx.rgb(*self.color)
         ctx.round_rectangle(
             self.x - self.size / 2,
@@ -118,12 +114,14 @@ class Worm:
             self.size // 2,
         ).fill()
 
-    def mutate(self):
-        self.color = [
-            max(0, min(1, x + ((random.random() - 0.5) * 0.3))) for x in self.color
-        ]
+    def mutate(self) -> None:
+        self.color = (
+            max(0, min(1, self.color[0] + ((random.random() - 0.5) * 0.3))),
+            max(0, min(1, self.color[1] + ((random.random() - 0.5) * 0.3))),
+            max(0, min(1, self.color[2] + ((random.random() - 0.5) * 0.3))),
+        )
 
-    def move(self):
+    def move(self) -> None:
         dist = math.sqrt(self.x**2 + self.y**2)
         target_size = (130 - dist) / 3
 
@@ -137,7 +135,7 @@ class Worm:
 
         self.direction += (random.random() - 0.5) * math.pi / 4
 
-        (dx, dy) = ui.xy_from_polar(self.speed, self.direction)
+        (dx, dy) = xy_from_polar(self.speed, self.direction)
         self.x += dx
         self.y += dy
 

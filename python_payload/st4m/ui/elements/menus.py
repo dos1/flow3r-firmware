@@ -5,9 +5,8 @@ from st4m.ui.menu import MenuController, MenuItem
 
 from st4m import Ctx, InputState
 
-from st4m.utils import lerp
+from st4m.utils import lerp, tau
 import math
-from st4m.vector import tau
 
 
 class SimpleMenu(MenuController):
@@ -95,14 +94,15 @@ class FlowerMenu(MenuController):
         "_sun",
     )
 
-    def __init__(self, items: List[MenuItem], vm: ViewManager, name="flow3r") -> None:
+    def __init__(
+        self, items: List[MenuItem], vm: ViewManager, name: str = "flow3r"
+    ) -> None:
         self._ts = 0
         self.name = name
         self.ui = GroupRing(r=80)
         for item in items:
             self.ui.items_ring.append(FlowerIcon(label=item.label()))
         super().__init__(items, vm)
-        self._scroll_controller.wrap = True
 
         self.icon = FlowerIcon(label=self.name)
         self.icon.rotation_time = -5000
@@ -119,14 +119,14 @@ class FlowerMenu(MenuController):
     def draw(self, ctx: Ctx) -> None:
         ctx.gray(0)
         ctx.rectangle(-120, -120, 240, 240).fill()
-        for item in self.ui.items_ring:
-            item.highlighted = False
-            item.rotation_time = 10000
+        # for item in self.ui.items_ring:
+        #    item.highlighted = False
+        #    item.rotation_time = 10000
         current = self._scroll_controller.current_position()
         current_int = round(current) % len(self._items)
         # print("current", current, current_int)
-        self.ui.items_ring[current_int].highlighted = True
-        self.ui.items_ring[current_int].rotation_time = 3000
+        # self.ui.items_ring[current_int].highlighted = True
+        # self.ui.items_ring[current_int].rotation_time = 3000
         self.ui.angle_offset = math.pi - (tau * current / len(self.ui.items_ring))
 
         self.ui.draw(ctx)

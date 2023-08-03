@@ -9,5 +9,8 @@ def lerp(a: float, b: float, v: float) -> float:
     return a + (b - a) * v
 
 
-def xy_from_polar(r, phi):
+def xy_from_polar(r: float, phi: float) -> tuple[float, float]:
     return (r * math.sin(phi), r * math.cos(phi))  # x  # y
+
+
+tau = math.pi * 2

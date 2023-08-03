@@ -38,6 +38,24 @@ class Ctx(ABCBase):
         self.text_baseline: str = "alphabetic"
         self.line_width: float = 1.0
         self.global_alpha: float = 1.0
+        self.font: str = ""
+
+    @abstractmethod
+    def text_width(self, text: str) -> float:
+        """
+        Calculates width of rendered text, without rendering it.
+        """
+        pass
+
+    @abstractmethod
+    def get_font_name(self, ix: int) -> str:
+        """
+        Returns font name from internal font index. See ctx_config.h for
+        defined fonts.
+
+        TODO(q3k): expose these font indices into mpy
+        """
+        pass
 
     @abstractmethod
     def begin_path(self) -> "Ctx":
