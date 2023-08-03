@@ -94,6 +94,12 @@ class MenuItemBack(MenuItem):
     def label(self) -> str:
         return "Back"
 
+    def draw(self, ctx: Ctx) -> None:
+        ctx.move_to(0, 0)
+        ctx.font = "Material Icons"
+        ctx.text("\ue5c4")
+
+
 
 class MenuController(ViewWithInputState):
     """
