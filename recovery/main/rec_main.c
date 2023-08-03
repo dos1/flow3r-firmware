@@ -136,17 +136,13 @@ typedef struct {
     esp_app_desc_t app;
 } esp32_standard_header_t;
 
-static void _main_list(void) {
-    _cur_menu = &_list_menu;
-    _cur_menu->selected = 0;
-
-    int entry = 1;
+static void _scan_dir(char *dir, char *dir_name) {
+    int entry = _cur_menu->entries_count;
 
     struct dirent *pDirent;
     DIR *pDir;
 
-    // TODO(schneider): also consider the SD card
-    pDir = opendir("/flash");
+    pDir = opendir(dir);
     if (pDir != NULL) {
         while (((pDirent = readdir(pDir)) != NULL) && (entry < 64)) {
             ESP_LOGI(TAG, "Checking header of %s", pDirent->d_name);
@@ -158,7 +154,7 @@ static void _main_list(void) {
                 esp32_standard_header_t hdr;
 
                 char path[64];
-                snprintf(path, sizeof(path) / sizeof(char), "/flash/%s",
+                snprintf(path, sizeof(path) / sizeof(char), "%s/%s", dir,
                          pDirent->d_name);
                 FILE *f = fopen(path, "rb");
                 if (f == NULL) {
@@ -180,7 +176,7 @@ static void _main_list(void) {
                 }
 
                 image_entry_t *ie = &image_list[entry];
-                snprintf(ie->label, sizeof(ie->label), "%s: %s",
+                snprintf(ie->label, sizeof(ie->label), "%s/%s: %s", dir_name,
                          pDirent->d_name, hdr.app.project_name);
                 snprintf(ie->path, sizeof(ie->path), "%s", path);
 
@@ -191,9 +187,22 @@ static void _main_list(void) {
         }
         closedir(pDir);
     } else {
-        ESP_LOGE(TAG, "Opening /flash failed");
+        ESP_LOGE(TAG, "Opening %s failed", dir);
     }
     _list_menu.entries_count = entry;
+}
+
+static void _main_list(void) {
+    _cur_menu = &_list_menu;
+    _cur_menu->selected = 0;
+    _cur_menu->entries_count = 1;
+
+    _scan_dir("/flash", "Flash");
+
+    st3m_fs_sd_mount();
+    if (st3m_fs_sd_get_status() == st3m_fs_sd_status_mounted) {
+        _scan_dir("/sd", "SD");
+    }
 }
 
 static menu_entry_t _main_menu_entries[] = {
