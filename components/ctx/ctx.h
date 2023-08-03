@@ -1,4 +1,4 @@
-/* ctx git commit: 10d7cba4 */
+/* ctx git commit: f358a7e1 */
 /* 
  * ctx.h is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with ctx; if not, see <https://www.gnu.org/licenses/>.
  *
- * 2012, 2015, 2019, 2020, 2021, 2022 Øyvind Kolås <pippin@gimp.org>
+ * 2012, 2015, 2019, 2020, 2021, 2022, 2023 Øyvind Kolås <pippin@gimp.org>
  *
  * ctx is a 2D vector graphics processing processing framework.
  *
@@ -5463,7 +5463,7 @@ static inline CtxList *ctx_list_find_custom (CtxList *list,
 #endif
 
 #ifndef CTX_GLYPH_CACHE_SIZE
-#define CTX_GLYPH_CACHE_SIZE     256
+#define CTX_GLYPH_CACHE_SIZE     128
 #endif
 
 #ifndef CTX_MAX_STATES
@@ -5640,6 +5640,20 @@ static inline CtxList *ctx_list_find_custom (CtxList *list,
 #define cnd_broadcast pthread_cond_broadcast
 #define thrd_create(tid, tiled_render_fun, args) pthread_create(tid, NULL, tiled_render_fun, args)
 #define thrd_t pthread_t
+#else
+
+#define mtx_lock(a)
+#define mtx_unlock(a)
+#define mtx_t size_t
+#define cnd_t size_t
+#define mtx_plain 0
+#define mtx_init(a,b)
+#define cnd_init(a)
+#define cnd_wait(a,b)
+#define cnd_broadcast(c)
+#define thrd_create(tid, tiled_render_fun, args) 0
+#define thrd_t size_t
+
 #endif
 
 #ifndef CTX_SIMD_SUFFIX
@@ -5715,13 +5729,22 @@ static inline CtxList *ctx_list_find_custom (CtxList *list,
 #endif
 
 #if CTX_IMAGE_WRITE
-#else
-#define MINIZ_NO_ARCHIVE_APIS  1
-#define MINIZ_NO_DEFLATE_APIS  1
+
+#if CTX_AUDIO==0
+#define MINIZ_NO_INFLATE_APIS
 #endif
 
-//#define MINIZ_NO_ARCHIVE_WRITING_APIS 1
-#define MINIZ_NO_STDIO                1
+#else
+
+#if CTX_AUDIO==0
+#define MINIZ_NO_DEFLATE_APIS
+#define MINIZ_NO_INFLATE_APIS
+#endif
+
+#endif
+
+#define MINIZ_NO_ARCHIVE_APIS
+#define MINIZ_NO_STDIO
 
 
 //#define uncompress tinf_uncompress
@@ -21691,6 +21714,30 @@ struct _CtxTermGlyph
   uint8_t  rgba_fg[4];
 };
 
+#if CTX_BRAILLE_TEXT
+static CtxTermGlyph *
+ctx_rasterizer_find_term_glyph (CtxRasterizer *rasterizer, int col, int row)
+{
+    CtxTermGlyph *glyph = NULL;
+    
+    for (CtxList *l = rasterizer->glyphs; l; l=l->next)
+    {
+      glyph = l->data;
+      if (glyph->col == col &&
+          glyph->row == row)
+      {
+        return glyph;
+      }
+    }
+
+    glyph = ctx_calloc (sizeof (CtxTermGlyph), 1);
+    ctx_list_append (&rasterizer->glyphs, glyph);
+    glyph->col = col;
+    glyph->row = row;
+    return glyph;
+}
+#endif
+
 static int _ctx_glyph (Ctx *ctx, uint32_t unichar, int stroke);
 static void
 ctx_rasterizer_glyph (CtxRasterizer *rasterizer, uint32_t unichar, int stroke)
@@ -21731,11 +21778,9 @@ ctx_rasterizer_glyph (CtxRasterizer *rasterizer, uint32_t unichar, int stroke)
     _ctx_user_to_device (rasterizer->state, &tx, &ty);
     int col = (int)(tx / cw + 1);
     int row = (int)(ty / ch + 1);
-    CtxTermGlyph *glyph = ctx_calloc (sizeof (CtxTermGlyph), 1);
-    ctx_list_append (&rasterizer->glyphs, glyph);
+    CtxTermGlyph *glyph = ctx_rasterizer_find_term_glyph (rasterizer, col, row);
+
     glyph->unichar = unichar;
-    glyph->col = col;
-    glyph->row = row;
     ctx_color_get_rgba8 (rasterizer->state, &rasterizer->state->gstate.source_fill.color,
                          &glyph->rgba_fg[0]);
   }
@@ -21776,11 +21821,9 @@ ctx_rasterizer_text (CtxRasterizer *rasterizer, const char *string, int stroke)
 
     for (int i = 0; string[i]; i++, col++)
     {
-      CtxTermGlyph *glyph = ctx_calloc (sizeof (CtxTermGlyph), 1);
-      ctx_list_prepend (&rasterizer->glyphs, glyph);
+      CtxTermGlyph *glyph = ctx_rasterizer_find_term_glyph (rasterizer, col, row);
+
       glyph->unichar = string[i];
-      glyph->col = col;
-      glyph->row = row;
       ctx_color_get_rgba8 (rasterizer->state, &rasterizer->state->gstate.source_fill.color,
                       glyph->rgba_fg);
     }
@@ -21955,8 +21998,8 @@ ctx_rasterizer_stroke_1px_segment (CtxRasterizer *rasterizer,
 
   float dxf = (x1 - x0);
   float dyf = (y1 - y0);
-  int tx = (x0)* 65536;
-  int ty = (y0)* 65536;
+  int tx = (int)((x0)* 65536);
+  int ty = (int)((y0)* 65536);
 
   int blit_width = rasterizer->blit_width;
   int blit_height = rasterizer->blit_height;
@@ -21964,13 +22007,13 @@ ctx_rasterizer_stroke_1px_segment (CtxRasterizer *rasterizer,
   if (dxf*dxf>dyf*dyf)
   {
     int length = abs((int)dxf);
-    int dy = (dyf * 65536)/(length);
+    int dy = (int)((dyf * 65536)/(length));
     int x = tx >> 16;
 
     if (dxf < 0.0f)
     {
-      ty = (y1)* 65536;
-      x = (x1); 
+      ty = (int)((y1)* 65536);
+      x = (int)x1; 
       dy *= -1;
     }
     int i = 0;
@@ -22016,13 +22059,13 @@ ctx_rasterizer_stroke_1px_segment (CtxRasterizer *rasterizer,
   else
   {
     int length = abs((int)dyf);
-    int dx = (dxf * 65536)/(length);
+    int dx = (int)((dxf * 65536)/(length));
     int y = ty >> 16;
 
     if (dyf < 0.0f)
     {
-      tx = (x1)* 65536;
-      y = (y1); 
+      tx = (int)((x1)* 65536);
+      y = (int)y1; 
       dx *= -1;
     }
     int i = 0;
@@ -22177,7 +22220,6 @@ ctx_rasterizer_stroke (CtxRasterizer *rasterizer)
 #endif
          )
        {
-
         float x0 = entry3->data.s16[2] * 1.0f / CTX_SUBDIV;
         float y0 = entry3->data.s16[3] * 1.0f / CTX_FULL_AA;
         float x1 = entry1->data.s16[2] * 1.0f / CTX_SUBDIV;
@@ -36423,7 +36465,7 @@ int ctx_terminal_rows (void)
 #include <signal.h>
 #endif
 
-#define DELAY_MS  100  
+#define CTX_DELAY_MS  20
 
 #ifndef MIN
 #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -36862,7 +36904,7 @@ const char *ctx_nct_get_event (Ctx *n, int timeoutms, int *x, int *y)
         }
       got_event = mouse_has_event (n);
       if (!got_event)
-        got_event = ctx_nct_has_event (n, MIN(DELAY_MS, timeoutms-elapsed));
+        got_event = ctx_nct_has_event (n, MIN(CTX_DELAY_MS, timeoutms-elapsed));
       if (size_changed)
         {
           size_changed = 0;
@@ -36871,7 +36913,7 @@ const char *ctx_nct_get_event (Ctx *n, int timeoutms, int *x, int *y)
       /* only do this if the client has asked for idle events,
        * and perhaps programmed the ms timer?
        */
-      elapsed += MIN(DELAY_MS, timeoutms-elapsed);
+      elapsed += MIN(CTX_DELAY_MS, timeoutms-elapsed);
       if (!got_event && timeoutms && elapsed >= timeoutms)
         return "idle";
     } while (!got_event);
@@ -36893,7 +36935,7 @@ const char *ctx_nct_get_event (Ctx *n, int timeoutms, int *x, int *y)
             FD_ZERO (&rfds);
             FD_SET (STDIN_FILENO, &rfds);
             tv.tv_sec = 0;
-            tv.tv_usec = 1000 * DELAY_MS;
+            tv.tv_usec = 1000 * CTX_DELAY_MS;
             if (select (1, &rfds, NULL, NULL, &tv) == 0)
               return "esc";
           }
@@ -37012,7 +37054,7 @@ void ctx_nct_consume_events (Ctx *ctx)
   int ix, iy;
   CtxCtx *ctxctx = (CtxCtx*)ctx->backend;
   const char *event = NULL;
-
+  int max_events = 4;
   do {
     float x, y;
     event = ctx_nct_get_event (ctx, 50, &ix, &iy);
@@ -37085,7 +37127,8 @@ void ctx_nct_consume_events (Ctx *ctx)
       else
       ctx_key_press (ctx, 0, event, 0);
     }
-  }  while (event);
+    max_events --;
+  }  while (event && max_events > 0);
 }
 
 const char *ctx_native_get_event (Ctx *n, int timeoutms)
@@ -37113,7 +37156,7 @@ const char *ctx_native_get_event (Ctx *n, int timeoutms)
           size_changed = 0;
           return "size-changed";
         }
-      got_event = ctx_nct_has_event (n, MIN(DELAY_MS, timeoutms-elapsed));
+      got_event = ctx_nct_has_event (n, MIN(CTX_DELAY_MS, timeoutms-elapsed));
       if (size_changed)
         {
           size_changed = 0;
@@ -37122,7 +37165,7 @@ const char *ctx_native_get_event (Ctx *n, int timeoutms)
       /* only do this if the client has asked for idle events,
        * and perhaps programmed the ms timer?
        */
-      elapsed += MIN(DELAY_MS, timeoutms-elapsed);
+      elapsed += MIN(CTX_DELAY_MS, timeoutms-elapsed);
       if (!got_event && timeoutms && elapsed >= timeoutms)
       {
         return "idle";
@@ -37243,9 +37286,9 @@ int _ctx_enable_hash_cache = 1;
 extern int _ctx_shape_cache_enabled;
 #endif
 
+int _ctx_max_threads = 1;
 #if CTX_THREADS
 static mtx_t _ctx_texture_mtx;
-int _ctx_max_threads = 1;
 #endif
 
 void _ctx_texture_lock (void)
@@ -43621,7 +43664,7 @@ ctx_hasher_process (Ctx *ctx, CtxCommand *command)
 
 
           float height = ctx_get_font_size (rasterizer->backend.ctx);
-           CtxIntRectangle shape_rect;
+           CtxIntRectangle shape_rect = {0,0,0,0};
 
            float tx = rasterizer->x;
            float ty = rasterizer->y - height * 1.2f;
@@ -43754,7 +43797,6 @@ ctx_hasher_process (Ctx *ctx, CtxCommand *command)
            * since it is also used in the small shapes rasterization
            * cache
            */
-        //uint64_t hash = ctx_rasterizer_poly_to_hash2 (rasterizer); // + hasher->salt;
         CtxIntRectangle shape_rect = {
           (int)(rasterizer->col_min / CTX_SUBDIV - 3),
           (int)(rasterizer->scan_min / aa - 3),
@@ -43801,6 +43843,8 @@ ctx_hasher_process (Ctx *ctx, CtxCommand *command)
           (int)((rasterizer->col_max - rasterizer->col_min + 1) / CTX_SUBDIV + rasterizer->state->gstate.line_width),
           (int)((rasterizer->scan_max - rasterizer->scan_min + 1) / aa + rasterizer->state->gstate.line_width)
         };
+        //printf ("%ix%i %i %i\n", shape_rect.width, shape_rect.height, shape_rect.x, shape_rect.y);
+        // XXX the height and y coordinates seem off!
 
         shape_rect.width += (int)(rasterizer->state->gstate.line_width * 2);
         shape_rect.height += (int)(rasterizer->state->gstate.line_width * 2);
@@ -43822,7 +43866,8 @@ ctx_hasher_process (Ctx *ctx, CtxCommand *command)
 
         uint32_t color;
         ctx_color_get_rgba8 (rasterizer->state, &rasterizer->state->gstate.source_stroke.color, (uint8_t*)(&color));
-
+          murmur3_32_process(&murmur, (unsigned char*)&color, 4);
+        ctx_color_get_rgba8 (rasterizer->state, &rasterizer->state->gstate.source_fill.color, (uint8_t*)(&color));
           murmur3_32_process(&murmur, (unsigned char*)&color, 4);
 
           _ctx_add_hash (hasher, &shape_rect, murmur3_32_finalize (&murmur));
@@ -45955,9 +46000,9 @@ int _ctx_damage_control = 0;
 void ctx_tiled_destroy (CtxTiled *tiled)
 {
   tiled->quit = 1;
-  //mtx_lock (&tiled->mtx);
-  //cnd_broadcast (&tiled->cond);
-  //mtx_unlock (&tiled->mtx);
+  mtx_lock (&tiled->mtx);
+  cnd_broadcast (&tiled->cond);
+  mtx_unlock (&tiled->mtx);
 
   while (tiled->thread_quit < _ctx_max_threads)
     usleep (1000);
@@ -45983,7 +46028,7 @@ static long sdl_icc_length = 0;
 static void ctx_tiled_end_frame (Ctx *ctx)
 {
   CtxTiled *tiled = (CtxTiled*)ctx->backend;
-  //mtx_lock (&tiled->mtx);
+  mtx_lock (&tiled->mtx);
   if (tiled->shown_frame == tiled->render_frame)
   {
     int dirty_tiles = 0;
@@ -46076,13 +46121,13 @@ static void ctx_tiled_end_frame (Ctx *ctx)
             ctx_render_ctx (tiled->ctx_copy, host);
           }
 #endif
-    //cnd_broadcast (&tiled->cond);
+    cnd_broadcast (&tiled->cond);
   }
   else
   {
     fprintf (stderr, "{drip}");
   }
-  //mtx_unlock (&tiled->mtx);
+  mtx_unlock (&tiled->mtx);
   ctx_drawlist_clear (ctx);
 }
 
@@ -46096,9 +46141,9 @@ void ctx_tiled_render_fun (void **data)
   {
     Ctx *host = tiled->host[no];
 
-    //mtx_lock (&tiled->mtx);
-    //cnd_wait(&tiled->cond, &tiled->mtx);
-    //mtx_unlock (&tiled->mtx);
+    mtx_lock (&tiled->mtx);
+    cnd_wait(&tiled->cond, &tiled->mtx);
+    mtx_unlock (&tiled->mtx);
 
     if (tiled->render_frame != tiled->rendered_frame[no])
     {
@@ -46128,7 +46173,6 @@ void ctx_tiled_render_fun (void **data)
             }
 #endif
             int swap_red_green = rasterizer->swap_red_green;
-            int compressed_scanlines = 0;
             ctx_rasterizer_init (rasterizer,
                                  host, tiled->backend.ctx, &host->state,
                                  &tiled->pixels[tiled->width * 4 * y0 + x0 * 4],
@@ -46285,7 +46329,7 @@ static void ctx_tiled_undraw_cursor (CtxTiled *tiled)
 //    CtxCursor cursor_shape = tiled->backend.ctx->cursor;
 //    int no = 0;
 //
-//    if (cursor_x == ctx_tiled_cursor_drawn_x &&
+//   if (cursor_x == ctx_tiled_cursor_drawn_x &&
 //        cursor_y == ctx_tiled_cursor_drawn_y &&
 //        cursor_shape == ctx_tiled_cursor_drawn_shape)
 //      ctx_tiled_cursor_same_pos ++;
@@ -49190,38 +49234,42 @@ inline static void ctx_term_process (Ctx *ctx,
 {
   CtxTerm *term = (void*)ctx->backend;
 
-#if CTX_CURRENT_PATH
-  ctx_update_current_path (ctx, &command->entry);
-#endif
-
 
 #if CTX_BRAILLE_TEXT
   if (command->code == CTX_FILL)
   {
      CtxRasterizer *rasterizer = (CtxRasterizer*)term->host->backend;
 
-     if (ctx_is_half_opaque (rasterizer))
+     if (0 && ctx_is_half_opaque (rasterizer))
      {
         CtxIntRectangle shape_rect = {
-          ((int)(rasterizer->col_min / CTX_SUBDIV - 2))/2,
-          ((int)(rasterizer->scan_min / 15 - 2))/3,
-          ((int)(3+((int)rasterizer->col_max - rasterizer->col_min + 1) / CTX_SUBDIV))/2,
-          ((int)(3+((int)rasterizer->scan_max - rasterizer->scan_min + 1) / 15))/3
+          ((int)(rasterizer->col_min))/ (CTX_SUBDIV * 2),
+          ((int)(rasterizer->scan_min))/ (CTX_FULL_AA * 3),
+          ((int)(((int)rasterizer->col_max - rasterizer->col_min + 1))) / (CTX_SUBDIV * 2),
+          ((int)(((int)rasterizer->scan_max - rasterizer->scan_min + 1)) / (CTX_FULL_AA *3) )
         };
 #if 0
   CtxGState *gstate = &rasterizer->state->gstate;
-       fprintf (stderr, "{%i,%i %ix%i %.2f %i}",
+       fprintf (stderr, "{%i,%i %ix%i %.2f}",
                        shape_rect.x, shape_rect.y,
                        shape_rect.width, shape_rect.height,
 
-                       gstate->global_alpha_f,
-                       ga[1]
-                       
+                       gstate->global_alpha_f
                        );
-   //  sleep(1);
+//   sleep(1);
 #endif
 
-       if (shape_rect.y > 0) // XXX : workaround 
+       if (shape_rect.y > 0)
+       {
+       if (0){ // XXXX :
+               // disabled - offset is wrong (or offset of cursor in stuff is wrong
+               // trying to use ink coverage yield yet other problems..
+         again:
+         for (CtxList *l = rasterizer->glyphs; l; l=l?l->next:NULL)
+         {
+           CtxTermGlyph *glyph = l->data;
+
+
        for (int row = shape_rect.y;
             row < (shape_rect.y+(int)shape_rect.height);
             row++)
@@ -49229,21 +49277,23 @@ inline static void ctx_term_process (Ctx *ctx,
             col < (shape_rect.x+(int)shape_rect.width);
             col++)
 
-       if (0){ // disabled - offset is wrong (or offset of cursor in stuff is wrong
-         for (CtxList *l = rasterizer->glyphs; l; l=l?l->next:NULL)
-         {
-           CtxTermGlyph *glyph = l->data;
-           if ((glyph->row == row+1) &&
-               (glyph->col == col+1))
+           if ((glyph->row == row) &&
+               (glyph->col == col))
            {
               ctx_list_remove (&rasterizer->glyphs, glyph);
               ctx_free (glyph);
-              l = NULL;
+              l = NULL;goto again;
            }
          }
        }
+
+       }
      }
   }
+#endif
+
+#if CTX_CURRENT_PATH
+  ctx_update_current_path (ctx, &command->entry);
 #endif
 
   /* we need to interpret state related things ourself to be able to respond to
@@ -50825,50 +50875,16 @@ static int ctx_glyph_find_ctx (CtxFont *font, Ctx *ctx, uint32_t unichar)
           return ctx->glyph_index_cache[hash].offset;
   }
 #endif
-#if 1
-  int length = ctx_font_get_length (font);
-  for (int i = 0; i < length; i++)
-  {
-    CtxEntry *entry = (CtxEntry *) &font->ctx.data[i];
-    if (entry->code == CTX_DEFINE_GLYPH &&
-        entry->data.u32[0] == unichar)
-    {
-#if CTX_GLYPH_CACHE
-       if (ctx)
-       {
-         ctx->glyph_index_cache[hash].font    = font;
-         ctx->glyph_index_cache[hash].unichar = unichar;
-         ctx->glyph_index_cache[hash].offset  = i;
-       }
-#endif
-       return i;
-       // XXX this could be prone to insertion of valid header
-       // data in included bitmaps.. is that an issue?
-       //   
-    }
-  }
-#else
-  int start = -1;
+
+  int start = 0;
   int end = ctx_font_get_length (font);
-  int max_iter = 10;
-    uint32_t start_glyph = ctx_glyph_find_next (font, ctx, start);
-    if (unichar  == start_glyph)
-    {
-#if CTX_GLYPH_CACHE
-       if (ctx)
-       {
-         ctx->glyph_index_cache[hash].font    = font;
-         ctx->glyph_index_cache[hash].unichar = unichar;
-         ctx->glyph_index_cache[hash].offset  = start;
-       }
-#endif
-       return start;
-    }
+  int max_iter = 14;
 
   do {
     int middle = (start + end) / 2;
 
     uint32_t middle_glyph = ctx_glyph_find_next (font, ctx, middle);
+
     if (unichar  == middle_glyph)
     {
 #if CTX_GLYPH_CACHE
@@ -50892,7 +50908,7 @@ static int ctx_glyph_find_ctx (CtxFont *font, Ctx *ctx, uint32_t unichar)
     if (start == end)
       return -1;
   } while (max_iter -- > 0);
-#endif
+
   return -1;
 }
 
@@ -51708,7 +51724,7 @@ static int _ctx_resolve_font (const char *name)
   }
 #endif
 
-  char temp[ctx_strlen (name)+1];
+  char temp[ctx_strlen (name)+8];
   /* first we look for exact */
   for (int i = 0; ret < 0 && i < ctx_font_count; i ++)
     {
@@ -51729,7 +51745,7 @@ static int _ctx_resolve_font (const char *name)
   {
      memset(temp,0,sizeof(temp));
      strncpy (temp, name + 4, sizeof(temp)-1);
-     memcpy (temp, "Arrrr", 5);  // we should match Arial and Arimo
+     memcpy (temp, "Arrrr", 5);  // this matches Arial and Arimo
      name = temp;
   }
   else if (!strncmp (name, "Monospace", 9))
@@ -51742,7 +51758,7 @@ static int _ctx_resolve_font (const char *name)
   else if (!strncmp (name, "Mono ", 5))
   {
     memset(temp,0,sizeof(temp));
-    strncpy (temp + 3, name, sizeof(temp)-1-3);
+    strncpy (temp+ 3, name, sizeof(temp)-1-3);
     memcpy (temp, "Courier ", 8); 
     name = temp;
   }
@@ -51752,9 +51768,20 @@ static int _ctx_resolve_font (const char *name)
   }
   }
 
-  /* and attempt substring matching with mangled named
-   * permitting matches with length and two first chars
-   * to be valid
+  /* first we look for exact of mangled */
+  for (int i = 0; ret < 0 && i < ctx_font_count; i ++)
+    {
+      if (!ctx_strcmp (ctx_font_get_name (&ctx_fonts[i]), name) )
+        { ret = i; }
+    }
+  /* ... and substring matches for passed in string */
+  for (int i = 0; ret < 0 && i < ctx_font_count; i ++)
+    {
+      if (ctx_strstr (ctx_font_get_name (&ctx_fonts[i]), name) )
+        { ret = i; }
+    }
+
+  /* then attempt more fuzzy matching
    */
   if (ret < 0 ) {
     char *subname = (char*)name;
@@ -51768,10 +51795,10 @@ static int _ctx_resolve_font (const char *name)
     for (int i = 0; ret < 0 && i < ctx_font_count; i ++)
     {
       const char *font_name = ctx_font_get_name (&ctx_fonts[i]);
-      if (font_name[0]==name[0] &&
+      if ((font_name[0]==name[0] &&
           font_name[1]==name[1] &&
-          font_name[namelen] == name[namelen] &&
-          (namelen == 0 || ctx_strstr (font_name, subname) ))
+          font_name[namelen] == name[namelen])
+          || (namelen == 0 && ctx_strstr (font_name, subname)))
         ret = i;
     }
   }
