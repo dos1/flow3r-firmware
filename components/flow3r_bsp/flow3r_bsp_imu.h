@@ -15,6 +15,8 @@ typedef struct {
     struct bmp5_dev bmp;
     uint8_t bmi_dev_addr;
     uint8_t bmp_dev_addr;
+    int acc_range;
+    int gyro_range;
     struct bmp5_osr_odr_press_config osr_odr_press_cfg;
 } flow3r_bsp_imu_t;
 

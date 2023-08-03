@@ -23,8 +23,8 @@ static const char *TAG = "flow3r-imu";
 
 static void bmi2_error_codes_print_result(int8_t rslt);
 static void bmp5_error_codes_print_result(const char api_name[], int8_t rslt);
-static int8_t set_accel_config(struct bmi2_dev *bmi);
-static int8_t set_gyro_config(struct bmi2_dev *bmi);
+static int8_t set_accel_config(flow3r_bsp_imu_t *imu);
+static int8_t set_gyro_config(flow3r_bsp_imu_t *imu);
 static int8_t set_bmp_config(
     struct bmp5_osr_odr_press_config *osr_odr_press_cfg, struct bmp5_dev *dev);
 static float lsb_to_mps(int16_t val, float g_range, uint8_t bit_width);
@@ -45,7 +45,7 @@ static BMI2_INTF_RETURN_TYPE bmi2_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
 
     esp_err_t ret = flow3r_bsp_i2c_write_read_device(
         imu->bmi_dev_addr, tx, sizeof(tx), reg_data, len,
-        TIMEOUT_MS / portTICK_PERIOD_MS);
+        I2C_TIMEOUT_MS / portTICK_PERIOD_MS);
 
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "i2c read/write fail: %s", esp_err_to_name(ret));
@@ -68,7 +68,7 @@ static BMI2_INTF_RETURN_TYPE bmi2_i2c_write(uint8_t reg_addr,
              len);
     ESP_LOG_BUFFER_HEX_LEVEL(TAG, reg_data, len, ESP_LOG_DEBUG);
     esp_err_t ret = flow3r_bsp_i2c_write_to_device(
-        imu->bmi_dev_addr, tx, sizeof(tx), TIMEOUT_MS / portTICK_PERIOD_MS);
+        imu->bmi_dev_addr, tx, sizeof(tx), I2C_TIMEOUT_MS / portTICK_PERIOD_MS);
 
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "i2c write fail: %s", esp_err_to_name(ret));
@@ -155,11 +155,13 @@ esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu) {
     bmi2_error_codes_print_result(rslt);
     if (rslt != BMI2_OK) return ESP_FAIL;
 
-    rslt = set_accel_config(&(imu->bmi));
+    imu->acc_range = 2;  // 2 g default range
+    rslt = set_accel_config(imu);
     bmi2_error_codes_print_result(rslt);
     if (rslt != BMI2_OK) return ESP_FAIL;
 
-    rslt = set_gyro_config(&(imu->bmi));
+    imu->gyro_range = 2000;  // 2 deg per second default range
+    rslt = set_gyro_config(imu);
     bmi2_error_codes_print_result(rslt);
     if (rslt != BMI2_OK) return ESP_FAIL;
 
@@ -252,10 +254,9 @@ esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x, float *y,
     esp_err_t res = flow3r_bsp_imu_read_acc(imu, &ix, &iy, &iz);
 
     if (res == ESP_OK) {
-        // TODO: un-hardcode the 2 G range
-        *x = lsb_to_mps(ix, 2.f, imu->bmi.resolution);
-        *y = lsb_to_mps(iy, 2.f, imu->bmi.resolution);
-        *z = lsb_to_mps(iz, 2.f, imu->bmi.resolution);
+        *x = lsb_to_mps(ix, imu->acc_range, imu->bmi.resolution);
+        *y = lsb_to_mps(iy, imu->acc_range, imu->bmi.resolution);
+        *z = lsb_to_mps(iz, imu->acc_range, imu->bmi.resolution);
     }
 
     return res;
@@ -289,10 +290,9 @@ esp_err_t flow3r_bsp_imu_read_gyro_dps(flow3r_bsp_imu_t *imu, float *x,
     esp_err_t res = flow3r_bsp_imu_read_gyro(imu, &ix, &iy, &iz);
 
     if (res == ESP_OK) {
-        // TODO: un-hardcode the 2000 dps range
-        *x = lsb_to_dps(ix, 2000.f, imu->bmi.resolution);
-        *y = lsb_to_dps(iy, 2000.f, imu->bmi.resolution);
-        *z = lsb_to_dps(iz, 2000.f, imu->bmi.resolution);
+        *x = lsb_to_dps(ix, imu->gyro_range, imu->bmi.resolution);
+        *y = lsb_to_dps(iy, imu->gyro_range, imu->bmi.resolution);
+        *z = lsb_to_dps(iz, imu->gyro_range, imu->bmi.resolution);
     }
 
     return res;
@@ -623,14 +623,14 @@ static void bmp5_error_codes_print_result(const char api_name[], int8_t rslt) {
     }
 }
 
-static int8_t set_accel_config(struct bmi2_dev *bmi) {
+static int8_t set_accel_config(flow3r_bsp_imu_t *imu) {
     int8_t rslt;
     struct bmi2_sens_config config;
 
     config.type = BMI2_ACCEL;
 
     /* Get default configurations for the type of feature selected. */
-    rslt = bmi2_get_sensor_config(&config, 1, bmi);
+    rslt = bmi2_get_sensor_config(&config, 1, &imu->bmi);
     bmi2_error_codes_print_result(rslt);
 
     if (rslt == BMI2_OK) {
@@ -638,8 +638,22 @@ static int8_t set_accel_config(struct bmi2_dev *bmi) {
         config.cfg.acc.odr = BMI2_ACC_ODR_100HZ;
 
         /* Gravity range (+/- 2G, 4G, 8G, 16G). */
-        config.cfg.acc.range = BMI2_ACC_RANGE_2G;
-
+        switch (imu->acc_range) {
+            case 2:
+                config.cfg.acc.range = BMI2_ACC_RANGE_2G;
+                break;
+            case 4:
+                config.cfg.acc.range = BMI2_ACC_RANGE_2G;
+                break;
+            case 6:
+                config.cfg.acc.range = BMI2_ACC_RANGE_2G;
+                break;
+            case 8:
+                config.cfg.acc.range = BMI2_ACC_RANGE_2G;
+                break;
+            default:
+                return BMI2_E_OUT_OF_RANGE;
+        };
         /* The bandwidth parameter is used to configure the number of sensor
          * samples that are averaged if it is set to 2, then 2^(bandwidth
          * parameter) samples are averaged, resulting in 4 averaged samples.
@@ -654,33 +668,50 @@ static int8_t set_accel_config(struct bmi2_dev *bmi) {
         config.cfg.acc.filter_perf = BMI2_PERF_OPT_MODE;
 
         /* Set the accel configurations. */
-        rslt = bmi2_set_sensor_config(&config, 1, bmi);
+        rslt = bmi2_set_sensor_config(&config, 1, &imu->bmi);
         bmi2_error_codes_print_result(rslt);
 
         /* Map data ready interrupt to interrupt pin. */
-        rslt = bmi2_map_data_int(BMI2_DRDY_INT, BMI2_INT1, bmi);
+        rslt = bmi2_map_data_int(BMI2_DRDY_INT, BMI2_INT1, &imu->bmi);
         bmi2_error_codes_print_result(rslt);
     }
 
     return rslt;
 }
 
-static int8_t set_gyro_config(struct bmi2_dev *bmi) {
+static int8_t set_gyro_config(flow3r_bsp_imu_t *imu) {
     int8_t rslt;
     struct bmi2_sens_config config;
 
     config.type = BMI2_GYRO;
 
     /* Get default configurations for the type of feature selected. */
-    rslt = bmi2_get_sensor_config(&config, 1, bmi);
+    rslt = bmi2_get_sensor_config(&config, 1, &imu->bmi);
     bmi2_error_codes_print_result(rslt);
 
     if (rslt == BMI2_OK) {
         // Output Data Rate
         config.cfg.gyr.odr = BMI2_GYR_ODR_100HZ;
 
-        // Measurement Range. By default the range is 2000 deg per second.
-        config.cfg.gyr.range = BMI2_GYR_RANGE_2000;
+        switch (imu->gyro_range) {
+            case 125:
+                config.cfg.gyr.range = BMI2_GYR_RANGE_125;
+                break;
+            case 250:
+                config.cfg.gyr.range = BMI2_GYR_RANGE_250;
+                break;
+            case 500:
+                config.cfg.gyr.range = BMI2_GYR_RANGE_500;
+                break;
+            case 1000:
+                config.cfg.gyr.range = BMI2_GYR_RANGE_1000;
+                break;
+            case 2000:
+                config.cfg.gyr.range = BMI2_GYR_RANGE_2000;
+                break;
+            default:
+                return BMI2_E_OUT_OF_RANGE;
+        };
 
         config.cfg.gyr.bwp = BMI2_GYR_NORMAL_MODE;
 
@@ -688,11 +719,11 @@ static int8_t set_gyro_config(struct bmi2_dev *bmi) {
         config.cfg.gyr.filter_perf = BMI2_PERF_OPT_MODE;
         config.cfg.gyr.noise_perf = BMI2_POWER_OPT_MODE;
 
-        rslt = bmi2_set_sensor_config(&config, 1, bmi);
+        rslt = bmi2_set_sensor_config(&config, 1, &imu->bmi);
         bmi2_error_codes_print_result(rslt);
 
         /* Map data ready interrupt to interrupt pin. */
-        rslt = bmi2_map_data_int(BMI2_DRDY_INT, BMI2_INT1, bmi);
+        rslt = bmi2_map_data_int(BMI2_DRDY_INT, BMI2_INT1, &imu->bmi);
         bmi2_error_codes_print_result(rslt);
     }
 
