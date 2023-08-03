@@ -153,6 +153,10 @@ class Ctx:
         self._emit(f"moveTo {int(x)} {int(y)}")
         return self
 
+    def rel_move_to(self, x, y):
+        self._emit(f"relMoveTo {int(x)} {int(y)}")
+        return self
+
     def translate(self, x, y):
         self._emit(f"translate {int(x)} {int(y)}")
         return self
@@ -240,3 +244,14 @@ class Ctx:
 
     def text_width(self, text):
         return _wasm.ctx_text_width(self._ctx, text)
+
+    def get_font_name(self, i):
+        return [
+            "Arimo_Regular",
+            "Arimo_Bold",
+            "Arimo_Italic",
+            "Arimo_BoldItalic",
+            "CampFont1",
+            "CampFont2",
+            "CampFont3",
+        ][i]
