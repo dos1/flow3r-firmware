@@ -131,6 +131,14 @@ class Ctx:
         self._emit(f"lineWidth {v:.3f}")
 
     @property
+    def font(self):
+        return None
+
+    @font.setter
+    def font(self, v):
+        self._emit(f'font "{v}"')
+
+    @property
     def font_size(self):
         return None
 
@@ -247,11 +255,12 @@ class Ctx:
 
     def get_font_name(self, i):
         return [
-            "Arimo_Regular",
-            "Arimo_Bold",
-            "Arimo_Italic",
-            "Arimo_BoldItalic",
-            "CampFont1",
-            "CampFont2",
-            "CampFont3",
+            "Arimo Regular",
+            "Arimo Bold",
+            "Arimo Italic",
+            "Arimo Bold Italic",
+            "Camp Font 1",
+            "Camp Font 2",
+            "Camp Font 3",
+            "Material Icons",
         ][i]
