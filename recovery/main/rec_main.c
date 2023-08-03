@@ -222,6 +222,12 @@ void app_main(void) {
     st3m_io_init();
     st3m_fs_init();
 
+    esp_err_t err;
+    if ((err = st3m_fs_flash_mount()) != ESP_OK) {
+        ESP_LOGW(TAG, "Failed to mount FAT FS: %s", esp_err_to_name(err));
+        _main_menu_entries[0].disabled = true;
+    }
+
     if (st3m_fs_sd_get_status() != st3m_fs_sd_status_probed) {
         _main_menu_entries[3].disabled = true;
     }
