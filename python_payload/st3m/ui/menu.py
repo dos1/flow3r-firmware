@@ -14,11 +14,16 @@ from st3m.ui.interactions import ScrollController
 from st3m.ui.ctx import Ctx
 
 
-class MenuItem(ABCBase):
+class MenuItem(Responder):
     """
     An abstract MenuItem to be implemented by concrete impementations.
 
     A MenuItem implementation can be added to a MenuController
+
+    Every MenuItems is also a Responder that will be called whenever said
+    MenuItem should be rendered within a Menu. A Default draw/think
+    implementation is provided which simply render's this MenuItem's label as
+    text.
     """
 
     @abstractmethod
@@ -36,6 +41,12 @@ class MenuItem(ABCBase):
         """
         Return the printable label of the menu item.
         """
+        pass
+
+    def draw(self, ctx: Ctx) -> None:
+        ctx.text(self.label())
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
         pass
 
 
@@ -128,6 +139,8 @@ class MenuController(ViewWithInputState):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
+        for item in self._items:
+            item.think(ins, delta_ms)
 
         self._scroll_controller.think(ins, delta_ms)
 

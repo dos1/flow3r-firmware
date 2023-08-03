@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     class ABCBase(metaclass=ABCMeta):
         pass
 
-    from typing import List, Optional, Tuple, Dict, Any
+    from typing import List, Optional, Tuple, Dict, Any, Callable
     from enum import Enum
 else:
     # We're in CPython or Micropython.
@@ -31,7 +31,7 @@ else:
         return _fail
 
     try:
-        from typing import List, Optional, Tuple, Dict, Any
+        from typing import List, Optional, Tuple, Dict, Any, Callable
         from enum import Enum
     except ImportError:
         # We're in Micropython.
@@ -40,6 +40,7 @@ else:
         Tuple = None
         Dict = None
         Any = None
+        Callable = None
 
         class Enum:
             pass
@@ -55,4 +56,5 @@ __all__ = [
     "Tuple",
     "Dict",
     "Any",
+    "Callable",
 ]

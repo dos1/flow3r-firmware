@@ -48,6 +48,24 @@ class Responder(ABCBase):
         pass
 
 
+class ReactorStats:
+    def __init__(self) -> None:
+        self.run_times: List[int] = []
+        self.render_times: List[int] = []
+
+    def record_run_time(self, ms: int) -> None:
+        self.run_times.append(ms)
+        delete = len(self.run_times) - 20
+        if delete > 0:
+            self.run_times = self.run_times[delete:]
+
+    def record_render_time(self, ms: int) -> None:
+        self.render_times.append(ms)
+        delete = len(self.render_times) - 20
+        if delete > 0:
+            self.render_times = self.render_times[delete:]
+
+
 class Reactor:
     """
     The Reactor is the main Micropython scheduler of the st3m system and any
@@ -57,14 +75,24 @@ class Reactor:
     that saturates the display rasterization/blitting pipeline.
     """
 
-    __slots__ = ("_top", "_tickrate_ms", "_last_tick", "_ctx", "_ts")
+    __slots__ = (
+        "_top",
+        "_tickrate_ms",
+        "_last_tick",
+        "_ctx",
+        "_ts",
+        "_last_ctx_get",
+        "stats",
+    )
 
     def __init__(self) -> None:
         self._top: Optional[Responder] = None
         self._tickrate_ms: int = 20
         self._ts: int = 0
         self._last_tick: Optional[int] = None
+        self._last_ctx_get: Optional[int] = None
         self._ctx: Optional[Ctx] = None
+        self.stats = ReactorStats()
 
     def set_top(self, top: Responder) -> None:
         """
@@ -89,11 +117,11 @@ class Reactor:
         self._run_top(start)
 
         end = time.ticks_ms()
+        elapsed = end - start
+        self.stats.record_run_time(elapsed)
         wait = deadline - end
         if wait > 0:
             hardware.freertos_sleep(wait)
-        else:
-            print("too long", wait)
 
     def _run_top(self, start: int) -> None:
         # Skip if we have no top Responder.
@@ -117,6 +145,11 @@ class Reactor:
         if self._ctx is None:
             self._ctx = hardware.get_ctx()
             if self._ctx is not None:
+                if self._last_ctx_get is not None:
+                    diff = start - self._last_ctx_get
+                    self.stats.record_render_time(diff)
+                self._last_ctx_get = start
+
                 self._ctx.save()
                 self._top.draw(self._ctx)
                 self._ctx.restore()

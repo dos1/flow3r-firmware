@@ -29,6 +29,7 @@ class Ctx(ABCBase):
     )
 
     CENTER = "center"
+    RIGHT = "right"
     MIDDLE = "middle"
 
     @abstractmethod

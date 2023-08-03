@@ -14,21 +14,30 @@ class SimpleMenu(MenuController):
     A simple line-by-line menu.
     """
 
+    SIZE_LARGE = 30
+    SIZE_SMALL = 20
+
     def draw(self, ctx: Ctx) -> None:
         ctx.gray(0)
         ctx.rectangle(-120, -120, 240, 240).fill()
-
-        ctx.text_align = ctx.CENTER
-        ctx.text_baseline = ctx.MIDDLE
 
         current = self._scroll_controller.current_position()
 
         ctx.gray(1)
         for ix, item in enumerate(self._items):
-            offs = (ix - current) * 30
-            size = lerp(30, 20, abs(offs / 20))
-            ctx.font_size = size
-            ctx.move_to(0, offs).text(item.label())
+            offs = (ix - current) * self.SIZE_LARGE
+            ctx.save()
+            ctx.move_to(0, 0)
+            ctx.font_size = self.SIZE_LARGE
+            ctx.text_align = ctx.CENTER
+            ctx.text_baseline = ctx.MIDDLE
+            ctx.translate(0, offs)
+            scale = lerp(
+                1, self.SIZE_SMALL / self.SIZE_LARGE, abs(offs / self.SIZE_SMALL)
+            )
+            ctx.scale(scale, scale)
+            item.draw(ctx)
+            ctx.restore()
 
 
 class SunMenu(MenuController):
@@ -51,8 +60,8 @@ class SunMenu(MenuController):
         self._sun.think(ins, delta_ms)
         self._ts += delta_ms
 
-    def _draw_text_angled(
-        self, ctx: Ctx, text: str, angle: float, activity: float
+    def _draw_item_angled(
+        self, ctx: Ctx, item: MenuItem, angle: float, activity: float
     ) -> None:
         size = lerp(20, 40, activity)
         color = lerp(0, 1, activity)
@@ -62,7 +71,8 @@ class SunMenu(MenuController):
         ctx.save()
         ctx.translate(-120, 0).rotate(angle).translate(140, 0)
         ctx.font_size = size
-        ctx.rgba(1.0, 1.0, 1.0, color).move_to(0, 0).text(text)
+        ctx.rgba(1.0, 1.0, 1.0, color).move_to(0, 0)
+        item.draw(ctx)
         ctx.restore()
 
     def draw(self, ctx: Ctx) -> None:
@@ -81,7 +91,7 @@ class SunMenu(MenuController):
 
         for ix, item in enumerate(self._items):
             rot = (ix - current) * angle_per_item
-            self._draw_text_angled(ctx, item.label(), rot, 1 - abs(rot))
+            self._draw_item_angled(ctx, item, rot, 1 - abs(rot))
 
 
 class FlowerMenu(MenuController):
