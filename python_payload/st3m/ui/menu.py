@@ -100,7 +100,6 @@ class MenuItemBack(MenuItem):
         ctx.text("\ue5c4")
 
 
-
 class MenuController(ViewWithInputState):
     """
     Base class for menus. Reacts to canonical inputs (left shoulder button) to
