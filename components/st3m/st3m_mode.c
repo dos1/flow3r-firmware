@@ -76,8 +76,8 @@ void st3m_mode_update_display(bool *restartable) {
                     .lines = lines,
                 };
                 st3m_gfx_show_textview(&tv);
-                if (restartable != NULL) *restartable = true;
             }
+            if (restartable != NULL) *restartable = true;
             break;
         case st3m_mode_kind_fatal: {
             const char *msg = _mode.message;
