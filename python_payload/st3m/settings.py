@@ -212,7 +212,6 @@ class OnOffWidget(TunableWidget):
         self._prev_state = self._state
 
     def draw(self, ctx: Ctx) -> None:
-        ctx.scale(0.8, 0.8)
         # TODO(pippin): graphical glitches without the two next lines
         ctx.rectangle(-200, -200, 10, 10)
         ctx.fill()
