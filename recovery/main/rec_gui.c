@@ -77,6 +77,8 @@ void rec_menu_draw(menu_t *menu) {
             ctx_rectangle(target->ctx, -120, y - 9, 240, 18);
             ctx_fill(target->ctx);
             ctx_rgb(target->ctx, 0.29, 0.10, 0.35);
+        } else if (entry->disabled) {
+            ctx_gray(target->ctx, 0.5);
         } else {
             ctx_gray(target->ctx, 1.0);
         }
@@ -100,12 +102,16 @@ void rec_menu_process(menu_t *menu) {
     }
 
     if (left != st3m_tripos_none) {
+        bool going_left = false;
+        bool going_right = false;
         switch (left) {
             case st3m_tripos_left:
                 menu->selected--;
+                going_left = true;
                 break;
             case st3m_tripos_right:
                 menu->selected++;
+                going_right = true;
                 break;
             case st3m_tripos_mid:
                 if (entry->enter != NULL) {
@@ -115,11 +121,24 @@ void rec_menu_process(menu_t *menu) {
             default:
                 break;
         }
-        if (menu->selected < 0) {
-            menu->selected = 0;
-        }
-        if (menu->selected >= menu->entries_count) {
-            menu->selected = menu->entries_count - 1;
+        for (;;) {
+            if (menu->selected < 0) {
+                menu->selected = 0;
+            }
+            if (menu->selected >= menu->entries_count) {
+                menu->selected = menu->entries_count - 1;
+            }
+            menu_entry_t *entry = &menu->entries[menu->selected];
+            if (entry->disabled && (going_left || going_right)) {
+                // TODO(q3k): handle case when all menu items are disabled?
+                if (going_left) {
+                    menu->selected--;
+                } else if (going_right) {
+                    menu->selected++;
+                }
+            } else {
+                break;
+            }
         }
         debounce = 2;
     }
