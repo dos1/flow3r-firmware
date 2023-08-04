@@ -6,6 +6,7 @@ from st3m.input import InputState
 import leds
 
 import json
+import math
 
 
 class Configuration:
@@ -50,8 +51,8 @@ class NickApp(Application):
     def __init__(self, name: str) -> None:
         super().__init__(name)
         self._scale = 1.0
-        self._dir = 1
         self._led = 0.0
+        self._phase = 0
         self._filename = "/flash/nick.json"
         self._config = Configuration.load(self._filename)
 
@@ -85,11 +86,8 @@ class NickApp(Application):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
 
-        self._scale += delta_ms / 1000 * self._dir
-
-        if abs(self._scale) > 1 and self._scale * self._dir > 0:
-            self._dir *= -1
-
+        self._phase += delta_ms / 1000
+        self._scale = math.sin(self._phase)
         self._led += delta_ms / 45
         if self._led >= 40:
             self._led = 0
