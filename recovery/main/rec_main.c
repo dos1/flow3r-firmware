@@ -73,6 +73,7 @@ static void _main_erase_fat32(void) {
     rec_erasing_draw();
     esp_err_t ret = st3m_fs_flash_erase();
     if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Erase failed: %s", esp_err_to_name(ret));
         rec_fatal("Erase failed");
     }
     _cur_menu = &_erasedone_menu;
@@ -265,12 +266,6 @@ void app_main(void) {
     flow3r_bsp_i2c_init();
     st3m_io_init();
     st3m_fs_init();
-
-    esp_err_t err;
-    if ((err = st3m_fs_flash_mount()) != ESP_OK) {
-        ESP_LOGW(TAG, "Failed to mount FAT FS: %s", esp_err_to_name(err));
-        _main_menu_entries[0].disabled = true;
-    }
 
     if (st3m_fs_sd_get_status() != st3m_fs_sd_status_probed) {
         _main_menu_entries[3].disabled = true;
