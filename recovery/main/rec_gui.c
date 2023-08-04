@@ -42,6 +42,24 @@ void rec_erasing_draw(void) {
     st3m_gfx_drawctx_pipe_put(target);
 }
 
+void rec_flashing_draw(int percent) {
+    st3m_ctx_desc_t *target = st3m_gfx_drawctx_free_get(portMAX_DELAY);
+    _header_draw(target);
+
+    ctx_move_to(target->ctx, 0, 0);
+    ctx_font_size(target->ctx, 20.0);
+    ctx_gray(target->ctx, 0.8);
+
+    char buf[128];
+    snprintf(buf, sizeof(buf), "Flashing... %2d%%", percent);
+    ctx_text(target->ctx, buf);
+
+    ctx_rectangle(target->ctx, -120, 20, 240 * percent / 100, 20);
+    ctx_fill(target->ctx);
+
+    st3m_gfx_drawctx_pipe_put(target);
+}
+
 void rec_menu_draw(menu_t *menu) {
     st3m_ctx_desc_t *target = st3m_gfx_drawctx_free_get(portMAX_DELAY);
     _header_draw(target);

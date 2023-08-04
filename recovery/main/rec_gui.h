@@ -17,5 +17,6 @@ typedef struct {
 } menu_t;
 
 void rec_erasing_draw(void);
+void rec_flashing_draw(int percent);
 void rec_menu_draw(menu_t *menu);
 void rec_menu_process(menu_t *menu);

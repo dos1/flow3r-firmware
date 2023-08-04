@@ -127,6 +127,11 @@ static void _list_select(void) {
         rec_fatal("Could not open file :(");
     }
 
+    fseek(f, 0, SEEK_END);
+    size_t size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    rec_flashing_draw(0);
     do {
         n = fread(buf, 1, sizeof(buf), f);
         if (n > 0) {
@@ -134,6 +139,7 @@ static void _list_select(void) {
             esp_partition_write(p, offset, buf, n);
             offset += n;
             ESP_LOGI(TAG, "wrote %u bytes", offset);
+            rec_flashing_draw(offset * 100 / size);
         }
     } while (n == sizeof(buf));
 
