@@ -90,9 +90,21 @@ static void _diskmode_exit(void) {
     st3m_usb_mode_switch(&usb_mode);
 }
 
+static void _unmount_filesystems(void) {
+    if (st3m_fs_flash_get_status() == st3m_fs_flash_status_mounted) {
+        st3m_fs_flash_unmount();
+    }
+
+    if (st3m_fs_sd_get_status() == st3m_fs_sd_status_mounted) {
+        st3m_fs_sd_unmount();
+    }
+}
+
 static void _list_exit(void) {
     _cur_menu = &_main_menu;
     _cur_menu->selected = 0;
+
+    _unmount_filesystems();
 }
 
 static void _list_select(void) {
@@ -129,6 +141,8 @@ static void _list_select(void) {
 
     _cur_menu = &_main_menu;
     _cur_menu->selected = 0;
+
+    _unmount_filesystems();
 }
 
 typedef struct {
@@ -198,8 +212,11 @@ static void _main_list(void) {
     _cur_menu->selected = 0;
     _cur_menu->entries_count = 1;
 
-    _scan_dir("/flash", "Flash");
-
+    esp_err_t err;
+    if ((err = st3m_fs_flash_mount()) == ESP_OK) {
+        ESP_LOGW(TAG, "Failed to mount FAT FS: %s", esp_err_to_name(err));
+        _scan_dir("/flash", "Flash");
+    }
     st3m_fs_sd_mount();
     if (st3m_fs_sd_get_status() == st3m_fs_sd_status_mounted) {
         _scan_dir("/sd", "SD");
