@@ -46,7 +46,7 @@ class Input:
         for i, (x, y) in enumerate(self.POSITIONS):
             dx = mouse_x - x
             dy = mouse_y - y
-            if math.sqrt(dx ** 2 + dy ** 2) < self.MARKER_SIZE // 2:
+            if math.sqrt(dx**2 + dy**2) < self.MARKER_SIZE // 2:
                 return i
         return None
 

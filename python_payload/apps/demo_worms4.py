@@ -122,7 +122,7 @@ class Worm:
         )
 
     def move(self) -> None:
-        dist = math.sqrt(self.x ** 2 + self.y ** 2)
+        dist = math.sqrt(self.x**2 + self.y**2)
         target_size = (130 - dist) / 3
 
         if self.size > target_size:
