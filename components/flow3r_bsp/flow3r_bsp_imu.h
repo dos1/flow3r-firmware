@@ -20,7 +20,7 @@ typedef struct {
     struct bmp5_osr_odr_press_config osr_odr_press_cfg;
 } flow3r_bsp_imu_t;
 
-// Init the IMU to default settings
+// Init the IMU with default settings
 //
 // Configures the IMU to:
 // Accelerometer: 100 Hz sample rate, 2 g range
@@ -28,47 +28,46 @@ typedef struct {
 // Pressure sensor: 50 Hz sample rate
 esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu);
 
-// Query the IMU for an accelerometer reading.
+// Update the IMU readings by reading data from the I2C bus.
 //
 // This directly calls the I2C bus and waits until the bus is available (max 1
-// second). Returns ESP_ERR_NOT_FOUND if there is no new reading available.
+// second).
 // Returns ESP_FAIL if the sensor could not be read (e.g. I2C unavailable).
+esp_err_t flow3r_bsp_imu_update(flow3r_bsp_imu_t *imu);
+
+// Get an accelerometer reading.
+//
+// Returns ESP_ERR_NOT_FOUND if there is no new reading available.
 // Return values are raw data from the BMI270.
 // Use imu->acc_range and imu->bmi.resolution for interpretation.
 esp_err_t flow3r_bsp_imu_read_acc(flow3r_bsp_imu_t *imu, int *x, int *y,
                                   int *z);
 
-// Query the IMU for a converted accelerometer reading.
+// Get aa converted accelerometer reading.
 //
-// This directly calls the I2C bus and waits until the bus is available (max 1
-// second). Returns ESP_ERR_NOT_FOUND if there is no new reading available.
-// Returns ESP_FAIL if the sensor could not be read (e.g. I2C unavailable).
+// Returns ESP_ERR_NOT_FOUND if there is no new reading available.
 // Return values in m/s**2.
 esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x, float *y,
                                       float *z);
 
-// Query the IMU for a gyroscope reading.
+// Get a gyroscope reading.
 //
-// This directly calls the I2C bus and waits until the bus is available (max 1
-// second). Returns ESP_ERR_NOT_FOUND if there is no new reading available.
-// Returns ESP_FAIL if the sensor could not be read (e.g. I2C unavailable).
+// Returns ESP_ERR_NOT_FOUND if there is no new reading available.
 // Return values are raw data from the BMI270.
 // Use imu->gyro_range and imu->bmi.resolution for interpretation.
 esp_err_t flow3r_bsp_imu_read_gyro(flow3r_bsp_imu_t *imu, int *x, int *y,
                                    int *z);
 
-// Query the IMU for a converted gyroscope reading.
+// Get converted gyroscope reading.
 //
-// This directly calls the I2C bus and waits until the bus is available (max 1
-// second). Returns ESP_ERR_NOT_FOUND if there is no new reading available.
-// Returns ESP_FAIL if the sensor could not be read (e.g. I2C unavailable).
+// Returns ESP_ERR_NOT_FOUND if there is no new reading available.
 // Return values in deg/s.
 esp_err_t flow3r_bsp_imu_read_gyro_dps(flow3r_bsp_imu_t *imu, float *x,
                                        float *y, float *z);
 
-// Query the IMU for a pressure sensor reading.
+// Get a pressure sensor reading.
 //
-// Returns cached data if no new reading is available.
+// Returns ESP_ERR_NOT_FOUND if there is no new reading available.
 // Presssure in Pa, temperature in deg C
 esp_err_t flow3r_bsp_imu_read_pressure(flow3r_bsp_imu_t *imu, float *pressure,
                                        float *temperature);

@@ -30,6 +30,8 @@ static int8_t set_bmp_config(
 static float lsb_to_mps(int16_t val, float g_range, uint8_t bit_width);
 static float lsb_to_dps(int16_t val, float dps, uint8_t bit_width);
 
+static struct bmi2_sens_data _bmi_sens_data;
+
 static BMI2_INTF_RETURN_TYPE bmi2_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
                                            uint32_t len, void *intf_ptr) {
     flow3r_bsp_imu_t *imu = (flow3r_bsp_imu_t *)intf_ptr;
@@ -83,11 +85,11 @@ static BMP5_INTF_RET_TYPE bmp5_i2c_read(uint8_t reg_addr, uint8_t *reg_data,
     int8_t rslt;
 
     // The BMI270 is configured to automatically fetch the sensor readings
-    // from the BMP581. We can read them directly from BMI270 memory, avoiding
+    // from the BMP581. We can read them directly from BMI270 state, avoiding
     // extra I2C transactions.
-    if (reg_addr >= BMP5_REG_TEMP_DATA_XLSB &&
-        reg_addr + length <= BMP5_REG_TEMP_DATA_XLSB + 6) {
-        rslt = bmi2_i2c_read(BMI2_AUX_X_LSB_ADDR, reg_data, length, intf_ptr);
+    if (reg_addr == BMP5_REG_TEMP_DATA_XLSB && length <= 6) {
+        memcpy(reg_data, _bmi_sens_data.aux_data, length);
+        rslt = BMI2_OK;
     } else {
         rslt = bmi2_read_aux_man_mode(reg_addr, reg_data, (uint16_t)length,
                                       &imu->bmi);
@@ -221,25 +223,28 @@ esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu) {
     return ESP_OK;
 }
 
-esp_err_t flow3r_bsp_imu_read_acc(flow3r_bsp_imu_t *imu, int *x, int *y,
-                                  int *z) {
+esp_err_t flow3r_bsp_imu_update(flow3r_bsp_imu_t *imu) {
     struct bmi2_sens_data sens_data = {
         0,
     };
-
     int8_t rslt = bmi2_get_sensor_data(&sens_data, &(imu->bmi));
     bmi2_error_codes_print_result(rslt);
 
     if (rslt == BMI2_OK) {
-        if (sens_data.status & BMI2_DRDY_ACC) {
-            *x = sens_data.acc.x;
-            *y = sens_data.acc.y;
-            *z = sens_data.acc.z;
-            return ESP_OK;
-        }
-        return ESP_ERR_NOT_FOUND;
+        _bmi_sens_data = sens_data;
     }
-    return ESP_FAIL;
+    return rslt;
+}
+
+esp_err_t flow3r_bsp_imu_read_acc(flow3r_bsp_imu_t *imu, int *x, int *y,
+                                  int *z) {
+    if (_bmi_sens_data.status & BMI2_DRDY_ACC) {
+        *x = _bmi_sens_data.acc.x;
+        *y = _bmi_sens_data.acc.y;
+        *z = _bmi_sens_data.acc.z;
+        return ESP_OK;
+    }
+    return ESP_ERR_NOT_FOUND;
 }
 
 esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x, float *y,
@@ -259,23 +264,13 @@ esp_err_t flow3r_bsp_imu_read_acc_mps(flow3r_bsp_imu_t *imu, float *x, float *y,
 
 esp_err_t flow3r_bsp_imu_read_gyro(flow3r_bsp_imu_t *imu, int *x, int *y,
                                    int *z) {
-    struct bmi2_sens_data sens_data = {
-        0,
-    };
-
-    int8_t rslt = bmi2_get_sensor_data(&sens_data, &(imu->bmi));
-    bmi2_error_codes_print_result(rslt);
-
-    if (rslt == BMI2_OK) {
-        if (sens_data.status & BMI2_DRDY_ACC) {
-            *x = sens_data.gyr.x;
-            *y = sens_data.gyr.y;
-            *z = sens_data.gyr.z;
-            return ESP_OK;
-        }
-        return ESP_ERR_NOT_FOUND;
+    if (_bmi_sens_data.status & BMI2_DRDY_GYR) {
+        *x = _bmi_sens_data.gyr.x;
+        *y = _bmi_sens_data.gyr.y;
+        *z = _bmi_sens_data.gyr.z;
+        return ESP_OK;
     }
-    return ESP_FAIL;
+    return ESP_ERR_NOT_FOUND;
 }
 
 esp_err_t flow3r_bsp_imu_read_gyro_dps(flow3r_bsp_imu_t *imu, float *x,
