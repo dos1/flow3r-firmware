@@ -52,7 +52,7 @@ class NickApp(Application):
         super().__init__(name)
         self._scale = 1.0
         self._led = 0.0
-        self._phase = 0
+        self._phase = 0.0
         self._filename = "/flash/nick.json"
         self._config = Configuration.load(self._filename)
 
