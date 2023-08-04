@@ -8,6 +8,7 @@ etc.
 
 from st3m import Responder, Ctx, InputState, Reactor
 from st3m.goose import Dict, Enum, List, ABCBase, abstractmethod
+from st3m.utils import tau
 
 
 class OverlayKind(Enum):
@@ -15,11 +16,13 @@ class OverlayKind(Enum):
     Indicators = 0
     # Naughty debug developers for naughty developers and debuggers.
     Debug = 1
+    Touch = 2
 
 
 _all_kinds = [
     OverlayKind.Indicators,
     OverlayKind.Debug,
+    OverlayKind.Touch,
 ]
 
 
@@ -138,3 +141,47 @@ class OverlayDebug(Overlay):
         ctx.gray(0).rectangle(-120, 80, 240, 12).fill()
         ctx.gray(1).move_to(0, 86).text(self.text())
         ctx.restore()
+
+
+class OverlayCaptouch(Overlay):
+    kind = OverlayKind.Touch
+
+    class Dot(Responder):
+        def __init__(self, ix: int) -> None:
+            self.ix = ix
+            self.phi = 0.0
+            self.rad = 0.0
+            self.pressed = False
+
+        def think(self, s: InputState, delta_ms: int) -> None:
+            self.pressed = s.petal_pressed[self.ix]
+            (rad, phi) = s.petal_pos[self.ix]
+            self.phi = phi
+            self.rad = rad
+
+        def draw(self, ctx: Ctx) -> None:
+            if not self.pressed:
+                return
+
+            a = (tau / 10) * self.ix
+            ctx.rotate(-a)
+            ctx.translate(0, -80)
+
+            offs_x = -self.phi / 1000
+            offs_y = -self.rad / 1000
+            ctx.rectangle(-5 + offs_x, -5 + offs_y, 10, 10)
+            ctx.rgb(1, 0, 1)
+            ctx.fill()
+
+    def __init__(self) -> None:
+        self.dots = [self.Dot(i) for i in range(10)]
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        for dot in self.dots:
+            dot.think(ins, delta_ms)
+
+    def draw(self, ctx: Ctx) -> None:
+        for dot in self.dots:
+            ctx.save()
+            dot.draw(ctx)
+            ctx.restore()

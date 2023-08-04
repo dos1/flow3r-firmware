@@ -94,12 +94,24 @@ menu_badge = SimpleMenu(
     ],
     vm,
 )
+
+menu_system = SimpleMenu(
+    [
+        MenuItemBack(),
+        MenuItemForeground("Settings", menu_settings),
+        MenuItemNoop("Disk Mode"),
+        MenuItemNoop("About"),
+        MenuItemNoop("Reboot"),
+    ],
+    vm,
+)
+
 menu_main = SunMenu(
     [
         MenuItemForeground("Badge", menu_badge),
         MenuItemForeground("Music", menu_music),
         MenuItemForeground("Apps", menu_apps),
-        MenuItemForeground("Settings", menu_settings),
+        MenuItemForeground("System", menu_system),
     ],
     vm,
 )
@@ -125,6 +137,18 @@ settings.onoff_debug.subscribe(_onoff_debug_update)
 debug = overlays.OverlayDebug()
 debug.add_fragment(overlays.DebugReactorStats(reactor))
 compositor.add_overlay(debug)
+
+debug_touch = overlays.OverlayCaptouch()
+
+
+# Tie compositor's debug touch overlay to setting.
+def _onoff_debug_touch_update() -> None:
+    compositor.enabled[overlays.OverlayKind.Touch] = settings.onoff_debug_touch.value
+
+
+_onoff_debug_touch_update()
+settings.onoff_debug_touch.subscribe(_onoff_debug_touch_update)
+compositor.add_overlay(debug_touch)
 
 reactor.set_top(compositor)
 reactor.run()
