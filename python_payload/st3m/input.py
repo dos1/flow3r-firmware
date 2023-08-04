@@ -3,6 +3,7 @@ from st3m.ui.ctx import Ctx
 
 import hardware
 import captouch
+import imu
 
 import math
 
@@ -328,6 +329,21 @@ class TriSwitchState:
         self.right._ignore_pressed()
 
 
+class IMUState:
+    __slots__ = ("acc", "gyro", "pressure", "temperature")
+
+    def __init__(self) -> None:
+        self.acc = (0.0, 0.0, 0.0)
+        self.gyro = (0.0, 0.0, 0.0)
+        self.pressure = 0.0
+        self.temperature = 0.0
+
+    def _update(self, ts: int, hr: InputState) -> None:
+        self.acc = imu.acc_read()
+        self.gyro = imu.gyro_read()
+        self.pressure, self.temperature = imu.pressure_read()
+
+
 class InputController:
     """
     A stateful input controller. It accepts InputState updates from the Reactor
@@ -344,6 +360,7 @@ class InputController:
         "captouch",
         "left_shoulder",
         "right_shoulder",
+        "imu",
         "_ts",
     )
 
@@ -351,6 +368,7 @@ class InputController:
         self.captouch = CaptouchState()
         self.left_shoulder = TriSwitchState(TriSwitchHandedness.left)
         self.right_shoulder = TriSwitchState(TriSwitchHandedness.right)
+        self.imu = IMUState()
         self._ts = 0
 
     def think(self, hr: InputState, delta_ms: int) -> None:
@@ -358,6 +376,7 @@ class InputController:
         self.captouch._update(self._ts, hr)
         self.left_shoulder._update(self._ts, hr)
         self.right_shoulder._update(self._ts, hr)
+        self.imu._update(self._ts, hr)
 
     def _ignore_pressed(self) -> None:
         """
