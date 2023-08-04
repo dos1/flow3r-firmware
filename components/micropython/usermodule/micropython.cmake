@@ -8,7 +8,7 @@ target_sources(usermod_badge23 INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/mp_hardware.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_leds.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_audio.c
-    ${CMAKE_CURRENT_LIST_DIR}/mp_bl00mbox.c
+    ${CMAKE_CURRENT_LIST_DIR}/mp_sys_bl00mbox.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_badge_link.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_imu.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_kernel.c

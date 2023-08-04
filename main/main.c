@@ -129,7 +129,7 @@ void flow3r_startup(void) {
 
     st3m_scope_init();
     st3m_audio_init();
-    st3m_audio_set_player_function(bl00mbox_player_function);
+    bl00mbox_init();
 
     st3m_mode_set(st3m_mode_kind_starting, "micropython");
     st3m_mode_update_display(NULL);
