@@ -152,6 +152,7 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
     }
 
     bool reprogram = _sequence_advance(chip);
+    bool tweak = false;
 
     // Synchronize on beginning of sequence for calibration logic.
     if (chip->seq_position == 0) {
@@ -191,7 +192,7 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
                 // Can we tweak the AFE to get a better measurement?
                 uint16_t rerun = 0;
                 for (size_t i = 0; i < chip->nchannels; i++) {
-                    bool tweak = _channel_afe_tweak(chip, i);
+                    tweak = _channel_afe_tweak(chip, i);
                     if (tweak) {
                         rerun |= (1 << i);
                     }
@@ -229,12 +230,13 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
         }
     }
 
-    // BUG(q3k): we shouldn't need to do this every cycle, but otherwise we get
-    // some weird results on positional output. Needs to be investigated.
-    esp_err_t ret;
-    if ((ret = _sequence_request(chip, reprogram)) != ESP_OK) {
-        COMPLAIN(chip, "%s: requesting next sequence failed: %s", chip->name,
-                 esp_err_to_name(ret));
+    // _sequence_request also writes the AFE registers which just got tweaked
+    if (reprogram || tweak) {
+        esp_err_t ret;
+        if ((ret = _sequence_request(chip, reprogram)) != ESP_OK) {
+            COMPLAIN(chip, "%s: requesting next sequence failed: %s",
+                     chip->name, esp_err_to_name(ret));
+        }
     }
 }
 
