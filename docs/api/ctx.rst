@@ -1,6 +1,6 @@
 ``ctx`` module
 ==============
 
-.. automodule:: st4m.ui.ctx
+.. automodule:: st3m.ui.ctx
    :members:
    :undoc-members:

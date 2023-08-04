@@ -14,7 +14,7 @@ firmware repository.
 
 ::
 
-	$ git clone TODO
+	$ git clone https://git.flow3r.garden/flow3r/flow3r-firmware
 
 Dependencies
 ------------
@@ -25,12 +25,10 @@ On other Linux-based distributions, you will have to manually install ESP-IDF al
 
 ::
 
-	$ git clone https://github.com/espressif/esp-idf.git
+	$ git clone https://git.flow3r.garden/flow3r/esp-idf
 	$ cd esp-idf
-	$ git checkout v5.1
+	$ git checkout v5.1-flow3r
 	$ git submodule update --init --recursive
-	$ cd esp-idf
-	$ patch -p1 < ../firmware/third_party/b03c8912c73fa59061d97a2f5fd5acddcc3fa356.patch
 	$ ./install.sh
 	$ source export.sh
 
@@ -59,7 +57,7 @@ You can use `mpremote` and similar to copy edited files from ``python_payload/``
 
 	$ mpremote cp python_payload/main.py :/flash/sys/main.py
 
-*TODO: document mpremote mount*
+*TODO: document mpremote mount, it's currently broken*
 
 As with application development, you can first check your changes using the simulator:
 
@@ -82,17 +80,13 @@ To compile:
 	
 	$ idf.py build
 
-To flash, put the badge in :ref:`flash` mode and run:
-
-::
-	
-	$ idf.py flash
-
-Or, to just write the main firmware partition:
+To flash the main firmware only (without overwriting the FAT32 partition or recovery image), put the badge in :ref:`flash` mode and run:
 
 ::
 	
 	$ idf.py app-flash
+
+Note: do not run ``idf.py flash`` as that will prevent you from going into recovery mode. If you're flashing a factory-new badge, you also need to flash the recovery partition/bootloader/firmware first. See `flashing recovery`_.
 
 To clean, do not trust ``idf.py clean``. Instead, kill everything with fire:
 
@@ -107,6 +101,50 @@ To edit the sdkconfig temporarily:
 	$ idf.py menuconfig
 
 To commit your sdkconfig changes to git, run menuconfig, press *d*, accept the default path. Then, copy over ``build/defconfig`` onto ``sdkconfig.defaults``.
+
+.. _`flashing recovery`:
+
+Flashing Recovery
+-----------------
+
+Tl;DR use the following script to flash *everything*:
+
+::
+
+	$ tools/flash-full.sh
+
+The long story is that the main firmware codebase has a slightly different
+partition layout (as seen by the flashing tooling) than the recovery tooling.
+The one used in the recovery project (``recovery/partitions.csv``) is the
+correct one. However, we can't use it as the main ``partitions.csv`` file as
+ESP-IDF performs magical detection from that file on where the build artifact
+should be located, and it always defaults to flashing to the ``factory`` image.
+Thus, in the real/recovery partition table the recovery firmware is the
+``factory`` image, while the main firmware is in the ``ota_0`` partition. But to
+make ``idf.py app-flash`` work in the main firmware repository, there the main
+firmware is marked as ``factory``. But if you flash the main firmware's
+partition table to the device, the recovery partition will stop working.
+
+In addition to Different-Partition-Table shenanigans, the second-stage
+bootloader is also a problem. As with the partition teable, the correct one is
+the recovery one. Using this bootloader allows you to pick the recovery image on
+startup by holding the right trigger.
+
+So, in order to have a functioning badge you shoud:
+
+ 1. Flash the partition table from recovery
+ 2. Flash the bootloader from recovery
+ 3. Flash the factory image from recovery
+ 4. Flash the ota_0 image from main
+
+Or, in code:
+
+::
+
+	$ (cd recovery && idf.py erase-flash flash)
+	$ idf.py app-flash
+
+Thich is what ``tools/flash-full`` does.
 
 printf-Debugging
 ----------------
@@ -133,3 +171,45 @@ You should stay compatible with our :ref:`partition` layout. The easiest way to 
 Then, you can run your firmware by distributing the resulting ``.bin`` file and letting people flash to it via :ref:`Recovery Mode`.
 
 For an example, see our doom port at **TODO**.
+
+Hardware Generations
+--------------------
+
+If you've received your badge at CCCamp2023, you have a Production Badge and thus you don't need to worry about this section. Congratulations!
+
+For those who have a prototype badge, there's an ``idf.py -g pX`` flag which you can use to get the firmware running on your hardware:
+
++------------------+----------+-----------------------------------+
+| Badge Generation | Markings | Flag                              |
++==================+==========+===================================+
+| Prototype 4      | B4xx     | *dead*                            |
++------------------+----------+-----------------------------------+
+| Prototype 3      | B3xx     | ``-g p3``                         |
++------------------+----------+-----------------------------------+
+| Prototype 4      | B4xx     | ``-g p4``                         |
++------------------+----------+-----------------------------------+
+| Prototype 5      | B5xx     | *port me*                         |
++------------------+----------+-----------------------------------+
+| Prototype 6      | B6xx     | ``-g p6`` (default, same as prod) |
++------------------+----------+-----------------------------------+
+
+*NOTE: Anything older than p6 is not (yet?) supported by the recovery firmware.*
+
+Writing Docs
+------------
+
+Automatically updated on CI runs of the main branch and lives under https://docs.flow3r.garden.
+
+To build the docs locally:
+
+::
+
+    $ cd docs
+    $ make html
+    $ firefox _build/html/index.html
+
+To continuously build on change:
+
+::
+    
+    $ watchexec make html

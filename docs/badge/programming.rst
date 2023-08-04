@@ -102,19 +102,19 @@ You can also access the filesystem over the same Micropython serial port:
 ::
 
 	$ mpremote
-	MicroPython c48f94151-dirty on 1980-01-01; badge23 with ESP32S3
+	MicroPython c48f94151-dirty on 1980-01-01; flow3r with ESP32S3
 	Type "help()" for more information.
 	>>> import os
 	>>> os.listdir('/')
 	['flash']
 	>>> os.listdir('/flash/sys')
-	['main.py', 'st4m', '.sys-installed']
+	['main.py', 'st3m', '.sys-installed']
 	>>> 
 
 	$ mpremote ls :flash/sys
 	ls :flash/sys
 	           0 main.py
-	           0 st4m
+	           0 st3m
 	           0 .sys-installed
 
 .. _disk mode:
