@@ -791,7 +791,7 @@ static int8_t set_bmp_config(
 static float lsb_to_mps(int16_t val, float g_range, uint8_t bit_width) {
     double power = 2;
 
-    float half_scale = (float)((pow((double)power, (double)bit_width) / 2.0f));
+    float half_scale = powf(power, bit_width) / 2.0f;
 
     return (GRAVITY_EARTH * val * g_range) / half_scale;
 }
@@ -801,7 +801,7 @@ static float lsb_to_mps(int16_t val, float g_range, uint8_t bit_width) {
 static float lsb_to_dps(int16_t val, float dps, uint8_t bit_width) {
     double power = 2;
 
-    float half_scale = (float)((pow((double)power, (double)bit_width) / 2.0f));
+    float half_scale = powf(power, bit_width) / 2.0f;
 
     return (dps / (half_scale)) * (val);
 }

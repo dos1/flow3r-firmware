@@ -145,7 +145,7 @@ static void _audio_headphones_apply(st3m_audio_output_t *out) {
     float software_volume_dB = vol_dB - hardware_volume_dB;
     if (software_volume_dB > 0) software_volume_dB = 0;
     out->volume_software =
-        (int32_t)(32768 * exp(software_volume_dB * NAT_LOG_DB));
+        (int32_t)(32768 * expf(software_volume_dB * NAT_LOG_DB));
 }
 
 // Output apply function for speaker.
@@ -167,7 +167,7 @@ static void _audio_speaker_apply(st3m_audio_output_t *out) {
     float software_volume_dB = vol_dB - hardware_volume_dB;
     if (software_volume_dB > 0) software_volume_dB = 0;
     out->volume_software =
-        (int32_t)(32768. * exp(software_volume_dB * NAT_LOG_DB));
+        (int32_t)(32768. * expf(software_volume_dB * NAT_LOG_DB));
 }
 
 // Global state structure. Guarded by state_mutex.
@@ -446,7 +446,7 @@ void st3m_audio_input_thru_set_mute(bool mute) {
 float st3m_audio_input_thru_set_volume_dB(float vol_dB) {
     if (vol_dB > 0) vol_dB = 0;
     LOCK;
-    state.input_thru_vol_int = (int32_t)(32768. * exp(vol_dB * NAT_LOG_DB));
+    state.input_thru_vol_int = (int32_t)(32768. * expf(vol_dB * NAT_LOG_DB));
     state.input_thru_vol = vol_dB;
     UNLOCK;
     return vol_dB;

@@ -13,9 +13,9 @@ typedef struct {
 typedef struct {
     // From 0.0 to 1.0.
 
-    double h;
-    double s;
-    double v;
+    float h;
+    float s;
+    float v;
 } st3m_hsv_t;
 
 // Convert an HSV colour to an RGB colour.

@@ -104,7 +104,7 @@ static void st3m_gfx_crtc_task(void *_arg) {
             ESP_LOGD(
                 TAG,
                 "blitting: %.3f/sec, read %.3fms, work %.3fms, write %.3fms",
-                rate, read, work, write);
+                (double)rate, (double)read, (double)work, (double)write);
         }
     }
 }
@@ -160,7 +160,8 @@ static void st3m_gfx_rast_task(void *_arg) {
             ESP_LOGD(TAG,
                      "rasterization: %.3f/sec, read fb %.3fms, read dctx "
                      "%.3fms, work %.3fms, write %.3fms",
-                     rate, read_fb, read_dctx, work, write);
+                     (double)rate, (double)read_fb, (double)read_dctx,
+                     (double)work, (double)write);
         }
     }
 }

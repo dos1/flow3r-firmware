@@ -3,7 +3,7 @@
 #include <math.h>
 
 st3m_rgb_t st3m_hsv_to_rgb(st3m_hsv_t hsv) {
-    double r = 0, g = 0, b = 0;
+    float r = 0, g = 0, b = 0;
 
     if (hsv.s == 0) {
         r = hsv.v;
@@ -11,14 +11,14 @@ st3m_rgb_t st3m_hsv_to_rgb(st3m_hsv_t hsv) {
         b = hsv.v;
     } else {
         int i;
-        double f, p, q, t;
+        float f, p, q, t;
 
         if (hsv.h == 360)
             hsv.h = 0;
         else
             hsv.h = hsv.h / 60;
 
-        i = (int)trunc(hsv.h);
+        i = (int)truncf(hsv.h);
         f = hsv.h - i;
 
         p = hsv.v * (1.0 - hsv.s);

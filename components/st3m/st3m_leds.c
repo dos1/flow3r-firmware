@@ -226,9 +226,9 @@ void st3m_leds_set_gamma(float red, float green, float blue) {
             state.gamma_blue.lut[i] = 0;
         }
         float step = ((float)i) / 255.;
-        state.gamma_red.lut[i] = (uint8_t)(254. * (pow(step, red)) + 1);
-        state.gamma_green.lut[i] = (uint8_t)(254. * (pow(step, green)) + 1);
-        state.gamma_blue.lut[i] = (uint8_t)(254. * (pow(step, blue)) + 1);
+        state.gamma_red.lut[i] = (uint8_t)(254. * (powf(step, red)) + 1);
+        state.gamma_green.lut[i] = (uint8_t)(254. * (powf(step, green)) + 1);
+        state.gamma_blue.lut[i] = (uint8_t)(254. * (powf(step, blue)) + 1);
     }
     UNLOCK;
 }
