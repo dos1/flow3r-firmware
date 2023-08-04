@@ -71,3 +71,7 @@ void st3m_gfx_show_textview(st3m_gfx_textview_t *tv);
 // drawctx pipe, which means they will get overwritten the moment a proper
 // rendering loop starts.
 void st3m_gfx_splash(const char *text);
+
+// Draw the flow3r multi-coloured logo at coordinates x,y and with given
+// dimension (approx. bounding box size).
+void st3m_gfx_flow3r_logo(Ctx *ctx, float x, float y, float dim);
