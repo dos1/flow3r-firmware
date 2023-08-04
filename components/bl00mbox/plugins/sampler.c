@@ -57,7 +57,7 @@ void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_
 }
 
 radspa_t * sampler_create(uint32_t init_var){
-    if(init_var == 0) init_var = 500*48;
+    if(init_var == 0) init_var = 500;
     uint32_t buffer_size = init_var * (48000/1000);
     radspa_t * sampler = radspa_standard_plugin_create(&sampler_desc, SAMPLER_NUM_SIGNALS, sizeof(sampler_data_t), buffer_size);
     if(sampler == NULL) return NULL;

@@ -6,15 +6,13 @@ idf_component_register(
         bl00mbox_plugin_registry.c
         radspa/radspa.c
         plugins/trad_synth/trad_synth.c
-        plugins/tools/ampliverter.c
-        plugins/tools/sampler.c
-        plugins/tools/delay.c
-        plugins/tools/sequence_timer.c
-        plugins/tools/filter.c
+        plugins/ampliverter.c
+        plugins/sampler.c
+        plugins/delay.c
+        plugins/sequencer.c
     INCLUDE_DIRS
         include
         plugins/trad_synth
-        plugins/tools
         plugins
         radspa
     REQUIRES

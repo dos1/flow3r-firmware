@@ -71,7 +71,7 @@ void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
 }
 
 radspa_t * delay_create(uint32_t init_var){
-    if(init_var == 0) init_var = 500*48;
+    if(init_var == 0) init_var = 500;
     uint32_t buffer_size = init_var*(48000/1000);
     radspa_t * delay = radspa_standard_plugin_create(&delay_desc, DELAY_NUM_SIGNALS, sizeof(delay_data_t), buffer_size);
 

@@ -3,13 +3,18 @@
 #include "radspa.h"
 
 typedef struct {
+    uint8_t num_tracks;
+    uint16_t track_step_len;
+    uint8_t step_target;
+    uint8_t step;
     uint64_t counter;
-    uint64_t target;
-    uint16_t repeats;
-    uint16_t repeats_counter;
-    int16_t trigger_in_prev;
-    int16_t trigger_out_prev;
-    int16_t volume;
+    uint64_t counter_target;
+    int16_t sync_in_prev;
+    int16_t sync_out;
+    int16_t track_fill[1];
+    int16_t track_prev[1];
+    int16_t bpm_prev;
+    int16_t beat_div_prev;
 } sequencer_data_t;
 
 extern radspa_descriptor_t sequencer_desc;

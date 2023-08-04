@@ -29,3 +29,30 @@ def terminal_scope(signal, signal_min = -32767, signal_max = 32767, delay_ms = 2
         fun_counter += delay_ms
 
 #terminal_scope(a.env.signals.output, 0, fun = a.start, fun_ms = 1000)
+
+
+def sct_to_note_name(sct):
+    sct = sct - 18367 + 100
+    octave = ((sct + 9*200) // 2400) + 4
+    tones = ["A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab"]
+    tone = tones[(sct // 200) % 12]
+    return tone + str(octave)
+
+def note_name_to_sct(name):
+    tones = ["A", "Bb", "B", "C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab"]
+    semitones = tones.index(name[0])
+    if semitones > 2 :
+        semitones -= 12
+    if name[1] == "b":
+        octave = int(name[2:])
+        semitones -= 1
+    elif name[1] == "#":
+        octave = int(name[2:])
+        semitones += 1
+    else:
+        octave = int(name[1:])
+    return 18367 + (octave - 4) * 2400 + (200*semitones)
+    
+def sct_to_freq(sct):
+    return 440 * 2**((sct-18367)/2400)
+

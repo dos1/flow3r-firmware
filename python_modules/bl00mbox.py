@@ -289,8 +289,9 @@ class Bud:
 
     @table.setter
     def table(self, stuff):
-        if len(stuff) > sys_bl00mbox.channel_bud_get_table_len(self.channel_num, self.bud_num):
-            return
+        max_len = sys_bl00mbox.channel_bud_get_table_len(self.channel_num, self.bud_num)
+        if len(stuff) > max_len:
+            stuff = stuff[:max_len]
         for x, y in enumerate(stuff):
             sys_bl00mbox.channel_bud_set_table_value(self.channel_num, self.bud_num, x, y)
 

@@ -99,18 +99,54 @@ class sampler(_Patch):
         frames = f.getnframes()
         self.sampler = chan.new_bud(696969, 1+(frames//48))
         self.sampler.signals.output = chan.mixer
-
         table = []
-        for i in range(23000):
+        for i in range(frames):
             frame = f.readframes(1)
             value = int.from_bytes(frame[0:2], 'little')
             table += [value]
-
+        f.close()
         self.sampler.table = table
     def start(self):
         self.sampler.signals.trigger.start()
     def stop(self):
         self.sampler.signals.trigger.stop()
 
+class step_sequencer(_Patch):
+    def __init__(self, chan):
+        self.seqs = []
+        for i in range(4):
+            seq = chan.new_bud(56709)
+            seq.table = [-32767] + ([0]*16)
+            if(len(self.seqs)):
+                self.seqs[-1].signals.sync_out = seq.signals.sync_in
+            self.seqs += [seq]
 
+    def __repr__(self):
+        ret = "[patch] step sequencer"
+        #ret += "\n  " + "\n  ".join(repr(self.seqs[0]).split("\n"))
+        ret += "\n  bpm: " + str(self.seqs[0].signals.bpm.value) + " @ 1/" + str(self.seqs[0].signals.beat_div.value)
+        ret += "\n  step: " + str(self.seqs[0].signals.step.value) + "/" + str(self.seqs[0].signals.step_len.value)
+        ret += "\n  step: " + str(self.seqs[1].signals.step.value) + "/" + str(self.seqs[1].signals.step_len.value)
+        ret += "\n  [tracks]"
+        for x,seq in enumerate(self.seqs):
+            ret += "\n    " + str(x) + " [  " + "".join(["X  " if x > 0 else ".  " for x in seq.table[1:]]) + "]"
+        return ret    
 
+    def start(self, track, step):
+        a = self.seqs[track].table
+        a[step+1] = 32767
+        self.seqs[track].table = a
+
+    def stop(self, track, step):
+        a = self.seqs[track].table
+        a[step+1] = 32767
+        self.seqs[track].table = a
+
+    def clear(self, track, step):
+        a = self.seqs[track].table
+        a[step+1] = 0
+        self.seqs[track].table = a
+
+    @property
+    def step(self):
+        return self.seqs[0].signals.step
