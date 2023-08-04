@@ -154,8 +154,8 @@ class OverlayCaptouch(Overlay):
             self.pressed = False
 
         def think(self, s: InputState, delta_ms: int) -> None:
-            self.pressed = s.petal_pressed[self.ix]
-            (rad, phi) = s.petal_pos[self.ix]
+            self.pressed = s.captouch.petals[self.ix].pressed
+            (rad, phi) = s.captouch.petals[self.ix].position
             self.phi = phi
             self.rad = rad
 

@@ -55,9 +55,10 @@ class CapTouchDemo(application.Application):
         super().think(ins, delta_ms)
         self.dots = []
         for i in range(10):
-            (rad, phi) = ins.petal_pos[i]
+            petal = ins.captouch.petals[i]
+            (rad, phi) = petal.position
             size = 4
-            if ins.petal_pressed[i]:
+            if petal.pressed:
                 size += 4
             x = 70 + (rad / 1000) + 0j
             x += (phi / 600) * 1j

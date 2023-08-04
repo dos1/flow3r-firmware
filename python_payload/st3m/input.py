@@ -18,15 +18,12 @@ class InputState:
 
     def __init__(
         self,
-        petal_pressed: List[bool],
-        # petal_pads: List[List[int]],
-        petal_pos: List[Tuple[int, int]],
+        captouch: captouch.CaptouchState,
         left_button: int,
         right_button: int,
     ) -> None:
-        self.petal_pressed = petal_pressed
         # self.petal_pads = petal_pads
-        self.petal_pos = petal_pos
+        self.captouch = captouch
         self.left_button = left_button
         self.right_button = right_button
 
@@ -37,17 +34,10 @@ class InputState:
         Reactor.
         """
         cts = captouch.read()
-        petal_pressed = [cts.petals[i].pressed for i in range(10)]
-        # petal_pads = [
-        #    [hardware.captouch_get_petal_pad(petal_ix, pad_ix) for pad_ix in range(3)]
-        #    for petal_ix in range(10)
-        # ]
-        petal_pos = [cts.petals[petal_ix].position for petal_ix in range(10)]
-
         left_button = hardware.left_button_get()
         right_button = hardware.right_button_get()
 
-        return InputState(petal_pressed, petal_pos, left_button, right_button)
+        return InputState(cts, left_button, right_button)
 
 
 class RepeatSettings:
@@ -281,9 +271,9 @@ class CaptouchState:
     def __init__(self) -> None:
         self.petals = [PetalState(i) for i in range(10)]
 
-    def _update(self, ts: int, hr: InputState) -> None:
+    def _update(self, ts: int, ins: InputState) -> None:
         for i, petal in enumerate(self.petals):
-            petal._update(ts, hr.petal_pressed[i])
+            petal._update(ts, ins.captouch.petals[i].pressed)
 
     def _ignore_pressed(self) -> None:
         for petal in self.petals:

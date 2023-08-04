@@ -46,7 +46,8 @@ def run(ins: InputState) -> None:
     global octave
     global synths
     for i in range(10):
-        if ins.petal_pressed[i]:
+        petal = ins.captouch.petals[i]
+        if petal.pressed:
             if i == 4:
                 octave = -1
                 adjust_playing_field_to_octave()
