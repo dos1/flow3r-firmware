@@ -11,6 +11,21 @@
 #include "bl00mbox_plugin_registry.h"
 
 static uint64_t bl00mbox_bud_index = 1;
+bl00mbox_bud_t * bl00mbox_channel_get_bud_by_index(uint8_t channel, uint32_t index);
+
+uint16_t bl00mbox_channel_buds_num(uint8_t channel){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    uint16_t ret = 0;
+    if(chan->buds != NULL){
+        bl00mbox_bud_t * last = chan->buds;
+        ret++;
+        while(last->chan_next != NULL){
+            last = last->chan_next;
+            ret++;
+        } 
+    }
+    return ret;
+}
 
 uint64_t bl00mbox_channel_get_bud_by_list_pos(uint8_t channel, uint32_t pos){
     bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
@@ -28,20 +43,6 @@ uint64_t bl00mbox_channel_get_bud_by_list_pos(uint8_t channel, uint32_t pos){
     return 0;
 }
 
-uint16_t bl00mbox_channel_buds_num(uint8_t channel){
-    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
-    uint16_t ret = 0;
-    if(chan->buds != NULL){
-        bl00mbox_bud_t * last = chan->buds;
-        ret++;
-        while(last->chan_next != NULL){
-            last = last->chan_next;
-            ret++;
-        } 
-    }
-    return ret;
-}
-
 uint16_t bl00mbox_channel_conns_num(uint8_t channel){
     bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
     uint16_t ret = 0;
@@ -54,6 +55,148 @@ uint16_t bl00mbox_channel_conns_num(uint8_t channel){
         } 
     }
     return ret;
+}
+
+uint16_t bl00mbox_channel_mixer_num(uint8_t channel){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    uint16_t ret = 0;
+    if(chan->root_list != NULL){
+        bl00mbox_channel_root_t * last = chan->root_list;
+        ret++;
+        while(last->next != NULL){
+            last = last->next;
+            ret++;
+        } 
+    }
+    return ret;
+}
+
+uint64_t bl00mbox_channel_get_bud_by_mixer_list_pos(uint8_t channel, uint32_t pos){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    uint16_t ret = 0;
+    if(chan->buds != NULL){
+        bl00mbox_channel_root_t * last = chan->root_list;
+        if(pos == ret) return last->con->source_bud->index;
+        ret++;
+        while(last->next != NULL){
+            last = last->next;
+            if(pos == ret) return last->con->source_bud->index;
+            ret++;
+        } 
+    }
+    return 0;
+}
+
+uint32_t bl00mbox_channel_get_signal_by_mixer_list_pos(uint8_t channel, uint32_t pos){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    uint16_t ret = 0;
+    if(chan->buds != NULL){
+        bl00mbox_channel_root_t * last = chan->root_list;
+        if(pos == ret) return last->con->signal_index;
+        ret++;
+        while(last->next != NULL){
+            last = last->next;
+            if(pos == ret) return last->con->signal_index;
+            ret++;
+        } 
+    }
+    return 0;
+}
+
+uint16_t bl00mbox_channel_subscriber_num(uint8_t channel, uint64_t bud_index, uint16_t signal_index){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return 0;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return 0;
+    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, signal_index);
+    if(sig == NULL) return 0;
+    bl00mbox_connection_t * conn = (bl00mbox_connection_t *) sig->buffer; // buffer sits on top of struct
+    if(conn == NULL) return 0;
+
+    uint16_t ret = 0;
+    if(conn->subs != NULL){
+        bl00mbox_connection_subscriber_t * last = conn->subs;
+        ret++;
+        while(last->next != NULL){
+            last = last->next;
+            ret++;
+        } 
+    }
+    return ret;
+}
+
+uint64_t bl00mbox_channel_get_bud_by_subscriber_list_pos(uint8_t channel, uint64_t bud_index,
+                uint16_t signal_index, uint8_t pos){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return 0;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return 0;
+    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, signal_index);
+    if(sig == NULL) return 0;
+    bl00mbox_connection_t * conn = (bl00mbox_connection_t *) sig->buffer; // buffer sits on top of struct
+    if(conn == NULL) return 0;
+
+    uint16_t ret = 0;
+    if(conn->subs != NULL){
+        bl00mbox_connection_subscriber_t * last = conn->subs;
+        if(pos == ret) return (last->type == 0) ? last->bud_index : 0;
+        ret++;
+        while(last->next != NULL){
+            last = last->next;
+            if(pos == ret) return (last->type == 0) ? last->bud_index : 0;
+            ret++;
+        } 
+    }
+    return 0;
+}
+
+int32_t bl00mbox_channel_get_signal_by_subscriber_list_pos(uint8_t channel, uint64_t bud_index,
+                uint16_t signal_index, uint8_t pos){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return 0;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return 0;
+    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, signal_index);
+    if(sig == NULL) return 0;
+    bl00mbox_connection_t * conn = (bl00mbox_connection_t *) sig->buffer; // buffer sits on top of struct
+    if(conn == NULL) return 0;
+
+    uint16_t ret = 0;
+    if(conn->subs != NULL){
+        bl00mbox_connection_subscriber_t * last = conn->subs;
+        if(pos == ret) return (last->type == 0) ? last->signal_index : -1;
+        ret++;
+        while(last->next != NULL){
+            last = last->next;
+            if(pos == ret) return (last->type == 0) ? last->signal_index : -1;
+            ret++;
+        } 
+    }
+    return 0;
+}
+
+uint64_t bl00mbox_channel_get_source_bud(uint8_t channel, uint64_t bud_index, uint16_t signal_index){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return 0;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return 0;
+    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, signal_index);
+    if(sig == NULL) return 0;
+    bl00mbox_connection_t * conn = (bl00mbox_connection_t *) sig->buffer; // buffer sits on top of struct
+    if(conn == NULL) return 0;
+    return conn->source_bud->index;
+}
+
+uint16_t bl00mbox_channel_get_source_signal(uint8_t channel, uint64_t bud_index, uint16_t signal_index){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return 0;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return 0;
+    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, signal_index);
+    if(sig == NULL) return 0;
+    bl00mbox_connection_t * conn = (bl00mbox_connection_t *) sig->buffer; // buffer sits on top of struct
+    if(conn == NULL) return 0;
+    return conn->signal_index;
 }
 
 static bl00mbox_connection_t * create_connection(uint8_t channel){

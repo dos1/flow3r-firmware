@@ -2,6 +2,8 @@
 
 //TODO: move this to kconfig someday
 #define BL00MBOX_MAX_BUFFER_LEN 256
+#define BL00MBOX_DEFAULT_CHANNEL_VOLUME 3000
+#define BL00MBOX_CHANNELS 32
 
 #include "radspa.h"
 
@@ -21,7 +23,7 @@ typedef struct _bl00mbox_bud_t{
 typedef struct _bl00mbox_connection_subscriber_t{
     uint8_t type; // 0: standard signal input, 1: output mixer
     uint8_t channel;
-    uint32_t bud_index;
+    uint64_t bud_index;
     uint32_t signal_index;
     struct _bl00mbox_connection_subscriber_t * next;
 } bl00mbox_connection_subscriber_t;

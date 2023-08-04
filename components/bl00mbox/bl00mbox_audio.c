@@ -10,9 +10,6 @@
 #include "bl00mbox_audio.h"
 
 static bool is_initialized = false;
-
-#define BL00MBOX_DEFAULT_CHANNEL_VOLUME 3000
-#define BL00MBOX_CHANNELS 32
 static bool bl00mbox_audio_run = true;
 void bl00mbox_audio_enable(){ bl00mbox_audio_run = true; }
 void bl00mbox_audio_disable(){ bl00mbox_audio_run = false; }
@@ -93,6 +90,9 @@ void bl00mbox_channels_init(){
     for(uint8_t i = 0; i < BL00MBOX_CHANNELS; i++){
         bl00mbox_channel_t * chan = bl00mbox_get_channel(i);
         chan->volume = BL00MBOX_DEFAULT_CHANNEL_VOLUME;
+        chan->root_list = NULL;
+        chan->buds = NULL;
+        chan->connections = NULL;
         chan->is_active = true;
         chan->is_free = true;
     }

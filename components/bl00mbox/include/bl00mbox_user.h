@@ -6,6 +6,9 @@
 uint16_t bl00mbox_channel_buds_num(uint8_t channel);
 uint64_t bl00mbox_channel_get_bud_by_list_pos(uint8_t channel, uint32_t pos);
 uint16_t bl00mbox_channel_conns_num(uint8_t channel);
+uint16_t bl00mbox_channel_mixer_num(uint8_t channel);
+uint64_t bl00mbox_channel_get_bud_by_mixer_list_pos(uint8_t channel, uint32_t pos);
+uint32_t bl00mbox_channel_get_signal_by_mixer_list_pos(uint8_t channel, uint32_t pos);
 bool bl00mbox_channel_clear(uint8_t channel);
 
 bool bl00mbox_channel_connect_signal_to_output_mixer(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index);
@@ -30,6 +33,13 @@ char * bl00mbox_channel_bud_get_signal_unit(uint8_t channel, uint32_t bud_index,
 bool bl00mbox_channel_bud_set_signal_value(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index, int16_t value);
 int16_t bl00mbox_channel_bud_get_signal_value(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index);
 uint32_t bl00mbox_channel_bud_get_signal_hints(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index);
+uint16_t bl00mbox_channel_subscriber_num(uint8_t channel, uint64_t bud_index, uint16_t signal_index);
+uint64_t bl00mbox_channel_get_bud_by_subscriber_list_pos(uint8_t channel, uint64_t bud_index,
+                uint16_t signal_index, uint8_t pos);
+int32_t bl00mbox_channel_get_signal_by_subscriber_list_pos(uint8_t channel, uint64_t bud_index,
+                uint16_t signal_index, uint8_t pos);
+uint64_t bl00mbox_channel_get_source_bud(uint8_t channel, uint64_t bud_index, uint16_t signal_index);
+uint16_t bl00mbox_channel_get_source_signal(uint8_t channel, uint64_t bud_index, uint16_t signal_index);
 
 bool bl00mbox_channel_bud_set_table_value(uint8_t channel, uint32_t bud_index, uint32_t table_index, int16_t value);
 int16_t bl00mbox_channel_bud_get_table_value(uint8_t channel, uint32_t bud_index, uint32_t table_index);
