@@ -187,7 +187,18 @@ STATIC mp_uint_t vfs_posix_file_ioctl(mp_obj_t o_in, mp_uint_t request, uintptr_
         case MP_STREAM_CLOSE:
             if (o->fd >= 0) {
                 MP_THREAD_GIL_EXIT();
-                close(o->fd);
+                switch (o->fd) {
+                case 0:
+                case 1:
+                case 2:
+                    // Don't let anything close stdin/stdout/stderr.
+                    // BUG: we shouldn't even get to this point of anything
+                    // attempting to close these. But that's for someone else to
+                    // debug.
+                    break;
+                default:
+                    close(o->fd);
+                }
                 MP_THREAD_GIL_ENTER();
             }
             o->fd = -1;
