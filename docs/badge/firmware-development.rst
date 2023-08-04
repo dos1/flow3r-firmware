@@ -21,13 +21,13 @@ Dependencies
 
 If you're using Nix(OS), just run ``nix-shell nix/shell.nix``.
 
-On other Linux-based distributions, you will have to manually install ESP-IDF alongside our custom patches:
+On other Linux-based distributions, you will have to manually install ESP-IDF alongside our custom patches (note that install.sh installs stuff to your $HOME so that you may want to use a container or nix):
 
 ::
 
 	$ git clone https://git.flow3r.garden/flow3r/esp-idf
 	$ cd esp-idf
-	$ git checkout v5.1-flow3r
+	$ git checkout tag/v5.1-flow3r
 	$ git submodule update --init --recursive
 	$ ./install.sh
 	$ source export.sh
