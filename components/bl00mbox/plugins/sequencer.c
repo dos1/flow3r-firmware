@@ -18,7 +18,7 @@ radspa_descriptor_t sequencer_desc = {
 #define SEQUENCER_OUTPUT 6
 
 static uint64_t target(uint64_t step_len, uint64_t bpm, uint64_t beat_div){
-        return (48000ULL * 60) / (bpm * beat_div);
+        return (48000ULL * 60 * 4) / (bpm * beat_div);
 }
 
 radspa_t * sequencer_create(uint32_t init_var){
@@ -40,7 +40,7 @@ radspa_t * sequencer_create(uint32_t init_var){
     data->track_step_len = num_pixels;
     data->num_tracks = num_tracks;
     data->bpm_prev = 120;
-    data->beat_div_prev = 8;
+    data->beat_div_prev = 16;
     data->counter_target = target(data->track_step_len, data->bpm_prev, data->beat_div_prev);
     radspa_signal_set(sequencer, SEQUENCER_STEP, "step", RADSPA_SIGNAL_HINT_OUTPUT, 0);
     radspa_signal_set(sequencer, SEQUENCER_STEP_LEN, "step_len", RADSPA_SIGNAL_HINT_INPUT, num_pixels);

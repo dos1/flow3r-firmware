@@ -120,32 +120,48 @@ class step_sequencer(_Patch):
             if(len(self.seqs)):
                 self.seqs[-1].signals.sync_out = seq.signals.sync_in
             self.seqs += [seq]
+        self._bpm = 120
 
     def __repr__(self):
         ret = "[patch] step sequencer"
         #ret += "\n  " + "\n  ".join(repr(self.seqs[0]).split("\n"))
         ret += "\n  bpm: " + str(self.seqs[0].signals.bpm.value) + " @ 1/" + str(self.seqs[0].signals.beat_div.value)
         ret += "\n  step: " + str(self.seqs[0].signals.step.value) + "/" + str(self.seqs[0].signals.step_len.value)
-        ret += "\n  step: " + str(self.seqs[1].signals.step.value) + "/" + str(self.seqs[1].signals.step_len.value)
         ret += "\n  [tracks]"
         for x,seq in enumerate(self.seqs):
             ret += "\n    " + str(x) + " [  " + "".join(["X  " if x > 0 else ".  " for x in seq.table[1:]]) + "]"
         return ret    
 
-    def start(self, track, step):
+    @property
+    def bpm(self):
+        return self._bpm
+
+    @bpm.setter
+    def bpm(self, bpm):
+        for seq in self.seqs:
+            seq.signals.bpm.value = bpm
+        self._bpm = bpm
+
+    def trigger_start(self, track, step):
         a = self.seqs[track].table
         a[step+1] = 32767
         self.seqs[track].table = a
 
-    def stop(self, track, step):
-        a = self.seqs[track].table
-        a[step+1] = 32767
-        self.seqs[track].table = a
-
-    def clear(self, track, step):
+    def trigger_stop(self, track, step):
         a = self.seqs[track].table
         a[step+1] = 0
         self.seqs[track].table = a
+    
+    def trigger_state(self, track, step):
+        a = self.seqs[track].table
+        return a[step+1]
+
+    def trigger_toggle(self, track, step):
+        if self.trigger_state(track, step) == 0:
+            self.trigger_start(track, step)
+        else:
+            self.trigger_stop(track, step)
+
 
     @property
     def step(self):

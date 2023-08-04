@@ -20,7 +20,7 @@ void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_
     int16_t * buf = sampler->plugin_table;
     radspa_signal_t * trigger_sig = radspa_signal_get_by_index(sampler, SAMPLER_TRIGGER);
 
-    static int16_t ret = 0;
+    static int32_t ret = 0;
     
     uint32_t buffer_size = sampler->plugin_table_len;
     
@@ -48,6 +48,7 @@ void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_
             data->read_head_position++;
             ret = i16_mult_shift(buf[data->read_head_position], data->volume);
         } else {
+            //ret = (ret * 255)>>8; // avoid dc clicks with bad samples
             ret = 0;
         }
 

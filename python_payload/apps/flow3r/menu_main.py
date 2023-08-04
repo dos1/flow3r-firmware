@@ -1,7 +1,7 @@
 from st3m import menu, event, control
 
 from apps import demo_worms, cap_touch_demo
-from apps import demo_sparabo, melodic_demo, harmonic_demo
+from apps import demo_sparabo, melodic_demo, harmonic_demo, drum_demo
 from apps.flow3r import menu_settings, menu_tinysynth, menu_crazysynth
 
 
@@ -14,7 +14,7 @@ def get_menu(app):
     menu_apps = menu.Menu("apps")
     menu_music = menu.Menu("music")
 
-    for app_module in [demo_sparabo, melodic_demo, harmonic_demo]:
+    for app_module in [demo_sparabo, harmonic_demo, drum_demo]:
         menu_music.add(menu.MenuItemApp(app_module.app))
 
     for app_module in [
