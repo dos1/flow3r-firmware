@@ -40,14 +40,13 @@ static st3m_usb_descriptor_set_t _descset_app = {
             .bDescriptorType = TUSB_DESC_DEVICE,
             .bcdUSB = 0x0200,
 
-            .bDeviceClass = 0x00,
-            .bDeviceSubClass = 0x00,
-            .bDeviceProtocol = 0x00,
-
+            .bDeviceClass = TUSB_CLASS_MISC,
+            .bDeviceSubClass = MISC_SUBCLASS_COMMON,
+            .bDeviceProtocol = MISC_PROTOCOL_IAD,
             .bMaxPacketSize0 = CFG_TUD_ENDPOINT0_SIZE,
+
             .idVendor = 0x303a,
             .idProduct = 0x4042,
-
             .bcdDevice = 0x0100,
 
             .iManufacturer = 0x01,

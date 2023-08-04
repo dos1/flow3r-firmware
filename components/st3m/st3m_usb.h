@@ -119,11 +119,12 @@ void st3m_usb_cdc_txpoll(void);
 void st3m_usb_cdc_detached(void);
 
 typedef enum {
-    st3m_usb_interface_disk_msc,
+    st3m_usb_interface_disk_msc = 0,
     st3m_usb_interface_disk_total,
 } st3m_usb_interface_disk_t;
 
 typedef enum {
-    st3m_usb_interface_app_cdc,
+    st3m_usb_interface_app_cdc = 0,
+    st3m_usb_interface_app_cdc_data,
     st3m_usb_interface_app_total,
 } st3m_usb_interface_app_t;
