@@ -211,6 +211,10 @@ static void _task(void *data) {
     bool bot_ok = true;
     esp_err_t ret;
     for (;;) {
+#if defined(CONFIG_FLOW3R_HW_GEN_P4)
+        bool top = true, bot = true;
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+#else
         bool bot = false;
         if (xQueueReceive(_q, &bot, portMAX_DELAY) == pdFALSE) {
             ESP_LOGE(TAG, "Queue receive failed");
@@ -224,7 +228,7 @@ static void _task(void *data) {
             top = true;
             bot = true;
         }
-
+#endif
         if (bot) {
             if ((ret = flow3r_bsp_ad7147_chip_process(&_bot)) != ESP_OK) {
                 if (bot_ok) {
