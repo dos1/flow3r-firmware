@@ -1,7 +1,8 @@
 import st3m
 
-from st3m.input import InputState
+from st3m.input import InputState, Touchable
 from st3m.ui.ctx import Ctx
+from st3m.goose import Optional, Tuple
 from st3m import Responder
 
 
@@ -149,129 +150,69 @@ class ScrollController(st3m.Responder):
         self._current_position += self._velocity * delta
 
 
-# class GestureScrollController(ScrollController):
-#    """
-#    GestureScrollController extends ScrollController to also react to swipe gestures
-#    on a configurable petal.
-#
-#    #TODO (iggy): rewrite both to extend a e.g. "PhysicsController"
-#    """
-#
-#    def __init__(self, petal_index, wrap=False):
-#        super().__init__(wrap)
-#        self._petal = PetalController(petal_index)
-#        self._speedbuffer = [0.0]
-#        self._ignore = 0
-#
-#    def scroll_left(self) -> None:
-#        """
-#        Call when the user wants to scroll left by discrete action (eg. button
-#        press).
-#        """
-#        # self._target_position -= 1
-#        self._speedbuffer = []
-#        self._velocity = -1
-#        self._current_position -= 0.3
-#
-#    def scroll_right(self) -> None:
-#        """
-#        Call when the user wants to scroll right by discrete action (eg. button
-#        press).
-#        """
-#        # self._target_position += 1
-#        self._speedbuffer = []
-#        self._velocity = 1
-#        self._current_position += 0.3
-#
-#    def think(self, ins: InputState, delta_ms: int) -> None:
-#        # super().think(ins, delta_ms)
-#
-#        self._petal.think(ins, delta_ms)
-#
-#        if self._ignore:
-#            self._ignore -= 1
-#            return
-#
-#        dphi = self._petal._input._dphi
-#        phase = self._petal._input.phase()
-#
-#        self._speedbuffer.append(self._velocity)
-#
-#        while len(self._speedbuffer) > 3:
-#            self._speedbuffer.pop(0)
-#
-#        speed = sum(self._speedbuffer) / len(self._speedbuffer)
-#
-#        speed = min(speed, 0.008)
-#        speed = max(speed, -0.008)
-#
-#        if phase == self._petal._input.ENDED:
-#            # self._speedbuffer = [0 if abs(speed) < 0.005 else speed]
-#            while len(self._speedbuffer) > 3:
-#                print("sb:", self._speedbuffer)
-#                self._speedbuffer.pop()
-#        elif phase == self._petal._input.UP:
-#            pass
-#        elif phase == self._petal._input.BEGIN:
-#            self._ignore = 5
-#            # self._speedbuffer = [0.0]
-#        elif phase == self._petal._input.RESTING:
-#            self._speedbuffer.append(0.0)
-#        elif phase == self._petal._input.MOVED:
-#            impulse = -dphi / delta_ms
-#            self._speedbuffer.append(impulse)
-#
-#        if abs(speed) < 0.0001:
-#            speed = 0
-#
-#        self._velocity = speed
-#
-#        self._current_position = self._current_position + self._velocity * delta_ms
-#
-#        if self.wrap:
-#            self._current_position = self._current_position % self._nitems
-#        elif round(self._current_position) < 0:
-#            self._current_position = 0
-#        elif round(self._current_position) >= self._nitems:
-#            self._current_position = self._nitems - 1
-#
-#        if phase != self._petal._input.UP:
-#            return
-#
-#        pos = round(self._current_position)
-#        microstep = round(self._current_position) - self._current_position
-#        # print("micro:", microstep)
-#        # print("v", self._velocity)
-#        # print("pos", self._current_position)
-#
-#        if (
-#            abs(microstep) < 0.1
-#            and abs(self._velocity) < 0.001
-#            # and abs(self._velocity)
-#        ):
-#            self._velocity = 0
-#            self._speedbuffer.append(0)
-#            self._current_position = round(self._current_position)
-#            self._target_position = self._current_position
-#            # print("LOCK")
-#            return
-#
-#        if abs(self._velocity) > 0.001:
-#            self._speedbuffer.append(-self._velocity)
-#            # print("BREAKING")
-#            return
-#
-#        if self._velocity >= 0 and microstep > 0:
-#            self._speedbuffer.append(max(self._velocity, 0.01) * microstep * 10)
-#            # print("1")
-#        elif self._velocity < 0 and microstep > 0:
-#            self._speedbuffer.append(-self._velocity)
-#            # print("2")
-#        elif self._velocity > 0 and microstep < 0:
-#            self._speedbuffer.append(-self._velocity * 0.5)
-#            # print("3")
-#
-#        elif self._velocity <= 0 and microstep < 0:
-#            self._speedbuffer.append(min(self._velocity, -0.01) * abs(microstep) * 10)
-#            # print("4")
-#
+class CapScrollController:
+    """
+    A Capacitive Touch based Scroll Controller.
+
+    You can think of it as a virtual trackball controlled by a touch petal. It
+    has a current position (in arbitrary units, but as a tuple corresponding to
+    the two different axes of capacitive touch positions) and a
+    momentum/velocity vector.
+
+    To use this, instantiate this in your application/responder, and call
+    update() on every think() with a Touchable as retrieved from an
+    InputController. The CapScrolController will then translate gestures
+    received from the InputController's Touchable into the motion of the scroll
+    mechanism.
+
+    TODO(q3k): dynamic precision based on gesture magnitude/speed
+    TODO(q3k): notching into predefined positions, for use in menus
+    """
+
+    def __init__(self) -> None:
+        self.position = (0.0, 0.0)
+        self.momentum = (0.0, 0.0)
+        # Current timestamp.
+        self._ts = 0
+        # Position when touch started, and time at which touch started.
+        self._grab_start: Optional[Tuple[float, float]] = None
+        self._grab_start_ms: Optional[int] = None
+
+    def update(self, t: Touchable, delta_ms: int) -> None:
+        """
+        Call this in your think() method.
+        """
+        self._ts += delta_ms
+        if t.phase() == t.BEGIN:
+            self._grab_start = self.position
+            self._grab_start_ms = self._ts
+            self.momentum = (0.0, 0.0)
+
+        if t.phase() == t.MOVED and self._grab_start is not None:
+            move = t.current_gesture()
+            assert move is not None
+            assert self._grab_start is not None
+            drad, dphi = move.distance
+            drad /= 1000
+            dphi /= 1000
+            srad = self._grab_start[0]
+            sphi = self._grab_start[1]
+            self.position = (srad + drad, sphi + dphi)
+
+        if t.phase() == t.ENDED:
+            move = t.current_gesture()
+            assert move is not None
+            vrad, vphi = move.velocity
+            vrad /= 1000
+            vphi /= 1000
+            self.momentum = (vrad, vphi)
+
+        if t.phase() == t.UP:
+            rad_p, phi_p = self.position
+            rad_m, phi_m = self.momentum
+            rad_p += rad_m / (1000 / delta_ms)
+            phi_p += phi_m / (1000 / delta_ms)
+            rad_m *= 0.99
+            phi_m *= 0.99
+            self.momentum = (rad_m, phi_m)
+            self.position = (rad_p, phi_p)
