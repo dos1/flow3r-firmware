@@ -29,9 +29,19 @@ class Context(Protocol):
     global_alpha: float = 1.0
     font: str = ""
 
-    CENTER: str = "center"
-    RIGHT: str = "right"
+    ALPHABETIC: str = "alphabetic"
+    TOP: str = "top"
+    HANGING: str = "hanging"
     MIDDLE: str = "middle"
+    IDEOGRAPHIC: str = "ideographic"
+    BOTTOM: str = "bottom"
+
+    START: str = "start"
+    END: str = "end"
+    JUSTIFY: str = "justify"
+    CENTER: str = "center"
+    LEFT: str = "left"
+    RIGHT: str = "right"
 
     def __init__(self) -> None: ...
     def text_width(self, text: str) -> float:
