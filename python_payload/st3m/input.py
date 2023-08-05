@@ -174,10 +174,15 @@ class Pressable:
         return "<Pressable: " + self.state + ">"
 
 
-class PetalState(Pressable):
+class PetalState:
     def __init__(self, ix: int) -> None:
         self.ix = ix
-        super().__init__(False)
+        self.whole = Pressable(False)
+        self.pressure = 0
+
+    def _update(self, ts: int, petal: captouch.CaptouchPetalState) -> None:
+        self.whole._update(ts, petal.pressed)
+        self.pressure = petal.pressure
 
 
 # class Touchable(Pressable):
@@ -273,11 +278,11 @@ class CaptouchState:
 
     def _update(self, ts: int, ins: InputState) -> None:
         for i, petal in enumerate(self.petals):
-            petal._update(ts, ins.captouch.petals[i].pressed)
+            petal._update(ts, ins.captouch.petals[i])
 
     def _ignore_pressed(self) -> None:
         for petal in self.petals:
-            petal._ignore_pressed()
+            petal.whole._ignore_pressed()
 
 
 class TriSwitchHandedness(Enum):

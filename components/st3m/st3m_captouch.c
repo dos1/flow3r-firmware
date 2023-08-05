@@ -24,12 +24,20 @@ static inline void _pad_feed(st3m_petal_pad_state_t *pad, uint16_t data,
     ringbuffer_write(&pad->rb, data);
     int32_t thres = top ? 8000 : 12000;
     pad->pressed = data > thres;
+    if (pad->pressed) {
+        pad->pressure = data - thres;
+    } else {
+        pad->pressure = 0;
+    }
 }
 
 static inline void _petal_process(st3m_petal_state_t *petal, bool top) {
     if (top) {
         petal->pressed =
             petal->base.pressed || petal->ccw.pressed || petal->cw.pressed;
+        petal->pressure =
+            (petal->base.pressure + petal->ccw.pressure + petal->cw.pressure) /
+            3;
         int32_t left = ringbuffer_avg(&petal->ccw.rb);
         int32_t right = ringbuffer_avg(&petal->cw.rb);
         int32_t base = ringbuffer_avg(&petal->base.rb);
@@ -40,6 +48,7 @@ static inline void _petal_process(st3m_petal_state_t *petal, bool top) {
 #endif
     } else {
         petal->pressed = petal->base.pressed || petal->tip.pressed;
+        petal->pressure = (petal->base.pressure + petal->tip.pressure) / 2;
         int32_t base = ringbuffer_avg(&petal->base.rb);
         int32_t tip = ringbuffer_avg(&petal->tip.rb);
         petal->pos_distance = tip - base;

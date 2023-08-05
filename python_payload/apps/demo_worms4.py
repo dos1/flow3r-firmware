@@ -77,7 +77,7 @@ class AppWorms(application.Application):
                 w.move()
             self.bufn = 6
         for index, petal in enumerate(self.input.captouch.petals):
-            if petal.pressed or petal.repeated:
+            if petal.whole.pressed or petal.whole.repeated:
                 self.worms.append(Worm(tau * index / 10 + math.pi))
         while len(self.worms) > 10:
             self.worms.pop(0)

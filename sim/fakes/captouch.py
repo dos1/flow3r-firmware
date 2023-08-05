@@ -32,6 +32,12 @@ class CaptouchPetalState:
         self.position = (0, 0)
 
     @property
+    def pressure(self) -> int:
+        if not self.pressed:
+            return 0
+        return 1000
+
+    @property
     def pressed(self) -> bool:
         if self.top:
             return self._pads.base or self._pads.ccw or self._pads.cw

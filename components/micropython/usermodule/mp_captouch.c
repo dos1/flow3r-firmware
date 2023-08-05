@@ -100,6 +100,9 @@ STATIC void mp_captouch_petal_state_attr(mp_obj_t self_in, qstr attr,
         case MP_QSTR_pressed:
             dest[0] = mp_obj_new_bool(state->pressed);
             break;
+        case MP_QSTR_pressure:
+            dest[0] = mp_obj_new_int(state->pressure);
+            break;
         case MP_QSTR_pads:
             dest[0] = self->pads;
             break;

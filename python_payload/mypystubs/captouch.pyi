@@ -41,6 +41,12 @@ class CaptouchPetalState(Protocol):
         """
         ...
     @property
+    def pressure(self) -> int:
+        """
+        How strongly the petal is currently being touched, in arbitrary units.
+        """
+        ...
+    @property
     def top(self) -> bool:
         """
         True if this is a top petal.

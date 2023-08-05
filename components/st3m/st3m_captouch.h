@@ -71,6 +71,8 @@ typedef struct {
     // Whether the pad is currently being touched. Calculated from ringbuffer
     // data.
     bool pressed;
+    // How strongly the pad is currently being pressed, in arbitrary units.
+    uint16_t pressure;
 } st3m_petal_pad_state_t;
 
 // State of capacitive touch for a petal.
@@ -90,6 +92,9 @@ typedef struct {
     // Whether the petal is currently being touched. Calculated from individual
     // pad data.
     bool pressed;
+
+    // How strongly the petal is currently being pressed, in arbitrary units.
+    uint16_t pressure;
 
     // Touch position on petal, calculated from pad data.
     //
