@@ -52,6 +52,7 @@ from apps.harmonic_demo import app as harmonic
 from apps.melodic_demo import app as melodic
 from apps.nick import app as nick
 from apps.cap_touch_demo import app as captouch_demo
+from apps.scroll_demo import app as scroll_demo
 
 
 # Set the view_managers for the apps, otherwise leaving the app (back) will not work
@@ -60,6 +61,7 @@ harmonic._view_manager = vm
 melodic._view_manager = vm
 nick._view_manager = vm
 captouch_demo._view_manager = vm
+scroll_demo._view_manager = vm
 
 # Build menu structure
 
@@ -82,6 +84,7 @@ menu_apps = SimpleMenu(
         MenuItemBack(),
         MenuItemForeground("captouch", captouch_demo),
         MenuItemForeground("worms", worms),
+        MenuItemForeground("cap scroll", scroll_demo),
     ],
     vm,
 )
