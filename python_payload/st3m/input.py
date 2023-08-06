@@ -4,7 +4,7 @@ import hardware
 import captouch
 import imu
 
-import math
+import machine
 
 
 class InputState:
@@ -458,6 +458,24 @@ class IMUState:
         self.pressure, self.temperature = imu.pressure_read()
 
 
+class PowerState:
+    __slots__ = ("_ts", "_adc_pin", "_adc", "battery_voltage")
+
+    def __init__(self) -> None:
+        self._adc_pin = machine.Pin(9, machine.Pin.IN)
+        self._adc = machine.ADC(self._adc_pin, atten=machine.ADC.ATTN_11DB)
+        self.battery_voltage = self._battery_voltage_sample()
+        self._ts = 0
+
+    def _battery_voltage_sample(self) -> float:
+        return self._adc.read_uv() * 2 / 1e6
+
+    def _update(self, ts: int, hr: InputState) -> None:
+        if ts >= self._ts + 1000:
+            self.battery_voltage = self._battery_voltage_sample()
+            self._ts = ts
+
+
 class InputController:
     """
     A stateful input controller. It accepts InputState updates from the Reactor
@@ -475,6 +493,7 @@ class InputController:
         "left_shoulder",
         "right_shoulder",
         "imu",
+        "power",
         "_ts",
     )
 
@@ -483,6 +502,7 @@ class InputController:
         self.left_shoulder = TriSwitchState(TriSwitchHandedness.left)
         self.right_shoulder = TriSwitchState(TriSwitchHandedness.right)
         self.imu = IMUState()
+        self.power = PowerState()
         self._ts = 0
 
     def think(self, hr: InputState, delta_ms: int) -> None:
@@ -491,6 +511,7 @@ class InputController:
         self.left_shoulder._update(self._ts, hr)
         self.right_shoulder._update(self._ts, hr)
         self.imu._update(self._ts, hr)
+        self.power._update(self._ts, hr)
 
     def _ignore_pressed(self) -> None:
         """

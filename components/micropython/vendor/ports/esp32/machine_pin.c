@@ -155,7 +155,7 @@ STATIC const machine_pin_obj_t machine_pin_obj[GPIO_NUM_MAX] = {
     {{&machine_pin_type}, GPIO_NUM_6}, // Badgelink
     {{&machine_pin_type}, GPIO_NUM_7}, // Badgelink
     {{NULL}, -1}, // 8
-    {{NULL}, -1}, // 9
+    {{&machine_pin_type}, GPIO_NUM_9}, // Battery ADC
     {{NULL}, -1}, // 10
     {{NULL}, -1}, // 11
     {{NULL}, -1}, // 12

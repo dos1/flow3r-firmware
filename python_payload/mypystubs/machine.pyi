@@ -1,30 +1,36 @@
-try:
-    from typing import Protocol
-except ImportError:
-    from typing_extensions import Protocol  # type: ignore
+from typing import Any
 
-class Pin(Protocol):
+class Pin:
     """
     See the official micropython docs for more details:
 
     https://docs.micropython.org/en/latest/library/machine.Pin.html
     """
 
-    IN: int
-    OUT: int
-    OPEN_DRAIN: int
-    PULL_UP: int
-    PULL_DOWN: int
-    IRQ_RISING: int = 1
-    IRQ_FALLING: int = 2
-    WAKE_LOW: int
-    WAKE_HIGH: int
-    DRIVE_0: int
-    DRIVE_1: int
-    DRIVE_2: int
-    DRIVE_3: int
+    IN: int = 1
+    OUT: int = 2
+    OPEN_DRAIN: int = 3
+    PULL_UP: int = 4
+    PULL_DOWN: int = 5
+    IRQ_RISING: int = 6
+    IRQ_FALLING: int = 7
+    WAKE_LOW: int = 8
+    WAKE_HIGH: int = 9
+    DRIVE_0: int = 10
+    DRIVE_1: int = 11
+    DRIVE_2: int = 12
+    DRIVE_3: int = 13
 
-    def __init__(self, id, mode=-1, pull=-1, *, value=None, drive=0, alt=-1):
+    def __init__(
+        self,
+        id: int,
+        mode: int = -1,
+        pull: int = -1,
+        *,
+        value: Any = None,
+        drive: int = 0,
+        alt: int = -1
+    ) -> None:
         """
         Available pins for the flow3r badge are:
 
@@ -35,17 +41,30 @@ class Pin(Protocol):
         * 17 (QWIIC SDA)
         * 45 (QWIIC SCL)
         """
-    def init(self, mode=-1, pull=-1, *, value=None, drive=0, alt=-1): ...
-    def value(self, x=None): ...
-    def __call__(self, x=None): ...
-    def on(self): ...
-    def off(self): ...
+    def init(
+        self,
+        mode: int = -1,
+        pull: int = -1,
+        *,
+        value: Any = None,
+        drive: int = 0,
+        alt: int = -1
+    ) -> None: ...
+    def value(self, x: Any = None) -> int: ...
+    def __call__(self, x: Any = None) -> None: ...
+    def on(self) -> None: ...
+    def off(self) -> None: ...
     def irq(
         self,
-        handler=None,
-        trigger=IRQ_FALLING | IRQ_RISING,
+        handler: Any = None,
+        trigger: Any = IRQ_FALLING | IRQ_RISING,
         *,
-        priority=1,
-        wake=None,
-        hard=False
-    ): ...
+        priority: int = 1,
+        wake: Any = None,
+        hard: bool = False
+    ) -> None: ...
+
+class ADC:
+    ATTN_11DB: int = 1
+    def __init__(self, p: Pin, atten: int = 0): ...
+    def read_uv(self) -> float: ...
