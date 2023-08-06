@@ -156,6 +156,7 @@ static void bl00mbox_audio_channel_render(bl00mbox_channel_t* chan,
         memset(out, 0, len * sizeof(int16_t));  // mute
         return;
     }
+    if (root == NULL) return; // clang garbage, undo asap
 
     int32_t acc[256];
     bool first = true;
@@ -177,7 +178,6 @@ static void bl00mbox_audio_channel_render(bl00mbox_channel_t* chan,
         root = root->next;
     }
 
-    if (root == NULL) return;
     for (uint16_t i = 0; i < len; i++) {
         if (adding) {
             out[i] =
