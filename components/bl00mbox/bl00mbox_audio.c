@@ -145,7 +145,11 @@ void bl00mbox_audio_bud_render(bl00mbox_bud_t* bud, uint16_t num_samples) {
 static void bl00mbox_audio_channel_render(bl00mbox_channel_t* chan,
                                           int16_t* out, uint16_t len,
                                           bool adding) {
-    if (render_pass_id == chan->render_pass_id) return;
+    if (adding) {
+        // ^ to make clang-tidy happy
+        if (render_pass_id == chan->render_pass_id) return;
+    }
+
     chan->render_pass_id = render_pass_id;
 
     bl00mbox_channel_root_t* root = chan->root_list;
@@ -156,7 +160,7 @@ static void bl00mbox_audio_channel_render(bl00mbox_channel_t* chan,
         memset(out, 0, len * sizeof(int16_t));  // mute
         return;
     }
-    if (root == NULL) return; // clang garbage, undo asap
+    if (root == NULL) return;  // clang garbage, undo asap
 
     int32_t acc[256];
     bool first = true;
