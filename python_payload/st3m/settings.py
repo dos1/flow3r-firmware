@@ -334,7 +334,7 @@ def save_all() -> None:
     log.info("Saved settings to flash")
 
 
-def build_menu(vm: ViewManager) -> SimpleMenu:
+def build_menu() -> SimpleMenu:
     """
     Return a SimpleMenu for all settings.
     """
@@ -342,4 +342,4 @@ def build_menu(vm: ViewManager) -> SimpleMenu:
     positions: List[MenuItem] = [
         mib,
     ] + [SettingsMenuItem(t) for t in all_settings]
-    return SettingsMenu(positions, vm)
+    return SettingsMenu(positions)

@@ -1,6 +1,7 @@
 import st3m
 
 from st3m import Responder
+from st3m import logging
 from st3m.goose import ABCBase, abstractmethod, List, Optional
 from st3m.input import InputState, InputController
 from st3m.ui.view import (
@@ -12,6 +13,9 @@ from st3m.ui.view import (
 )
 from st3m.ui.interactions import ScrollController
 from st3m.ui.ctx import Ctx
+
+
+log = logging.Log(__name__)
 
 
 class MenuItem(Responder):
@@ -62,6 +66,8 @@ class MenuItemForeground(MenuItem):
     def press(self, vm: Optional[ViewManager]) -> None:
         if vm is not None:
             vm.push(self._r, ViewTransitionSwipeLeft())
+        else:
+            log.warning(f"Could not foreground {self._r} as no ViewManager is present")
 
     def label(self) -> str:
         return self._label
@@ -90,6 +96,8 @@ class MenuItemBack(MenuItem):
     def press(self, vm: Optional[ViewManager]) -> None:
         if vm is not None:
             vm.pop(ViewTransitionSwipeRight())
+        else:
+            log.warning(f"Could not go back as no ViewManager is present")
 
     def label(self) -> str:
         return "Back"
@@ -115,13 +123,17 @@ class MenuController(ViewWithInputState):
         "_view_manager",
     )
 
-    def __init__(self, items: List[MenuItem], vm: Optional[ViewManager]) -> None:
+    def __init__(self, items: List[MenuItem]) -> None:
         self._items = items
         self._scroll_controller = ScrollController()
         self._scroll_controller.set_item_count(len(items))
-        self._view_manager = vm
+        self._view_manager: Optional[ViewManager] = None
 
         super().__init__()
+
+    def on_enter(self, vm: Optional["ViewManager"]) -> None:
+        self._view_manager = vm
+        super().on_enter(vm)
 
     def _parse_state(self) -> None:
         left = self.input.left_shoulder.left

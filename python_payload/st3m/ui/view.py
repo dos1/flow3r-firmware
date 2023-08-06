@@ -13,7 +13,7 @@ class View(Responder):
     ViewWithInputState class.
     """
 
-    def on_enter(self) -> None:
+    def on_enter(self, vm: Optional["ViewManager"]) -> None:
         """
         Called when the View has just become active. This is guaranteed to be
         called before think().
@@ -36,7 +36,7 @@ class ViewWithInputState(View):
     def __init__(self) -> None:
         self.input = InputController()
 
-    def on_enter(self) -> None:
+    def on_enter(self, vm: Optional["ViewManager"]) -> None:
         self.input._ignore_pressed()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
@@ -181,7 +181,7 @@ class ViewManager(Responder):
         """
         self._outgoing = self._incoming
         self._incoming = r
-        self._incoming.on_enter()
+        self._incoming.on_enter(self)
         self._overriden_vt = overide_vt
         if self._outgoing is None:
             return

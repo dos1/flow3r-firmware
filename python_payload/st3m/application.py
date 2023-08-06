@@ -12,6 +12,10 @@ class Application(ViewWithInputState):
     def on_exit(self) -> None:
         pass
 
+    def on_enter(self, vm: Optional[ViewManager]) -> None:
+        self._view_manager = vm
+        super().on_enter(vm)
+
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
 

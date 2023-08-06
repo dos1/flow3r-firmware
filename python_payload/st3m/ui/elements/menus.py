@@ -50,10 +50,10 @@ class SunMenu(MenuController):
         "_sun",
     )
 
-    def __init__(self, items: List[MenuItem], vm: ViewManager) -> None:
+    def __init__(self, items: List[MenuItem]) -> None:
         self._ts = 0
         self._sun = Sun()
-        super().__init__(items, vm)
+        super().__init__(items)
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
@@ -104,15 +104,13 @@ class FlowerMenu(MenuController):
         "_sun",
     )
 
-    def __init__(
-        self, items: List[MenuItem], vm: ViewManager, name: str = "flow3r"
-    ) -> None:
+    def __init__(self, items: List[MenuItem], name: str = "flow3r") -> None:
         self._ts = 0
         self.name = name
         self.ui = GroupRing(r=80)
         for item in items:
             self.ui.items_ring.append(FlowerIcon(label=item.label()))
-        super().__init__(items, vm)
+        super().__init__(items)
 
         self.icon = FlowerIcon(label=self.name)
         self.icon.rotation_time = -5000

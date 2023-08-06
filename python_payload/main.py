@@ -54,18 +54,9 @@ from apps.nick import app as nick
 from apps.cap_touch_demo import app as captouch_demo
 from apps.scroll_demo import app as scroll_demo
 
-
-# Set the view_managers for the apps, otherwise leaving the app (back) will not work
-worms._view_manager = vm
-harmonic._view_manager = vm
-melodic._view_manager = vm
-nick._view_manager = vm
-captouch_demo._view_manager = vm
-scroll_demo._view_manager = vm
-
 # Build menu structure
 
-menu_settings = settings.build_menu(vm)
+menu_settings = settings.build_menu()
 
 menu_music = SimpleMenu(
     [
@@ -76,7 +67,6 @@ menu_music = SimpleMenu(
         # MenuItemNoop("CrazySynth"),
         MenuItemNoop("NOOP Sequencer"),
     ],
-    vm,
 )
 
 menu_apps = SimpleMenu(
@@ -86,7 +76,6 @@ menu_apps = SimpleMenu(
         MenuItemForeground("worms", worms),
         MenuItemForeground("cap scroll", scroll_demo),
     ],
-    vm,
 )
 
 
@@ -95,7 +84,6 @@ menu_badge = SimpleMenu(
         MenuItemBack(),
         MenuItemForeground("nick", nick),
     ],
-    vm,
 )
 
 menu_system = SimpleMenu(
@@ -106,7 +94,6 @@ menu_system = SimpleMenu(
         MenuItemNoop("About"),
         MenuItemNoop("Reboot"),
     ],
-    vm,
 )
 
 menu_main = SunMenu(
@@ -116,7 +103,6 @@ menu_main = SunMenu(
         MenuItemForeground("Apps", menu_apps),
         MenuItemForeground("System", menu_system),
     ],
-    vm,
 )
 
 

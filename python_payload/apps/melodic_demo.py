@@ -3,8 +3,9 @@ from hardware import *
 import captouch
 import leds
 
-from st3m.goose import List
+from st3m.goose import List, Optional
 from st3m.input import InputState
+from st3m.ui.view import ViewManager
 from st3m.ui.ctx import Ctx
 
 octave = 0
@@ -94,7 +95,7 @@ class MelodicApp(Application):
         scope_draw(ctx)
         ctx.fill()
 
-    def on_enter(self) -> None:
+    def on_enter(self, vm: Optional[ViewManager]) -> None:
         foreground()
 
     def think(self, ins: InputState, delta_ms: int) -> None:

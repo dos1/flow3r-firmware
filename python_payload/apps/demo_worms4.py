@@ -4,18 +4,19 @@ import time
 import math
 
 # flow3r imports
-from st3m import application
 from st3m import Ctx, InputState
+from st3m.application import Application
 from st3m.property import BLUE, WHITE
 from st3m.goose import Optional
 from st3m.utils import xy_from_polar
+from st3m.ui.view import ViewManager
 
 
 tau = 2 * math.pi
 
 
 # Subclass Application
-class AppWorms(application.Application):
+class AppWorms(Application):
     def __init__(self, name: str) -> None:
         super().__init__(name)
 
@@ -40,9 +41,9 @@ class AppWorms(application.Application):
 
         self.just_shown = True
 
-    def on_enter(self) -> None:
+    def on_enter(self, vm: Optional[ViewManager]) -> None:
         # print("on foreground")
-        super().on_enter()
+        super().on_enter(vm)
         self.just_shown = True
 
     def draw(self, ctx: Ctx) -> None:
