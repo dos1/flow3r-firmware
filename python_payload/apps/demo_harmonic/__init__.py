@@ -5,9 +5,9 @@ blm = bl00mbox.Channel()
 import leds
 import hardware
 
-from st3m.ui.ctx import Ctx
 from st3m.goose import List
 from st3m.input import InputState
+from ctx import Context
 
 chords = [
     [-4, 0, 3, 8, 10],
@@ -52,7 +52,7 @@ class HarmonicApp(Application):
             self.chord = chords[i]
             leds.update()
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         i = self.color_intensity
         ctx.rgb(i, i, i).rectangle(-120, -120, 240, 240).fill()
 

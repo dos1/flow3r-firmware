@@ -4,7 +4,6 @@ import captouch
 import leds
 
 from st3m.application import Application
-from st3m.ui.ctx import Ctx
 from st3m.input import InputState
 
 

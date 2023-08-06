@@ -1,7 +1,7 @@
 from st3m import application, logging
 from st3m.goose import List
-from st3m.ui.ctx import Ctx
 from st3m.input import InputState
+from ctx import Context
 
 log = logging.Log(__name__, level=logging.INFO)
 log.info("import")
@@ -19,7 +19,7 @@ class Dot:
         self.imag = imag
         self.real = real
 
-    def draw(self, i: int, ctx: Ctx) -> None:
+    def draw(self, i: int, ctx: Context) -> None:
         imag = self.imag
         real = self.real
         size = self.size
@@ -67,7 +67,7 @@ class CapTouchDemo(application.Application):
 
             self.dots.append(Dot(size, x.imag, x.real))
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         # print(self.last_calib)
 
         # TODO (q3k) bug: we have to do this, otherwise we have horrible blinking

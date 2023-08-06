@@ -1,8 +1,8 @@
 from st3m.application import Application
 from st3m.property import PUSH_RED, GO_GREEN, BLACK
 from st3m.goose import Dict, Any
-from st3m.ui.ctx import Ctx
 from st3m.input import InputState
+from ctx import Context
 import leds
 
 import json
@@ -56,7 +56,7 @@ class NickApp(Application):
         self._filename = "/flash/nick.json"
         self._config = Configuration.load(self._filename)
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         ctx.text_align = ctx.CENTER
         ctx.text_baseline = ctx.MIDDLE
         ctx.font_size = self._config.size

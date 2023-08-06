@@ -9,7 +9,7 @@ import leds
 from st3m.goose import List, Optional
 from st3m.input import InputState
 from st3m.ui.view import ViewManager
-from st3m.ui.ctx import Ctx
+from ctx import Context
 
 octave = 0
 synths = []
@@ -92,7 +92,7 @@ class MelodicApp(Application):
         super().__init__(name)
         init()
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         ctx.rgb(1, 1, 1).rectangle(-120, -120, 240, 240).fill()
         ctx.rgb(0, 0, 0)
         scope_draw(ctx)
