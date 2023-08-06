@@ -379,7 +379,10 @@ class Bud:
 
 
 class ChannelOverview:
-    def __repr__(self, nonempty=False):
+    def __init__(self, nonempty=False):
+        self._nonempty = nonempty
+    def __repr__(self):
+        nonempty = self._nonempty
         ret = (
             "[channel list]\n  foreground: [channel "
             + str(sys_bl00mbox.channel_get_foreground())
