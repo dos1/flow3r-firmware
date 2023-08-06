@@ -27,7 +27,7 @@ void st3m_leds_set_single_hsv(uint8_t index, float hue, float sat, float value);
 void st3m_leds_set_all_rgb(uint8_t red, uint8_t green, uint8_t blue);
 void st3m_leds_set_all_hsv(float hue, float sat, float value);
 
-// Set/get global LED brightness. Default 69.
+// Set/get global LED brightness, 0-255. Default 69.
 //
 // Only affects the LEDs after st3m_leds_update, or if autoupdate is enabled.
 void st3m_leds_set_brightness(uint8_t brightness);

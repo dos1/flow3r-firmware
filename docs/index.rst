@@ -26,6 +26,7 @@ Welcome to flow3r's documentation!
    api/captouch.rst
    api/hardware.rst
    api/kernel.rst
+   api/leds.rst
    api/synth.rst
    api/ctx.rst
 

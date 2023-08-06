@@ -26,14 +26,14 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_leds_get_brightness_obj,
                                  mp_leds_get_brightness);
 
 STATIC mp_obj_t mp_leds_set_auto_update(mp_obj_t on) {
-    st3m_leds_set_auto_update(mp_obj_get_int(on));
+    st3m_leds_set_auto_update(mp_obj_is_true(on));
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_leds_set_auto_update_obj,
                                  mp_leds_set_auto_update);
 
 STATIC mp_obj_t mp_leds_get_auto_update() {
-    return mp_obj_new_int(st3m_leds_get_auto_update());
+    return mp_obj_new_bool(st3m_leds_get_auto_update());
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_leds_get_auto_update_obj,
                                  mp_leds_get_auto_update);
