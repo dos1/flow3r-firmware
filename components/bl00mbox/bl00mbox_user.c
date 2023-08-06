@@ -237,9 +237,7 @@ static bool weak_delete_connection(bl00mbox_connection_t *conn) {
         radspa_signal_t *tx =
             radspa_signal_get_by_index(bud->plugin, conn->signal_index);
         if (tx != NULL) {
-            bl00mbox_audio_waitfor_pointer_change(
-                (void **)&(tx->buffer),
-                NULL);  // void**cast only bc dumb pipeline sorry
+            bl00mbox_audio_waitfor_pointer_change(&(tx->buffer), NULL);
         }
     }
 
