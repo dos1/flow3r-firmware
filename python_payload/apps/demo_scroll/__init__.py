@@ -4,12 +4,13 @@ import time
 import math
 
 # flow3r imports
-from st3m import Ctx, InputState
+from st3m import InputState
 from st3m.application import Application
 from st3m.property import BLUE, WHITE
 from st3m.goose import Optional
 from st3m.utils import xy_from_polar, tau
 from st3m.ui.interactions import CapScrollController
+from ctx import Context
 
 
 class ScrollDemo(Application):
@@ -19,7 +20,7 @@ class ScrollDemo(Application):
         super().__init__(name)
         self.scroll = CapScrollController()
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         ctx.save()
         ctx.move_to(0, 0)
         ctx.gray(0)

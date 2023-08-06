@@ -4,12 +4,13 @@ import time
 import math
 
 # flow3r imports
-from st3m import Ctx, InputState
+from st3m import InputState
 from st3m.application import Application
 from st3m.property import BLUE, WHITE
 from st3m.goose import Optional
 from st3m.utils import xy_from_polar
 from st3m.ui.view import ViewManager
+from ctx import Context
 
 
 tau = 2 * math.pi
@@ -46,7 +47,7 @@ class AppWorms(Application):
         super().on_enter(vm)
         self.just_shown = True
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         if self.bufn <= 5:
             # TODO (q3k) bug: we have to do this, otherwise we have horrible blinking
 
@@ -105,7 +106,7 @@ class Worm:
         # (self.dx,self.dy) = xy_from_polar(1,self.direction)
         self._lastdist = 0.0
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         ctx.rgb(*self.color)
         ctx.round_rectangle(
             self.x - self.size / 2,
