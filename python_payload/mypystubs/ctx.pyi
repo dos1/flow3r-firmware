@@ -5,19 +5,19 @@ except ImportError:
 
 class Context(Protocol):
     """
-    Ctx is the rendering/rasterization API used by st3m.
+    Context is the rendering/rasterization API used by st3m.
 
     It's a WebCanvas-style vector API, with an implicit pen which can be moved
     and can draw lines, arcs, text, etc.
 
-    In st3m, the Ctx object is backed by a drawlist generator. That is, any
+    In st3m, the Context object is backed by a drawlist generator. That is, any
     operation performed on the ctx object will cause an entry to be added to an
     in-memory draw list. Then, when the rasterizer is ready, it will rasterize
     said drawlist to pixels in a separate thread.
 
-        A Ctx object is passed to all draw() calls to Responder. This object should
-        only be used within the lifecycle of the draw method and must not be
-        persisted.
+    A Context object is passed to all draw() calls to Responder. This object
+    should only be used within the lifecycle of the draw method and must not be
+    persisted.
 
     For more information, see: https://ctx.graphics/
     """
