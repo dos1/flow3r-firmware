@@ -1,5 +1,6 @@
 import captouch
 import bl00mbox
+
 blm = bl00mbox.Channel()
 import leds
 import hardware
@@ -17,6 +18,7 @@ chords = [
 ]
 
 from st3m.application import Application
+
 
 class HarmonicApp(Application):
     def __init__(self, name: str) -> None:
@@ -39,7 +41,7 @@ class HarmonicApp(Application):
             synth.fm(1.5)
 
         self._set_chord(3)
-        self.prev_captouch = [0]*10
+        self.prev_captouch = [0] * 10
 
     def _set_chord(self, i: int) -> None:
         hue = int(72 * (i + 0.5)) % 360

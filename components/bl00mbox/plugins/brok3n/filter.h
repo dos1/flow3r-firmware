@@ -15,5 +15,5 @@ typedef struct {
 } filter_data_t;
 
 extern radspa_descriptor_t filter_desc;
-radspa_t * filter_create(uint32_t init_var);
-void filter_run(radspa_t * osc, uint16_t num_samples, uint32_t render_pass_id);
+radspa_t* filter_create(uint32_t init_var);
+void filter_run(radspa_t* osc, uint16_t num_samples, uint32_t render_pass_id);

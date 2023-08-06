@@ -19,5 +19,6 @@ typedef struct {
 } sequencer_data_t;
 
 extern radspa_descriptor_t sequencer_desc;
-radspa_t * sequencer_create(uint32_t init_var);
-void sequencer_run(radspa_t * osc, uint16_t num_samples, uint32_t render_pass_id);
+radspa_t* sequencer_create(uint32_t init_var);
+void sequencer_run(radspa_t* osc, uint16_t num_samples,
+                   uint32_t render_pass_id);

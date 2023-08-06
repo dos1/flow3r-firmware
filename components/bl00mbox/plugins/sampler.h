@@ -9,6 +9,5 @@ typedef struct {
 } sampler_data_t;
 
 extern radspa_descriptor_t sampler_desc;
-radspa_t * sampler_create(uint32_t init_var);
-void sampler_run(radspa_t * osc, uint16_t num_samples, uint32_t render_pass_id);
-
+radspa_t* sampler_create(uint32_t init_var);
+void sampler_run(radspa_t* osc, uint16_t num_samples, uint32_t render_pass_id);

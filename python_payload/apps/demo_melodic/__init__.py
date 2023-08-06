@@ -1,4 +1,5 @@
 import bl00mbox
+
 blm = bl00mbox.Channel()
 
 from hardware import *
@@ -13,6 +14,7 @@ from st3m.ui.ctx import Ctx
 octave = 0
 synths = []
 scale = [0, 2, 4, 5, 7, 9, 11]
+
 
 def highlight_bottom_petal(num: int, r: int, g: int, b: int) -> None:
     start = 4 + 8 * num

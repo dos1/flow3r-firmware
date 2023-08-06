@@ -1,8 +1,9 @@
-#SPDX-License-Identifier: CC0-1.0
+# SPDX-License-Identifier: CC0-1.0
 
 import sys_bl00mbox
 
-class _Plugin():
+
+class _Plugin:
     def __init__(self, index):
         self.index = index
         self.plugin_id = sys_bl00mbox.plugin_index_get_id(self.index)
@@ -10,12 +11,22 @@ class _Plugin():
         self.description = sys_bl00mbox.plugin_index_get_description(self.index)
 
     def __repr__(self):
-        return "[plugin " + str(self.plugin_id) + "] " + self.name + ": " + self.description
+        return (
+            "[plugin "
+            + str(self.plugin_id)
+            + "] "
+            + self.name
+            + ": "
+            + self.description
+        )
 
-class _Plugins():
+
+class _Plugins:
     pass
 
+
 plugins = _Plugins()
+
 
 def _fill():
     plugins_list = {}
@@ -24,5 +35,6 @@ def _fill():
 
     for name, value in plugins_list.items():
         setattr(plugins, name, _Plugin(value))
+
 
 _fill()
