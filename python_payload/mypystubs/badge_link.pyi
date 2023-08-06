@@ -1,7 +1,5 @@
 """
-Badgelink API.
-
-Badgelink allows for multiple flow3r badges to connect together over the TRRS
+Badge Link allows for multiple flow3r badges to connect together over the TRS
 jacks and exchange data. It also allows for flow3r badges to access the outside
 world over the same connector, even if that world is outside of the realm of
 usual audio frequencies. Think: eurorack control voltages, MIDI, ...
@@ -26,8 +24,10 @@ True
 >>> badge_link.right.active()
 True
 >>> badge_link.right.tip
+JackPin(right tip)
+>>> badge_link.right.tip.pin
 Pin(4)
->>> rt = badge_link.right.tip
+>>> rt = badge_link.right.tip.pin
 >>> rt.init(mode=machine.Pin.OUT)
 >>> rt.on()
 """
