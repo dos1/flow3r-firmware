@@ -1,4 +1,7 @@
-from bl00mbox import tinysynth
+import bl00mbox
+
+blm = bl00mbox.Channel()
+
 from hardware import *
 import captouch
 import leds
@@ -9,7 +12,7 @@ from st3m.ui.view import ViewManager
 from st3m.ui.ctx import Ctx
 
 octave = 0
-synths: List[tinysynth] = []
+synths = []
 scale = [0, 2, 4, 5, 7, 9, 11]
 
 
@@ -71,9 +74,9 @@ def run(ins: InputState) -> None:
 def init() -> None:
     global synths
     for i in range(1):
-        synths += [tinysynth(440)]
+        synths += [blm.new_patch(bl00mbox.patches.tinysynth_fm)]
     for synth in synths:
-        synth.decay_ms(100)
+        synth.decay(100)
 
 
 def foreground() -> None:

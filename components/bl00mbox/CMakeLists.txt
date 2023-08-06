@@ -1,10 +1,23 @@
+#SPDX-License-Identifier: CC0-1.0
+
 idf_component_register(
     SRCS
         bl00mbox.c
-        buds/tinysynth/tinysynth.c
+        bl00mbox_audio.c
+        bl00mbox_user.c
+        bl00mbox_plugin_registry.c
+        bl00mbox_radspa_requirements.c
+        plugins/trad_synth/trad_synth.c
+        plugins/ampliverter.c
+        plugins/sampler.c
+        plugins/delay.c
+        plugins/sequencer.c
+        radspa/radspa_helpers.c
     INCLUDE_DIRS
         include
-        buds/tinysynth
+        plugins/trad_synth
+        plugins
+        radspa
     REQUIRES
         st3m
 )
