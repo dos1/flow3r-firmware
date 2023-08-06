@@ -9,6 +9,8 @@ typedef enum {
     st3m_mode_kind_repl = 3,
     st3m_mode_kind_disk = 4,
     st3m_mode_kind_fatal = 5,
+    st3m_mode_kind_exception = 6,
+    st3m_mode_kind_mpremote = 7,
 } st3m_mode_kind_t;
 
 typedef struct {

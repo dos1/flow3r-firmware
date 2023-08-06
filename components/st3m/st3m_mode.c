@@ -9,6 +9,7 @@
 
 #include "st3m_gfx.h"
 #include "st3m_io.h"
+#include "st3m_term.h"
 
 static st3m_mode_t _mode = {
     .kind = st3m_mode_kind_starting,
@@ -62,17 +63,27 @@ void st3m_mode_update_display(bool *restartable) {
         case st3m_mode_kind_disk:
             st3m_gfx_splash("Disk Mode");
             break;
+        case st3m_mode_kind_exception:
+            if (!_mode.shown) {
+                _mode.shown = true;
+                st3m_term_draw(6);
+            }
+            if (restartable != NULL) *restartable = true;
+            break;
         case st3m_mode_kind_repl:
+        case st3m_mode_kind_mpremote:
             if (!_mode.shown) {
                 _mode.shown = true;
                 const char *lines[] = {
-                    "Send Ctrl-D over USB",
-                    "or press left shoulder button",
+                    "Send Ctrl-D over USB or",
+                    "press left shoulder button",
                     "to restart.",
                     NULL,
                 };
                 st3m_gfx_textview_t tv = {
-                    .title = "In REPL",
+                    .title = _mode.kind == st3m_mode_kind_repl
+                                 ? "In REPL"
+                                 : "mpremote active",
                     .lines = lines,
                 };
                 st3m_gfx_show_textview(&tv);

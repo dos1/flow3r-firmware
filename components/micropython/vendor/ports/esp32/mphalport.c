@@ -34,6 +34,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_timer.h"
+#include "st3m_term.h"
 
 #include "py/obj.h"
 #include "py/objstr.h"
@@ -122,12 +123,14 @@ int mp_hal_stdin_rx_chr(void) {
     }
 }
 
+
 void mp_hal_stdout_tx_strn(const char *str, size_t len) {
     // Only release the GIL if many characters are being sent
     bool release_gil = len > 20;
     if (release_gil) {
         MP_THREAD_GIL_EXIT();
     }
+    st3m_term_feed(str, len);
     fwrite(str, len, 1, stdout);
     if (release_gil) {
         MP_THREAD_GIL_ENTER();

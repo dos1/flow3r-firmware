@@ -119,7 +119,7 @@ soft_reset:
 
     // run boot-up scripts
     pyexec_frozen_module("_boot.py");
-    pyexec_file_if_exists("boot.py");
+    int ret = pyexec_file_if_exists("boot.py");
     if (pyexec_mode_kind == PYEXEC_MODE_FRIENDLY_REPL) {
         int ret = pyexec_file_if_exists("/flash/sys/main.py");
         if (ret & PYEXEC_FORCED_EXIT) {
@@ -127,7 +127,15 @@ soft_reset:
         }
     }
 
-    st3m_mode_set(st3m_mode_kind_repl, NULL);
+    if (ret == 1)
+    {
+      if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL)
+          st3m_mode_set(st3m_mode_kind_mpremote, NULL);
+      else
+          st3m_mode_set(st3m_mode_kind_repl, NULL);
+    }
+    else
+      st3m_mode_set(st3m_mode_kind_exception, NULL);
 
     for (;;) {
         if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
