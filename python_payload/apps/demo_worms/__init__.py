@@ -147,6 +147,3 @@ class Worm:
             self.direction = -math.atan2(dy, dx)
             self.mutate()
         self._lastdist = dist
-
-
-app = AppWorms("worms")

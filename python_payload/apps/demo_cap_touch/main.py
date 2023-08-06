@@ -84,6 +84,3 @@ class CapTouchDemo(application.Application):
     #    log.info("Performing captouch autocalibration")
     #    captouch.calibration_request()
     #    self.last_calib = 50
-
-
-app = CapTouchDemo("cap touch")

@@ -96,11 +96,9 @@ class MelodicApp(Application):
         ctx.fill()
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
+        super().on_enter(vm)
         foreground()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
         run(ins)
-
-
-app = MelodicApp("melodic")

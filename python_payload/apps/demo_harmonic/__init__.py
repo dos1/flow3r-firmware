@@ -90,6 +90,3 @@ class HarmonicApp(Application):
                     self.synths[k].stop()
                     self.synths[k + 5].stop()
                     self.synths[k + 10].stop()
-
-
-app = HarmonicApp("harmonic")

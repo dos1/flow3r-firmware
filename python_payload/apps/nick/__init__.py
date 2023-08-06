@@ -91,6 +91,3 @@ class NickApp(Application):
         self._led += delta_ms / 45
         if self._led >= 40:
             self._led = 0
-
-
-app = NickApp("nick")

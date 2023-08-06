@@ -18,6 +18,7 @@ settings.load_all()
 
 from st3m.ui.view import View, ViewManager, ViewTransitionBlend
 from st3m.ui.menu import (
+    MenuItem,
     MenuItemBack,
     MenuItemForeground,
     MenuItemNoop,
@@ -44,47 +45,21 @@ leds.set_rgb(0, 255, 0, 0)
 
 vm = ViewManager(ViewTransitionBlend())
 
+from st3m.application import discover_bundles
 
-# Preload all applications.
-# TODO(q3k): only load these on demand.
-from apps.demo_worms4 import app as worms
-from apps.harmonic_demo import app as harmonic
-from apps.melodic_demo import app as melodic
-from apps.nick import app as nick
-from apps.cap_touch_demo import app as captouch_demo
-from apps.scroll_demo import app as scroll_demo
+bundles = discover_bundles("/flash/sys/apps")
 
 # Build menu structure
 
 menu_settings = settings.build_menu()
 
-menu_music = SimpleMenu(
-    [
-        MenuItemBack(),
-        MenuItemForeground("Harmonic", harmonic),
-        MenuItemForeground("Melodic", melodic),
-        # MenuItemNoop("TinySynth"),
-        # MenuItemNoop("CrazySynth"),
-        MenuItemNoop("NOOP Sequencer"),
-    ],
-)
 
-menu_apps = SimpleMenu(
-    [
-        MenuItemBack(),
-        MenuItemForeground("captouch", captouch_demo),
-        MenuItemForeground("worms", worms),
-        MenuItemForeground("cap scroll", scroll_demo),
-    ],
-)
+def _make_bundle_menu(kind: str) -> SimpleMenu:
+    entries: List[MenuItem] = [MenuItemBack()]
+    for bundle in bundles:
+        entries += bundle.menu_entries(kind)
+    return SimpleMenu(entries)
 
-
-menu_badge = SimpleMenu(
-    [
-        MenuItemBack(),
-        MenuItemForeground("nick", nick),
-    ],
-)
 
 menu_system = SimpleMenu(
     [
@@ -98,9 +73,9 @@ menu_system = SimpleMenu(
 
 menu_main = SunMenu(
     [
-        MenuItemForeground("Badge", menu_badge),
-        MenuItemForeground("Music", menu_music),
-        MenuItemForeground("Apps", menu_apps),
+        MenuItemForeground("Badge", _make_bundle_menu("Badge")),
+        MenuItemForeground("Music", _make_bundle_menu("Music")),
+        MenuItemForeground("Apps", _make_bundle_menu("Apps")),
         MenuItemForeground("System", menu_system),
     ],
 )
