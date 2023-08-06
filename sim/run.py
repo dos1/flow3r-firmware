@@ -41,6 +41,7 @@ class UnderscoreFinder(importlib.abc.MetaPathFinder):
 
 sys.path = [
     os.path.join(projectpath, "python_payload"),
+    os.path.join(projectpath, "components", "micropython", "frozen"),
     os.path.join(projectpath, "sim", "fakes"),
 ]
 
@@ -58,5 +59,47 @@ sys.path_importer_cache.clear()
 importlib.invalidate_caches()
 
 sys.modules["time"] = time
+
+simpath = "/tmp/flow3r-sim"
+print(f"Using {simpath} as /flash mount")
+try:
+    os.mkdir(simpath)
+except:
+    pass
+
+
+def _path_replace(p):
+    if p.startswith("/flash/sys"):
+        p = p[len("/flash/sys") :]
+        p = projectpath + "/python_payload" + p
+        return p
+    if p.startswith("/flash"):
+        p = p[len("/flash") :]
+        p = simpath + p
+        return p
+
+    return p
+
+
+_listdir_orig = os.listdir
+
+
+def _listdir_override(path):
+    return _listdir_orig(_path_replace(path))
+
+
+os.listdir = _listdir_override
+
+import builtins
+
+_open_orig = builtins.open
+
+
+def _open_override(file, *args, **kwargs):
+    file = _path_replace(file)
+    return _open_orig(file, *args, **kwargs)
+
+
+builtins.open = _open_override
 
 import main
