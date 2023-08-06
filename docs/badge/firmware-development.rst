@@ -36,10 +36,10 @@ For running the simulator, you'll need Python 3 with pygame and wasmer:
 ::
 
 	$ python3 -m venv venv
-	$ venv/bin/pip install pygame
-	$ venv/bin/pip install wasmer
-	$ venv/bin/pip install wasmer-compiler-cranelift
 	$ . venv/bin/activate
+	$ pip install pygame wasmer wasmer-compiler-cranelift
+
+If using python 3.11, for some reason the wasmer developers haven't published working wheels. We have `unofficial builds here <https://flow3r.garden/tmp/wasmer-py311/>`_.
 
 For Python development, you're also encouraged to use mypy for typechecks. It should be available in your distribution repositories.
 
