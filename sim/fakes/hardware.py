@@ -2,6 +2,7 @@ import math
 import os
 import time
 import itertools
+import sys
 
 import pygame
 
@@ -13,6 +14,10 @@ screen = pygame.display.set_mode(size=(screen_w, screen_h))
 simpath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 bgpath = os.path.join(simpath, "background.png")
 background = pygame.image.load(bgpath)
+
+
+SCREENSHOT = False
+SCREENSHOT_DELAY = 5
 
 
 class Input:
@@ -465,6 +470,16 @@ def display_update(subctx):
     fb = ctx._wasm._i.exports.memory.uint8_view(fbp)
     _sim.render_display(fb)
     _sim.render_gui_now()
+
+    global SCREENSHOT
+    global SCREENSHOT_DELAY
+    if SCREENSHOT:
+        SCREENSHOT_DELAY -= 1
+        if SCREENSHOT_DELAY <= 0:
+            path = os.curdir + "/flow3r.png"
+            pygame.image.save(screen, path)
+            print("Saved screenshot to ", path)
+            sys.exit(0)
 
     fbm.put(fbp, c)
 

@@ -107,4 +107,9 @@ def _stat(path):
 
 os.stat = _stat
 
+if len(sys.argv) >= 2 and sys.argv[1] == "screenshot":
+    import hardware
+
+    hardware.SCREENSHOT = True
+
 import main

@@ -70,6 +70,15 @@ build-p6:
     paths: ['build/flow3r.elf']
     expire_in: 5 hours
 
+simulate:
+  stage: build
+  script:
+    - python3 sim/run.py screenshot
+  artifacts:
+    expose_as: 'Smulator Screenshot'
+    paths: ['flow3r.png']
+    expire_in: 5 hours
+
 pages:
   stage: deploy
   only:
