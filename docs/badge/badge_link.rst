@@ -54,7 +54,8 @@ There are three competing arrangements for this:
 
  * MIDI Type A: Tip is sink/data, ring is source/Vcc.
  * MIDI Type B: Ring is sink/data, tip is source/Vcc.
- * TS / Non-TRS / Type C: Like type B, but ring and sleeve are shorted.
+ * TS / Non-TRS / Type C: Like type B, but ring and sleeve are shorted. Not
+   recommended.
 
 See https://minimidi.world/ for more details.
 
