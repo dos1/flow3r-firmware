@@ -17,10 +17,10 @@
 ///  - number: The FreeRTOS task number
 ///  - stack_left: High water mark of stack usage by task, ie. highest ever
 ///                recorded use of stack. The units seem arbitrary.
-///  - run_time: Number of times this task has been recorded to been scheduled
-///              on a core. The units are arbitrary and should only be used
-///              comparatively against other task runtimes, and the global total
-///              runtime value from scheduler_stats.
+///  - run_time: The run time allocated to this task so far, as defined by the
+///              FreeRTOS run time stats clock. The units are arbitrary and
+///              should only be used comparatively against other task runtimes,
+///              and the global total runtime value from scheduler_stats.
 ///  - state: one of kernel.{RUNNING,READY,BLOCKED,SUSPENDED,DELETED,INVALID}
 ///  - core_affinity: bitmask of where this task is allowed to be scheduled. Bit
 ///                   0 is core 0, bit 1 is core 1. The value 0b11 (3) means the
@@ -104,12 +104,12 @@ MP_DEFINE_CONST_OBJ_TYPE(task_type, MP_QSTR_task, MP_TYPE_FLAG_NONE, print,
                          task_print, attr, task_attr);
 
 /// snapshot of the FreeRTOS scheduler state. Will not update dynamically,
-/// instead needs to be re-created by calling scheduler_snapsot() again.
+/// instead needs to be re-created by calling scheduler_snapshot() again.
 ///
 /// Properties:
 ///  - tasks: list of tasks
-///  - total_runtime: number of times that the task scheduling measurement has
-///                   been performed.
+///  - total_runtime: the total run time since boot as defined by the FreeRTOS
+///                   run time stats clock
 typedef struct _scheduler_snapshot_obj_t {
     mp_obj_base_t base;
 
@@ -215,6 +215,9 @@ STATIC void heap_kind_stats_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
         return;
     }
     switch (attr) {
+        case MP_QSTR_kind:
+            dest[0] = MP_OBJ_NEW_QSTR(self->kind);
+            break;
         case MP_QSTR_total_free_bytes:
             dest[0] = mp_obj_new_int_from_uint(self->info.total_free_bytes);
             break;
@@ -277,7 +280,7 @@ MP_DEFINE_CONST_OBJ_TYPE(heap_stats_type, MP_QSTR_heap_stats, MP_TYPE_FLAG_NONE,
 STATIC mp_obj_t mp_heap_stats(void) {
     mp_obj_t general =
         heap_kind_stats_from_caps(MP_QSTR_general, MALLOC_CAP_DEFAULT);
-    mp_obj_t dma = heap_kind_stats_from_caps(MP_QSTR_general, MALLOC_CAP_DMA);
+    mp_obj_t dma = heap_kind_stats_from_caps(MP_QSTR_dma, MALLOC_CAP_DMA);
 
     heap_stats_obj_t *stats = m_new_obj(heap_stats_obj_t);
     stats->base.type = &heap_stats_type;
