@@ -381,6 +381,7 @@ class Bud:
 class ChannelOverview:
     def __init__(self, nonempty=False):
         self._nonempty = nonempty
+
     def __repr__(self):
         nonempty = self._nonempty
         ret = (
