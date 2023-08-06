@@ -37,16 +37,11 @@ try:
 except ImportError:
     from typing_extensions import Protocol
 
-class Pin(Protocol):
-    """
-    TODO(q3k): properly define in machine.pyi
-    """
-
-    pass
+import machine
 
 class JackPin(Protocol):
     @property
-    def tip(self) -> Pin:
+    def pin(self) -> machine.Pin:
         """
         Return the GPIO Pin object for this jack pin.
 
