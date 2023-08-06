@@ -5,17 +5,26 @@ import leds
 
 from st3m.application import Application
 from st3m.input import InputState
+from st3m.goose import Tuple
+from ctx import Context
 
 
 class Dot:
-    def __init__(self, sizex, sizey, imag, real, col):
+    def __init__(
+        self,
+        sizex: float,
+        sizey: float,
+        imag: float,
+        real: float,
+        col: Tuple[float, float, float],
+    ) -> None:
         self.sizex = sizex
         self.sizey = sizey
         self.imag = imag
         self.real = real
         self.col = col
 
-    def draw(self, i, ctx):
+    def draw(self, i: int, ctx: Context) -> None:
         imag = self.imag
         real = self.real
         sizex = self.sizex
@@ -47,14 +56,11 @@ class SimpleDrums(Application):
         self.seq.bpm = 80
         self.blm.background_mute_override = True
 
-    def _highlight_petal(self, num, r, g, b):
+    def _highlight_petal(self, num: int, r: int, g: int, b: int) -> None:
         for i in range(5):
             leds.set_rgb((4 * num - i + 2) % 40, r, g, b)
 
-    def on_foreground(self):
-        pass
-
-    def _track_col(self, track, smol=False):
+    def _track_col(self, track: int) -> Tuple[int, int, int]:
         rgb = (20, 20, 20)
         if track == 0:
             rgb = (0, 255, 0)
@@ -62,11 +68,9 @@ class SimpleDrums(Application):
             rgb = (0, 0, 255)
         elif track == 2:
             rgb = (255, 0, 0)
-        if smol:
-            rgb = [x / 256 for x in rgb]
         return rgb
 
-    def draw(self, ctx):
+    def draw(self, ctx: Context) -> None:
         dots = []
         groupgap = 4
         for i in range(4):
@@ -82,7 +86,8 @@ class SimpleDrums(Application):
                 )
 
         for track in range(3):
-            rgb = self._track_col(track, smol=True)
+            rgb = self._track_col(track)
+            rgbf = (rgb[0] / 256, rgb[1] / 256, rgb[2] / 256)
             y = 12 * (track - 1)
             for i in range(16):
                 trigger_state = self.seq.trigger_state(track, i)
@@ -92,7 +97,7 @@ class SimpleDrums(Application):
                 x = 12 * (7.5 - i)
                 x += groupgap * (1.5 - (i // 4))
                 x = int(x)
-                dots.append(Dot(size, size, x, y, rgb))
+                dots.append(Dot(size, size, x, y, rgbf))
 
         dots.append(Dot(1, 40, 0, 0, (0.5, 0.5, 0.5)))
         dots.append(Dot(1, 40, 4 * 12 + groupgap, 0, (0.5, 0.5, 0.5)))

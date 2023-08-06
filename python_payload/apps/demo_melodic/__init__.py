@@ -12,7 +12,7 @@ from st3m.ui.view import ViewManager
 from ctx import Context
 
 octave = 0
-synths = []
+synths: List[bl00mbox.patches.tinysynth_fm] = []
 scale = [0, 2, 4, 5, 7, 9, 11]
 
 
