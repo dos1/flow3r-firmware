@@ -5,6 +5,7 @@ from importlib.machinery import PathFinder, BuiltinImporter
 import importlib.util
 import os
 import sys
+import builtins
 
 
 projectpath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -81,25 +82,29 @@ def _path_replace(p):
     return p
 
 
-_listdir_orig = os.listdir
+def _mkmock(fun):
+    orig = fun
+
+    def _wrap(path, *args, **kwargs):
+        path = _path_replace(path)
+        return orig(path, *args, **kwargs)
+
+    return _wrap
 
 
-def _listdir_override(path):
-    return _listdir_orig(_path_replace(path))
+os.listdir = _mkmock(os.listdir)
+os.stat = _mkmock(os.stat)
+builtins.open = _mkmock(builtins.open)
+
+orig_stat = os.stat
 
 
-os.listdir = _listdir_override
-
-import builtins
-
-_open_orig = builtins.open
-
-
-def _open_override(file, *args, **kwargs):
-    file = _path_replace(file)
-    return _open_orig(file, *args, **kwargs)
+def _stat(path):
+    res = orig_stat(path)
+    # lmao
+    return (res.st_mode, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
 
-builtins.open = _open_override
+os.stat = _stat
 
 import main
