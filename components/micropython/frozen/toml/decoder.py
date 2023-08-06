@@ -11,28 +11,13 @@ else:
     unichr = chr
 
 
-def _detect_pathlib_path(p):
-    if (3, 4) <= sys.version_info:
-        import pathlib
-
-        if isinstance(p, pathlib.PurePath):
-            return True
-    return False
-
-
 def _ispath(p):
     if isinstance(p, (bytes, basestring)):
         return True
-    return _detect_pathlib_path(p)
+    return False
 
 
 def _getpath(p):
-    if (3, 6) <= sys.version_info:
-        import os
-
-        return os.fspath(p)
-    if _detect_pathlib_path(p):
-        return str(p)
     return p
 
 
