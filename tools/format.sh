@@ -5,7 +5,8 @@ set -e -x
 black \
     python_payload \
     sim \
-    tools
+    tools \
+    components/micropython/frozen
 
 # C: clang-format
 find . \
