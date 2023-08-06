@@ -1,0 +1,22 @@
+{
+  "name": "flow3r-webflasher",
+  "version": "1.0.0",
+  "description": "Web flasher tool for the flow3r Badge",
+  "main": "main.js",
+  "author": "flow3r Devs",
+  "scripts": {
+    "clean": "rm -rf ./dist/*",
+    "build": "mkdir -p dist && cp -r static/* dist/ && npx esbuild src/main.ts --bundle --loader:.ts=ts --target=chrome115 --outfile=dist/bundle.js",
+    "copy_firmware": "cp ../recovery/build/bootloader/bootloader.bin dist/api/bootloader.bin && cp ../recovery/build/partition_table/partition-table.bin dist/api/partition-table.bin && cp ../recovery/build/flow3r-recovery.bin dist/api/flow3r-recovery.bin && cp ../build/flow3r.bin dist/api/flow3r.bin",
+    "serve": "npm run copy_firmware && http-server -a 127.0.0.1 dist"
+  },
+  "devDependencies": {
+    "@types/dom-serial": "^1.0.3",
+    "esbuild": "^0.18.18",
+    "http-server": "^14.1.1",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "esptool-js": "^0.3.0"
+  }
+}

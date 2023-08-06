@@ -1,0 +1,27 @@
+[
+    {
+        "name": "local",
+        "partitions": [
+            {
+                "name": "bootloader",
+                "url": "http://127.0.0.1:8080/api/bootloader.bin",
+                "offset": "0x0"
+            },
+            {
+                "name": "partition-table",
+                "url": "http://127.0.0.1:8080/api/partition-table.bin",
+                "offset": "0x8000"
+            },
+            {
+                "name": "recovery",
+                "url": "http://127.0.0.1:8080/api/flow3r-recovery.bin",
+                "offset": "0x10000"
+            },
+            {
+                "name": "flow3r",
+                "url": "http://127.0.0.1:8080/api/flow3r.bin",
+                "offset": "0x90000"
+            }
+        ]
+    }
+]
