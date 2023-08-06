@@ -450,7 +450,7 @@ fbm = FramebufferManager()
 
 def get_ctx():
     dctx = ctx._wasm.ctx_new_drawlist(240, 240)
-    return ctx.Ctx(dctx)
+    return ctx.Context(dctx)
 
 
 def display_update(subctx):

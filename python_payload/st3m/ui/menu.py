@@ -12,7 +12,7 @@ from st3m.ui.view import (
     ViewTransitionSwipeRight,
 )
 from st3m.ui.interactions import ScrollController
-from st3m.ui.ctx import Ctx
+from ctx import Context
 
 
 log = logging.Log(__name__)
@@ -47,7 +47,7 @@ class MenuItem(Responder):
         """
         pass
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         ctx.text(self.label())
 
     def think(self, ins: InputState, delta_ms: int) -> None:
@@ -102,7 +102,7 @@ class MenuItemBack(MenuItem):
     def label(self) -> str:
         return "Back"
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         ctx.move_to(0, 0)
         ctx.font = "Material Icons"
         ctx.text("\ue5c4")
@@ -165,7 +165,7 @@ class MenuController(ViewWithInputState):
             self.select()
         self._parse_state()
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         pass
 
     def select(self) -> None:

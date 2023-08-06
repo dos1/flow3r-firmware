@@ -10,12 +10,13 @@ request.
 
 import json
 
-from st3m import Ctx, InputState, Responder, logging
+from st3m import InputState, Responder, logging
 from st3m.goose import ABCBase, abstractmethod, Any, Dict, List, Optional, Callable
 from st3m.ui.menu import MenuController, MenuItem, MenuItemBack
 from st3m.ui.elements.menus import SimpleMenu
 from st3m.ui.view import ViewManager
 from st3m.utils import lerp, ease_out_cubic, reduce
+from ctx import Context
 
 log = logging.Log(__name__, level=logging.INFO)
 
@@ -211,7 +212,7 @@ class OnOffWidget(TunableWidget):
         self._progress = 1.0 - (self._animating / animation_duration)
         self._prev_state = self._state
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         # TODO(pippin): graphical glitches without the two next lines
         ctx.rectangle(-200, -200, 10, 10)
         ctx.fill()
@@ -257,7 +258,7 @@ class SettingsMenuItem(MenuItem):
     def label(self) -> str:
         return self.tunable._name
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         ctx.move_to(40, 0)
         ctx.text_align = ctx.RIGHT
         super().draw(ctx)

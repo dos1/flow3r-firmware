@@ -1,6 +1,7 @@
 ``ctx`` module
 ==============
 
-.. automodule:: st3m.ui.ctx
+.. automodule:: ctx
    :members:
    :undoc-members:
+   :member-order: groupwise

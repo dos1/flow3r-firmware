@@ -88,7 +88,7 @@ class Wasm:
 _wasm = Wasm()
 
 
-class Ctx:
+class Context:
     """
     Ctx implements a subset of uctx [1]. It should be extended as needed as we
     make use of more and more uctx features in the badge code.

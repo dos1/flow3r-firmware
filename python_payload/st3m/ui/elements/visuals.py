@@ -1,7 +1,8 @@
 from st3m.utils import xy_from_polar, tau
 from st3m.property import PUSH_RED, GO_GREEN, BLACK
 from st3m.goose import List, Optional
-from st3m import Responder, Ctx, InputState
+from st3m import Responder, InputState
+from ctx import Context
 
 
 import random
@@ -23,7 +24,7 @@ class Sun(Responder):
         self.ts += delta_ms
         pass
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         nrays = 10
         angle_per_ray = 6.28 / nrays
         for i in range(nrays):
@@ -68,7 +69,7 @@ class GroupRing(Responder):
         for item in self.items_ring:
             item.think(ins, delta_ms)
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         if self.item_center:
             self.item_center.draw(ctx)
 
@@ -110,7 +111,7 @@ class FlowerIcon(Responder):
         self.ts += delta_ms
         pass
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         x = self.x
         y = self.y
         petal_size = 0.0

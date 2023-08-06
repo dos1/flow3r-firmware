@@ -1,6 +1,6 @@
 from st3m.goose import ABCBase, abstractmethod, List, Optional
 from st3m.input import InputState
-from st3m.ui.ctx import Ctx
+from ctx import Context
 
 import time, hardware
 
@@ -29,7 +29,7 @@ class Responder(ABCBase):
         pass
 
     @abstractmethod
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         """
         draw() will be called when the Responder should draw, ie. generate a drawlist by performing calls on the given ctx object.
 
@@ -91,7 +91,7 @@ class Reactor:
         self._ts: int = 0
         self._last_tick: Optional[int] = None
         self._last_ctx_get: Optional[int] = None
-        self._ctx: Optional[Ctx] = None
+        self._ctx: Optional[Context] = None
         self.stats = ReactorStats()
 
     def set_top(self, top: Responder) -> None:

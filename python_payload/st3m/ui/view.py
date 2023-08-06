@@ -1,7 +1,7 @@
 from st3m.reactor import Responder
 from st3m.goose import ABCBase, abstractmethod, Optional, List
 from st3m.input import InputState, InputController
-from st3m.ui.ctx import Ctx
+from ctx import Context
 
 
 class View(Responder):
@@ -52,7 +52,7 @@ class ViewTransition(ABCBase):
 
     @abstractmethod
     def draw(
-        self, ctx: Ctx, transition: float, incoming: Responder, outgoing: Responder
+        self, ctx: Context, transition: float, incoming: Responder, outgoing: Responder
     ) -> None:
         """
         Called when the ViewManager performs a transition from the outgoing
@@ -71,7 +71,7 @@ class ViewTransitionBlend(ViewTransition):
     """
 
     def draw(
-        self, ctx: Ctx, transition: float, incoming: Responder, outgoing: Responder
+        self, ctx: Context, transition: float, incoming: Responder, outgoing: Responder
     ) -> None:
         ctx.start_group()
         outgoing.draw(ctx)
@@ -89,7 +89,7 @@ class ViewTransitionSwipeLeft(ViewTransition):
     """
 
     def draw(
-        self, ctx: Ctx, transition: float, incoming: Responder, outgoing: Responder
+        self, ctx: Context, transition: float, incoming: Responder, outgoing: Responder
     ) -> None:
         ctx.save()
         ctx.translate(transition * -240, 0)
@@ -108,7 +108,7 @@ class ViewTransitionSwipeRight(ViewTransition):
     """
 
     def draw(
-        self, ctx: Ctx, transition: float, incoming: Responder, outgoing: Responder
+        self, ctx: Context, transition: float, incoming: Responder, outgoing: Responder
     ) -> None:
         ctx.save()
         ctx.translate(transition * 240, 0)
@@ -160,7 +160,7 @@ class ViewManager(Responder):
         if self._incoming is not None:
             self._incoming.think(ins, delta_ms)
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         if self._transitioning:
             vt = self._default_vt
             if self._overriden_vt is not None:

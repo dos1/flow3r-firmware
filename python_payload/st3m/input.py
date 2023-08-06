@@ -1,5 +1,4 @@
 from st3m.goose import List, Optional, Enum, Tuple
-from st3m.ui.ctx import Ctx
 
 import hardware
 import captouch

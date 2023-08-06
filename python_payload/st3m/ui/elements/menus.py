@@ -3,10 +3,11 @@ from st3m.ui.view import ViewManager
 from st3m.ui.elements.visuals import Sun, GroupRing, FlowerIcon
 from st3m.ui.menu import MenuController, MenuItem
 
-from st3m import Ctx, InputState
+from st3m import InputState
 
 from st3m.utils import lerp, tau
 import math
+from ctx import Context
 
 
 class SimpleMenu(MenuController):
@@ -17,7 +18,7 @@ class SimpleMenu(MenuController):
     SIZE_LARGE = 30
     SIZE_SMALL = 20
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         ctx.gray(0)
         ctx.rectangle(-120, -120, 240, 240).fill()
 
@@ -61,7 +62,7 @@ class SunMenu(MenuController):
         self._ts += delta_ms
 
     def _draw_item_angled(
-        self, ctx: Ctx, item: MenuItem, angle: float, activity: float
+        self, ctx: Context, item: MenuItem, angle: float, activity: float
     ) -> None:
         size = lerp(20, 40, activity)
         color = lerp(0, 1, activity)
@@ -75,7 +76,7 @@ class SunMenu(MenuController):
         item.draw(ctx)
         ctx.restore()
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         ctx.gray(0)
         ctx.rectangle(-120, -120, 240, 240).fill()
 
@@ -124,7 +125,7 @@ class FlowerMenu(MenuController):
         self.ui.think(ins, delta_ms)
         self._ts += delta_ms
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         ctx.gray(0)
         ctx.rectangle(-120, -120, 240, 240).fill()
         # for item in self.ui.items_ring:

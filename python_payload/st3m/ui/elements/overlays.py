@@ -6,9 +6,10 @@ for persistent, anchored symbols like charging symbols, toasts, debug overlays,
 etc.
 """
 
-from st3m import Responder, Ctx, InputState, Reactor
+from st3m import Responder, InputState, Reactor
 from st3m.goose import Dict, Enum, List, ABCBase, abstractmethod
 from st3m.utils import tau
+from ctx import Context
 
 
 class OverlayKind(Enum):
@@ -62,7 +63,7 @@ class Compositor(Responder):
         for overlay in self._enabled_overlays():
             overlay.think(ins, delta_ms)
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         self.main.draw(ctx)
         for overlay in self._enabled_overlays():
             overlay.draw(ctx)
@@ -132,7 +133,7 @@ class OverlayDebug(Overlay):
         text = [f.text() for f in self.fragments if f.text() != ""]
         return " ".join(text)
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         ctx.save()
         ctx.text_align = ctx.CENTER
         ctx.text_baseline = ctx.MIDDLE
@@ -159,7 +160,7 @@ class OverlayCaptouch(Overlay):
             self.phi = phi
             self.rad = rad
 
-        def draw(self, ctx: Ctx) -> None:
+        def draw(self, ctx: Context) -> None:
             if not self.pressed:
                 return
 
@@ -180,7 +181,7 @@ class OverlayCaptouch(Overlay):
         for dot in self.dots:
             dot.think(ins, delta_ms)
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         for dot in self.dots:
             ctx.save()
             dot.draw(ctx)

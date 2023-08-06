@@ -1,9 +1,9 @@
 import st3m
 
 from st3m.input import InputState, Touchable
-from st3m.ui.ctx import Ctx
 from st3m.goose import Optional, Tuple
 from st3m import Responder
+from ctx import Context
 
 
 class ScrollController(st3m.Responder):
@@ -79,7 +79,7 @@ class ScrollController(st3m.Responder):
 
         self._physics_step(delta_ms / 1000.0)
 
-    def draw(self, ctx: Ctx) -> None:
+    def draw(self, ctx: Context) -> None:
         pass
 
     def current_position(self) -> float:
