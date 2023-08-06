@@ -16,7 +16,7 @@ def set_hsv(ix: int, h: float, s: float, v: float) -> None:
 def set_all_rgb(r: int, g: int, b: int) -> None:
     """Set all LEDs to rgb value r, g, b"""
 
-def set_all_hsv(h: float, s: float, v:float) -> None:
+def set_all_hsv(h: float, s: float, v: float) -> None:
     """Set all LEDs to hsv value h, s, v"""
 
 def update() -> None:
@@ -30,7 +30,7 @@ def get_brightness() -> int:
     Returns global LED brightness, 0-255. Default 69.
     """
 
-def set_brightness(b: int):
+def set_brightness(b: int) -> None:
     """
     Set global LED brightness, 0-255. Default 69.
 
@@ -42,7 +42,7 @@ def get_auto_update() -> bool:
     Returns whether auto updates are on. See set_auto_update()
     """
 
-def set_auto_update(on: bool):
+def set_auto_update(on: bool) -> None:
     """
     Make update() be periodically called by the background task for slew rate
     animation when set to 1. This adds user changes immediately. Useful with
