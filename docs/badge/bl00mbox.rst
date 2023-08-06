@@ -158,7 +158,7 @@ functions, for example [pitch] types support multiple abstract input concepts:
 
     # assign raw value to an input signal
     >>> env.signals.sustain = 16000
-    # assign a abstract numeric value to a [pitch] with a special setter
+    # assign a abstract value to a [pitch] with signal type specific setters
     >>> osc.signals.pitch.freq = 220
     >>> osc.signals.pitch.tone = "Gb4"
 
@@ -170,7 +170,7 @@ automatically stop after calling .start()
     # plays forever...
     >>> env.signals.trigger.start()
     # ...until you call this!
-    >>> env.signals.trigger.start()
+    >>> env.signals.trigger.stop()
 
 
 Example 1: Auto bassline
