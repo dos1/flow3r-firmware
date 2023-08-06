@@ -21,6 +21,10 @@ pkgs.dockerTools.buildImage {
       (python3.withPackages (ps: with ps; [
         sphinx sphinx_rtd_theme
         black
+        
+        # simulator deps
+        pygame wasmer
+        wasmer-compiler-cranelift
       ]))
 
       # random build tools
