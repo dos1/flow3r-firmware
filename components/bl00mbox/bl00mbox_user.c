@@ -388,7 +388,7 @@ bool bl00mbox_channel_connect_signal_to_output_mixer(
     if (root == NULL) return false;
     bl00mbox_connection_subscriber_t *sub =
         malloc(sizeof(bl00mbox_connection_subscriber_t));
-    if (sub == NULL){
+    if (sub == NULL) {
         free(root);
         return false;
     }
@@ -411,7 +411,7 @@ bool bl00mbox_channel_connect_signal_to_output_mixer(
         if (conn->subs != NULL) {
             bl00mbox_connection_subscriber_t *seek = conn->subs;
             while (seek != NULL) {
-                if (seek->type == 1){
+                if (seek->type == 1) {
                     free(root);
                     free(sub);
                     return false;  // already connected
