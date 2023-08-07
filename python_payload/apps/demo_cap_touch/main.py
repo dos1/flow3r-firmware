@@ -70,9 +70,6 @@ class CapTouchDemo(application.Application):
     def draw(self, ctx: Context) -> None:
         # print(self.last_calib)
 
-        # TODO (q3k) bug: we have to do this, otherwise we have horrible blinking
-        ctx.rgb(1, 1, 1)
-
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
         for i, dot in enumerate(self.dots):
             dot.draw(i, ctx)

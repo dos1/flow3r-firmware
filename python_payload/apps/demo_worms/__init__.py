@@ -49,14 +49,6 @@ class AppWorms(Application):
 
     def draw(self, ctx: Context) -> None:
         if self.bufn <= 5:
-            # TODO (q3k) bug: we have to do this, otherwise we have horrible blinking
-
-            ctx.rgb(*BLUE).rectangle(-120, -120, 240, 240).fill()
-            ctx.rgb(1, 1, 1)
-
-            ctx.rgb(*BLUE).rectangle(-120, -120, 240, 240).fill()
-            ctx.rgb(1, 1, 1)
-
             ctx.rgb(*BLUE).rectangle(-120, -120, 240, 240).fill()
 
             ctx.text_align = ctx.CENTER
