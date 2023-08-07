@@ -62,10 +62,6 @@ class NickApp(Application):
         ctx.font_size = self._config.size
         ctx.font = ctx.get_font_name(self._config.font)
 
-        # TODO (q3k) bug: we have to do this, otherwise we have horrible blinking
-        ctx.rgb(1, 1, 1)
-
-        # TODO (q3k) bug: we have to do this two times, otherwise we have horrible blinking
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
         ctx.rgb(*GO_GREEN)
 
