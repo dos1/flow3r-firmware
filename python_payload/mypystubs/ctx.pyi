@@ -133,8 +133,9 @@ class Context(Protocol):
         pass
     def line_to(self, x: float, y: float) -> "Context":
         """
-        Draws a line segment from the position of the last
-        {line,move,curve,quad}_to) to the given coordinates.
+        Adds a line segment to the path, from the position of the virtual pen
+        to the given coordinates, the coordinates are the new position of the
+        virtual pen.
         """
         pass
     def move_to(self, x: float, y: float) -> "Context":
@@ -146,12 +147,14 @@ class Context(Protocol):
         self, cx0: float, cy0: float, cx1: float, cy1: float, x: float, y: float
     ) -> "Context":
         """
-        TOD(q3k): document
+        Add a cubic bezier segment to current path, with control handles at
+        cx0, cy0 and cx1,cy1, the virtual pens new position is x, y.
         """
         pass
     def quad_to(self, cx: float, cy: float, x: float, y: float) -> "Context":
         """
-        TOD(q3k): document
+        Add a quadratic bezier segment to current path with control point at
+        cx,cy ending at x,y.
         """
         pass
     def gray(self, a: float) -> "Context":
@@ -209,14 +212,17 @@ class Context(Protocol):
         pass
     def rectangle(self, x: float, y: float, w: float, h: float) -> "Context":
         """
-        TOD(q3k): document
+        Trace the outline of a rectangle with upper left coordinates at x,y
+        which is w wide and h high.
         """
         pass
     def round_rectangle(
         self, x: float, y: float, w: float, h: float, r: float
     ) -> "Context":
         """
-        TOD(q3k): document
+        Trace the outline of a rectangle with upper left coordinates at x,y
+        which is w wide and h high. With quarter circles with a radius of r
+        for corners.
         """
         pass
     def arc(
@@ -234,7 +240,8 @@ class Context(Protocol):
         pass
     def close_path(self) -> "Context":
         """
-        TOD(q3k): document
+        Close the current open path with a curve back to where the current
+        sequence of path segments started.
         """
         pass
     def preserve(self) -> "Context":
