@@ -424,6 +424,10 @@ void st3m_gfx_init(void) {
             fb_desc->buffer, FLOW3R_BSP_DISPLAY_WIDTH,
             FLOW3R_BSP_DISPLAY_HEIGHT, FLOW3R_BSP_DISPLAY_WIDTH * 2,
             CTX_FORMAT_RGB565_BYTESWAPPED);
+        if (i) {
+            ctx_set_texture_source(fb_desc->ctx, framebuffer_descs[0].ctx);
+            ctx_set_texture_cache(fb_desc->ctx, framebuffer_descs[0].ctx);
+        }
         assert(fb_desc->ctx != NULL);
         // Rotate by 180 deg and translate x and y by 120 px to have (0,0) at
         // the center of the screen
@@ -443,6 +447,7 @@ void st3m_gfx_init(void) {
         dctx_desc->num = i;
         dctx_desc->ctx = ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH,
                                           FLOW3R_BSP_DISPLAY_HEIGHT);
+        ctx_set_texture_cache(dctx_desc->ctx, framebuffer_descs[0].ctx);
         assert(dctx_desc->ctx != NULL);
 
         // Push descriptor to freeq.
