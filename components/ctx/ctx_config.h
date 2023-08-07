@@ -8,6 +8,15 @@
 #include "sdkconfig.h"
 #endif
 
+#ifndef __clang__
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
+#pragma GCC optimize("O3")
+#else
+#pragma GCC optimize("Oz")
+#endif
+#endif
+
+
 #define CTX_TINYVG    1
 #define CTX_TVG_STDIO 0
 #define CTX_DITHER    1
@@ -61,6 +70,8 @@
 #define CTX_FRAGMENT_SPECIALIZE         1
 #define CTX_FAST_FILL_RECT              1
 #define CTX_BLENDING_AND_COMPOSITING    1
+#define CTX_ENABLE_YUV420               1
+#define CTX_ENABLE_GRAY8                1
 #else
 #define CTX_ENABLE_CLIP                 0
 #define CTX_FRAGMENT_SPECIALIZE         0
@@ -72,10 +83,10 @@
 
 
 #define CTX_RAW_KB_EVENTS          0
-#define CTX_MATH                   0
+#define CTX_MATH                   1
 #define CTX_TERMINAL_EVENTS        0 // gets rid of posix bits and bobs
 #define CTX_THREADS                0
-#define CTX_TILED                  1
+#define CTX_TILED                  0
 #define CTX_FORMATTER              0  // we want these eventually
 #define CTX_PARSER                 0  // enabled
 #define CTX_BRAILLE_TEXT           0
