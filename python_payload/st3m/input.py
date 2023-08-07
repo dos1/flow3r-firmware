@@ -3,8 +3,9 @@ from st3m.goose import List, Optional, Enum, Tuple
 import hardware
 import captouch
 import imu
+from st3m.power import Power
 
-import machine
+power = Power()
 
 
 class InputState:
@@ -20,11 +21,21 @@ class InputState:
         captouch: captouch.CaptouchState,
         left_button: int,
         right_button: int,
+        acc: Tuple[float, float, float],
+        gyro: Tuple[float, float, float],
+        pressure: float,
+        temperature: float,
+        battery_voltage: float,
     ) -> None:
         # self.petal_pads = petal_pads
         self.captouch = captouch
         self.left_button = left_button
         self.right_button = right_button
+        self.acc = acc
+        self.gyro = gyro
+        self.pressure = pressure
+        self.temperature = temperature
+        self.battery_voltage = battery_voltage
 
     @classmethod
     def gather(cls, swapped_buttons: bool = False) -> "InputState":
@@ -38,7 +49,20 @@ class InputState:
         if swapped_buttons:
             left_button, right_button = right_button, left_button
 
-        return InputState(cts, left_button, right_button)
+        acc = imu.acc_read()
+        gyro = imu.gyro_read()
+        pressure, temperature = imu.pressure_read()
+        battery_voltage = power.battery_voltage
+        return InputState(
+            cts,
+            left_button,
+            right_button,
+            acc,
+            gyro,
+            pressure,
+            temperature,
+            battery_voltage,
+        )
 
 
 class RepeatSettings:
@@ -475,24 +499,6 @@ class IMUState:
         self.pressure, self.temperature = imu.pressure_read()
 
 
-class PowerState:
-    __slots__ = ("_ts", "_adc_pin", "_adc", "battery_voltage")
-
-    def __init__(self) -> None:
-        self._adc_pin = machine.Pin(9, machine.Pin.IN)
-        self._adc = machine.ADC(self._adc_pin, atten=machine.ADC.ATTN_11DB)
-        self.battery_voltage = self._battery_voltage_sample()
-        self._ts = 0
-
-    def _battery_voltage_sample(self) -> float:
-        return self._adc.read_uv() * 2 / 1e6
-
-    def _update(self, ts: int, hr: InputState) -> None:
-        if ts >= self._ts + 1000:
-            self.battery_voltage = self._battery_voltage_sample()
-            self._ts = ts
-
-
 class InputController:
     """
     A stateful input controller. It accepts InputState updates from the Reactor
@@ -509,8 +515,6 @@ class InputController:
         "captouch",
         "left_shoulder",
         "right_shoulder",
-        "imu",
-        "power",
         "_ts",
     )
 
@@ -518,8 +522,6 @@ class InputController:
         self.captouch = CaptouchState()
         self.left_shoulder = TriSwitchState(TriSwitchHandedness.left)
         self.right_shoulder = TriSwitchState(TriSwitchHandedness.right)
-        self.imu = IMUState()
-        self.power = PowerState()
         self._ts = 0
 
     def think(self, hr: InputState, delta_ms: int) -> None:
@@ -527,8 +529,6 @@ class InputController:
         self.captouch._update(self._ts, hr)
         self.left_shoulder._update(self._ts, hr)
         self.right_shoulder._update(self._ts, hr)
-        self.imu._update(self._ts, hr)
-        self.power._update(self._ts, hr)
 
     def _ignore_pressed(self) -> None:
         """
