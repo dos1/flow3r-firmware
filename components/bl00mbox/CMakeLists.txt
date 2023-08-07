@@ -7,17 +7,21 @@ idf_component_register(
         bl00mbox_user.c
         bl00mbox_plugin_registry.c
         bl00mbox_radspa_requirements.c
-        plugins/trad_synth/trad_synth.c
+        plugins/osc_fm.c
+        plugins/env_adsr.c
         plugins/ampliverter.c
         plugins/sampler.c
         plugins/delay.c
+        plugins/flanger.c
         plugins/sequencer.c
+        plugins/noise.c
         radspa/radspa_helpers.c
+        extern/xoroshiro64star.c
     INCLUDE_DIRS
         include
-        plugins/trad_synth
         plugins
         radspa
+        extern
     REQUIRES
         st3m
 )

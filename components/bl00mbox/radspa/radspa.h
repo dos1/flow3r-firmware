@@ -1,10 +1,20 @@
 //SPDX-License-Identifier: CC0-1.0
 
-// Version 0.1.0
+// Please do not define a new version number. If want to distribute a modified version of
+// this file, kindly append "-modified" to the version string below so it is not mistaken
+// for an official release.
+
+// Version 0.1.0+
 
 /* Realtime Audio Developer's Simple Plugin Api
  *
  * Written from scratch but largely inspired by faint memories of the excellent ladspa.h
+ *
+ * Plugins may only include this file and the corresponding "radspa_helpers.h" with
+ * the same version string. Specifically, do not include <math.h> no matter how tempting
+ * it may be - it's a notoriously slow library on most architectures and has no place
+ * in realtime audio synthesis.
+ *
  * For a simple plugin implementation example check ampliverter.c/.h :D
  */
 
@@ -28,11 +38,14 @@
 
 // signal hints
 
-#define RADSPA_SIGNAL_HINT_INPUT 1
-#define RADSPA_SIGNAL_HINT_OUTPUT 2
-#define RADSPA_SIGNAL_HINT_TRIGGER 4
+#define RADSPA_SIGNAL_HINT_INPUT (1<<0)
+#define RADSPA_SIGNAL_HINT_OUTPUT (1<<1)
+#define RADSPA_SIGNAL_HINT_TRIGGER (1<<2)
+#define RADSPA_SIGNAL_HINT_VOL (1<<3)
+#define RADSPA_SIGNAL_HINT_SCT (1<<5)
 
-#define RADSPA_SIGNAL_HINT_SCT 32
+#define RADSPA_SIGNAL_VAL_SCT_A440 (INT16_MAX - 6*2400)
+#define RADSPA_SIGNAL_VAL_UNITY_GAIN (1<<11)
 
 struct _radspa_descriptor_t;
 struct _radspa_signal_t;
@@ -107,3 +120,5 @@ extern int16_t radspa_mult_shift(int32_t a, int32_t b);
 extern int16_t radspa_trigger_start(int16_t velocity, int16_t * hist);
 extern int16_t radspa_trigger_stop(int16_t * hist);
 extern int16_t radspa_trigger_get(int16_t trigger_signal, int16_t * hist);
+
+extern int16_t radspa_random();

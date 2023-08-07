@@ -93,3 +93,5 @@ int16_t radspa_trigger_get(int16_t trigger_signal, int16_t * hist){
     (* hist) = trigger_signal;
     return ret;
 }
+
+int16_t radspa_random(){ return xoroshiro64star()>>16; }

@@ -87,21 +87,25 @@ radspa_descriptor_t * bl00mbox_plugin_registry_get_id_from_index(uint32_t index)
  * removing plugins from the registry at runtime is not intended.
  */
 
-#include "trad_synth.h"
+#include "osc_fm.h"
+#include "env_adsr.h"
 #include "ampliverter.h"
 #include "delay.h"
 //#include "filter.h"
-//#include "sequence_timer.h"
 #include "sequencer.h"
 #include "sampler.h"
+#include "flanger.h"
+#include "noise.h"
+
 void bl00mbox_plugin_registry_init(void){
     if(bl00mbox_plugin_registry_is_initialized) return;
-    plugin_add(&trad_osc_desc);
+    plugin_add(&osc_fm_desc);
     plugin_add(&ampliverter_desc);
-    plugin_add(&trad_env_desc);   
+    plugin_add(&env_adsr_desc);   
     plugin_add(&delay_desc);   
 //    plugin_add(&filter_desc);   
-//    plugin_add(&sequence_timer_desc);
     plugin_add(&sequencer_desc);
     plugin_add(&sampler_desc);
+    plugin_add(&flanger_desc);
+    plugin_add(&noise_desc);
 }
