@@ -1,4 +1,4 @@
-/* ctx git commit: 691a7a62 */
+/* ctx git commit: e460cf76 */
 /* 
  * ctx.h is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2582,7 +2582,7 @@ void        ctx_string_append_float   (CtxString *string, float val);
   jklmnopqrstuvwxyz{|}~  */
 static const struct __attribute__ ((packed)) {uint8_t code; uint32_t a; uint32_t b;}
 ctx_font_ascii[]={
-{15, 0x2f2fa008, 0x000007a7},/* length:1959 CTX_SUBDIV:8 CTX_BAKE_FONT_SIZE:160 */
+{15, 0x0000a008, 0x000007a7},/* length:1959 CTX_SUBDIV:8 CTX_BAKE_FONT_SIZE:160 */
 {'(', 0x00000008, 0x00000001},/* Roboto*/
 {32, 0x6f626f52, 0x00006f74},
 {')', 0x00000008, 0x00000001},
@@ -23778,7 +23778,7 @@ ctx_new_for_buffer (CtxBuffer *buffer)
 {
   Ctx *ctx = _ctx_new_drawlist (buffer->width, buffer->height);
   ctx_set_backend (ctx,
-                    ctx_rasterizer_init ( (CtxRasterizer *) ctx_malloc (sizeof (CtxRasterizer) ),
+                    ctx_rasterizer_init ( (CtxRasterizer *) ctx_calloc (sizeof (CtxRasterizer), 1),
                                           ctx, NULL, &ctx->state,
                                           buffer->data, 0, 0, buffer->width, buffer->height,
                                           buffer->stride, buffer->format->pixel_format,
@@ -46289,7 +46289,6 @@ static inline int ctx_is_in_cursor (int x, int y, int size, CtxCursor shape)
   return 0;
 }
 
-#if 0
 static void ctx_tiled_undraw_cursor (CtxTiled *tiled)
 {
     int cursor_size = ctx_height (tiled->backend.ctx) / 28;
@@ -46379,7 +46378,6 @@ static inline void ctx_tiled_draw_cursor (CtxTiled *tiled)
     ctx_tiled_cursor_drawn_y = cursor_y;
     ctx_tiled_cursor_drawn_shape = cursor_shape;
 }
-#endif
 
 #endif
 
@@ -55302,6 +55300,16 @@ int ctx_pixel_format_components (CtxPixelFormat format)
   return -1;
 }
 
+void ctx_set_texture_source (Ctx *ctx, Ctx *texture_source)
+{
+  ((CtxRasterizer*)ctx->backend)->texture_source = texture_source;
+}
+
+void ctx_set_texture_cache (Ctx *ctx, Ctx *texture_cache)
+{
+  ctx->texture_cache = texture_cache;
+}
+
 #if CTX_EVENTS
 void         ctx_set_cursor (Ctx *ctx, CtxCursor cursor)
 {
@@ -55343,15 +55351,6 @@ char *ctx_get_clipboard (Ctx *ctx)
   return ctx_strdup ("");
 }
 
-void ctx_set_texture_source (Ctx *ctx, Ctx *texture_source)
-{
-  ((CtxRasterizer*)ctx->backend)->texture_source = texture_source;
-}
-
-void ctx_set_texture_cache (Ctx *ctx, Ctx *texture_cache)
-{
-  ctx->texture_cache = texture_cache;
-}
 
 void ctx_set_transform (Ctx *ctx, float a, float b, float c, float d, float e, float f, float g, float h, float i)
 {
@@ -70077,4 +70076,3 @@ int ctx_tinyvg_fd_draw (Ctx *ctx, int fd, int flags)
 
 #endif // CTX_IMPLEMENTATION
 #endif //  __CTX_H__
-
