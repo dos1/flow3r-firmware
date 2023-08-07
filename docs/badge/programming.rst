@@ -29,7 +29,7 @@ Accessing the badge
 
 When the badge runs (for example, when you see the main menu), you can connect
 it to a PC and it should appear as a serial device. On Linux systems, this
-device will be usually called ``/dev/ttyACM0``.
+device will be usually called ``/dev/ttyACM0`` (sometimes ``/dev/ttyACM1``).
 
 You can then use any terminal emulator program (like picocom, GNU screen, etc)
 to access the badge's runtime logs. Even better, use a dedicated
@@ -48,7 +48,8 @@ These are the tools we've tested and are known to work:
 .. _`Micro REPL`: https://github.com/Ma7moud3ly/micro-repl
 
 In the rest of these docs we'll use mpremote. But you should be able to follow
-along with any of the aforementioned tools.
+along with any of the aforementioned tools. If you are on Linux and your flow3r
+came up as ``/dev/ttyACM1``, add an ``a1`` after ``mprempote``.
 
 After connecting your badge and making sure it runs:
 
