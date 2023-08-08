@@ -1,0 +1,11 @@
+[app]
+name = "Otamatone"
+menu = "Music"
+
+[entry]
+class = "Otamatone"
+
+[metadata]
+author = "Flow3r Badge Authors"
+license = "LGPL-3.0-only"
+url = "https://git.flow3r.garden/flow3r/flow3r-firmware"
