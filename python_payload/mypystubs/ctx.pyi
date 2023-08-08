@@ -75,22 +75,6 @@ class Context(Protocol):
         should be balanced.
         """
         pass
-    def start_frame(self) -> "Context":
-        """
-        Prepare for rendering a new frame, clears internal drawlist and
-        initializes the state.
-
-        TODO(q3k): we probably shouldn't expose this
-        """
-        pass
-    def end_frame(self) -> "Context":
-        """
-        We're done rendering a frame, this does nothing on a context created for
-        a framebuffer, where drawing commands are immediate.
-
-        TODO(q3k): we probably shouldn't expose this
-        """
-        pass
     def start_group(self) -> "Context":
         """
         Start a compositing group.
@@ -194,24 +178,30 @@ class Context(Protocol):
         pass
     def rel_line_to(self, x: float, y: float) -> "Context":
         """
-        TOD(q3k): document
+        Adds a line segment from the current point to current_x + x,
+        current_y + y.
         """
         pass
     def rel_move_to(self, x: float, y: float) -> "Context":
         """
-        TOD(q3k): document
+        Moves the virtual pen a relative amount without adding a segment to
+        the current path.
         """
         pass
     def rel_curve_to(
         self, cx0: float, cy0: float, cx1: float, cy1: float, x: float, y: float
     ) -> "Context":
         """
-        TOD(q3k): document
+        Adds a cubic bezier segment using relative coordinates, behaves
+        like curve_to but all coordinate arguments are relative to the
+        coordinates of the virtual pen when called.
         """
         pass
     def rel_quad_to(self, cx: float, cy: float, x: float, y: float) -> "Context":
         """
-        TOD(q3k): document
+        Adds a quadratic bezier segment using relative coordinates, behaves
+        like quad_to but all coordinate arguments are relative to the
+        coordinates of the virtual pen when called.
         """
         pass
     def rel_arc_to(
@@ -262,17 +252,14 @@ class Context(Protocol):
         pass
     def fill(self) -> "Context":
         """
-        TOD(q3k): document
+        Fill the current path with the current source (color, gradient or
+        texture).
         """
         pass
     def stroke(self) -> "Context":
         """
-        TOD(q3k): document
-        """
-        pass
-    def paint(self) -> "Context":
-        """
-        TOD(q3k): document
+        Stroke the current path with the current source (color, gradient or
+        texture), with current line_width
         """
         pass
     def linear_gradient(self, x0: float, y0: float, x1: float, y1: float) -> "Context":
@@ -305,12 +292,13 @@ class Context(Protocol):
         pass
     def logo(self, x: float, y: float, dim: float) -> "Context":
         """
-        TOD(q3k): document
+        Draws the ctx logo, centered at x,y with a footprint of roughly dim
+        units.
         """
         pass
     def text(self, text: str) -> "Context":
         """
-        TOD(q3k): document
+        Add a text fragment using the current fill source, font and font_size.
         """
         pass
     def scope(self) -> "Context":

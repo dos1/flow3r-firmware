@@ -2,6 +2,7 @@ from st3m.goose import ABCBase, abstractmethod, List, Optional
 from st3m.input import InputState
 from ctx import Context
 
+import media
 import time
 import sys_display
 import sys_kernel
@@ -149,6 +150,7 @@ class Reactor:
 
         # Think!
         self._top.think(hr, delta)
+        media.think(delta)
 
         # Draw!
         if self._ctx is None:

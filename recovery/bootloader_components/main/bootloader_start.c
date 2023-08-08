@@ -86,4 +86,6 @@ static int select_partition_number(bootloader_state_t *bs, bool want_recovery) {
 }
 
 // Return global reent struct if any newlib functions are linked to bootloader
-struct _reent *__getreent(void) { return _GLOBAL_REENT; }
+struct _reent *__getreent(void) {
+    return _GLOBAL_REENT;
+}
