@@ -28,7 +28,7 @@ class ViewWithInputState(View):
 
     Derive this class, then use self.input to access the InputController.
 
-    Remember to call super().think() in think()!
+    Remember to call super().__init__() in __init__() and super().think() in think()!
     """
 
     __slots__ = ("input",)

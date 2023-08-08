@@ -156,3 +156,286 @@ This becomes important if you need exact timings in your application,
 as the Reactor makes no explicit guarantee about how often `think()` will
 be called. Currently we are shooting for once every 20 milliseconds, but if something in the system
 takes a bit longer to process something, this number can change from one call to the next.
+
+
+Example 1d: Automatic input processing
+--------------------------------------
+
+Working on the bare state of the buttons and the captouch petals can be cumbersome and error prone.
+the flow3r application framework gives you a bit of help in the form of the :py:class:`InputController`
+which processes an input state and gives you higher level information about what is happening.
+
+The following example shows how to properly react to single button presses without having to
+think about what happens if the user presses the button for a long time. It uses the `InputController`
+to detect single button presses and switches between showing a circle (by drawing a 360 deg arc) and
+a square.
+
+
+.. code-block:: python
+
+    from st3m.reactor import Responder
+    from st3m.input import InputController
+    from st3m.utils import tau
+
+    from hardware import BUTTON_PRESSED_LEFT, BUTTON_PRESSED_RIGHT, BUTTON_PRESSED_DOWN
+    import st3m.run
+
+    class Example(Responder):
+        def __init__(self) -> None:
+            self.input = InputController()
+            self._x = -20.
+            self._draw_rectangle = True
+
+        def draw(self, ctx: Context) -> None:
+            # Paint the background black
+            ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
+
+            # Paint a red square in the middle of the display
+            if self._draw_rectangle:
+                ctx.rgb(255, 0, 0).rectangle(self._x, -20, 40, 40).fill()
+            else:
+                ctx.rgb(255, 0, 0).arc(self._x, -20, 40, 0, tau, 0).fill()
+
+        def think(self, ins: InputState, delta_ms: int) -> None:
+            self.input.think(ins, delta_ms) # let the input controller to its magic
+
+            direction = ins.left_button # -1 (left), 1 (right), or 2 (pressed)
+
+            if self.input.right_shoulder.middle.pressed:
+                self._draw_rectangle = not self._draw_rectangle
+
+            if direction == BUTTON_PRESSED_LEFT:
+                self._x -= 20 * delta_ms / 1000
+            elif direction == BUTTON_PRESSED_RIGHT:
+                self._x += 40 * delta_ms / 1000
+
+
+    st3m.run.run_responder(Example())
+
+
+Managing multiple views
+----------------------------------------
+
+If you want to write a more advanced application you probably also want to display more than
+one screen (or view as we call them).
+With just the Responder class this can become a bit tricky as it never knows when it is visible and
+when it is not. It also doesn't directly allow you to launch a new screen.
+
+To help you with that you can use a :py:class:`View` instead. It can tell you when
+it becomes visible and you can also use it to bring a new screen or widget into the foreground or remove
+it again from the screen.
+
+Example 2a: Managing two views
+--------------------------------
+
+In this example we use a basic `View` to switch between to different screens using a button. One screen
+shows a red square, the other one a green square. You can of course put any kind of complex processing
+into the two different views. We make use of an `InputController` again to handle the button presses.
+
+
+.. code-block:: python
+
+    from st3m.input import InputController
+    from st3m.ui.view import View
+    import st3m.run
+
+    class SecondScreen(View):
+        def __init__(self) -> None:
+            self.input = InputController()
+            self._vm = None
+
+        def on_enter(self, vm: Optional[ViewManager]) -> None:
+            self._vm = vm
+
+            # Ignore the button which brought us here until it is released
+            self.input._ignore_pressed()
+
+        def draw(self, ctx: Context) -> None:
+            # Paint the background black
+            ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
+            # Green square
+            ctx.rgb(0, 255, 0).rectangle(-20, -20, 40, 40).fill()
+
+        def think(self, ins: InputState, delta_ms: int) -> None:
+            self.input.think(ins, delta_ms) # let the input controller to its magic
+
+            if self.input.right_shoulder.middle.pressed:
+                self._vm.pop()
+
+
+    class Example(View):
+        def __init__(self) -> None:
+            self.input = InputController()
+            self._vm = None
+
+        def draw(self, ctx: Context) -> None:
+            # Paint the background black
+            ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
+            # Red square
+            ctx.rgb(255, 0, 0).rectangle(-20, -20, 40, 40).fill()
+
+
+        def on_enter(self, vm: Optional[ViewManager]) -> None:
+            self._vm = vm
+
+        def think(self, ins: InputState, delta_ms: int) -> None:
+            self.input.think(ins, delta_ms) # let the input controller to its magic
+
+            if self.input.right_shoulder.middle.pressed:
+                self._vm.push(SecondScreen())
+
+    st3m.run.run_view(Example())
+
+Try it using `mpremote`. The right shoulder button switches between the two views. To avoid that
+the still pressed button immediately closes `SecondScreen` we make us of a special method of the
+`InputController` which hides the pressed button from the view until it is released again.
+
+Example 2b: Easier view management
+----------------------------------
+
+The idea that a button (physical or captouch) is used to enter / exit a view is so universal that
+there is a special view which helps you with that: :py:class:`ViewWithInputState`. It integrates an
+`InputController` and handles the ignoring of extra presses:
+
+.. code-block:: python
+
+    from st3m.ui.view import ViewWithInputState
+    import st3m.run
+
+    class SecondScreen(ViewWithInputState):
+        def __init__(self) -> None:
+            super().__init__()
+            self._vm = None
+
+        def on_enter(self, vm: Optional[ViewManager]) -> None:
+            super().on_enter(vm) # Let ViewWithInputState do its thing
+            self._vm = vm
+
+        def draw(self, ctx: Context) -> None:
+            # Paint the background black
+            ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
+            # Green square
+            ctx.rgb(0, 255, 0).rectangle(-20, -20, 40, 40).fill()
+
+        def think(self, ins: InputState, delta_ms: int) -> None:
+            super().think(ins, delta_ms) # Let ViewWithInputState do its thing
+
+            if self.input.right_shoulder.middle.pressed:
+                self._vm.pop()
+
+
+    class Example(ViewWithInputState):
+        def __init__(self) -> None:
+            super().__init__()
+            self._vm = None
+
+        def draw(self, ctx: Context) -> None:
+            # Paint the background black
+            ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
+            # Red square
+            ctx.rgb(255, 0, 0).rectangle(-20, -20, 40, 40).fill()
+
+
+        def on_enter(self, vm: Optional[ViewManager]) -> None:
+            self._vm = vm
+
+        def think(self, ins: InputState, delta_ms: int) -> None:
+            super().think(ins, delta_ms) # Let ViewWithInputState do its thing
+
+            if self.input.right_shoulder.middle.pressed:
+                self._vm.push(SecondScreen())
+
+    st3m.run.run_view(Example())
+
+
+
+Writing an application for the menu system
+------------------------------------------
+
+All fine and good, you were able to write an application that you can run with `mpremote`,
+but certainly you also want to run it from flow3r's menu system.
+
+Let's introduce the final class you should actually be using for application development:
+:py:class:`Application` (yeah, right).
+
+.. code-block:: python
+
+    from st3m.application import Application
+    import st3m.run
+
+    class SecondScreen(ViewWithInputState):
+        def __init__(self) -> None:
+            super().__init__()
+            self._vm = None
+
+        def on_enter(self, vm: Optional[ViewManager]) -> None:
+            super().on_enter(vm) # Let ViewWithInputState do its thing
+            self._vm = vm
+
+        def draw(self, ctx: Context) -> None:
+            # Paint the background black
+            ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
+            # Green square
+            ctx.rgb(0, 255, 0).rectangle(-20, -20, 40, 40).fill()
+
+        def think(self, ins: InputState, delta_ms: int) -> None:
+            super().think(ins, delta_ms) # Let ViewWithInputState do its thing
+
+            if self.input.right_shoulder.middle.pressed:
+                self._vm.pop()
+
+
+    class MyDemo(Application):
+        def __init__(self) -> None:
+            super().__init__(name="My demo")
+
+        def draw(self, ctx: Context) -> None:
+            # Paint the background black
+            ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
+            # Red square
+            ctx.rgb(255, 0, 0).rectangle(-20, -20, 40, 40).fill()
+
+        def on_enter(self, vm: Optional[ViewManager]) -> None:
+            super().on_enter(vm) # Let Application do its thing
+
+        def think(self, ins: InputState, delta_ms: int) -> None:
+            super().think(ins, delta_ms) # Let Application do its thing
+
+            if self.input.right_shoulder.middle.pressed:
+                self._view_manager.push(SecondScreen())
+
+    st3m.run.run_view(Example())
+
+The `Application` class gives you the following extras:
+
+ - Pressing the down the left shoulder button exits the app
+ - You get a `_view_manager` member to manager your views
+ - It can be picked up by the main menu system
+
+
+To add the application to the menu we are missing one more thing: a `flow3r.toml`
+file which describes the application so flow3r knows where to put it in the menu system.
+Together with the Python code this file forms a so called bundle
+(see also :py:class:`BundleMetadata`).
+
+-- code-block::
+
+    [app]
+    name = "My Demo"
+    menu = "Apps"
+
+    [entry]
+    class = "MyDemo"
+
+    [metadata]
+    author = "You :)"
+    license = "pick one, LGPL/MIT maybe?"
+    url = "https://git.flow3r.garden/you/mydemo"
+
+
+Save this as `flow3r.toml` together with the Python code as `__init__.py` in a folder and put
+that folder into the `apps` folder on your flow3r (if there is no `apps` folder visible,
+there might be an `apps` folder in the `sys` folder). Restart the flow3r and it should pick up your
+new application.
+
+
