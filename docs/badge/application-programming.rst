@@ -433,9 +433,21 @@ Together with the Python code this file forms a so called bundle
     url = "https://git.flow3r.garden/you/mydemo"
 
 
-Save this as `flow3r.toml` together with the Python code as `__init__.py` in a folder and put
-that folder into the `apps` folder on your flow3r (if there is no `apps` folder visible,
+Save this as `flow3r.toml` together with the Python code as `__init__.py` in a folder (name doesn't matter)
+and put that folder into the `apps` folder on your flow3r (if there is no `apps` folder visible,
 there might be an `apps` folder in the `sys` folder). Restart the flow3r and it should pick up your
 new application.
 
+
+Using the simulator
+-------------------
+
+The simulator deserves its own page in the docs. For now have a look at the "Firmware Development" page
+to see how to set it up.
+
+The simulators apps live in `python_payload/apps` copy you app folder in there and it will appear in
+the simulators menu system. Currently the simulator supports the display, LEDs, the buttons and some
+static input values from the accelerometer, gyroscope, temperature sensor and pressure sensor.
+
+No audio output on the simulator yet. Want to step up and get it in?
 
