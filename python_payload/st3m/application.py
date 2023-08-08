@@ -19,8 +19,7 @@ log = Log(__name__)
 
 
 class Application(ViewWithInputState):
-    def __init__(self, name: str = __name__) -> None:
-        self._name = name
+    def __init__(self) -> None:
         self._view_manager: Optional[ViewManager] = None
         super().__init__()
 
