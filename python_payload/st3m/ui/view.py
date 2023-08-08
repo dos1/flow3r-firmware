@@ -167,10 +167,14 @@ class ViewManager(Responder):
                 vt = self._overriden_vt
 
             if self._incoming is not None and self._outgoing is not None:
+                ctx.save()
                 vt.draw(ctx, self._transition, self._incoming, self._outgoing)
+                ctx.restore()
                 return
         if self._incoming is not None:
+            ctx.save()
             self._incoming.draw(ctx)
+            ctx.restore()
 
     def replace(self, r: View, overide_vt: Optional[ViewTransition] = None) -> None:
         """
