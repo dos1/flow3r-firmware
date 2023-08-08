@@ -25,8 +25,8 @@ class IMUDemo(Application):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
 
-        self.v_y += ins.acc[0] * delta_ms / 1000.0 * 10
-        self.v_x += ins.acc[1] * delta_ms / 1000.0 * 10
+        self.v_y += ins.imu.acc[0] * delta_ms / 1000.0 * 10
+        self.v_x += ins.imu.acc[1] * delta_ms / 1000.0 * 10
 
         x = self.p_x + self.v_x * delta_ms / 1000.0
         y = self.p_y + self.v_y * delta_ms / 1000.0

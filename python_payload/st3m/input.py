@@ -8,6 +8,26 @@ from st3m.power import Power
 power = Power()
 
 
+class IMUState:
+    """
+    State of the Inertial Measurement Unit
+
+    Acceleration in m/s**2, roation rate in deg/s, pressure in Pascal
+    """
+
+    __slots__ = ("acc", "gyro", "pressure")
+
+    def __init__(
+        self,
+        acc: Tuple[float, float, float],
+        gyro: Tuple[float, float, float],
+        pressure: float,
+    ) -> None:
+        self.acc = acc
+        self.gyro = gyro
+        self.pressure = pressure
+
+
 class InputState:
     """
     Current state of inputs from badge user. Passed via think() to every
@@ -21,9 +41,7 @@ class InputState:
         captouch: captouch.CaptouchState,
         left_button: int,
         right_button: int,
-        acc: Tuple[float, float, float],
-        gyro: Tuple[float, float, float],
-        pressure: float,
+        imu: IMUState,
         temperature: float,
         battery_voltage: float,
     ) -> None:
@@ -31,9 +49,7 @@ class InputState:
         self.captouch = captouch
         self.left_button = left_button
         self.right_button = right_button
-        self.acc = acc
-        self.gyro = gyro
-        self.pressure = pressure
+        self.imu = imu
         self.temperature = temperature
         self.battery_voltage = battery_voltage
 
@@ -52,14 +68,14 @@ class InputState:
         acc = imu.acc_read()
         gyro = imu.gyro_read()
         pressure, temperature = imu.pressure_read()
+        imu_state = IMUState(acc, gyro, pressure)
+
         battery_voltage = power.battery_voltage
         return InputState(
             cts,
             left_button,
             right_button,
-            acc,
-            gyro,
-            pressure,
+            imu_state,
             temperature,
             battery_voltage,
         )
@@ -482,21 +498,6 @@ class TriSwitchState:
         self.left._ignore_pressed()
         self.middle._ignore_pressed()
         self.right._ignore_pressed()
-
-
-class IMUState:
-    __slots__ = ("acc", "gyro", "pressure", "temperature")
-
-    def __init__(self) -> None:
-        self.acc = (0.0, 0.0, 0.0)
-        self.gyro = (0.0, 0.0, 0.0)
-        self.pressure = 0.0
-        self.temperature = 0.0
-
-    def _update(self, ts: int, hr: InputState) -> None:
-        self.acc = imu.acc_read()
-        self.gyro = imu.gyro_read()
-        self.pressure, self.temperature = imu.pressure_read()
 
 
 class InputController:
