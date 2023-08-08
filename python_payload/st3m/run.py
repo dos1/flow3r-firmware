@@ -12,13 +12,24 @@ import captouch, audio, leds, gc
 log = logging.Log(__name__, level=logging.INFO)
 
 
+def _make_reactor() -> Reactor:
+    reactor = Reactor()
+
+    def _onoff_button_swap_update() -> None:
+        reactor.set_buttons_swapped(settings.onoff_button_swap.value)
+
+    settings.onoff_button_swap.subscribe(_onoff_button_swap_update)
+    _onoff_button_swap_update()
+    return reactor
+
+
 def run_responder(r: Responder) -> None:
     """
     Run a given Responder in the foreground, without any menu or main firmware running in the background.
 
     This is useful for debugging trivial applications from the REPL.
     """
-    reactor = Reactor()
+    reactor = _make_reactor()
     reactor.set_top(r)
     reactor.run()
 
@@ -70,7 +81,7 @@ def run_view(v: View) -> None:
     """
     vm = ViewManager(ViewTransitionBlend())
     vm.push(v)
-    reactor = Reactor()
+    reactor = _make_reactor()
     compositor = _make_compositor(reactor, vm)
     reactor.set_top(compositor)
     reactor.run()

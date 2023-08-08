@@ -32,30 +32,6 @@ STATIC mp_obj_t mp_display_set_backlight(mp_obj_t percent_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_display_set_backlight_obj,
                                  mp_display_set_backlight);
 
-STATIC mp_obj_t mp_menu_button_set_left(mp_obj_t left) {
-    st3m_io_menu_button_set_left(mp_obj_get_int(left));
-    return mp_const_none;
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_menu_button_set_left_obj,
-                                 mp_menu_button_set_left);
-
-STATIC mp_obj_t mp_menu_button_get_left() {
-    return mp_obj_new_int(st3m_io_menu_button_get_left());
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_menu_button_get_left_obj,
-                                 mp_menu_button_get_left);
-
-STATIC mp_obj_t mp_menu_button_get() {
-    return mp_obj_new_int(st3m_io_menu_button_get());
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_menu_button_get_obj, mp_menu_button_get);
-
-STATIC mp_obj_t mp_application_button_get() {
-    return mp_obj_new_int(st3m_io_application_button_get());
-}
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_application_button_get_obj,
-                                 mp_application_button_get);
-
 STATIC mp_obj_t mp_left_button_get() {
     return mp_obj_new_int(st3m_io_left_button_get());
 }
@@ -190,18 +166,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_usb_console_active_obj,
 STATIC const mp_rom_map_elem_t mp_module_hardware_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_hardware) },
 
-    { MP_ROM_QSTR(MP_QSTR_menu_button_get),
-      MP_ROM_PTR(&mp_menu_button_get_obj) },
-    { MP_ROM_QSTR(MP_QSTR_application_button_get),
-      MP_ROM_PTR(&mp_application_button_get_obj) },
     { MP_ROM_QSTR(MP_QSTR_left_button_get),
       MP_ROM_PTR(&mp_left_button_get_obj) },
     { MP_ROM_QSTR(MP_QSTR_right_button_get),
       MP_ROM_PTR(&mp_right_button_get_obj) },
-    { MP_ROM_QSTR(MP_QSTR_menu_button_set_left),
-      MP_ROM_PTR(&mp_menu_button_set_left_obj) },
-    { MP_ROM_QSTR(MP_QSTR_menu_button_get_left),
-      MP_ROM_PTR(&mp_menu_button_get_left_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_display_update), MP_ROM_PTR(&mp_display_update_obj) },
     { MP_ROM_QSTR(MP_QSTR_freertos_sleep), MP_ROM_PTR(&mp_freertos_sleep_obj) },

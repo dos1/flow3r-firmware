@@ -5,20 +5,6 @@
 
 void st3m_io_init(void);
 
-/* UI sugar: People might prefer using one button for in-application stuff and
- * the other for entering main menu/volume control, depending on their
- * handedness and how they hold the badge. This function allows them configure
- * this and is meant to be only be used by the OS user config handler.
- *
- * Set to 1 to use the left shoulder button as the menu button, 0 for the right
- */
-void st3m_io_menu_button_set_left(bool left);
-
-/* Gets user menu button user preference as set with
- * st3m_io_menu_button_set_left.
- */
-bool st3m_io_menu_button_get_left();
-
 // A 'tripos' button is what we're calling the shoulder buttons. As the name
 // indicates, it has three positions: left, middle (a.k.a. down/press) and
 // right.
@@ -32,11 +18,6 @@ typedef enum {
     // Pressed towards the right.
     st3m_tripos_right = 1,
 } st3m_tripos;
-
-/* Read the state of the menu/application button.
- */
-st3m_tripos st3m_io_menu_button_get();
-st3m_tripos st3m_io_application_button_get();
 
 /* Read the state of the left/right button.
  * This ignores user preference and should be used only with good reason.

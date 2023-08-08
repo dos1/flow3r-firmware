@@ -33,20 +33,6 @@ bool st3m_io_line_in_jacksense_get() {
     return flow3r_bsp_spio_jacksense_right_get();
 }
 
-static bool menu_button_left = false;
-
-void st3m_io_menu_button_set_left(bool left) { menu_button_left = left; }
-
-st3m_tripos st3m_io_menu_button_get() {
-    if (menu_button_left) return flow3r_bsp_spio_left_button_get();
-    return flow3r_bsp_spio_right_button_get();
-}
-
-st3m_tripos st3m_io_application_button_get() {
-    if (menu_button_left) return flow3r_bsp_spio_right_button_get();
-    return flow3r_bsp_spio_left_button_get();
-}
-
 st3m_tripos st3m_io_left_button_get() {
     return flow3r_bsp_spio_left_button_get();
 }
@@ -54,8 +40,6 @@ st3m_tripos st3m_io_left_button_get() {
 st3m_tripos st3m_io_right_button_get() {
     return flow3r_bsp_spio_right_button_get();
 }
-
-bool st3m_io_menu_button_get_left() { return menu_button_left; }
 
 static uint8_t badge_link_enabled = 0;
 

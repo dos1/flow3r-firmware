@@ -82,6 +82,7 @@ class Reactor:
         "_ctx",
         "_ts",
         "_last_ctx_get",
+        "_swap_buttons",
         "stats",
     )
 
@@ -92,6 +93,7 @@ class Reactor:
         self._last_tick: Optional[int] = None
         self._last_ctx_get: Optional[int] = None
         self._ctx: Optional[Context] = None
+        self._swap_buttons = False
         self.stats = ReactorStats()
 
     def set_top(self, top: Responder) -> None:
@@ -109,6 +111,9 @@ class Reactor:
         """
         while True:
             self._run_once()
+
+    def set_buttons_swapped(self, swapped: bool) -> None:
+        self._swap_buttons = swapped
 
     def _run_once(self) -> None:
         start = time.ticks_ms()
@@ -136,7 +141,7 @@ class Reactor:
 
         self._ts += delta
 
-        hr = InputState.gather()
+        hr = InputState.gather(self._swap_buttons)
 
         # Think!
         self._top.think(hr, delta)

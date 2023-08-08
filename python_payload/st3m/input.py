@@ -27,7 +27,7 @@ class InputState:
         self.right_button = right_button
 
     @classmethod
-    def gather(cls) -> "InputState":
+    def gather(cls, swapped_buttons: bool = False) -> "InputState":
         """
         Build InputState from current hardware state. Should only be used by the
         Reactor.
@@ -35,6 +35,8 @@ class InputState:
         cts = captouch.read()
         left_button = hardware.left_button_get()
         right_button = hardware.right_button_get()
+        if swapped_buttons:
+            left_button, right_button = right_button, left_button
 
         return InputState(cts, left_button, right_button)
 
