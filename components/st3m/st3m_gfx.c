@@ -130,9 +130,7 @@ static void st3m_gfx_rast_task(void *_arg) {
 
         // Render drawctx into fbctx.
         start = esp_timer_get_time();
-        ctx_save(fb->ctx);
         ctx_render_ctx(draw->ctx, fb->ctx);
-        ctx_restore(fb->ctx);
         ctx_drawlist_clear(draw->ctx);
         end = esp_timer_get_time();
         st3m_counter_timer_sample(&rast_work_time, end - start);
