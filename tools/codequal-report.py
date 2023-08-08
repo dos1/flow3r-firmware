@@ -72,7 +72,9 @@ def parse_line(s: str, nocol: bool = False) -> Union[Issue, None]:
     }.get(level, Severity.info)
     check = ""
     if rest.endswith("]"):
-        rest, check = rest.split("[")
+        spl = rest.rfind("[")
+        assert spl != -1
+        rest, check = rest[:spl], rest[spl + 1 :]
         rest = rest.strip()
         check = check.rstrip("]")
     location = Location(
