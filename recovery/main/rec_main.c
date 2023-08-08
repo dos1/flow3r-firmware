@@ -175,8 +175,15 @@ static void _scan_dir(char *dir, char *dir_name) {
                 esp32_standard_header_t hdr;
 
                 char path[64];
-                snprintf(path, sizeof(path) / sizeof(char), "%s/%s", dir,
-                         pDirent->d_name);
+                int ret = snprintf(path, sizeof(path) / sizeof(char), "%s/%s",
+                                   dir, pDirent->d_name);
+
+                // Error or too long
+                if (ret < 0 || ret > sizeof(path) / sizeof(char)) {
+                    ESP_LOGW(TAG, "could not build file path");
+                    continue;
+                }
+
                 FILE *f = fopen(path, "rb");
                 if (f == NULL) {
                     ESP_LOGW(TAG, "fopen failed: %s", strerror(errno));
@@ -197,8 +204,12 @@ static void _scan_dir(char *dir, char *dir_name) {
                 }
 
                 image_entry_t *ie = &image_list[entry];
-                snprintf(ie->label, sizeof(ie->label), "%s/%s: %s", dir_name,
-                         pDirent->d_name, hdr.app.project_name);
+                ret = snprintf(ie->label, sizeof(ie->label), "%s/%s: %s",
+                               dir_name, pDirent->d_name, hdr.app.project_name);
+                if (ret < 0) {
+                    ESP_LOGW(TAG, "could not build menu entry");
+                    continue;
+                }
                 snprintf(ie->path, sizeof(ie->path), "%s", path);
 
                 _list_menu_entries[entry].label = ie->label;
