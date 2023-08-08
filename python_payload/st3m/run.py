@@ -81,7 +81,8 @@ def run_main() -> None:
     log.info(f"free memory: {gc.mem_free()}")
 
     captouch.calibration_request()
-    audio.set_volume_dB(0)
+    # TODO(q3k): volume control. but until then, make slightly less loud on startup.
+    audio.set_volume_dB(-10)
     leds.set_rgb(0, 255, 0, 0)
     leds.update()
     bundles = discover_bundles("/flash/sys/apps")
