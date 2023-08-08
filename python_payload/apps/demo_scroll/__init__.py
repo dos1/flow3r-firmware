@@ -70,6 +70,3 @@ class ScrollDemo(Application):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
         self.scroll.update(self.input.captouch.petals[self.PETAL_NO].gesture, delta_ms)
-
-
-app = ScrollDemo("scroll")
