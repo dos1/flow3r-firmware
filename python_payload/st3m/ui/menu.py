@@ -5,7 +5,7 @@ from st3m import logging
 from st3m.goose import ABCBase, abstractmethod, List, Optional
 from st3m.input import InputState, InputController
 from st3m.ui.view import (
-    ViewWithInputState,
+    BaseView,
     View,
     ViewManager,
     ViewTransitionSwipeLeft,
@@ -108,7 +108,7 @@ class MenuItemBack(MenuItem):
         ctx.text("\ue5c4")
 
 
-class MenuController(ViewWithInputState):
+class MenuController(BaseView):
     """
     Base class for menus. Reacts to canonical inputs (left shoulder button) to
     move across and select actions from the menu.

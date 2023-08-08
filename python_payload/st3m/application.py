@@ -1,5 +1,5 @@
 from st3m.ui.view import (
-    ViewWithInputState,
+    BaseView,
     ViewTransitionSwipeRight,
     ViewTransitionSwipeLeft,
     ViewManager,
@@ -18,7 +18,7 @@ import sys
 log = Log(__name__)
 
 
-class Application(ViewWithInputState):
+class Application(BaseView):
     def __init__(self, name: str = __name__) -> None:
         self._name = name
         super().__init__()

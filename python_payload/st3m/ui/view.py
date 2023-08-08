@@ -10,7 +10,7 @@ class View(Responder):
     lifecycle in terms of being foregrounded or backgrounded.
 
     These signals can be used to alter input processing, se the
-    ViewWithInputState class.
+    BaseView class.
     """
 
     def on_enter(self, vm: Optional["ViewManager"]) -> None:
@@ -21,7 +21,7 @@ class View(Responder):
         pass
 
 
-class ViewWithInputState(View):
+class BaseView(View):
     """
     A base class helper for implementing views which respond to inputs and who
     want to do their own, separate input processing.

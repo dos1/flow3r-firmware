@@ -294,20 +294,20 @@ Example 2b: Easier view management
 ----------------------------------
 
 The idea that a button (physical or captouch) is used to enter / exit a view is so universal that
-there is a special view which helps you with that: :py:class:`ViewWithInputState`. It integrates an
+there is a special view which helps you with that: :py:class:`BaseView`. It integrates an
 `InputController` and handles the ignoring of extra presses:
 
 .. code-block:: python
 
-    from st3m.ui.view import ViewWithInputState
+    from st3m.ui.view import BaseView
     import st3m.run
 
-    class SecondScreen(ViewWithInputState):
+    class SecondScreen(BaseView):
         def __init__(self) -> None:
             super().__init__()
 
         def on_enter(self, vm: Optional[ViewManager]) -> None:
-            super().on_enter(vm) # Let ViewWithInputState do its thing
+            super().on_enter(vm) # Let BaseView do its thing
 
         def draw(self, ctx: Context) -> None:
             # Paint the background black
@@ -316,13 +316,13 @@ there is a special view which helps you with that: :py:class:`ViewWithInputState
             ctx.rgb(0, 255, 0).rectangle(-20, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
-            super().think(ins, delta_ms) # Let ViewWithInputState do its thing
+            super().think(ins, delta_ms) # Let BaseView do its thing
 
             if self.input.right_shoulder.middle.pressed:
                 self.vm.pop()
 
 
-    class Example(ViewWithInputState):
+    class Example(BaseView):
         def __init__(self) -> None:
             super().__init__()
 
@@ -334,10 +334,10 @@ there is a special view which helps you with that: :py:class:`ViewWithInputState
 
 
         def on_enter(self, vm: Optional[ViewManager]) -> None:
-            super().on_enter(vm) # Let ViewWithInputState do its thing
+            super().on_enter(vm) # Let BaseView do its thing
 
         def think(self, ins: InputState, delta_ms: int) -> None:
-            super().think(ins, delta_ms) # Let ViewWithInputState do its thing
+            super().think(ins, delta_ms) # Let BaseView do its thing
 
             if self.input.right_shoulder.middle.pressed:
                 self.vm.push(SecondScreen())
@@ -360,12 +360,12 @@ Let's introduce the final class you should actually be using for application dev
     from st3m.application import Application
     import st3m.run
 
-    class SecondScreen(ViewWithInputState):
+    class SecondScreen(BaseView):
         def __init__(self) -> None:
             super().__init__()
 
         def on_enter(self, vm: Optional[ViewManager]) -> None:
-            super().on_enter(vm) # Let ViewWithInputState do its thing
+            super().on_enter(vm) # Let BaseView do its thing
 
         def draw(self, ctx: Context) -> None:
             # Paint the background black
@@ -374,7 +374,7 @@ Let's introduce the final class you should actually be using for application dev
             ctx.rgb(0, 255, 0).rectangle(-20, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
-            super().think(ins, delta_ms) # Let ViewWithInputState do its thing
+            super().think(ins, delta_ms) # Let BaseView do its thing
 
             if self.input.right_shoulder.middle.pressed:
                 self.vm.pop()
