@@ -83,13 +83,13 @@ def foreground() -> None:
     adjust_playing_field_to_octave()
 
 
-from st3m.application import Application
+from st3m.application import Application, ApplicationContext
 
 
 # TODO(q3k): properly port this app
 class MelodicApp(Application):
-    def __init__(self, name: str) -> None:
-        super().__init__(name)
+    def __init__(self, app_ctx: ApplicationContext) -> None:
+        super().__init__(app_ctx)
         init()
 
     def draw(self, ctx: Context) -> None:

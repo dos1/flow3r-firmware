@@ -17,12 +17,12 @@ chords = [
     [3, 7, 10, 14, 15],
 ]
 
-from st3m.application import Application
+from st3m.application import Application, ApplicationContext
 
 
 class HarmonicApp(Application):
-    def __init__(self, name: str) -> None:
-        super().__init__(name)
+    def __init__(self, app_ctx: ApplicationContext) -> None:
+        super().__init__(app_ctx)
 
         self.color_intensity = 0.0
         self.chord_index = 0

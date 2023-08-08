@@ -357,7 +357,7 @@ Let's introduce the final class you should actually be using for application dev
 
 .. code-block:: python
 
-    from st3m.application import Application
+    from st3m.application import Application, ApplicationContext
     import st3m.run
 
     class SecondScreen(BaseView):
@@ -381,8 +381,8 @@ Let's introduce the final class you should actually be using for application dev
 
 
     class MyDemo(Application):
-        def __init__(self) -> None:
-            super().__init__(name="My demo")
+        def __init__(self, app_ctx: ApplicationContext) -> None:
+            super().__init__(app_ctx)
 
         def draw(self, ctx: Context) -> None:
             # Paint the background black
@@ -399,7 +399,7 @@ Let's introduce the final class you should actually be using for application dev
             if self.input.right_shoulder.middle.pressed:
                 self._view_manager.push(SecondScreen())
 
-    st3m.run.run_view(Example())
+    st3m.run.run_view(Example(ApplicationContext()))
 
 The `Application` class gives you the following extras:
 

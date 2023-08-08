@@ -5,7 +5,7 @@ import math
 import leds
 
 from st3m import InputState, Responder
-from st3m.application import Application
+from st3m.application import Application, ApplicationContext
 from st3m.property import BLUE, WHITE
 from st3m.goose import Optional
 from st3m.utils import xy_from_polar, tau
@@ -77,8 +77,8 @@ class Otamatone(Application):
 
     PETAL_NO = 3
 
-    def __init__(self, name: str) -> None:
-        super().__init__(name)
+    def __init__(self, app_ctx: ApplicationContext) -> None:
+        super().__init__(app_ctx)
         self._ts = 0
         self._blob = Blob()
 
@@ -136,4 +136,4 @@ class Otamatone(Application):
 if __name__ == "__main__":
     from st3m.run import run_view
 
-    run_view(Otamatone("otamatone"))
+    run_view(Otamatone(ApplicationContext()))

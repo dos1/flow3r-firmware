@@ -3,7 +3,7 @@ import hardware
 import captouch
 import leds
 
-from st3m.application import Application
+from st3m.application import Application, ApplicationContext
 from st3m.input import InputState
 from st3m.goose import Tuple
 from ctx import Context
@@ -37,8 +37,8 @@ class Dot:
 
 
 class SimpleDrums(Application):
-    def __init__(self, name: str) -> None:
-        super().__init__(name)
+    def __init__(self, app_ctx: ApplicationContext) -> None:
+        super().__init__(app_ctx)
         # ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
         self.blm = bl00mbox.Channel()
         self.seq = self.blm.new(bl00mbox.patches.step_sequencer)

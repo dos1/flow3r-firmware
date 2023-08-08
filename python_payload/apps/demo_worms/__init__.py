@@ -5,7 +5,7 @@ import math
 
 # flow3r imports
 from st3m import InputState
-from st3m.application import Application
+from st3m.application import Application, ApplicationContext
 from st3m.property import BLUE, WHITE
 from st3m.goose import Optional
 from st3m.utils import xy_from_polar
@@ -18,8 +18,8 @@ tau = 2 * math.pi
 
 # Subclass Application
 class AppWorms(Application):
-    def __init__(self, name: str) -> None:
-        super().__init__(name)
+    def __init__(self, app_ctx: ApplicationContext) -> None:
+        super().__init__(app_ctx)
 
         # HACK: we work against double buffering by keeping note of how many
         # times on_draw got called.

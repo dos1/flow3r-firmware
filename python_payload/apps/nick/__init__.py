@@ -1,4 +1,4 @@
-from st3m.application import Application
+from st3m.application import Application, ApplicationContext
 from st3m.property import PUSH_RED, GO_GREEN, BLACK
 from st3m.goose import Dict, Any
 from st3m.input import InputState
@@ -48,8 +48,8 @@ class Configuration:
 
 
 class NickApp(Application):
-    def __init__(self, name: str) -> None:
-        super().__init__(name)
+    def __init__(self, app_ctx: ApplicationContext) -> None:
+        super().__init__(app_ctx)
         self._scale = 1.0
         self._led = 0.0
         self._phase = 0.0

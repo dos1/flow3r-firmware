@@ -18,9 +18,20 @@ import sys
 log = Log(__name__)
 
 
+class ApplicationContext:
+    """
+    Container for future application context.
+
+    Envisioned are: path to the bundle, bundle data,
+    path to a data directory, etc...
+    """
+
+    pass
+
+
 class Application(BaseView):
-    def __init__(self, name: str = __name__) -> None:
-        self._name = name
+    def __init__(self, app_ctx: ApplicationContext) -> None:
+        self._app_ctx = app_ctx
         super().__init__()
 
     def on_exit(self) -> None:
@@ -152,7 +163,7 @@ class BundleMetadata:
             log.info(f"Loaded {self.name} module: {m}")
             klass = getattr(m, class_entry)
             log.info(f"Loaded {self.name} class: {klass}")
-            inst = klass(package_name)
+            inst = klass(ApplicationContext())
             log.info(f"Instantiated {self.name} class: {inst}")
             return inst  # type: ignore
         except Exception as e:

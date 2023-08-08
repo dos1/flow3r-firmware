@@ -1,4 +1,5 @@
-from st3m import application, logging
+from st3m import logging
+from st3m.application import Application, ApplicationContext
 from st3m.goose import List
 from st3m.input import InputState
 from ctx import Context
@@ -32,9 +33,9 @@ class Dot:
         ).fill()
 
 
-class CapTouchDemo(application.Application):
-    def __init__(self, name: str) -> None:
-        super().__init__(name)
+class CapTouchDemo(Application):
+    def __init__(self, app_ctx: ApplicationContext) -> None:
+        super().__init__(app_ctx)
         self.dots: List[Dot] = []
         self.last_calib = None
         # self.ui_autocalib = ui.IconLabel("Autocalib done", size=30)
