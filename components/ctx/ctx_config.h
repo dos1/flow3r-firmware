@@ -16,7 +16,6 @@
 #endif
 #endif
 
-
 #define CTX_TINYVG    1
 #define CTX_TVG_STDIO 0
 #define CTX_DITHER    1
@@ -57,7 +56,7 @@
 #define CTX_ENABLE_SHADOW_BLUR  0
 #define CTX_FONTS_FROM_FILE     0
 #define CTX_MAX_KEYDB          16
-#define CTX_MAX_TEXTURES        1
+#define CTX_MAX_TEXTURES        16
 #define CTX_PARSER_MAXLEN       512
 #define CTX_PARSER_FIXED_TEMP   1
 #define CTX_CURRENT_PATH        1
@@ -72,6 +71,10 @@
 #define CTX_BLENDING_AND_COMPOSITING    1
 #define CTX_ENABLE_YUV420               1
 #define CTX_ENABLE_GRAY8                1
+#define CTX_STB_IMAGE                   1
+#define STBI_ONLY_PNG
+#define STBI_ONLY_JPEG
+
 #else
 #define CTX_ENABLE_CLIP                 0
 #define CTX_FRAGMENT_SPECIALIZE         0
