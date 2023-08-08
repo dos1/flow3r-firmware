@@ -52,7 +52,6 @@ class SimpleDrums(Application):
         self.hat.sampler.signals.trigger = self.seq.seqs[1].signals.output
         self.snare.sampler.signals.trigger = self.seq.seqs[2].signals.output
         self.track_names = ["kick", "hihat", "snare"]
-        self.ct_prev = captouch.read()
         self.track = 0
         self.seq.bpm = 80
         self.blm.background_mute_override = True
@@ -60,6 +59,14 @@ class SimpleDrums(Application):
         self.delta_acc = 0
         self.stopped = False
         self.bpm = self.seq.bpm
+
+        # True if a given group should be highlighted, when a corresponding
+        # petal is pressed.
+        self._group_highlight = [False for _ in range(4)]
+
+        # Disable repeat functionality as we want to detect long holds.
+        for i in range(10):
+            self.input.captouch.petals[i].whole.repeat_disable()
 
     def _highlight_petal(self, num: int, r: int, g: int, b: int) -> None:
         for i in range(5):
@@ -79,7 +86,7 @@ class SimpleDrums(Application):
         dots = []
         groupgap = 4
         for i in range(4):
-            if self.ct_prev.petals[4 - i].pressed:
+            if self._group_highlight[i]:
                 dots.append(
                     Dot(
                         48 + groupgap,
@@ -162,17 +169,19 @@ class SimpleDrums(Application):
         self._highlight_petal(4 - (st // 4), *rgb)
         self._highlight_petal(6 + (st % 4), *rgb)
         leds.update()
-        ct = captouch.read()
+
+        petals = self.input.captouch.petals
+
+        self._group_highlight = [False for _ in range(4)]
         for i in range(4):
-            if ct.petals[4 - i].pressed:
+            if petals[4 - i].whole.down:
+                self._group_highlight[i] = True
                 for j in range(4):
-                    if ct.petals[6 + j].pressed and not (
-                        self.ct_prev.petals[6 + j].pressed
-                    ):
+                    if petals[6 + j].whole.pressed:
                         self.seq.trigger_toggle(self.track, i * 4 + j)
-        if ct.petals[5].pressed and not (self.ct_prev.petals[5].pressed):
-            self.track = (self.track + 1) % 3
-        if ct.petals[0].pressed and not (self.ct_prev.petals[0].pressed):
+        if petals[5].whole.pressed:
+            self.track = (self.track - 1) % 3
+        if petals[0].whole.pressed:
             if self.stopped:
                 self.seq.bpm = self.bpm
                 self.stopped = False
@@ -183,7 +192,7 @@ class SimpleDrums(Application):
                     self.bpm = bpm
             self.delta_acc = 0
 
-        if ct.petals[0].pressed:
+        if petals[0].whole.down:
             if self.tap_tempo_press_counter > 500:
                 self.seq.bpm = 0
                 self.stopped = True
@@ -194,4 +203,3 @@ class SimpleDrums(Application):
 
         if self.delta_acc < 3000:
             self.delta_acc += delta_ms
-        self.ct_prev = ct
