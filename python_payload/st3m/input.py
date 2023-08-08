@@ -72,13 +72,28 @@ class Pressable:
     def __init__(self, state: bool) -> None:
         self._state = state
         self._prev_state = state
-        self._repeat = RepeatSettings(400, 200)
+        self._repeat: Optional[RepeatSettings] = RepeatSettings(400, 200)
 
         self._pressed_at: Optional[float] = None
         self._repeating = False
         self._repeated = False
 
         self._ignoring = 0
+
+    def repeat_enable(self, first: int = 400, subsequent: int = 200) -> None:
+        """
+        Enable key repeat functionality. Arguments are amount to wait in ms
+        until first repeat is emitted and until subsequent repeats are emitted.
+
+        Repeat is enabled by default on Pressables.
+        """
+        self._repeat = RepeatSettings(first, subsequent)
+
+    def repeat_disable(self) -> None:
+        """
+        Disable repeat functionality on this Pressable.
+        """
+        self._repeat = None
 
     def _update(self, ts: int, state: bool) -> None:
         if self._ignoring > 0:
