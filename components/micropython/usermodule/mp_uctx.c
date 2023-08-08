@@ -397,6 +397,25 @@ static mp_obj_t mp_ctx_texture(size_t n_args, const mp_obj_t *args) {
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_ctx_texture_obj, 6, 6, mp_ctx_texture);
 
+static mp_obj_t mp_ctx_image(size_t n_args, const mp_obj_t *args) {
+    mp_ctx_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+
+    const char *path = mp_obj_str_get_str(args[1]);
+    float x0 = 0.0;
+    float y0 = 0.0;
+    float width = -1.0;
+    float height = -1.0;
+
+    if (n_args > 2) x0 = mp_obj_get_float(args[2]);
+    if (n_args > 3) y0 = mp_obj_get_float(args[3]);
+    if (n_args > 4) width = mp_obj_get_float(args[4]);
+    if (n_args > 5) height = mp_obj_get_float(args[5]);
+    ctx_draw_image(self->ctx, path, x0, y0, width, height);
+
+    return args[0];
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_ctx_image_obj, 2, 6, mp_ctx_image);
+
 #if 0
 static mp_obj_t mp_ctx_font(mp_obj_t self_in, mp_obj_t font_in)
 {
@@ -818,6 +837,7 @@ static const mp_rom_map_elem_t mp_ctx_locals_dict_table[] = {
     MP_CTX_METHOD(add_stop),
     MP_CTX_METHOD(line_dash),
     MP_CTX_METHOD(texture),
+    MP_CTX_METHOD(image),
     MP_CTX_METHOD(save),
     MP_CTX_METHOD(restore),
     MP_CTX_METHOD(start_frame),

@@ -284,6 +284,14 @@ class Context(Protocol):
         radiuses are in use.
         """
         pass
+    def image(self, path: str, x: float, y: float, w: float, h: float) -> "Context":
+        """
+        Draw the image at path a in a rectangle with upper left coordinates at
+        x,y which is w wide and h high. If w or h is -1 the other is set
+        maintaining aspect ratio, if both are -1 the pixel dimensions of the
+        image is used.
+        """
+        pass
     def logo(self, x: float, y: float, dim: float) -> "Context":
         """
         TOD(q3k): document

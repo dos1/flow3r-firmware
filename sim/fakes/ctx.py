@@ -216,6 +216,19 @@ class Context:
         )
         return self
 
+    def image(self, path, x, y, width, height):
+        # TODO: replace with base64 encoded, decoded version of image
+        self._emit(f"save")
+        self._emit(f"rectangle {x} {y} {width} {height}")
+        self._emit(f"rgba 0.5 0.5 0.5 0.5")
+        self._emit(f"fill")
+        self._emit(f"rectangle {x} {y} {width} {height}")
+        self._emit(f"gray 1.0")
+        self._emit(f"lineWidth 1")
+        self._emit(f"stroke")
+        self._emit(f"restore")
+        return self
+
     def rectangle(self, x, y, width, height):
         self._emit(f"rectangle {x} {y} {width} {height}")
         return self
