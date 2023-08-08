@@ -305,11 +305,9 @@ there is a special view which helps you with that: :py:class:`ViewWithInputState
     class SecondScreen(ViewWithInputState):
         def __init__(self) -> None:
             super().__init__()
-            self._vm = None
 
         def on_enter(self, vm: Optional[ViewManager]) -> None:
             super().on_enter(vm) # Let ViewWithInputState do its thing
-            self._vm = vm
 
         def draw(self, ctx: Context) -> None:
             # Paint the background black
@@ -321,13 +319,12 @@ there is a special view which helps you with that: :py:class:`ViewWithInputState
             super().think(ins, delta_ms) # Let ViewWithInputState do its thing
 
             if self.input.right_shoulder.middle.pressed:
-                self._vm.pop()
+                self.vm.pop()
 
 
     class Example(ViewWithInputState):
         def __init__(self) -> None:
             super().__init__()
-            self._vm = None
 
         def draw(self, ctx: Context) -> None:
             # Paint the background black
@@ -337,13 +334,13 @@ there is a special view which helps you with that: :py:class:`ViewWithInputState
 
 
         def on_enter(self, vm: Optional[ViewManager]) -> None:
-            self._vm = vm
+            super().on_enter(vm) # Let ViewWithInputState do its thing
 
         def think(self, ins: InputState, delta_ms: int) -> None:
             super().think(ins, delta_ms) # Let ViewWithInputState do its thing
 
             if self.input.right_shoulder.middle.pressed:
-                self._vm.push(SecondScreen())
+                self.vm.push(SecondScreen())
 
     st3m.run.run_view(Example())
 
@@ -366,11 +363,9 @@ Let's introduce the final class you should actually be using for application dev
     class SecondScreen(ViewWithInputState):
         def __init__(self) -> None:
             super().__init__()
-            self._vm = None
 
         def on_enter(self, vm: Optional[ViewManager]) -> None:
             super().on_enter(vm) # Let ViewWithInputState do its thing
-            self._vm = vm
 
         def draw(self, ctx: Context) -> None:
             # Paint the background black
@@ -382,7 +377,7 @@ Let's introduce the final class you should actually be using for application dev
             super().think(ins, delta_ms) # Let ViewWithInputState do its thing
 
             if self.input.right_shoulder.middle.pressed:
-                self._vm.pop()
+                self.vm.pop()
 
 
     class MyDemo(Application):

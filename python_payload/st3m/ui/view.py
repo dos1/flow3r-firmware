@@ -35,9 +35,11 @@ class ViewWithInputState(View):
 
     def __init__(self) -> None:
         self.input = InputController()
+        self.vm: Optional["ViewManager"] = None
 
     def on_enter(self, vm: Optional["ViewManager"]) -> None:
         self.input._ignore_pressed()
+        self.vm = vm
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.input.think(ins, delta_ms)

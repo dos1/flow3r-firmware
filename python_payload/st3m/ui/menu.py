@@ -120,19 +120,16 @@ class MenuController(ViewWithInputState):
     __slots__ = (
         "_items",
         "_scroll_controller",
-        "_view_manager",
     )
 
     def __init__(self, items: List[MenuItem]) -> None:
         self._items = items
         self._scroll_controller = ScrollController()
         self._scroll_controller.set_item_count(len(items))
-        self._view_manager: Optional[ViewManager] = None
 
         super().__init__()
 
     def on_enter(self, vm: Optional["ViewManager"]) -> None:
-        self._view_manager = vm
         super().on_enter(vm)
 
     def _parse_state(self) -> None:
@@ -174,4 +171,4 @@ class MenuController(ViewWithInputState):
 
         Automatically called on canonical user input.
         """
-        self._items[self._scroll_controller.target_position()].press(self._view_manager)
+        self._items[self._scroll_controller.target_position()].press(self.vm)
