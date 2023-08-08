@@ -17,6 +17,7 @@ find . \
         -path './components/micropython/vendor' -o \
         -path './components/tinyusb' -o \
         -path './components/ctx' -o \
+        -path './components/bl00mbox' -o \
         -path './components/bmi270' -o \
         -path './components/bmp581' -o \
         -path './sim' \
