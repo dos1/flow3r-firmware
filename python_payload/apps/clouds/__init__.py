@@ -49,7 +49,6 @@ class CloudsApp(Application):
         self.clouds = sorted(self.clouds, key=lambda c: -c.z)
 
     def draw(self, ctx: Context) -> None:
-        ctx.rel_line_to(1, 1)
         ctx.rectangle(-120, -120, 240, 120)
         ctx.rgb(0, 0.34, 0.72)
         ctx.fill()
