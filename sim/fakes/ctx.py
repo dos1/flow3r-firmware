@@ -107,6 +107,14 @@ class Context:
         self._ctx = _ctx
 
     @property
+    def image_smoothing(self):
+        return 0
+
+    @image_smoothing.setter
+    def image_smoothing(self, v):
+        self._emit(f"imageSmoothing 0")
+
+    @property
     def text_align(self):
         return None
 
