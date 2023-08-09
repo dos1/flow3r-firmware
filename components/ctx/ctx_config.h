@@ -10,7 +10,7 @@
 
 #ifndef __clang__
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-#pragma GCC optimize("O3")
+#pragma GCC optimize("O2")
 #else
 #pragma GCC optimize("Oz")
 #endif
