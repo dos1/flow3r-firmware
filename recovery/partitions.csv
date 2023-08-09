@@ -4,5 +4,5 @@
 nvs,      data, nvs,     0x9000,  0x6000,
 phy_init, data, phy,     0xf000,  0x1000,
 recovery, app,  factory, 0x10000, 0x80000,
-app,      app,  ota_0,   0x90000, 0x300000,
-vfs,      data, fat,     0x390000, 0xc70000,
+app,      app,  ota_0,   0x90000, 0x800000,
+vfs,      data, fat,     0x890000, 0x770000,
