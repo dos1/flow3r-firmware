@@ -7,9 +7,12 @@ etc.
 """
 
 from st3m import Responder, InputState, Reactor
-from st3m.goose import Dict, Enum, List, ABCBase, abstractmethod
+from st3m.goose import Dict, Enum, List, ABCBase, abstractmethod, Optional
 from st3m.utils import tau
 from ctx import Context
+
+import math
+import audio
 
 
 class OverlayKind(Enum):
@@ -18,12 +21,14 @@ class OverlayKind(Enum):
     # Naughty debug developers for naughty developers and debuggers.
     Debug = 1
     Touch = 2
+    Toast = 3
 
 
 _all_kinds = [
     OverlayKind.Indicators,
     OverlayKind.Debug,
     OverlayKind.Touch,
+    OverlayKind.Toast,
 ]
 
 
@@ -47,6 +52,7 @@ class Compositor(Responder):
         self.enabled: Dict[OverlayKind, bool] = {
             OverlayKind.Indicators: True,
             OverlayKind.Debug: True,
+            OverlayKind.Toast: True,
         }
 
     def _enabled_overlays(self) -> List[Responder]:
@@ -186,3 +192,130 @@ class OverlayCaptouch(Overlay):
             ctx.save()
             dot.draw(ctx)
             ctx.restore()
+
+
+class OverlayVolume(Overlay):
+    """
+    Renders a black square with icon and volume slider.
+
+    Icon depends on whether headphones are plugged in or not.
+    """
+
+    kind = OverlayKind.Toast
+
+    def __init__(self) -> None:
+        self._showing: Optional[int] = None
+        self._volume = 0.0
+        self._headphones = False
+        self._muted = False
+
+        self._started = False
+        self._prev_volume = self._volume
+        self._prev_headphones = self._headphones
+        self._prev_muted = self._muted
+
+    def changed(self) -> bool:
+        """
+        Returns true if there was a system volume change warranting re-drawing
+        the overlay.
+        """
+        if self._prev_volume != self._volume:
+            return True
+        if self._prev_headphones != self._headphones:
+            return True
+        if self._prev_muted != self._muted:
+            return True
+        return False
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        self._volume = audio.get_volume_dB()
+        self._headphones = audio.headphones_are_connected()
+        self._muted = audio.get_mute()
+        if self._headphones:
+            # -20 ... +3dB
+            self._volume += 20
+            self._volume /= 20 + 3
+        else:
+            # -20 ... +14dB
+            self._volume += 20
+            self._volume /= 20 + 14
+
+        if self._started:
+            if self.changed():
+                self._showing = 1000
+        else:
+            # Ignore first run cycle, to not show volume slider on startup.
+            self._started = True
+
+        self._prev_volume = self._volume
+        self._prev_headphones = self._headphones
+        self._prev_muted = self._muted
+
+        if self._showing is None:
+            return
+        self._showing -= delta_ms
+        if self._showing < 0:
+            self._showing = None
+
+    def draw(self, ctx: Context) -> None:
+        if self._showing is None:
+            return
+
+        opacity = self._showing / 200
+        opacity = min(opacity, 0.8)
+
+        ctx.start_group()
+        ctx.global_alpha = opacity
+
+        # Background
+        ctx.gray(0)
+        ctx.round_rectangle(-40, -40, 80, 80, 5)
+        ctx.fill()
+
+        ctx.end_group()
+
+        # Foreground
+        opacity = self._showing / 200
+        opacity = min(opacity, 1)
+        ctx.start_group()
+        ctx.global_alpha = opacity
+
+        muted = self._muted
+        if muted:
+            ctx.gray(0.5)
+        else:
+            ctx.gray(1)
+
+        # Icon
+        if self._headphones:
+            ctx.round_rectangle(-20, -10, 5, 20, 3)
+            ctx.fill()
+            ctx.round_rectangle(15, -10, 5, 20, 3)
+            ctx.fill()
+            ctx.line_width = 3
+            ctx.arc(0, -10, 17, tau / 2, tau, 0)
+            ctx.stroke()
+        else:
+            ctx.move_to(-10, -10)
+            ctx.line_to(0, -10)
+            ctx.line_to(10, -20)
+            ctx.line_to(10, 10)
+            ctx.line_to(0, 0)
+            ctx.line_to(-10, 0)
+            ctx.fill()
+
+        ctx.gray(1)
+
+        # Volume slider
+        ctx.round_rectangle(-30, 20, 60, 10, 3)
+        ctx.line_width = 2
+        ctx.stroke()
+
+        v = self._volume
+        v = min(max(v, 0), 1)
+
+        width = 60 * v
+        ctx.round_rectangle(-30, 20, width, 10, 3)
+        ctx.fill()
+
+        ctx.end_group()

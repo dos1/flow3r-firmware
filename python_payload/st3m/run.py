@@ -5,7 +5,7 @@ from st3m.ui.elements import overlays
 from st3m.ui.view import View, ViewManager, ViewTransitionBlend
 from st3m.ui.elements.menus import SimpleMenu, SunMenu
 from st3m.application import discover_bundles, BundleMetadata
-from st3m import settings, logging
+from st3m import settings, logging, processors
 
 import captouch, audio, leds, gc
 
@@ -47,6 +47,9 @@ def _make_compositor(reactor: Reactor, r: Responder) -> overlays.Compositor:
     """
     compositor = overlays.Compositor(r)
 
+    volume = overlays.OverlayVolume()
+    compositor.add_overlay(volume)
+
     # Tie compositor's debug overlay to setting.
     def _onoff_debug_update() -> None:
         compositor.enabled[overlays.OverlayKind.Debug] = settings.onoff_debug.value
@@ -83,7 +86,8 @@ def run_view(v: View) -> None:
     vm.push(v)
     reactor = _make_reactor()
     compositor = _make_compositor(reactor, vm)
-    reactor.set_top(compositor)
+    top = processors.ProcessorMidldeware(compositor)
+    reactor.set_top(top)
     reactor.run()
 
 
