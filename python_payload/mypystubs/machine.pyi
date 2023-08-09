@@ -1,5 +1,8 @@
 from typing import Any
 
+def reset() -> None:
+    pass
+
 class Pin:
     """
     See the official micropython docs for more details:

@@ -1,6 +1,12 @@
 from st3m.reactor import Reactor, Responder
 from st3m.goose import List
-from st3m.ui.menu import MenuItem, MenuItemBack, MenuItemForeground, MenuItemNoop
+from st3m.ui.menu import (
+    MenuItem,
+    MenuItemBack,
+    MenuItemForeground,
+    MenuItemNoop,
+    MenuItemAction,
+)
 from st3m.ui.elements import overlays
 from st3m.ui.view import View, ViewManager, ViewTransitionBlend
 from st3m.ui.elements.menus import SimpleMenu, SunMenu
@@ -8,6 +14,10 @@ from st3m.application import discover_bundles, BundleMetadata
 from st3m import settings, logging, processors
 
 import captouch, audio, leds, gc
+import os
+
+import machine
+
 
 log = logging.Log(__name__, level=logging.INFO)
 
@@ -91,6 +101,11 @@ def run_view(v: View) -> None:
     reactor.run()
 
 
+def yeet_local_changes() -> None:
+    os.remove("/flash/sys/.sys-installed")
+    machine.reset()
+
+
 def run_main() -> None:
     log.info(f"starting main")
     log.info(f"free memory: {gc.mem_free()}")
@@ -110,7 +125,8 @@ def run_main() -> None:
             MenuItemForeground("Settings", menu_settings),
             MenuItemNoop("Disk Mode"),
             MenuItemNoop("About"),
-            MenuItemNoop("Reboot"),
+            MenuItemAction("Yeet Local Changes", yeet_local_changes),
+            MenuItemAction("Reboot", lambda: machine.reset()),
         ],
     )
     menu_main = SunMenu(

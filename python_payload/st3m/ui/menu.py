@@ -2,7 +2,7 @@ import st3m
 
 from st3m import Responder
 from st3m import logging
-from st3m.goose import ABCBase, abstractmethod, List, Optional
+from st3m.goose import ABCBase, abstractmethod, List, Optional, Callable
 from st3m.input import InputState, InputController
 from st3m.ui.view import (
     BaseView,
@@ -13,7 +13,6 @@ from st3m.ui.view import (
 )
 from st3m.ui.interactions import ScrollController
 from ctx import Context
-
 
 log = logging.Log(__name__)
 
@@ -68,6 +67,22 @@ class MenuItemForeground(MenuItem):
             vm.push(self._r, ViewTransitionSwipeLeft())
         else:
             log.warning(f"Could not foreground {self._r} as no ViewManager is present")
+
+    def label(self) -> str:
+        return self._label
+
+
+class MenuItemAction(MenuItem):
+    """
+    A MenuItem which runs the provided lambda action.
+    """
+
+    def __init__(self, label: str, action: Callable[[], None]) -> None:
+        self._label = label
+        self._action = action
+
+    def press(self, vm: Optional[ViewManager]) -> None:
+        self._action()
 
     def label(self) -> str:
         return self._label
