@@ -1,9 +1,9 @@
-badg23 simulator
+flow3r badge simulator
 ===
 
 This is a little simulator that allows quicker development iteration on Python code.
 
-It's a (C)Python application which sets up its environment so that it appears similar enough to the Badge's micropython environment, loading scripts from `python_payload` and `python_modules` in the main project directory.
+It's a (C)Python application which sets up its environment so that it appears similar enough to the Badge's micropython environment, loading scripts from `python_payload` in the main project directory.
 
 All C-implemented functions are implemented (or maybe just stubbed out) by 'fakes' in the fakes directory. Please try to keep this in sync with the real usermodule implementation.
 
@@ -34,7 +34,7 @@ Note: The simulator currently does no work with python3.11. Make sure to use pyt
 Running
 ---
 
-From the main badge23-firmware checkout:
+From the main flow3r-firmware checkout:
 
 ```
 python3 sim/run.py
@@ -42,8 +42,6 @@ python3 sim/run.py
 
 Known Issues
 ---
-
-Captouch petal input order is wrong.
 
 No support for audio yet.
 
