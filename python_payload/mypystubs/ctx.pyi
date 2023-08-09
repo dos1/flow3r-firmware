@@ -22,6 +22,7 @@ class Context(Protocol):
     For more information, see: https://ctx.graphics/
     """
 
+    image_smoothing: bool = True
     font_size: float = 10
     text_align: str = "start"
     text_baseline: str = "alphabetic"
