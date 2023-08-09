@@ -14,7 +14,22 @@ firmware repository.
 
 ::
 
-	$ git clone https://git.flow3r.garden/flow3r/flow3r-firmware
+	$ git clone --recursive https://git.flow3r.garden/flow3r/flow3r-firmware
+
+Don't forget the ``--recursive``, otherwise you'll get weird errors from missing submodules, like:
+
+::
+
+    CMake Error at esp-idf/tools/cmake/component.cmake:313 (message):
+     Include directory
+     '.../flow3r-firmware/components/micropython/vendor/lib/berkeley-db-1.xx/PORT/include'
+     is not a directory.
+
+If you've already cloned without ``--recursive`` you can update your submodules the following way:
+
+::
+
+    $ git submodule update --init
 
 Dependencies
 ------------
