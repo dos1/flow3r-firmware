@@ -3,7 +3,7 @@
 See https://docs.flow3r.garden/badge/firmware-development.html for a firmware development guide.
 
 ## License
-All original source code in this reporitory is Copyright (C) 2023 Flow3r Badge Contributors. This source code is licensed under the GNU Lesser General Public License Version 3.0 as described in the file COPYING.
+All original source code in this repository is Copyright (C) 2023 Flow3r Badge Contributors. This source code is licensed under the GNU Lesser General Public License Version 3.0 as described in the file COPYING.
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License Version 3.0 as published by the Free Software Foundation.
 
