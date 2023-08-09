@@ -358,7 +358,12 @@ Let's introduce the final class you should actually be using for application dev
 .. code-block:: python
 
     from st3m.application import Application, ApplicationContext
+    from st3m.ui.view import BaseView, ViewManager
+    from st3m.input import InputState
+    from ctx import Context
     import st3m.run
+
+    from typing import Optional
 
     class SecondScreen(BaseView):
         def __init__(self) -> None:
@@ -399,7 +404,8 @@ Let's introduce the final class you should actually be using for application dev
             if self.input.right_shoulder.middle.pressed:
                 self._view_manager.push(SecondScreen())
 
-    st3m.run.run_view(Example(ApplicationContext()))
+    ##### Uncomment when running the application via mpremote/Micro REPL ####
+    # st3m.run.run_view(MyDemo(ApplicationContext()))
 
 The `Application` class gives you the following extras:
 
