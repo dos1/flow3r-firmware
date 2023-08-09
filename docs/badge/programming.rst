@@ -136,4 +136,8 @@ Disk Mode can also be enabled when the badge is in :ref:`Recovery mode`.
 Writing Applications
 --------------------
 
-TODO
+Once you feel some familiary with the REPL, you're ready to advance to the next
+chapter: writing full-fledged applications that can draw graphics on the screen,
+respond to input and play sound!
+
+For that, continue with :ref:`application_programming`.

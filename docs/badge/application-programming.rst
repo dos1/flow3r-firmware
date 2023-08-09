@@ -413,7 +413,7 @@ file which describes the application so flow3r knows where to put it in the menu
 Together with the Python code this file forms a so called bundle
 (see also :py:class:`BundleMetadata`).
 
--- code-block::
+::
 
     [app]
     name = "My Demo"
@@ -433,16 +433,48 @@ and put that folder into the `apps` folder on your flow3r (if there is no `apps`
 there might be an `apps` folder in the `sys` folder). Restart the flow3r and it should pick up your
 new application.
 
+Distributing applications
+-------------------------
+
+*TODO*
+
 
 Using the simulator
 -------------------
 
-The simulator deserves its own page in the docs. For now have a look at the "Firmware Development" page
-to see how to set it up.
+The flow3r badge firmware repository comes with a Python-based simulator which
+allows you to run the Python part of :ref:`st3m` on your local computer, using
+Python, Pygame and wasmer.
 
-The simulators apps live in `python_payload/apps` copy you app folder in there and it will appear in
-the simulators menu system. Currently the simulator supports the display, LEDs, the buttons and some
-static input values from the accelerometer, gyroscope, temperature sensor and pressure sensor.
+Currently the simulator supports the display, LEDs, the buttons and some static
+input values from the accelerometer, gyroscope, temperature sensor and pressure
+sensor.
 
-No audio output on the simulator yet. Want to step up and get it in?
+It does **not** support any audio API, and in fact currently doesn't even stub
+out the relevant API methods, so it will crash when attempting to run any Music
+app. It also does not support positional captouch APIs.
 
+To set the simulator up, clone the repository and prepare a Python virtual
+environment with the required packages:
+
+::
+
+    $ git clone https://git.flow3r.garden/flow3r/flow3r-firmware
+    $ cd flow3r-firmware
+    $ python3 -m venv venv
+    $ venv/bin/pip install pygame wasmer wasmer-compiler-cranelift
+
+*TODO: set up a pyproject/poetry/... file?*
+
+You can then run the simulator:
+
+::
+
+    $ venv/bin/python sim/run.py
+
+Grey areas near the petals and buttons can be pressed.
+
+The simulators apps live in `python_payload/apps` copy you app folder in there
+and it will appear in the simulators menu system.
+
+*TODO: make simulator directly run a bundle on startup when requested*
