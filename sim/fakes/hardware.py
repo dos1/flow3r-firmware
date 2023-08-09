@@ -28,6 +28,8 @@ class Input:
 
     # Pixels positions of each marker.
     POSITIONS = []
+    # Keyboard mapping
+    KEYS = []
     # Pixel size (diameter) of each marker.
     MARKER_SIZE = 100
 
@@ -66,6 +68,13 @@ class Input:
             self._mouse_held = self._mouse_hover
         if ev.type == pygame.MOUSEBUTTONUP:
             self._mouse_held = None
+        if ev.type in [pygame.KEYDOWN, pygame.KEYUP]:
+            if ev.key in self.KEYS:
+                self._mouse_hover = self.KEYS.index(ev.key)
+            if ev.type == pygame.KEYDOWN:
+                self._mouse_held = self._mouse_hover
+            if ev.type == pygame.KEYUP:
+                self._mouse_held = None
 
         if prev_hover != self._mouse_hover:
             return True
@@ -201,6 +210,7 @@ class ButtonsInput(Input):
         (756, 240),
         (788, 240),
     ]
+    KEYS = [ pygame.K_LEFT, pygame.K_SPACE, pygame.K_RIGHT, pygame.K_1, pygame.K_2, pygame.K_3 ]
     MARKER_SIZE = 20
     COLOR_HELD = (0x80, 0x80, 0x80, 0xFF)
     COLOR_HOVER = (0x40, 0x40, 0x40, 0xFF)
