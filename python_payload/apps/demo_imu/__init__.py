@@ -1,13 +1,13 @@
 # flow3r imports
 from st3m import InputState
-from st3m.application import Application
+from st3m.application import Application, ApplicationContext
 from ctx import Context
 from st3m.utils import tau
 
 
 class IMUDemo(Application):
-    def __init__(self, name: str) -> None:
-        super().__init__(name)
+    def __init__(self, app_ctx: ApplicationContext) -> None:
+        super().__init__(app_ctx)
         self.v_x = 0.0
         self.v_y = 0.0
         self.p_x = 0.0
