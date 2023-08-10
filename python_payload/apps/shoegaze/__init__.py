@@ -10,6 +10,7 @@ import bl00mbox
 
 import leds
 import hardware
+import random
 
 chords = [
     [-5, -5, 2, 7, 10],
@@ -88,6 +89,11 @@ class ShoegazeApp(Application):
         self._git_string_tuning = [0] * 4
         self._button_prev = 0
         self._update_connections()
+        self._spinny = -0.5
+        self._gaze_counter = 0
+        self._rand_counter = 0
+        self._rand_limit = 16
+        self._rand_rot = 0.0
 
     def _update_connections(self) -> None:
         if self.fuzz_on:
@@ -124,7 +130,7 @@ class ShoegazeApp(Application):
         self._update_connections()
 
     def _set_chord(self, i: int) -> None:
-        hue = int(72 * (i + 0.5)) % 360
+        hue = int(54 * (i + 0.5)) % 360
         if i != self.chord_index:
             self.chord_index = i
             for j in range(40):
@@ -134,31 +140,55 @@ class ShoegazeApp(Application):
 
     def draw(self, ctx: Context) -> None:
         ctx.text_align = ctx.CENTER
-        ctx.font = ctx.get_font_name(5)
-        ctx.font_size = 30
+        self._rand_counter += 1
+        if self._rand_counter > self._rand_limit:
+            self._rand_counter = 0
+            self._rand_rot = 0.01 * float(random.getrandbits(3))
+        if self._rand_counter == 1:
+            self._rand_limit = 2 + random.getrandbits(3)
 
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
+        ctx.font = ctx.get_font_name(5)
+        ctx.font_size = 35
 
-        ctx.move_to(60, 60)
+        ctx.move_to(0, -112)
+        ctx.rgb(0.2, 0, 0.2)
+        ctx.text("bass")
+
+        rot = self._spinny  # + self._detune_prev
+        ctx.rgb(0, 0.5, 0.5)
+        ctx.rotate(rot + self._rand_rot)
+        ctx.move_to(0, -10)
+        ctx.text("shoegazeshoegazeshoe")
+        ctx.move_to(0, 10)
+        ctx.text("gazeshoegazeshoegaze")
+        ctx.rotate(-2.2 * (rot + self._rand_rot) - 0.5)
+
+        ctx.move_to(40, 40)
         if self.delay_on:
-            ctx.rgb(0, 255, 0)
+            ctx.rgb(0, 0.8, 0)
             ctx.text("delay ON!")
         else:
-            ctx.rgb(255, 0, 0)
+            ctx.rgb(0, 0.6, 0)
             ctx.text("delay off")
+
+        ctx.rotate(0.2 + self._rand_rot)
 
         ctx.move_to(50, -50)
         detune = "detune: " + str(int(self._detune_prev * 100))
-        ctx.rgb(0, 255, 0)
-        ctx.text(detune).rotate(-10)
+        ctx.rgb(0, 0.8, 0)
+        ctx.text(detune)
+
+        ctx.rotate(-2.5 * (rot + 4 * self._rand_rot))
 
         ctx.move_to(-50, 50)
         if self.fuzz_on:
-            ctx.rgb(0, 255, 0)
+            ctx.rgb(0, 0.8, 0)
             ctx.text("fuzz ON!")
         else:
-            ctx.rgb(255, 0, 0)
+            ctx.rgb(0, 0.6, 0)
             ctx.text("fuzz off")
+
         ctx.restore()
 
     def think(self, ins: InputState, delta_ms: int) -> None:

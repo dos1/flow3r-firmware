@@ -281,30 +281,21 @@ class karplus_strong(_Patch):
     def __init__(self, chan):
         self.buds = _PatchBudList()
         self.signals = _PatchSignalList()
-        self.buds.noise = chan.new_bud(bl00mbox.plugins.noise)
+
+        self.buds.noise = chan.new_bud(bl00mbox.plugins.noise_burst)
+        self.buds.noise.signals.length = 25
+
         self.buds.flanger = chan.new_bud(bl00mbox.plugins.flanger)
-        self.buds.amp = chan.new_bud(bl00mbox.plugins.ampliverter)
-        self.buds.env = chan.new_bud(bl00mbox.plugins.env_adsr)
-        # self.buds.slew = chan.new_bud(bl00mbox.plugins.slew_rate_limiter)
 
         self.buds.flanger.signals.resonance = 32500
         self.buds.flanger.signals.manual.tone = "A2"
 
-        self.buds.env.signals.sustain = 0
-        self.buds.env.signals.decay = 20
-        self.buds.env.signals.attack = 5
+        self.buds.flanger.signals.input = self.buds.noise.signals.output
 
-        self.buds.amp.signals.output = self.buds.flanger.signals.input
-        self.buds.amp.signals.input = self.buds.noise.signals.output
-        # self.buds.amp.signals.input = self.buds.slew.signals.output
-        # self.buds.slew.signals.input = self.buds.noise.signals.output
-        # self.buds.slew.signals.slew_rate = 10000
-        self.buds.amp.signals.gain = self.buds.env.signals.output
-
-        self.signals.trigger = self.buds.env.signals.trigger
+        self.signals.trigger = self.buds.noise.signals.trigger
         self.signals.pitch = self.buds.flanger.signals.manual
         self.signals.output = self.buds.flanger.signals.output
-        # self.signals.slew_rate = self.buds.slew.signals.slew_rate
+
         self.signals.level = self.buds.flanger.signals.level
         self.decay = 1000
 

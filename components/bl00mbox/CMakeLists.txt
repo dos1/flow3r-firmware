@@ -15,6 +15,7 @@ idf_component_register(
         plugins/flanger.c
         plugins/sequencer.c
         plugins/noise.c
+        plugins/noise_burst.c
         plugins/distortion.c
         plugins/lowpass.c
         plugins/mixer.c
