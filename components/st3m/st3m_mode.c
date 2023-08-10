@@ -2,19 +2,73 @@
 
 #include <string.h>
 
+#include "esp_log.h"
 #include "esp_system.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 
+#include "st3m_fs_flash.h"
+#include "st3m_fs_sd.h"
 #include "st3m_gfx.h"
 #include "st3m_io.h"
+#include "st3m_usb.h"
+
+static const char *TAG = "st3m-mode";
 
 static st3m_mode_t _mode = {
     .kind = st3m_mode_kind_starting,
     .message = NULL,
 };
 static SemaphoreHandle_t _mu;
+
+static void _diskmode_flash(void) {
+    st3m_usb_msc_conf_t msc = {
+        .block_size = st3m_fs_flash_get_blocksize(),
+        .block_count = st3m_fs_flash_get_blockcount(),
+        .product_id = { 'f', 'l', 'o', 'w', '3', 'r', ' ', 'f', 'l', 'a', 's',
+                        'h', 0, 0, 0, 0 },
+        .fn_read10 = st3m_fs_flash_read,
+        .fn_write10 = st3m_fs_flash_write,
+    };
+    st3m_usb_mode_t usb_mode = {
+        .kind = st3m_usb_mode_kind_disk,
+        .disk = &msc,
+    };
+    st3m_usb_mode_switch(&usb_mode);
+}
+
+static void _diskmode_sd(void) {
+    esp_err_t ret = st3m_fs_sd_unmount();
+    if (ret != ESP_OK) {
+        // TODO(q3k): handle error
+        ESP_LOGE(TAG, "st3m_fs_sd_umount: %s", esp_err_to_name(ret));
+        return;
+    }
+
+    st3m_fs_sd_props_t props;
+    ret = st3m_fs_sd_probe(&props);
+    if (ret != ESP_OK) {
+        // TODO(q3k): handle error
+        ESP_LOGE(TAG, "st3m_fs_sd_probe: %s", esp_err_to_name(ret));
+        return;
+    }
+
+    st3m_usb_msc_conf_t msc = {
+        .block_size = props.sector_size,
+        .block_count = props.sector_count,
+        .product_id = { 'f', 'l', 'o', 'w', '3', 'r', ' ', 'S', 'D', 0, 0, 0, 0,
+                        0, 0, 0 },
+        .fn_read10 = st3m_fs_sd_read10,
+        .fn_write10 = st3m_fs_sd_write10,
+    };
+    st3m_usb_mode_t usb_mode = {
+        .kind = st3m_usb_mode_kind_disk,
+        .disk = &msc,
+    };
+    st3m_usb_mode_switch(&usb_mode);
+}
 
 void st3m_mode_set(st3m_mode_kind_t kind, const char *message) {
     xSemaphoreTake(_mu, portMAX_DELAY);
@@ -35,6 +89,13 @@ void st3m_mode_set(st3m_mode_kind_t kind, const char *message) {
 
     _mode.kind = kind;
     _mode.shown = false;
+
+    if (kind == st3m_mode_kind_disk_flash) {
+        _diskmode_flash();
+    }
+    if (kind == st3m_mode_kind_disk_sd) {
+        _diskmode_sd();
+    }
     xSemaphoreGive(_mu);
 }
 
@@ -59,9 +120,20 @@ void st3m_mode_update_display(bool *restartable) {
             st3m_gfx_show_textview(&tv);
             break;
         }
-        case st3m_mode_kind_disk:
-            st3m_gfx_splash("Disk Mode");
-            break;
+        case st3m_mode_kind_disk_sd:
+        case st3m_mode_kind_disk_flash: {
+            const char *lines[] = {
+                "Press left shoulder button",
+                "to exit.",
+                NULL,
+            };
+            st3m_gfx_textview_t tv = {
+                .title = "Disk Mode",
+                .lines = lines,
+            };
+            st3m_gfx_show_textview(&tv);
+            if (restartable != NULL) *restartable = true;
+        } break;
         case st3m_mode_kind_repl:
             if (!_mode.shown) {
                 _mode.shown = true;

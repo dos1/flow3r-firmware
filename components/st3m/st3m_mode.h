@@ -7,8 +7,9 @@ typedef enum {
     st3m_mode_kind_starting = 1,
     st3m_mode_kind_app = 2,
     st3m_mode_kind_repl = 3,
-    st3m_mode_kind_disk = 4,
-    st3m_mode_kind_fatal = 5,
+    st3m_mode_kind_disk_flash = 4,
+    st3m_mode_kind_disk_sd = 5,
+    st3m_mode_kind_fatal = 6,
 } st3m_mode_kind_t;
 
 typedef struct {
