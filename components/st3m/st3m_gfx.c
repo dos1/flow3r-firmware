@@ -16,6 +16,7 @@
 
 #include "flow3r_bsp.h"
 #include "st3m_counter.h"
+#include "st3m_version.h"
 
 static const char *TAG = "st3m-gfx";
 
@@ -383,6 +384,12 @@ void st3m_gfx_show_textview(st3m_gfx_textview_t *tv) {
             y += 15;
         }
     }
+
+    // Draw version.
+    ctx_font_size(target->ctx, 15.0);
+    ctx_gray(target->ctx, 0.6);
+    ctx_move_to(target->ctx, 0, 100);
+    ctx_text(target->ctx, st3m_version);
 
     st3m_gfx_drawctx_pipe_put(target);
 }

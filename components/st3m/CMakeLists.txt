@@ -1,3 +1,5 @@
+set(ST3M_VERSION_PATH "${CMAKE_CURRENT_BINARY_DIR}/include/st3m_version.c")
+
 idf_component_register(
     SRCS
         st3m_audio.c
@@ -20,6 +22,7 @@ idf_component_register(
         st3m_fs.c
         st3m_fs_flash.c
         st3m_fs_sd.c
+        "${ST3M_VERSION_PATH}"
     INCLUDE_DIRS
         .
     REQUIRES
@@ -34,3 +37,22 @@ idf_component_register(
 
 idf_component_get_property(tusb_lib tinyusb COMPONENT_LIB)
 target_include_directories(${tusb_lib} PRIVATE .)
+
+# Generate st3m_version.c
+add_custom_command(
+    OUTPUT
+        "${ST3M_VERSION_PATH}"
+        "${ST3M_VERSION_PATH}.fake"
+    COMMAND
+        "${python}" "${PROJECT_DIR}/tools/version.py" "-c" > "${ST3M_VERSION_PATH}.tmp"
+    COMMAND
+        ${CMAKE_COMMAND} -E copy_if_different "${ST3M_VERSION_PATH}.tmp" "${ST3M_VERSION_PATH}"
+    COMMAND
+        ${CMAKE_COMMAND} -E remove "${ST3M_VERSION_PATH}.tmp"
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Generate st3m_version.c"
+    VERBATIM
+)
+add_custom_target(generate_st3m_version_c ALL DEPENDS "${ST3M_VERSION_PATH}")
+idf_component_get_property(st3m_lib st3m COMPONENT_LIB)
+add_dependencies("${st3m_lib}" generate_st3m_version_c)

@@ -6,6 +6,7 @@
 #include <string.h>
 #include "py/obj.h"
 #include "py/runtime.h"
+#include "st3m_version.h"
 
 #if (configUSE_TRACE_FACILITY != 1)
 #error config_USE_TRACE_FACILITY must be set
@@ -292,10 +293,18 @@ STATIC mp_obj_t mp_heap_stats(void) {
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_heap_stats_obj, mp_heap_stats);
 
+STATIC mp_obj_t mp_firmware_version(void) {
+    return mp_obj_new_str(st3m_version, strlen(st3m_version));
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_firmware_version_obj, mp_firmware_version);
+
 STATIC const mp_rom_map_elem_t globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_scheduler_snapshot),
       MP_ROM_PTR(&mp_scheduler_snapshot_obj) },
     { MP_ROM_QSTR(MP_QSTR_heap_stats), MP_ROM_PTR(&mp_heap_stats_obj) },
+    { MP_ROM_QSTR(MP_QSTR_firmware_version),
+      MP_ROM_PTR(&mp_firmware_version_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_RUNNING), MP_ROM_INT(eRunning) },
     { MP_ROM_QSTR(MP_QSTR_READY), MP_ROM_INT(eReady) },

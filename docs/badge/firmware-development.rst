@@ -227,3 +227,13 @@ To continuously build on change:
 ::
     
     $ watchexec make html
+
+Releasing
+---------
+
+1. Check out a version of main that you'd like to cut a release from.
+2. Create a new branch named ``release/[major].[minor].[patch]``, eg. ``git checkout -b release/1.2.3``.
+3. Tag a the first release candidate: ``git tag v1.2.3+rc1``.
+4. Build and perform QA (*TODO: document*).
+5. If the release canidate needs more work, cherry-pick fixes from main, tag a subsequent RC (eg. ``git tag v1.2.3+rc2``) and go back to step 4.
+6. If the release candidate is ready to be released, tag a full release (``git tag v1.2.3``) and push branch/tags to gitlab. (*TODO: build CI pipeline for release tags*)

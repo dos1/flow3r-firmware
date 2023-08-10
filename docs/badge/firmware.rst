@@ -194,3 +194,14 @@ Download a release from **TODO**, extract the tarball and follow instructions in
 Or, if you're at CCCamp2023, visit one of our firmware update stations.
 
 .. [#WL] Wear leveling, to protect internal flash from death by repeat sector write.
+
+Versioning
+----------
+
+Releases follow semantic versioning rules and are names ``v[major].[minor].[patch].``.
+
+Release candidates are suffixed with ``+rc[number]``, with ``v1.2.3+rc23`` being the 23rd release candidate for version 1.2.3 (ie., if the RC is promoted to a build, it will become version 1.2.3).
+
+Development versions (not tagged with a release or release candidate tag) are suffixed with ``-dev[num]``, where ``num`` is the number of commits from the beginning of the main branch history.
+
+Builds from the main branch are currently always at version 0.
