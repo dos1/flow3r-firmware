@@ -125,6 +125,8 @@ class sampler(_Patch):
             pass
             # raise Bl00mboxError("wave library not found")
         f = wave.open("/flash/sys/samples/" + filename, "r")
+        channels = f.getnchannels()
+
         len_frames = f.getnframes()
         self.sampler = chan.new_bud(696969, len_frames)
         table = [0] * len_frames
