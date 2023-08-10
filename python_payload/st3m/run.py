@@ -6,11 +6,13 @@ from st3m.ui.menu import (
     MenuItemForeground,
     MenuItemNoop,
     MenuItemAction,
+    MenuItemLaunchPersistentView,
 )
 from st3m.ui.elements import overlays
 from st3m.ui.view import View, ViewManager, ViewTransitionBlend
 from st3m.ui.elements.menus import SimpleMenu, SunMenu
 from st3m.application import discover_bundles, BundleMetadata
+from st3m.about import About
 from st3m import settings, logging, processors
 
 import captouch, audio, leds, gc
@@ -124,7 +126,7 @@ def run_main() -> None:
             MenuItemBack(),
             MenuItemForeground("Settings", menu_settings),
             MenuItemNoop("Disk Mode"),
-            MenuItemNoop("About"),
+            MenuItemLaunchPersistentView("About", About),
             MenuItemAction("Yeet Local Changes", yeet_local_changes),
             MenuItemAction("Reboot", lambda: machine.reset()),
         ],

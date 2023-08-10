@@ -88,6 +88,30 @@ class MenuItemAction(MenuItem):
         return self._label
 
 
+class MenuItemLaunchPersistentView(MenuItem):
+    """
+    A MenuItem which lazily loads a View class on first run.
+    """
+
+    def __init__(self, label: str, cons: Callable[[], View]) -> None:
+        self._label = label
+        self._cons = cons
+        self._instance: Optional[View] = None
+
+    def press(self, vm: Optional[ViewManager]) -> None:
+        if self._instance is None:
+            self._instance = self._cons()
+        if vm is not None:
+            vm.push(self._instance, ViewTransitionSwipeLeft())
+        else:
+            log.warning(
+                f"Could not foreground {self._instance} as no ViewManager is present"
+            )
+
+    def label(self) -> str:
+        return self._label
+
+
 class MenuItemNoop(MenuItem):
     """
     A MenuItem which does nothing.
