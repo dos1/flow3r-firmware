@@ -2,6 +2,7 @@
 
 #include "st3m_gfx.h"
 #include "st3m_io.h"
+#include "st3m_version.h"
 
 // clang-format off
 #include "ctx_config.h"
@@ -26,8 +27,14 @@ static void _header_draw(st3m_ctx_desc_t *target) {
     ctx_font_size(target->ctx, 30.0);
     ctx_move_to(target->ctx, 0, -80);
     ctx_text(target->ctx, "Recovery");
-    ctx_move_to(target->ctx, 0, -50);
+    ctx_move_to(target->ctx, 0, -55);
     ctx_text(target->ctx, "Mode");
+
+    // Draw version.
+    ctx_font_size(target->ctx, 15.0);
+    ctx_gray(target->ctx, 0.6);
+    ctx_move_to(target->ctx, 0, 100);
+    ctx_text(target->ctx, st3m_version);
 }
 
 void rec_erasing_draw(void) {
