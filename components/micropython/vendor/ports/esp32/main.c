@@ -78,6 +78,25 @@ int vprintf_null(const char *format, va_list ap) {
     return 0;
 }
 
+static void _diskmode_maybe(int ret) {
+    // Switch to disk mode and suspend forever. For now we leave disk
+    // mode by restarting the badge.
+    //
+    // TODO(q3k): handle disk mode exiting gracefully
+    if (ret & PYEXEC_DISK_MODE_SD) {
+        st3m_mode_set(st3m_mode_kind_disk_sd, NULL);
+        for (;;) {
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+        }
+    }
+    if (ret & PYEXEC_DISK_MODE_FLASH) {
+        st3m_mode_set(st3m_mode_kind_disk_flash, NULL);
+        for (;;) {
+            vTaskDelay(100 / portTICK_PERIOD_MS);
+        }
+    }
+}
+
 void mp_task(void *pvParameter) {
     volatile uint32_t sp = (uint32_t)esp_cpu_get_sp();
     #if MICROPY_PY_THREAD
@@ -120,8 +139,10 @@ soft_reset:
     // run boot-up scripts
     pyexec_frozen_module("_boot.py");
     pyexec_file_if_exists("boot.py");
+    int ret;
     if (pyexec_mode_kind == PYEXEC_MODE_FRIENDLY_REPL) {
-        int ret = pyexec_file_if_exists("/flash/sys/main.py");
+        ret = pyexec_file_if_exists("/flash/sys/main.py");
+        _diskmode_maybe(ret);
         if (ret & PYEXEC_FORCED_EXIT) {
             goto soft_reset_exit;
         }
@@ -137,7 +158,8 @@ soft_reset:
             }
             esp_log_set_vprintf(vprintf_log);
         } else {
-            if (pyexec_friendly_repl() != 0) {
+            if ((ret = pyexec_friendly_repl() != 0)) {
+                _diskmode_maybe(pyexec_system_exit);
                 break;
             }
         }

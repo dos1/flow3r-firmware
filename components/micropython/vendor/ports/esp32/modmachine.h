@@ -32,4 +32,7 @@ void machine_pwm_deinit_all(void);
 void machine_timer_deinit_all(void);
 void machine_i2s_init0();
 
+#define PYEXEC_DISK_MODE_SD (0x200)
+#define PYEXEC_DISK_MODE_FLASH (0x400)
+
 #endif // MICROPY_INCLUDED_ESP32_MODMACHINE_H

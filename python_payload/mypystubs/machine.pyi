@@ -3,6 +3,18 @@ from typing import Any
 def reset() -> None:
     pass
 
+def disk_mode_sd() -> None:
+    """
+    Exit Micropython and enable SD card disk mode.
+    """
+    pass
+
+def disk_mode_flash() -> None:
+    """
+    Exit Micropython and enable internal flash disk mode.
+    """
+    pass
+
 class Pin:
     """
     See the official micropython docs for more details:
