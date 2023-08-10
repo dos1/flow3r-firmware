@@ -149,14 +149,15 @@ class sampler(_Patch):
 
 
 class step_sequencer(_Patch):
-    def __init__(self, chan):
+    def __init__(self, chan, num_channels = 4):
         self.seqs = []
-        for i in range(4):
+        for i in range(num_channels):
             seq = chan.new_bud(56709)
             seq.table = [-32767] + ([0] * 16)
             if len(self.seqs):
                 self.seqs[-1].signals.sync_out = seq.signals.sync_in
             self.seqs += [seq]
+        seq.signals.bpm.value = 120
         self._bpm = 120
 
     def __repr__(self):
