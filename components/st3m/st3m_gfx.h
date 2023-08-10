@@ -18,6 +18,8 @@
 typedef struct {
     // The numeric ID of this descriptor.
     int num;
+    // set when the drawlist was empty
+    int empty;
     // SPIRAM buffer.
     uint16_t buffer[240 * 240];
     Ctx *ctx;
@@ -50,7 +52,7 @@ uint8_t st3m_gfx_drawctx_pipe_full(void);
 // Flush any in-flight pipelined work, resetting the free ctx/framebuffer queues
 // to their initial state. This should be called if there has been any drawlist
 // ctx dropped (ie. drawctx_free_get was called but then drawctx_pipe_put
-// wasn't, for exaple if Micropython restarted).
+// wasn't, for example if Micropython restarted).
 //
 // This causes a graphical disturbance and shouldn't be called during normal
 // operation.

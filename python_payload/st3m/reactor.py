@@ -42,7 +42,9 @@ class Responder(ABCBase):
         coordinates are +/- 120 in both X and Y (positive numbers towards up and
         right), with 0,0 being the middle of the screen.
 
-        The Reactor will then rasterize and blit the result.
+        The Reactor will then rasterize and blit the result. If no ctx drawing
+        commands are issued, it is interpreted as a wish to keep the display
+        contents as-is, and cpu time is not spent on rasterization and blitting.
 
         The code must not sleep or block during this callback, as that will
         impact the system tickrate and framerate.
