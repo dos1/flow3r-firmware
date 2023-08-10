@@ -44,7 +44,7 @@ add_custom_command(
         "${ST3M_VERSION_PATH}"
         "${ST3M_VERSION_PATH}.fake"
     COMMAND
-        "${python}" "${PROJECT_DIR}/tools/version.py" "-c" > "${ST3M_VERSION_PATH}.tmp"
+        "${python}" "${CMAKE_CURRENT_SOURCE_DIR}/host-tools/version.py" "-c" > "${ST3M_VERSION_PATH}.tmp"
     COMMAND
         ${CMAKE_COMMAND} -E copy_if_different "${ST3M_VERSION_PATH}.tmp" "${ST3M_VERSION_PATH}"
     COMMAND
