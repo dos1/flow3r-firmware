@@ -1,23 +1,14 @@
-from bl00mbox import patches
+from bl00mbox._user import *
+import bl00mbox._patches as patches
+import bl00mbox._helpers as helpers
+from bl00mbox._plugins import plugins
 
-from typing import Optional, TypeVar, Any, Type
-
-patches = patches
-
-class Signal:
-    value: int
-
-class SignalList:
-    def __setattr__(self, name: str, value: Signal) -> None: ...
-    def __getattr__(self, name: str) -> Signal: ...
-
-class Bud:
-    signals: SignalList
-
-T = TypeVar("T")
-P = TypeVar("P", bound=patches._Patch)
-
-class Channel:
-    background_mute_override: bool
-    def new(self, thing: Type[T], init_var: Optional[Any] = None) -> T: ...
-    def new_patch(self, patch: Type[T], init_var: Optional[Any] = None) -> T: ...
+__all__ = [
+    "Signal",
+    "SignalList",
+    "Bud",
+    "Channel",
+    "patches",
+    "helpers",
+    "plugins",
+]

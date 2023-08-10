@@ -654,6 +654,16 @@ char * bl00mbox_channel_bud_get_signal_name(uint8_t channel, uint32_t bud_index,
     return sig->name;
 }
 
+int8_t bl00mbox_channel_bud_get_signal_name_multiplex(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return false;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return false;
+    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, bud_signal_index);
+    if(sig == NULL) return false;
+    return sig->name_multiplex;
+}
+
 char * bl00mbox_channel_bud_get_signal_description(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index){
     bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
     if(chan == NULL) return false;

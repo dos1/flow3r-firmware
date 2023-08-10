@@ -41,11 +41,11 @@
 #define RADSPA_SIGNAL_HINT_INPUT (1<<0)
 #define RADSPA_SIGNAL_HINT_OUTPUT (1<<1)
 #define RADSPA_SIGNAL_HINT_TRIGGER (1<<2)
-#define RADSPA_SIGNAL_HINT_VOL (1<<3)
+#define RADSPA_SIGNAL_HINT_GAIN (1<<3)
 #define RADSPA_SIGNAL_HINT_SCT (1<<5)
 
 #define RADSPA_SIGNAL_VAL_SCT_A440 (INT16_MAX - 6*2400)
-#define RADSPA_SIGNAL_VAL_UNITY_GAIN (1<<11)
+#define RADSPA_SIGNAL_VAL_UNITY_GAIN (1<<12)
 
 struct _radspa_descriptor_t;
 struct _radspa_signal_t;
@@ -115,7 +115,9 @@ extern int16_t radspa_clip(int32_t a);
 // saturating int16 addition
 extern int16_t radspa_add_sat(int32_t a, int32_t b);
 // (a*b)>>15
-extern int16_t radspa_mult_shift(int32_t a, int32_t b);
+extern int32_t radspa_mult_shift(int32_t a, int32_t b);
+// (a*b)>>12
+extern int32_t radspa_gain(int32_t a, int32_t b);
 
 extern int16_t radspa_trigger_start(int16_t velocity, int16_t * hist);
 extern int16_t radspa_trigger_stop(int16_t * hist);

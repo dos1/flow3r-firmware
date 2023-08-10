@@ -15,6 +15,10 @@ idf_component_register(
         plugins/flanger.c
         plugins/sequencer.c
         plugins/noise.c
+        plugins/distortion.c
+        plugins/lowpass.c
+        plugins/mixer.c
+        plugins/slew_rate_limiter.c
         radspa/radspa_helpers.c
         extern/xoroshiro64star.c
     INCLUDE_DIRS

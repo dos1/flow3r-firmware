@@ -77,7 +77,7 @@ void flanger_run(radspa_t * flanger, uint16_t num_samples, uint32_t render_pass_
         int16_t dry_vol = (mix>0) ? (32767-mix) : (32767+mix); //always pos polarity
 
         ret = radspa_add_sat(radspa_mult_shift(dry, dry_vol), radspa_mult_shift(radspa_clip(wet), mix));
-        ret = radspa_clip(radspa_mult_shift(ret, level));
+        ret = radspa_clip(radspa_gain(ret, level));
         (output_sig->buffer)[i] = ret;
     }
     output_sig->value = ret;
@@ -93,8 +93,10 @@ radspa_t * flanger_create(uint32_t init_var){
     radspa_signal_set(flanger, FLANGER_OUTPUT, "output", RADSPA_SIGNAL_HINT_OUTPUT, 0);
     radspa_signal_set(flanger, FLANGER_INPUT, "input", RADSPA_SIGNAL_HINT_INPUT, 0);
     radspa_signal_set(flanger, FLANGER_MANUAL, "manual", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_SCT, 18367);
-    radspa_signal_set(flanger, FLANGER_RESONANCE, "resonance", RADSPA_SIGNAL_HINT_INPUT, 16000);
-    radspa_signal_set(flanger, FLANGER_LEVEL, "level", RADSPA_SIGNAL_HINT_INPUT, 16000);
+    radspa_signal_set(flanger, FLANGER_RESONANCE, "resonance", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_GAIN,
+                            RADSPA_SIGNAL_VAL_UNITY_GAIN/2);
+    radspa_signal_set(flanger, FLANGER_LEVEL, "level", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_GAIN,
+                            RADSPA_SIGNAL_VAL_UNITY_GAIN);
     radspa_signal_set(flanger, FLANGER_MIX, "mix", RADSPA_SIGNAL_HINT_INPUT, 1<<14);
     return flanger;
 }

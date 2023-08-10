@@ -36,6 +36,7 @@ uint32_t bl00mbox_channel_bud_get_plugin_id(uint8_t channel, uint32_t bud_index)
 uint16_t bl00mbox_channel_bud_get_num_signals(uint8_t channel, uint32_t bud_index);
 
 char * bl00mbox_channel_bud_get_signal_name(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index);
+int8_t bl00mbox_channel_bud_get_signal_name_multiplex(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index);
 char * bl00mbox_channel_bud_get_signal_description(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index);
 char * bl00mbox_channel_bud_get_signal_unit(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index);
 bool bl00mbox_channel_bud_set_signal_value(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index, int16_t value);

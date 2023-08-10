@@ -41,7 +41,9 @@ void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
         data->write_head_position++;
         while(data->write_head_position >= buffer_size) data->write_head_position -= buffer_size; // maybe faster than %
         if(time != data->time_prev){
-            data->read_head_position = time * (48000/1000) + data->write_head_position;
+            data->read_head_position = data->write_head_position;
+            data->read_head_position = - time * (48000/1000);
+            if(data->read_head_position < 0) data->read_head_position += buffer_size;
             data->time_prev = time;
         } else {
             data->read_head_position++;
@@ -72,11 +74,13 @@ void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
 
 radspa_t * delay_create(uint32_t init_var){
     if(init_var == 0) init_var = 500;
+    if(init_var > 10000) init_var = 10000;
     uint32_t buffer_size = init_var*(48000/1000);
     radspa_t * delay = radspa_standard_plugin_create(&delay_desc, DELAY_NUM_SIGNALS, sizeof(delay_data_t), buffer_size);
 
     if(delay == NULL) return NULL;
     delay_data_t * plugin_data = delay->plugin_data;
+    plugin_data->time_prev = UINT32_MAX;
     plugin_data->max_delay = init_var;
     delay->render = delay_run;
     radspa_signal_set(delay, DELAY_OUTPUT, "output", RADSPA_SIGNAL_HINT_OUTPUT, 0);

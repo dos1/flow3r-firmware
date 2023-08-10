@@ -68,7 +68,8 @@ int16_t radspa_clip(int32_t a){
 }
 
 int16_t radspa_add_sat(int32_t a, int32_t b){ return radspa_clip(a+b); }
-int16_t radspa_mult_shift(int32_t a, int32_t b){ return radspa_clip((a*b)>>15); }
+int32_t radspa_mult_shift(int32_t a, int32_t b){ return radspa_clip((a*b)>>15); }
+int32_t radspa_gain(int32_t a, int32_t b){ return radspa_clip((a*b)>>12); }
 
 int16_t radspa_trigger_start(int16_t velocity, int16_t * hist){
     int16_t ret = ((* hist) > 0) ? -velocity : velocity;

@@ -3,7 +3,7 @@
 #include <radspa_helpers.h>
 
 typedef struct {
-    uint32_t read_head_position;
+    int32_t read_head_position;
     uint32_t write_head_position;
     uint32_t max_delay;
     uint32_t time_prev;

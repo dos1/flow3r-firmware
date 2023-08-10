@@ -18,6 +18,18 @@ void radspa_signal_set(radspa_t * plugin, uint8_t signal_index, char * name, uin
     sig->value = value;
 }
 
+void radspa_signal_set_group(radspa_t * plugin, uint8_t group_len, uint8_t signal_index, char * name,
+                                    uint32_t hints, int16_t value){
+    for(uint8_t i = 0; i < group_len; i++){
+        radspa_signal_t * sig = radspa_signal_get_by_index(plugin, signal_index + i);
+        if(sig == NULL) return;
+        sig->name = name;
+        sig->hints = hints;
+        sig->value = value;
+        sig->name_multiplex = i;
+    }
+}
+
 int16_t radspa_signal_add(radspa_t * plugin, char * name, uint32_t hints, int16_t value){
     radspa_signal_t * sig = calloc(1,sizeof(radspa_signal_t));
     if(sig == NULL) return -1; // allocation failed

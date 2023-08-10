@@ -91,11 +91,14 @@ radspa_descriptor_t * bl00mbox_plugin_registry_get_id_from_index(uint32_t index)
 #include "env_adsr.h"
 #include "ampliverter.h"
 #include "delay.h"
-//#include "filter.h"
+#include "lowpass.h"
 #include "sequencer.h"
 #include "sampler.h"
 #include "flanger.h"
 #include "noise.h"
+#include "distortion.h"
+#include "mixer.h"
+#include "slew_rate_limiter.h"
 
 void bl00mbox_plugin_registry_init(void){
     if(bl00mbox_plugin_registry_is_initialized) return;
@@ -103,9 +106,12 @@ void bl00mbox_plugin_registry_init(void){
     plugin_add(&ampliverter_desc);
     plugin_add(&env_adsr_desc);   
     plugin_add(&delay_desc);   
-//    plugin_add(&filter_desc);   
+    plugin_add(&lowpass_desc);   
     plugin_add(&sequencer_desc);
     plugin_add(&sampler_desc);
     plugin_add(&flanger_desc);
     plugin_add(&noise_desc);
+    plugin_add(&distortion_desc);
+    plugin_add(&mixer_desc);
+    plugin_add(&slew_rate_limiter_desc);
 }

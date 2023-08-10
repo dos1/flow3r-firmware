@@ -31,6 +31,3 @@ radspa_t * noise_create(uint32_t init_var){
     radspa_signal_set(noise, NOISE_OUTPUT, "output", RADSPA_SIGNAL_HINT_OUTPUT, 0);
     return noise;
 }
-
-#undef NOISE_NUM_SIGNALS
-#undef NOISE_OUTPUT

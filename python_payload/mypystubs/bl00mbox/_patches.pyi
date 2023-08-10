@@ -4,6 +4,12 @@ from typing import List
 
 class _Patch: ...
 
+class _PatchSignalList:
+    def __getattr__(self, name: str) -> bl00mbox.Signal: ...
+
+class _PatchBudList:
+    def __getattr__(self, name: str) -> bl00mbox.Bud: ...
+
 class tinysynth(_Patch):
     def decay(self, v: float) -> None: ...
     def waveform(self, v: int) -> None: ...
@@ -28,3 +34,15 @@ class step_sequencer(_Patch):
 
 class sampler(_Patch):
     sampler: bl00mbox.Bud
+
+class fuzz(_Patch):
+    buds: _PatchBudList
+    signals: _PatchSignalList
+    volume: int
+    intensity: float
+    gate: int
+
+class karplus_strong(_Patch):
+    buds: _PatchBudList
+    signals: _PatchSignalList
+    decay: int

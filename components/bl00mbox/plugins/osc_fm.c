@@ -66,7 +66,7 @@ static inline int16_t triangle(int16_t saw){
     return tmp;
 }
 
-inline int16_t waveshaper(int16_t saw, int16_t shape){
+static inline int16_t waveshaper(int16_t saw, int16_t shape){
     int32_t tmp = saw;
     uint8_t sh = ((uint16_t) shape) >> 14;
     sh = (sh + 2)%4;

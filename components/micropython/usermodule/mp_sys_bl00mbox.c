@@ -7,6 +7,7 @@
 #include "bl00mbox.h"
 #include "bl00mbox_plugin_registry.h"
 #include "bl00mbox_user.h"
+#include "radspa.h"
 
 // ========================
 //    PLUGIN OPERATIONS
@@ -232,6 +233,16 @@ STATIC mp_obj_t mp_channel_bud_get_signal_name(mp_obj_t chan, mp_obj_t bud,
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_bud_get_signal_name_obj,
                                  mp_channel_bud_get_signal_name);
+
+STATIC mp_obj_t mp_channel_bud_get_signal_name_multiplex(mp_obj_t chan,
+                                                         mp_obj_t bud,
+                                                         mp_obj_t signal) {
+    int8_t ret = bl00mbox_channel_bud_get_signal_name_multiplex(
+        mp_obj_get_int(chan), mp_obj_get_int(bud), mp_obj_get_int(signal));
+    return mp_obj_new_int(ret);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_bud_get_signal_name_multiplex_obj,
+                                 mp_channel_bud_get_signal_name_multiplex);
 
 STATIC mp_obj_t mp_channel_bud_get_signal_description(mp_obj_t chan,
                                                       mp_obj_t bud,
@@ -488,6 +499,8 @@ STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
     // SIGNAL OPERATIONS
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_signal_name),
       MP_ROM_PTR(&mp_channel_bud_get_signal_name_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_bud_get_signal_name_multiplex),
+      MP_ROM_PTR(&mp_channel_bud_get_signal_name_multiplex_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_signal_description),
       MP_ROM_PTR(&mp_channel_bud_get_signal_description_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_signal_unit),
@@ -531,6 +544,12 @@ STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
 
     // CONSTANTS
     { MP_ROM_QSTR(MP_QSTR_NUM_CHANNELS), MP_ROM_INT(BL00MBOX_CHANNELS) },
+    { MP_ROM_QSTR(MP_QSTR_RADSPA_SIGNAL_HINT_SCT),
+      MP_ROM_INT(RADSPA_SIGNAL_HINT_SCT) },
+    { MP_ROM_QSTR(MP_QSTR_RADSPA_SIGNAL_HINT_GAIN),
+      MP_ROM_INT(RADSPA_SIGNAL_HINT_GAIN) },
+    { MP_ROM_QSTR(MP_QSTR_RADSPA_SIGNAL_HINT_TRIGGER),
+      MP_ROM_INT(RADSPA_SIGNAL_HINT_TRIGGER) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_bl00mbox_globals, bl00mbox_globals_table);

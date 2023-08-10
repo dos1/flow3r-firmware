@@ -6,10 +6,15 @@
 int16_t radspa_signal_add(radspa_t * plugin, char * name, uint32_t hints, int16_t value);
 // as above, but sets parameters of an already existing signal with at list position signal_index
 void radspa_signal_set(radspa_t * plugin, uint8_t signal_index, char * name, uint32_t hints, int16_t value);
+void radspa_signal_set_group(radspa_t * plugin, uint8_t group_len, uint8_t signal_index, char * name,
+                                    uint32_t hints, int16_t value);
+
+
 // get signal struct from a signal index
 radspa_signal_t * radspa_signal_get_by_index(radspa_t * plugin, uint16_t signal_index);
 
-radspa_t * radspa_standard_plugin_create(radspa_descriptor_t * desc, uint8_t num_signals, size_t plugin_data_size, uint32_t plugin_table_size);
+radspa_t * radspa_standard_plugin_create(radspa_descriptor_t * desc, uint8_t num_signals, size_t plugin_data_size,
+                                                uint32_t plugin_table_size);
 void radspa_standard_plugin_destroy(radspa_t * plugin);
 
 // frees all signal structs. typically used to destroy a plugin instance.

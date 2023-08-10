@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: CC0-1.0
 import math
 
+import bl00mbox
+
 try:
     import cpython.wave as wave
 except ImportError:
@@ -10,6 +12,14 @@ except ImportError:
 class _Patch:
     def bl00mbox_patch_marker(self):
         return True
+
+
+class _PatchSignalList:
+    pass
+
+
+class _PatchBudList:
+    pass
 
 
 class tinysynth(_Patch):
@@ -208,3 +218,105 @@ class step_sequencer(_Patch):
     @property
     def step(self):
         return self.seqs[0].signals.step
+
+
+class fuzz(_Patch):
+    def __init__(self, chan):
+        self.buds = _PatchBudList()
+        self.signals = _PatchSignalList()
+        self.buds.dist = chan.new(bl00mbox.plugins.distortion)
+        self.signals.input = self.buds.dist.signals.input
+        self.signals.output = self.buds.dist.signals.output
+        self._intensity = 2
+        self._volume = 32767
+        self._gate = 0
+
+    @property
+    def intensity(self):
+        return self._intensity
+
+    @intensity.setter
+    def intensity(self, val):
+        self._intensity = val
+        self._update_table()
+
+    @property
+    def volume(self):
+        return self._volume
+
+    @volume.setter
+    def volume(self, val):
+        self._volume = val
+        self._update_table()
+
+    @property
+    def gate(self):
+        return self._gate
+
+    @gate.setter
+    def gate(self, val):
+        self._gate = val
+        self._update_table()
+
+    def _update_table(self):
+        table = list(range(129))
+        for num in table:
+            if num < 64:
+                ret = num / 64  # scale to [0..1[ range
+                ret = ret**self._intensity
+                if ret > 1:
+                    ret = 1
+                table[num] = int(self._volume * (ret - 1))
+            else:
+                ret = (128 - num) / 64  # scale to [0..1] range
+                ret = ret**self._intensity
+                table[num] = int(self._volume * (1 - ret))
+        gate = self.gate >> 9
+        for i in range(64 - gate, 64 + gate):
+            table[i] = 0
+        self.buds.dist.table = table
+
+
+class karplus_strong(_Patch):
+    def __init__(self, chan):
+        self.buds = _PatchBudList()
+        self.signals = _PatchSignalList()
+        self.buds.noise = chan.new_bud(bl00mbox.plugins.noise)
+        self.buds.flanger = chan.new_bud(bl00mbox.plugins.flanger)
+        self.buds.amp = chan.new_bud(bl00mbox.plugins.ampliverter)
+        self.buds.env = chan.new_bud(bl00mbox.plugins.env_adsr)
+        # self.buds.slew = chan.new_bud(bl00mbox.plugins.slew_rate_limiter)
+
+        self.buds.flanger.signals.resonance = 32500
+        self.buds.flanger.signals.manual.tone = "A2"
+
+        self.buds.env.signals.sustain = 0
+        self.buds.env.signals.decay = 20
+        self.buds.env.signals.attack = 5
+
+        self.buds.amp.signals.output = self.buds.flanger.signals.input
+        self.buds.amp.signals.input = self.buds.noise.signals.output
+        # self.buds.amp.signals.input = self.buds.slew.signals.output
+        # self.buds.slew.signals.input = self.buds.noise.signals.output
+        # self.buds.slew.signals.slew_rate = 10000
+        self.buds.amp.signals.gain = self.buds.env.signals.output
+
+        self.signals.trigger = self.buds.env.signals.trigger
+        self.signals.pitch = self.buds.flanger.signals.manual
+        self.signals.output = self.buds.flanger.signals.output
+        # self.signals.slew_rate = self.buds.slew.signals.slew_rate
+        self.signals.level = self.buds.flanger.signals.level
+        self.decay = 1000
+
+    @property
+    def decay(self):
+        return self._decay
+
+    @decay.setter
+    def decay(self, val):
+        tone = self.buds.flanger.signals.manual.tone
+        loss = (50 * (2 ** (-tone / 12))) // (val / 1000)
+        if loss < 2:
+            loss = 2
+        self.buds.flanger.signals.resonance = 32767 - loss
+        self._decay = val
