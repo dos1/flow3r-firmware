@@ -1,5 +1,5 @@
 from st3m.utils import xy_from_polar, tau
-from st3m.property import PUSH_RED, GO_GREEN, BLACK
+from st3m.ui.colours import PUSH_RED, GO_GREEN, BLACK
 from st3m.goose import List, Optional
 from st3m import Responder, InputState
 from ctx import Context

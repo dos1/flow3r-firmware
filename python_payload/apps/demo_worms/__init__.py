@@ -6,7 +6,7 @@ import math
 # flow3r imports
 from st3m import InputState
 from st3m.application import Application, ApplicationContext
-from st3m.property import BLUE, WHITE
+from st3m.ui.colours import BLUE, WHITE
 from st3m.goose import Optional
 from st3m.utils import xy_from_polar
 from st3m.ui.view import ViewManager

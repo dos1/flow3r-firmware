@@ -1,5 +1,5 @@
 from st3m.application import Application, ApplicationContext
-from st3m.property import PUSH_RED, GO_GREEN, BLACK
+from st3m.ui.colours import PUSH_RED, GO_GREEN, BLACK
 from st3m.goose import Dict, Any
 from st3m.input import InputState
 from ctx import Context
