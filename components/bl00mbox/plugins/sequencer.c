@@ -18,6 +18,7 @@ radspa_descriptor_t sequencer_desc = {
 #define SEQUENCER_OUTPUT 6
 
 static uint64_t target(uint64_t step_len, uint64_t bpm, uint64_t beat_div){
+        if(bpm == 0) return 0;
         return (48000ULL * 60 * 4) / (bpm * beat_div);
 }
 
@@ -95,43 +96,43 @@ void sequencer_run(radspa_t * sequencer, uint16_t num_samples, uint32_t render_p
         data->bpm_prev = bpm;
         data->beat_div_prev = beat_div;
     }
-    
-    for(uint16_t i = 0; i < num_samples; i++){
+    if(data->counter_target){
+        for(uint16_t i = 0; i < num_samples; i++){
+            data->counter++;
+            if(data->counter >= data->counter_target){
+                data->counter = 0;
+                data->step++;
+                if(data->step >= data->step_target){
+                    data->step = 0;
+                    data->sync_out = -data->sync_out;
+                }
+            }
 
-        data->counter++;
-        if(data->counter >= data->counter_target){
-            data->counter = 0;
-            data->step++;
-            if(data->step >= data->step_target){
+            int16_t sync_in = sync_in_sig->get_value(sync_in_sig, i, num_samples, render_pass_id);
+            if(((sync_in > 0) && (data->sync_in_prev <= 0)) || ((sync_in > 0) && (data->sync_in_prev <= 0))){
+                data->counter = 0;
                 data->step = 0;
                 data->sync_out = -data->sync_out;
             }
-        }
-
-        int16_t sync_in = sync_in_sig->get_value(sync_in_sig, i, num_samples, render_pass_id);
-        if(((sync_in > 0) && (data->sync_in_prev <= 0)) || ((sync_in > 0) && (data->sync_in_prev <= 0))){
-            data->counter = 0;
-            data->step = 0;
-            data->sync_out = -data->sync_out;
-        }
-        data->sync_in_prev = sync_in;
-        
-        if(!data->counter){ //event just happened
-            for(uint8_t track = 0; track < data->num_tracks; track++){
-                int16_t type = table[track*data->track_step_len];
-                int16_t stage_val = table[data->step + 1 + data->track_step_len * track];
-                if(type == 32767){
-                    data->track_fill[track] = stage_val;
-                } else if(type == -32767){
-                    if(stage_val > 0) data->track_fill[track] = radspa_trigger_start(stage_val, &(data->trigger_hist[track]));
-                    if(stage_val < 0) data->track_fill[track] = radspa_trigger_stop(&(data->trigger_hist[track]));
+            data->sync_in_prev = sync_in;
+            
+            if(!data->counter){ //event just happened
+                for(uint8_t track = 0; track < data->num_tracks; track++){
+                    int16_t type = table[track*data->track_step_len];
+                    int16_t stage_val = table[data->step + 1 + data->track_step_len * track];
+                    if(type == 32767){
+                        data->track_fill[track] = stage_val;
+                    } else if(type == -32767){
+                        if(stage_val > 0) data->track_fill[track] = radspa_trigger_start(stage_val, &(data->trigger_hist[track]));
+                        if(stage_val < 0) data->track_fill[track] = radspa_trigger_stop(&(data->trigger_hist[track]));
+                    }
                 }
             }
+          
+            if(output_sig->buffer != NULL) (output_sig->buffer)[i] = data->track_fill[0];
+            if(sync_out_sig->buffer != NULL) (sync_out_sig->buffer)[i] = data->sync_out;
+            if(step_sig->buffer != NULL) (step_sig->buffer)[i] = data->step;
         }
-      
-        if(output_sig->buffer != NULL) (output_sig->buffer)[i] = data->track_fill[0];
-        if(sync_out_sig->buffer != NULL) (sync_out_sig->buffer)[i] = data->sync_out;
-        if(step_sig->buffer != NULL) (step_sig->buffer)[i] = data->step;
     }
     sync_out_sig->value = data->sync_out;
     output_sig->value = data->track_fill[0];
