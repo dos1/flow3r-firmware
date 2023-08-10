@@ -46,18 +46,18 @@ class SimpleDrums(Application):
         self.kick = self.blm.new(bl00mbox.patches.sampler, "kick.wav")
         self.hat = self.blm.new(bl00mbox.patches.sampler, "hihat.wav")
         self.close = self.blm.new(bl00mbox.patches.sampler, "close.wav")
-        self.ride = self.blm.new(bl00mbox.patches.sampler, "open.wav")
+        self.open = self.blm.new(bl00mbox.patches.sampler, "open.wav")
         self.crash = self.blm.new(bl00mbox.patches.sampler, "crash.wav")
         self.snare = self.blm.new(bl00mbox.patches.sampler, "snare.wav")
 
         self.kick.sampler.signals.trigger = self.seq.seqs[0].signals.output
         self.hat.sampler.signals.trigger = self.seq.seqs[1].signals.output
         self.close.sampler.signals.trigger = self.seq.seqs[2].signals.output
-        self.ride.sampler.signals.trigger = self.seq.seqs[3].signals.output
+        self.open.sampler.signals.trigger = self.seq.seqs[3].signals.output
         self.crash.sampler.signals.trigger = self.seq.seqs[4].signals.output
         self.snare.sampler.signals.trigger = self.seq.seqs[5].signals.output
 
-        self.track_names = ["kick", "hihat", "close", "ride", "crash", "snare"]
+        self.track_names = ["kick", "hihat", "close", "open", "crash", "snare"]
         self.ct_prev = captouch.read()
         self.track = 0
         self.seq.bpm = 80

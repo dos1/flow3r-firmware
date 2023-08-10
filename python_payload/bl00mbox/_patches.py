@@ -127,8 +127,8 @@ class sampler(_Patch):
         f = wave.open("/flash/sys/samples/" + filename, "r")
         channels = f.getnchannels()
 
-        len_frames = f.getnframes()
-        self.sampler = chan.new_bud(696969, len_frames)
+        self.len_frames = f.getnframes()
+        self.sampler = chan.new_bud(696969, self.len_frames)
         table = [0] * len_frames
         for i in range(len_frames):
             frame = f.readframes(1)

@@ -52,4 +52,4 @@ uint16_t bl00mbox_channel_get_source_signal(uint8_t channel, uint64_t bud_index,
 
 bool bl00mbox_channel_bud_set_table_value(uint8_t channel, uint32_t bud_index, uint32_t table_index, int16_t value);
 int16_t bl00mbox_channel_bud_get_table_value(uint8_t channel, uint32_t bud_index, uint32_t table_index);
-int16_t bl00mbox_channel_bud_get_table_len(uint8_t channel, uint32_t bud_index);
+uint32_t bl00mbox_channel_bud_get_table_len(uint8_t channel, uint32_t bud_index);
