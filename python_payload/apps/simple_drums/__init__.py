@@ -119,7 +119,7 @@ class SimpleDrums(Application):
                 x = int(x)
                 dots.append(Dot(size, size, x, y, rgbf))
                 if (i == st) and (track == 0):
-                    dots.append(Dot(size / 2, size / 2, x, 10 + 5 * self.num_samplers, (1, 1, 1)))
+                    dots.append(Dot(size / 2, size / 2, x, 12 + 5 * self.num_samplers, (1, 1, 1)))
 
         dots.append(Dot(1, 10+10*self.num_samplers, 0, 0, (0.5, 0.5, 0.5)))
         dots.append(Dot(1, 10+10*self.num_samplers, 4 * 12 + groupgap, 0, (0.5, 0.5, 0.5)))
