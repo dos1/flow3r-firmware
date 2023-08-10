@@ -81,7 +81,8 @@ static void st3m_gfx_crtc_task(void *_arg) {
         st3m_counter_timer_sample(&blit_read_time, end - start);
 
         start = esp_timer_get_time();
-        flow3r_bsp_display_send_fb(framebuffer_descs[descno].buffer);
+        if (!framebuffer_descs[descno].empty)
+            flow3r_bsp_display_send_fb(framebuffer_descs[descno].buffer);
         end = esp_timer_get_time();
         st3m_counter_timer_sample(&blit_work_time, end - start);
 
@@ -134,7 +135,19 @@ static void st3m_gfx_rast_task(void *_arg) {
 
         // Render drawctx into fbctx.
         start = esp_timer_get_time();
-        ctx_render_ctx(draw->ctx, fb->ctx);
+        int count = 0;
+        const CtxEntry *drawlist = ctx_get_drawlist(draw->ctx, &count);
+
+        // XXX maybe we should just rely on count < 4 meaning empty,
+        // this is after-all a time critical path
+        if ((count == 4 && (drawlist[0].code == CTX_SAVE) &&
+             (drawlist[1].code == CTX_SAVE)) ||
+            count <= 2) {
+            fb->empty = 1;
+        } else {
+            fb->empty = 0;
+            ctx_render_ctx(draw->ctx, fb->ctx);
+        }
         ctx_drawlist_clear(draw->ctx);
         end = esp_timer_get_time();
         st3m_counter_timer_sample(&rast_work_time, end - start);
