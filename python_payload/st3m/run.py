@@ -103,7 +103,7 @@ def run_view(v: View) -> None:
     reactor.run()
 
 
-def yeet_local_changes() -> None:
+def _yeet_local_changes() -> None:
     os.remove("/flash/sys/.sys-installed")
     machine.reset()
 
@@ -125,10 +125,12 @@ def run_main() -> None:
         [
             MenuItemBack(),
             MenuItemForeground("Settings", menu_settings),
-            MenuItemNoop("Disk Mode"),
+            MenuItemAction("Disk Mode (Flash)", machine.disk_mode_flash),
+            MenuItemAction("Disk Mode (SD)", machine.disk_mode_sd),
             MenuItemLaunchPersistentView("About", About),
-            MenuItemAction("Yeet Local Changes", yeet_local_changes),
+            MenuItemAction("Yeet Local Changes", _yeet_local_changes),
             MenuItemAction("Reboot", lambda: machine.reset()),
+            MenuItemAction("Reboot", machine.reset),
         ],
     )
     menu_main = SunMenu(
