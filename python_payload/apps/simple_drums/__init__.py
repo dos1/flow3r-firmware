@@ -41,17 +41,24 @@ class SimpleDrums(Application):
         super().__init__(app_ctx)
         # ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
         self.blm = bl00mbox.Channel()
-        self.seq = self.blm.new(bl00mbox.patches.step_sequencer)
-        self.hat = self.blm.new(bl00mbox.patches.sampler, "hihat.wav")
-        # Dot(10, 10, -30, 0, self._track_col(0)).draw(0,ctx)
+        self.num_samplers = 3
+        self.seq = self.blm.new(bl00mbox.patches.step_sequencer, self.num_samplers)
+
         self.kick = self.blm.new(bl00mbox.patches.sampler, "kick.wav")
-        # Dot(20, 20, 0, 40, self._track_col(1)).draw(0,ctx)
-        self.snare = self.blm.new(bl00mbox.patches.sampler, "snare.wav")
-        # Dot(30, 30, 2, -20, self._track_col(2)).draw(0,ctx)
+        self.hat = self.blm.new(bl00mbox.patches.sampler, "hihat.wav")
+        self.close = self.blm.new(bl00mbox.patches.sampler, "hihat.wav")
+        #self.ride = self.blm.new(bl00mbox.patches.sampler, "hihat.wav")
+        #self.crash = self.blm.new(bl00mbox.patches.sampler, "kick.wav")
+        #self.snare = self.blm.new(bl00mbox.patches.sampler, "snare.wav")
+
         self.kick.sampler.signals.trigger = self.seq.seqs[0].signals.output
         self.hat.sampler.signals.trigger = self.seq.seqs[1].signals.output
-        self.snare.sampler.signals.trigger = self.seq.seqs[2].signals.output
-        self.track_names = ["kick", "hihat", "snare"]
+        self.close.sampler.signals.trigger = self.seq.seqs[2].signals.output
+        #self.ride.sampler.signals.trigger = self.seq.seqs[3].signals.output
+        #self.crash.sampler.signals.trigger = self.seq.seqs[4].signals.output
+        #self.snare.sampler.signals.trigger = self.seq.seqs[5].signals.output
+
+        self.track_names = ["kick", "hihat", "close", "ride", "crash", "snare"]
         self.ct_prev = captouch.read()
         self.track = 0
         self.seq.bpm = 80
@@ -68,11 +75,17 @@ class SimpleDrums(Application):
     def _track_col(self, track: int) -> Tuple[int, int, int]:
         rgb = (20, 20, 20)
         if track == 0:
-            rgb = (0, 255, 0)
+            rgb = (120, 0, 137)
         elif track == 1:
-            rgb = (0, 0, 255)
+            rgb = (0, 75, 255)
         elif track == 2:
-            rgb = (255, 0, 0)
+            rgb = (0, 130, 27)
+        elif track == 3:
+            rgb = (255, 239, 0)
+        elif track == 4:
+            rgb = (255, 142, 0)
+        elif track == 5:
+            rgb = (230, 0, 0)
         return rgb
 
     def draw(self, ctx: Context) -> None:
@@ -83,7 +96,7 @@ class SimpleDrums(Application):
                 dots.append(
                     Dot(
                         48 + groupgap,
-                        40,
+                        10+10*self.num_samplers,
                         int((12 * 4 + groupgap) * (1.5 - i)),
                         0,
                         (0.15, 0.15, 0.15),
@@ -91,10 +104,10 @@ class SimpleDrums(Application):
                 )
         st = self.seq.seqs[0].signals.step.value
 
-        for track in range(3):
+        for track in range(self.num_samplers):
             rgb = self._track_col(track)
             rgbf = (rgb[0] / 256, rgb[1] / 256, rgb[2] / 256)
-            y = 12 * (track - 1)
+            y = int(12 * (track - (self.num_samplers - 1)/2))
             for i in range(16):
                 trigger_state = self.seq.trigger_state(track, i)
                 size = 2
@@ -105,11 +118,11 @@ class SimpleDrums(Application):
                 x = int(x)
                 dots.append(Dot(size, size, x, y, rgbf))
                 if (i == st) and (track == 0):
-                    dots.append(Dot(size / 2, size / 2, x, 24, (1, 1, 1)))
+                    dots.append(Dot(size / 2, size / 2, x, 15 + 5 * self.num_samplers, (1, 1, 1)))
 
-        dots.append(Dot(1, 40, 0, 0, (0.5, 0.5, 0.5)))
-        dots.append(Dot(1, 40, 4 * 12 + groupgap, 0, (0.5, 0.5, 0.5)))
-        dots.append(Dot(1, 40, -4 * 12 - groupgap, 0, (0.5, 0.5, 0.5)))
+        dots.append(Dot(1, 70, 0, 0, (0.5, 0.5, 0.5)))
+        dots.append(Dot(1, 70, 4 * 12 + groupgap, 0, (0.5, 0.5, 0.5)))
+        dots.append(Dot(1, 70, -4 * 12 - groupgap, 0, (0.5, 0.5, 0.5)))
 
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
         for i, dot in enumerate(dots):
@@ -118,15 +131,15 @@ class SimpleDrums(Application):
         ctx.font = ctx.get_font_name(4)
         ctx.font_size = 30
 
-        ctx.move_to(0, 65)
+        ctx.move_to(0, 55)
         col = [x / 255 for x in self._track_col(self.track)]
         ctx.rgb(*col)
         ctx.text(self.track_names[self.track])
 
         ctx.font_size = 18
 
-        ctx.move_to(0, 102)
-        next_track = (self.track + 1) % 3
+        ctx.move_to(0, 105)
+        next_track = (self.track + 1) % self.num_samplers
         col = [x / 255 for x in self._track_col(next_track)]
         ctx.rgb(*col)
         ctx.text(self.track_names[next_track])
@@ -139,16 +152,18 @@ class SimpleDrums(Application):
         ctx.text(str(self.seq.bpm) + " bpm")
 
         ctx.font_size = 15
+        ctx.rgb(0.6, 0.6, 0.6)
 
         ctx.move_to(0, -85)
-
-        ctx.rgb(0.6, 0.6, 0.6)
         ctx.text("(hold) stop")
 
         ctx.move_to(0, -100)
         ctx.text("tap tempo")
 
-        ctx.move_to(0, 85)
+        ctx.move_to(0, 75)
+        ctx.text("(hold) clear")
+
+        ctx.move_to(0, 90)
         ctx.text("next:")
 
     def think(self, ins: InputState, delta_ms: int) -> None:
@@ -171,7 +186,7 @@ class SimpleDrums(Application):
                     ):
                         self.seq.trigger_toggle(self.track, i * 4 + j)
         if ct.petals[5].pressed and not (self.ct_prev.petals[5].pressed):
-            self.track = (self.track + 1) % 3
+            self.track = (self.track - 1) % self.num_samplers
         if ct.petals[0].pressed and not (self.ct_prev.petals[0].pressed):
             if self.stopped:
                 self.seq.bpm = self.bpm
