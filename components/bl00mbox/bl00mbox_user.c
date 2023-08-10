@@ -741,6 +741,15 @@ int16_t bl00mbox_channel_bud_get_table_value(uint8_t channel, uint32_t bud_index
     return bud->plugin->plugin_table[table_index];
 }
 
+int16_t * bl00mbox_channel_bud_get_table_pointer(uint8_t channel, uint32_t bud_index){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return false;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return false;
+    if(bud->plugin->plugin_table == NULL) return false;
+    return bud->plugin->plugin_table;
+}
+
 int16_t bl00mbox_channel_bud_get_table_len(uint8_t channel, uint32_t bud_index){
     bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
     if(chan == NULL) return false;

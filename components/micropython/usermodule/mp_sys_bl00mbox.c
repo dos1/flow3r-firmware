@@ -372,10 +372,18 @@ STATIC mp_obj_t mp_channel_bud_get_table_value(mp_obj_t chan, mp_obj_t bud,
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_bud_get_table_value_obj,
                                  mp_channel_bud_get_table_value);
 
+STATIC mp_obj_t mp_channel_bud_get_table_pointer(mp_obj_t chan, mp_obj_t bud) {
+    int16_t *val = bl00mbox_channel_bud_get_table_pointer(mp_obj_get_int(chan),
+                                                          mp_obj_get_int(bud));
+    return mp_obj_new_int_from_uint((uint32_t)val);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_channel_bud_get_table_pointer_obj,
+                                 mp_channel_bud_get_table_pointer);
+
 STATIC mp_obj_t mp_channel_bud_get_table_len(mp_obj_t chan, mp_obj_t bud) {
     uint32_t val = bl00mbox_channel_bud_get_table_len(mp_obj_get_int(chan),
                                                       mp_obj_get_int(bud));
-    return mp_obj_new_int(val);
+    return mp_obj_new_int_from_uint(val);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_channel_bud_get_table_len_obj,
                                  mp_channel_bud_get_table_len);
@@ -527,6 +535,8 @@ STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
       MP_ROM_PTR(&mp_channel_bud_set_table_value_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_table_value),
       MP_ROM_PTR(&mp_channel_bud_get_table_value_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_bud_get_table_pointer),
+      MP_ROM_PTR(&mp_channel_bud_get_table_pointer_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_table_len),
       MP_ROM_PTR(&mp_channel_bud_get_table_len_obj) },
 

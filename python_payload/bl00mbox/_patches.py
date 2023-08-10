@@ -125,16 +125,29 @@ class sampler(_Patch):
             pass
             # raise Bl00mboxError("wave library not found")
         f = wave.open("/flash/sys/samples/" + filename, "r")
-        len_frames = f.getnframes()
-        self.sampler = chan.new_bud(696969, len_frames)
-        table = [0] * len_frames
-        for i in range(len_frames):
-            frame = f.readframes(1)
-            value = int.from_bytes(frame[0:2], "little")
-            table[i] = value
+
+        self.len_frames = f.getnframes()
+        self.sampler = chan.new_bud(696969, self.len_frames)
+
+        assert f.getsampwidth() == 2
+        assert f.getnchannels() in (1, 2)
+        assert f.getcomptype() == "NONE"
+
+        if f.getnchannels() == 1:
+            # fast path for mono
+            table = self.sampler.table_bytearray
+            for i in range(0, self.len_frames * 2, 100):
+                table[i : i + 100] = f.readframes(50)
+        else:
+            # somewhat fast path for stereo
+            table = self.sampler.table_int16_array
+            for i in range(self.len_frames):
+                frame = f.readframes(1)
+                value = int.from_bytes(frame[0:2], "little")
+                table[i] = value
+
         f.close()
         self._filename = filename
-        self.sampler.table = table
         self.sampler.signals.output = chan.mixer
 
     def start(self):

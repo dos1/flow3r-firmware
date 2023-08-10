@@ -5,6 +5,7 @@ import sys_bl00mbox
 # note: consider the 'sys_bl00mbox' api super unstable for now pls :3
 
 import math
+import uctypes
 import bl00mbox
 from bl00mbox import _helpers as helpers
 
@@ -378,6 +379,27 @@ class Bud:
             sys_bl00mbox.channel_bud_set_table_value(
                 self.channel_num, self.bud_num, x, y
             )
+
+    @property
+    def table_pointer(self):
+        pointer = sys_bl00mbox.channel_bud_get_table_pointer(
+            self.channel_num, self.bud_num
+        )
+        max_len = sys_bl00mbox.channel_bud_get_table_len(self.channel_num, self.bud_num)
+        return (pointer, max_len)
+
+    @property
+    def table_bytearray(self):
+        pointer, max_len = self.table_pointer
+        bytes_len = max_len * 2
+        return uctypes.bytearray_at(pointer, bytes_len)
+
+    @property
+    def table_int16_array(self):
+        pointer, max_len = self.table_pointer
+        descriptor = {"table": (0 | uctypes.ARRAY, max_len | uctypes.INT16)}
+        struct = uctypes.struct(pointer, descriptor)
+        return struct.table
 
 
 class ChannelOverview:
