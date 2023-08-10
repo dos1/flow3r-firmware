@@ -129,8 +129,8 @@ class sampler(_Patch):
 
         self.len_frames = f.getnframes()
         self.sampler = chan.new_bud(696969, self.len_frames)
-        table = [0] * len_frames
-        for i in range(len_frames):
+        table = [0] * self.len_frames
+        for i in range(self.len_frames):
             frame = f.readframes(1)
             value = int.from_bytes(frame[0:2], "little")
             table[i] = value
