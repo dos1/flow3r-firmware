@@ -210,7 +210,14 @@ class ButtonsInput(Input):
         (756, 240),
         (788, 240),
     ]
-    KEYS = [ pygame.K_LEFT, pygame.K_SPACE, pygame.K_RIGHT, pygame.K_1, pygame.K_2, pygame.K_3 ]
+    KEYS = [
+        pygame.K_LEFT,
+        pygame.K_SPACE,
+        pygame.K_RIGHT,
+        pygame.K_1,
+        pygame.K_2,
+        pygame.K_3,
+    ]
     MARKER_SIZE = 20
     COLOR_HELD = (0x80, 0x80, 0x80, 0xFF)
     COLOR_HOVER = (0x40, 0x40, 0x40, 0xFF)
