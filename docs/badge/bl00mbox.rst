@@ -11,13 +11,9 @@ Upcoming features
 
 (in no specific order)
 
-1) Expose hardware such as captouch and IMU as pseudo-signals that buds can subscribe to. This frees the repl for parameter manipulation while the backend takes care of the playing surface, neat for live coding.
+1) Expose hardware such as captouch and IMU as pseudo-signals that plugins can subscribe to. This frees the repl for parameter manipulation while the backend takes care of the playing surface, neat for live coding.
 
-2) Cross-channel connections
-
-3) Stepped value naming
-
-4) Better signal/bud representation in patches
+2) Stepped value naming
 
 Patches
 -------------
@@ -35,8 +31,7 @@ with a channel instance, but you can also spawn one directly:
     >>> blm.volume = 5000
 
 The easiest way to get sound is to use patches. These are "macroscopic" units
-that directly connect to the output and provide a compact UI. Here's how to
-create one:
+and can often be used without much thinking:
 
 .. code-block:: pycon
 
@@ -44,15 +39,17 @@ create one:
     >>> bl00mbox.patches.
     # create a patch instance
     >>> tiny = blm.new(bl00mbox.patches.tinysynth_fm)
+    # connect sound output to mixer of the channel
+    >>> tiny.signals.output = blm.mixer
     # play it!
-    >>> tiny.start()
+    >>> tiny.signals.trigger.start()
     # try autocomplete here too!
     >>> tiny.
     # patches come with very individual parameters!
-    >>> tiny.fm_waveform(tiny.SAW)
-    >>> tiny.start()
+    >>> tiny.signals.waveform = 0
+    >>> tiny.signals.trigger.start()
 
-Buds
+Plugins
 ----------
 
 We can inspect the patch we created earlier:
@@ -61,13 +58,13 @@ We can inspect the patch we created earlier:
 
     >>> tiny
     [patch] tinysynth_fm
-      [bud 32] osc_fm
-        output [output]: 0 => input in [bud 34] ampliverter
+      [plugin 32] osc_fm
+        output [output]: 0 => input in [plugin 34] ampliverter
         pitch [input/pitch]: 18367 / 0.0 semitones / 440.0Hz
         waveform [input]: -1
-        lin_fm [input]: 0 <= output in [bud 35] osc_fm
-      [bud 33] env_adsr
-        output [output]: 0 => gain in [bud 34] ampliverter
+        lin_fm [input]: 0 <= output in [plugin 35] osc_fm
+      [plugin 33] env_adsr
+        output [output]: 0 => gain in [plugin 34] ampliverter
         phase [output]: 0
         input [input]: 32767
         trigger [input/trigger]: 0
@@ -76,20 +73,20 @@ We can inspect the patch we created earlier:
         sustain [ms] [input]: 0
         release [input]: 100
         gate [input]: 0
-      [bud 34] ampliverter
+      [plugin 34] ampliverter
         output [output]: 0 ==> [channel mixer]
-        input [input]: 0 <= output in [bud 32] osc_fm
-        gain [input]: 0 <= output in [bud 33] env_adsr
+        input [input]: 0 <= output in [plugin 32] osc_fm
+        gain [input]: 0 <= output in [plugin 33] env_adsr
         bias [input]: 0
-      [bud 35] osc_fm
-        output [output]: 0 => lin_fm in [bud 32] osc_fm
+      [plugin 35] osc_fm
+        output [output]: 0 => lin_fm in [plugin 32] osc_fm
         pitch [input/pitch]: 21539 / 15.86 semitones / 1099.801Hz
         waveform [input]: 1
         lin_fm [input]: 0
 
 
-The patch is actually composed of buds! Buds are wrappers that contain atomic plugins. Each
-plugin is composed of signals that can be connected to other signals. Signals can have different
+The patch is actually composed of plugins and connections! Plugins are atomic signal processing
+units. Each plugin has signals that can be connected to other signals. Signals can have different
 properties that are listed behind their name in square brackets. For starters, each signal is
 either an input or output. Connections always happen between an input and an output. Outputs
 can fan out to multiple inputs, but inputs can only receive data from a single output. If no
@@ -99,7 +96,7 @@ output is connected to an input, it has a static value.
     A special case is the channel mixer (an [input] signal) which only fakes
     being a bl00mbox signal and can accept multiple outputs.
 
-Let's play around with that a bit more and create some fresh unbothered buds:
+Let's play around with that a bit more and create some fresh unbothered plugins:
 
 .. code-block:: pycon
 
@@ -107,29 +104,29 @@ Let's play around with that a bit more and create some fresh unbothered buds:
     >>> bl00mbox.plugins.
     # print details about specific plugin
     >>> bl00mbox.plugins.ampliverter
-    # create a new bud
+    # create a new plugin
     >>> osc = blm.new(bl00mbox.plugins.osc_fm)
     >>> env = blm.new(bl00mbox.plugins.env_adsr)
 
-You can inspect properties of the new buds just as with a patch - in fact, many patches simply print
-all their contained buds and maybe some extra info (but that doesn't have to be the case and is up
+You can inspect properties of the new plugins just as with a patch - in fact, many patches simply print
+all their contained plugins and maybe some extra info (but that doesn't have to be the case and is up
 to the patch designer).
 
 .. note::
-    As of now patch designers can hide buds within the internal structure however they like and
+    As of now patch designers can hide plugins within the internal structure however they like and
     you kind of have to know where to find stuff. We'll come up with a better solution soon!
 
 .. code-block:: pycon
 
-    # print general info about bud
+    # print general info about plugin
     >>> osc
-    [bud 36] osc_fm
+    [plugin 36] osc_fm
       output [output]: 0
       pitch [input/pitch]: 18367 / 0.0 semitones / 440.0Hz
       waveform [input]: -16000
       lin_fm [input]: 0
 
-    # print info about a specific bud signal
+    # print info about a specific plugin signal
     >>> env.signals.trigger
     trigger [input/trigger]: 0
 
@@ -186,9 +183,9 @@ and we can get them individually:
     >>> chan_one
     [channel 1: shoegaze] (foreground)
       volume: 3000
-      buds: 18
+      plugins: 18
       [channel mixer] (1 connections)
-        output in [bud 1] lowpass
+        output in [plugin 1] lowpass
 
 We have accidentially grabbed the channel used by the shoegaze application! Each application
 should have its own channel(s), so in order to get a free one we'll request a free one from the
@@ -209,7 +206,7 @@ backend by skipping the number. We can also provide a name for a new channel ins
     >>> chan_free
     [channel 3: hewwo] (foreground)
       volume: 3000
-      buds: 0
+      plugins: 0
       [channel mixer] (0 connections)
 
 In case there's no free channel yet you get channel 31, the garbage channel. It behaves like
@@ -258,12 +255,12 @@ doing so:
 
 What constitutes a channel interaction for auto channel foregrounding is a bit in motion at this point
 and generally unreliable. For applications it is ideal to mark the channel manually when using it. When
-exiting, an application should free the channel with automatically clears all buds. A channel should
+exiting, an application should free the channel with automatically clears all plugins. A channel should
 be no longer used after freeing:
 
 .. code-block:: pycon
 
-    # this clears all buds and sets the internal "free" marker to zero
+    # this clears all plugins and sets the internal "free" marker to zero
     >>> chan_one.free = True
     # good practice to not accidentially use a free channel
     >>> chan_one = None 
@@ -278,7 +275,7 @@ Some other misc channel operations for live coding mostly:
     >>> bl00mbox.Channels.print_overview()
     [channel 3: hewwo] (foreground)
       volume: 3000
-      buds: 0
+      plugins: 0
       [channel mixer] (0 connections)
 
 Example 1: Auto bassline

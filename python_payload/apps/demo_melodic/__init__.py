@@ -67,16 +67,18 @@ def run(ins: InputState) -> None:
                     k -= 10
                 k = 3 - k
                 note = scale[k] + 12 * octave
-                synths[0].tone(note)
-                synths[0].start()
+                synths[0].signals.pitch.tone = note
+                synths[0].signals.trigger.start()
 
 
 def init() -> None:
     global synths
     for i in range(1):
-        synths += [blm.new(bl00mbox.patches.tinysynth_fm)]
+        synth = blm.new(bl00mbox.patches.tinysynth_fm)
+        synth.signals.output = blm.mixer
+        synths += [synth]
     for synth in synths:
-        synth.decay(100)
+        synth.signals.decay = 100
 
 
 def foreground() -> None:

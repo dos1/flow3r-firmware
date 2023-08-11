@@ -48,17 +48,21 @@ class SimpleDrums(Application):
         # Dot(20, 20, 0, 40, self._track_col(1)).draw(0,ctx)
         self.snare = self.blm.new(bl00mbox.patches.sampler, "snare.wav")
         # Dot(30, 30, 2, -20, self._track_col(2)).draw(0,ctx)
-        self.kick.sampler.signals.trigger = self.seq.seqs[0].signals.output
-        self.hat.sampler.signals.trigger = self.seq.seqs[1].signals.output
-        self.snare.sampler.signals.trigger = self.seq.seqs[2].signals.output
+        self.kick.signals.output = self.blm.mixer
+        self.snare.signals.output = self.blm.mixer
+        self.hat.signals.output = self.blm.mixer
+        self.kick.signals.trigger = self.seq.plugins.sequencer0.signals.output
+        self.hat.signals.trigger = self.seq.plugins.sequencer1.signals.output
+        self.snare.signals.trigger = self.seq.plugins.sequencer2.signals.output
+        self.seq.signals.bpm.value = 80
+
         self.track_names = ["kick", "hihat", "snare"]
         self.track = 0
-        self.seq.bpm = 80
         self.blm.background_mute_override = True
         self.tap_tempo_press_counter = 0
         self.delta_acc = 0
         self.stopped = False
-        self.bpm = self.seq.bpm
+        self.bpm = self.seq.signals.bpm.value
 
         # True if a given group should be highlighted, when a corresponding
         # petal is pressed.
@@ -96,7 +100,7 @@ class SimpleDrums(Application):
                         (0.15, 0.15, 0.15),
                     )
                 )
-        st = self.seq.seqs[0].signals.step.value
+        st = self.seq.signals.step.value
 
         for track in range(3):
             rgb = self._track_col(track)
@@ -143,7 +147,7 @@ class SimpleDrums(Application):
 
         ctx.move_to(0, -65)
         ctx.rgb(255, 255, 255)
-        ctx.text(str(self.seq.bpm) + " bpm")
+        ctx.text(str(self.seq.signals.bpm) + " bpm")
 
         ctx.font_size = 15
 
@@ -160,7 +164,7 @@ class SimpleDrums(Application):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
-        st = self.seq.seqs[0].signals.step.value
+        st = self.seq.signals.step.value
         rgb = self._track_col(self.track)
         if st == 0:
             leds.set_all_rgb(*[int(x / 4) for x in rgb])
@@ -183,19 +187,19 @@ class SimpleDrums(Application):
             self.track = (self.track - 1) % 3
         if petals[0].whole.pressed:
             if self.stopped:
-                self.seq.bpm = self.bpm
+                self.seq.signals.bpm = self.bpm
                 self.blm.background_mute_override = True
                 self.stopped = False
             elif self.delta_acc < 3000 and self.delta_acc > 10:
                 bpm = int(60000 / self.delta_acc)
                 if bpm > 40 and bpm < 500:
-                    self.seq.bpm = bpm
+                    self.seq.signals.bpm = bpm
                     self.bpm = bpm
             self.delta_acc = 0
 
         if petals[0].whole.down:
             if self.tap_tempo_press_counter > 500:
-                self.seq.bpm = 0
+                self.seq.signals.bpm = 0
                 self.stopped = True
                 self.blm.background_mute_override = False
             else:

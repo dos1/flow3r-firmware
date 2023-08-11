@@ -31,14 +31,15 @@ class HarmonicApp(Application):
         self.cp_prev = captouch.read()
 
         for i, synth in enumerate(self.synths):
-            synth.decay(500)
-            synth.waveform(-32767)
-            synth.attack(50)
-            synth.volume(0.3)
-            synth.sustain(0.9)
-            synth.release(800)
-            synth.fm_waveform(-32767)
-            synth.fm(1.5)
+            synth.signals.decay = 500
+            synth.signals.waveform = -32767
+            synth.signals.attack = 50
+            synth.signals.volume = 0.3 * 32767
+            synth.signals.sustain = 0.9 * 32767
+            synth.signals.release = 800
+            synth.signals.fm_waveform = -32767
+            synth.signals.output = blm.mixer
+            # synth.fm = 1.5
 
         self._set_chord(3)
         self.prev_captouch = [0] * 10
@@ -71,11 +72,11 @@ class HarmonicApp(Application):
                     self._set_chord(k)
                 else:
                     k = int(i / 2)
-                    self.synths[k].tone(self.chord[k])
-                    self.synths[k].start()
+                    self.synths[k].signals.pitch.tone = self.chord[k]
+                    self.synths[k].signals.trigger.start()
                     self.color_intensity = 1.0
             elif (not cts.petals[i].pressed) and self.cp_prev.petals[i].pressed:
                 if (1 + i) % 2:
                     k = int(i / 2)
-                    self.synths[k].stop()
+                    self.synths[k].signals.trigger.stop()
         self.cp_prev = cts

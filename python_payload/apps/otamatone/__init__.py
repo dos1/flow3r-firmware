@@ -84,7 +84,8 @@ class Otamatone(Application):
 
         self._blm = bl00mbox.Channel("Otamatone")
         self._osc = self._blm.new(bl00mbox.patches.tinysynth)
-        self._osc.waveform(2)
+        self._osc.signals.output = self._blm.mixer
+        self._osc.signals.waveform = 2
         self._intensity = 0.0
 
         self.input.captouch.petals[self.PETAL_NO].whole.repeat_disable()
@@ -123,12 +124,12 @@ class Otamatone(Application):
         if petal.whole.down:
             if self._intensity < 1.0:
                 self._intensity += 0.1 * (delta_ms / 20)
-            self._osc.tone(ctrl * 12)
-            self._osc.start()
+            self._osc.signals.pitch.tone = ctrl * 12
+            self._osc.signals.trigger.start()
 
         if petal.whole.up:
             self._intensity = 0
-            self._osc.stop()
+            self._osc.signals.trigger.stop()
 
         self._blob._yell = self._intensity * 0.8 + (ctrl + 1) * 0.1
 

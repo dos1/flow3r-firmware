@@ -10,124 +10,106 @@ except ImportError:
 
 
 class _Patch:
-    def bl00mbox_patch_marker(self):
-        return True
+    def __init__(self, chan):
+        self.plugins = _PatchPluginList()
+        self.signals = _PatchSignalList()
+        self._channel = chan
+
+    def __repr__(self):
+        ret = "[patch] " + type(self).__name__
+        ret += "\n  [signals:]\n    " + "\n    ".join(repr(self.signals).split("\n"))
+        ret += "\n  [plugins:]\n    " + "\n    ".join(repr(self.plugins).split("\n"))
+        return ret
 
 
-class _PatchSignalList:
-    pass
+class _PatchItemList:
+    def __init__(self):
+        self._items = []
+
+    def __iter__(self):
+        return iter(self._items)
+
+    def __repr__(self):
+        return "\n".join([x + ": " + repr(getattr(self, x)) for x in self._items])
+
+    def __setattr__(self, key, value):
+        current_value = getattr(self, key, None)
+
+        if current_value is None and not key.startswith("_"):
+            self._items.append(key)
+
+        super().__setattr__(key, value)
 
 
-class _PatchBudList:
+class _PatchSignalList(_PatchItemList):
+    def __setattr__(self, key, value):
+        current_value = getattr(self, key, None)
+        if isinstance(current_value, bl00mbox.Signal):
+            current_value.value = value
+            return
+        super().__setattr__(key, value)
+
+
+class _PatchPluginList(_PatchItemList):
     pass
 
 
 class tinysynth(_Patch):
     def __init__(self, chan):
-        self.channel = chan
-        self.SINE = -32767
-        self.TRI = -1
-        self.SQUARE = 1
-        self.SAW = 32767
+        super().__init__(chan)
+        self.plugins.osc = self._channel.new(bl00mbox.plugins.osc_fm)
+        self.plugins.env = self._channel.new(bl00mbox.plugins.env_adsr)
+        self.plugins.amp = self._channel.new(bl00mbox.plugins.ampliverter)
 
-        self.osc = chan._new_bud(420)
-        self.env = chan._new_bud(42)
-        self.amp = chan._new_bud(69)
-        self.amp.signals.output.value = chan.mixer
-        self.amp.signals.gain.value = self.env.signals.output
-        self.amp.signals.input.value = self.osc.signals.output
-        self.env.signals.sustain.value = 0
-        self.env.signals.decay.value = 500
-        self.release(100)
+        self.plugins.amp.signals.gain = self.plugins.env.signals.output
+        self.plugins.amp.signals.input = self.plugins.osc.signals.output
+        self.plugins.env.signals.decay = 500
 
-    def __repr__(self):
-        ret = "[patch] tinysynth"
-        ret += "\n  " + "\n  ".join(repr(self.osc).split("\n"))
-        ret += "\n  " + "\n  ".join(repr(self.env).split("\n"))
-        ret += "\n  " + "\n  ".join(repr(self.amp).split("\n"))
-        return ret
+        self.signals.output = self.plugins.amp.signals.output
+        self.signals.pitch = self.plugins.osc.signals.pitch
+        self.signals.waveform = self.plugins.osc.signals.waveform
 
-    def tone(self, val):
-        self.osc.signals.pitch.tone = val
-
-    def freq(self, val):
-        self.osc.signals.pitch.freq = val
-
-    def volume(self, val):
-        self.env.signals.input.value = 32767 * val
-
-    def start(self):
-        self.env.signals.trigger.start()
-
-    def stop(self):
-        self.env.signals.trigger.stop()
-
-    def waveform(self, val):
-        self.osc.signals.waveform.value = val
-
-    def attack(self, val):
-        self.env.signals.attack.value = val
-
-    def decay(self, val):
-        self.env.signals.decay.value = val
-
-    def sustain(self, val):
-        self.env.signals.sustain.value = val * 32767
-
-    def release(self, val):
-        self.env.signals.release.value = val
+        self.signals.trigger = self.plugins.env.signals.trigger
+        self.signals.attack = self.plugins.env.signals.attack
+        self.signals.sustain = self.plugins.env.signals.sustain
+        self.signals.decay = self.plugins.env.signals.decay
+        self.signals.release = self.plugins.env.signals.release
+        self.signals.volume = self.plugins.env.signals.input.value
+        self.signals.release = 100
 
 
 class tinysynth_fm(tinysynth):
     def __init__(self, chan):
-        tinysynth.__init__(self, chan)
-        self.mod_osc = chan._new_bud(420)
-        self.fm_mult = 2.5
-        self.mod_osc.signals.output.value = self.osc.signals.lin_fm
-        self.decay(1000)
-        self.attack(20)
-        self._update_mod_osc()
-        self.fm_waveform(self.SQUARE)
-        self.waveform(self.TRI)
+        super().__init__(chan)
+        self.plugins.mod_osc = self._channel.new(bl00mbox.plugins.osc_fm)
+        self.plugins.mod_osc.signals.output = self.plugins.osc.signals.lin_fm
+        self.signals.fm_waveform = self.plugins.mod_osc.signals.waveform
+        self.signals.fm_pitch = self.plugins.mod_osc.signals.pitch
+        self.signals.decay = 1000
+        self.signals.attack = 20
+        self.signals.waveform = -1
+        self.signals.fm_waveform = 0
 
-    def fm_waveform(self, val):
-        self.mod_osc.signals.waveform.value = val
+        self.sync_mod_osc(2.5)
 
-    def __repr__(self):
-        ret = tinysynth.__repr__(self)
-        ret = ret.split("\n")
-        ret[0] += "_fm"
-        ret = "\n".join(ret)
-        ret += "\n  " + "\n  ".join(repr(self.mod_osc).split("\n"))
-        return ret
-
-    def fm(self, val):
-        self.fm_mult = val
-        self._update_mod_osc()
-
-    def tone(self, val):
-        self.osc.signals.pitch.tone = val
-        self._update_mod_osc()
-
-    def freq(self, val):
-        self.osc.signals.pitch.freq = val
-        self._update_mod_osc()
-
-    def _update_mod_osc(self):
-        self.mod_osc.signals.pitch.freq = self.fm_mult * self.osc.signals.pitch.freq
+    def sync_mod_osc(self, val):
+        self.signals.fm_pitch.freq = int(val) * self.signals.pitch.freq
 
 
 class sampler(_Patch):
-    """needs a wave file with path relative to samples/"""
+    """
+    needs a wave file with path relative to /flash/sys/samples/
+    """
 
     def __init__(self, chan, filename):
+        super().__init__(chan)
         if wave is None:
             pass
             # raise Bl00mboxError("wave library not found")
         f = wave.open("/flash/sys/samples/" + filename, "r")
 
         self.len_frames = f.getnframes()
-        self.sampler = chan._new_bud(696969, self.len_frames)
+        self.plugins.sampler = chan._new_plugin(696969, self.len_frames)
 
         assert f.getsampwidth() == 2
         assert f.getnchannels() in (1, 2)
@@ -135,12 +117,12 @@ class sampler(_Patch):
 
         if f.getnchannels() == 1:
             # fast path for mono
-            table = self.sampler.table_bytearray
+            table = self.plugins.sampler.table_bytearray
             for i in range(0, self.len_frames * 2, 100):
                 table[i : i + 100] = f.readframes(50)
         else:
             # somewhat fast path for stereo
-            table = self.sampler.table_int16_array
+            table = self.plugins.sampler.table_int16_array
             for i in range(self.len_frames):
                 frame = f.readframes(1)
                 value = int.from_bytes(frame[0:2], "little")
@@ -148,13 +130,8 @@ class sampler(_Patch):
 
         f.close()
         self._filename = filename
-        self.sampler.signals.output = chan.mixer
-
-    def start(self):
-        self.sampler.signals.trigger.start()
-
-    def stop(self):
-        self.sampler.signals.trigger.stop()
+        self.signals.trigger = self.plugins.sampler.signals.trigger
+        self.signals.output = self.plugins.sampler.signals.output
 
     @property
     def filename(self):
@@ -162,30 +139,42 @@ class sampler(_Patch):
 
 
 class step_sequencer(_Patch):
-    def __init__(self, chan):
+    def __init__(self, chan, num=4):
+        super().__init__(chan)
+        if num > 32:
+            num = 32
+        if num < 0:
+            num = 0
         self.seqs = []
-        for i in range(4):
-            seq = chan._new_bud(56709)
+        prev_seq = None
+        for i in range(num):
+            seq = chan._new_plugin(56709)
             seq.table = [-32767] + ([0] * 16)
-            if len(self.seqs):
-                self.seqs[-1].signals.sync_out = seq.signals.sync_in
+            if prev_seq is None:
+                self.signals.bpm = seq.signals.bpm
+                self.signals.beat_div = seq.signals.beat_div
+                self.signals.step = seq.signals.step
+                self.signals.step_len = seq.signals.step_len
+            else:
+                prev_seq.signals.sync_out = seq.signals.sync_in
+            prev_seq = seq
             self.seqs += [seq]
-        self._bpm = 120
+            setattr(self.plugins, "sequencer" + str(i), seq)
 
     def __repr__(self):
         ret = "[patch] step sequencer"
         # ret += "\n  " + "\n  ".join(repr(self.seqs[0]).split("\n"))
         ret += (
             "\n  bpm: "
-            + str(self.seqs[0].signals.bpm.value)
+            + str(self.signals.bpm.value)
             + " @ 1/"
-            + str(self.seqs[0].signals.beat_div.value)
+            + str(self.signals.beat_div.value)
         )
         ret += (
-            "\n  step: "
-            + str(self.seqs[0].signals.step.value)
+            " step: "
+            + str(self.signals.step.value)
             + "/"
-            + str(self.seqs[0].signals.step_len.value)
+            + str(self.signals.step_len.value)
         )
         ret += "\n  [tracks]"
         for x, seq in enumerate(self.seqs):
@@ -196,17 +185,8 @@ class step_sequencer(_Patch):
                 + "".join(["X  " if x > 0 else ".  " for x in seq.table[1:]])
                 + "]"
             )
+        ret += "\n" + "\n".join(super().__repr__().split("\n")[1:])
         return ret
-
-    @property
-    def bpm(self):
-        return self._bpm
-
-    @bpm.setter
-    def bpm(self, bpm):
-        for seq in self.seqs:
-            seq.signals.bpm.value = bpm
-        self._bpm = bpm
 
     def trigger_start(self, track, step):
         a = self.seqs[track].table
@@ -228,18 +208,13 @@ class step_sequencer(_Patch):
         else:
             self.trigger_stop(track, step)
 
-    @property
-    def step(self):
-        return self.seqs[0].signals.step
-
 
 class fuzz(_Patch):
     def __init__(self, chan):
-        self.buds = _PatchBudList()
-        self.signals = _PatchSignalList()
-        self.buds.dist = chan.new(bl00mbox.plugins.distortion)
-        self.signals.input = self.buds.dist.signals.input
-        self.signals.output = self.buds.dist.signals.output
+        super().__init__(chan)
+        self.plugins.dist = chan.new(bl00mbox.plugins.distortion)
+        self.signals.input = self.plugins.dist.signals.input
+        self.signals.output = self.plugins.dist.signals.output
         self._intensity = 2
         self._volume = 32767
         self._gate = 0
@@ -287,29 +262,27 @@ class fuzz(_Patch):
         gate = self.gate >> 9
         for i in range(64 - gate, 64 + gate):
             table[i] = 0
-        self.buds.dist.table = table
+        self.plugins.dist.table = table
 
 
 class karplus_strong(_Patch):
     def __init__(self, chan):
-        self.buds = _PatchBudList()
-        self.signals = _PatchSignalList()
+        super().__init__(chan)
+        self.plugins.noise = chan._new_plugin(bl00mbox.plugins.noise_burst)
+        self.plugins.noise.signals.length = 25
 
-        self.buds.noise = chan._new_bud(bl00mbox.plugins.noise_burst)
-        self.buds.noise.signals.length = 25
+        self.plugins.flanger = chan._new_plugin(bl00mbox.plugins.flanger)
 
-        self.buds.flanger = chan._new_bud(bl00mbox.plugins.flanger)
+        self.plugins.flanger.signals.resonance = 32500
+        self.plugins.flanger.signals.manual.tone = "A2"
 
-        self.buds.flanger.signals.resonance = 32500
-        self.buds.flanger.signals.manual.tone = "A2"
+        self.plugins.flanger.signals.input = self.plugins.noise.signals.output
 
-        self.buds.flanger.signals.input = self.buds.noise.signals.output
+        self.signals.trigger = self.plugins.noise.signals.trigger
+        self.signals.pitch = self.plugins.flanger.signals.manual
+        self.signals.output = self.plugins.flanger.signals.output
 
-        self.signals.trigger = self.buds.noise.signals.trigger
-        self.signals.pitch = self.buds.flanger.signals.manual
-        self.signals.output = self.buds.flanger.signals.output
-
-        self.signals.level = self.buds.flanger.signals.level
+        self.signals.level = self.plugins.flanger.signals.level
         self.decay = 1000
 
     @property
@@ -318,9 +291,9 @@ class karplus_strong(_Patch):
 
     @decay.setter
     def decay(self, val):
-        tone = self.buds.flanger.signals.manual.tone
+        tone = self.plugins.flanger.signals.manual.tone
         loss = (50 * (2 ** (-tone / 12))) // (val / 1000)
         if loss < 2:
             loss = 2
-        self.buds.flanger.signals.resonance = 32767 - loss
+        self.plugins.flanger.signals.resonance = 32767 - loss
         self._decay = val

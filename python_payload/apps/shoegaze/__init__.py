@@ -65,13 +65,13 @@ class ShoegazeApp(Application):
         self.git_mixer.signals.input2 = self.git_strings[2].signals.output
         self.git_mixer.signals.input3 = self.git_strings[3].signals.output
         self.git_mixer.signals.output = self.git_lp.signals.input
-        self.git_fuzz.buds.dist.signals.input = self.git_lp.signals.output
+        self.git_fuzz.signals.input = self.git_lp.signals.output
 
         self.bass_lp.signals.input = self.bass_string.signals.output
         self.main_mixer.signals.input1 = self.bass_lp.signals.output
 
-        self.main_fuzz.buds.dist.signals.input = self.main_mixer.signals.output
-        self.main_fuzz.buds.dist.signals.output = self.main_lp.signals.input
+        self.main_fuzz.signals.input = self.main_mixer.signals.output
+        self.main_fuzz.signals.output = self.main_lp.signals.input
         self.main_lp.signals.output = self.blm.mixer
 
         self.git_delay.signals.time = 200
@@ -104,12 +104,12 @@ class ShoegazeApp(Application):
             self.main_lp.signals.freq = 2500
             self.main_lp.signals.gain = 2000
             self.git_mixer.signals.gain = 4000
-            self.main_lp.signals.input = self.main_fuzz.buds.dist.signals.output
+            self.main_lp.signals.input = self.main_fuzz.signals.output
             if self.delay_on:
-                self.git_delay.signals.input = self.git_fuzz.buds.dist.signals.output
+                self.git_delay.signals.input = self.git_fuzz.signals.output
                 self.main_mixer.signals.input0 = self.git_delay.signals.output
             else:
-                self.main_mixer.signals.input0 = self.git_fuzz.buds.dist.signals.output
+                self.main_mixer.signals.input0 = self.git_fuzz.signals.output
         else:
             self.bass_lp.signals.gain = 2000
             self.git_lp.signals.gain = 2000
