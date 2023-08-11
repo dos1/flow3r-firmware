@@ -164,8 +164,7 @@ void flow3r_bsp_max98091_headset_set_gain_dB(uint8_t gain_dB) {
 
 void flow3r_bsp_max98091_read_jacksense(
     flow3r_bsp_audio_jacksense_state_t *st) {
-    // TODO: read port expander
-    st->line_in = false;
+    st->line_in = flow3r_bsp_spio_jacksense_right_get();
 
     uint8_t jck = max98091_read(MAX98091_JACK_STATUS);
     switch (jck) {

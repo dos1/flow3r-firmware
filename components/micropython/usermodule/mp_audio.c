@@ -214,7 +214,11 @@ STATIC mp_obj_t mp_line_in_set_hardware_thru(mp_obj_t enable) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_line_in_set_hardware_thru_obj,
                                  mp_line_in_set_hardware_thru);
-
+STATIC mp_obj_t mp_line_in_is_connected() {
+    return mp_obj_new_int(st3m_audio_line_in_is_connected());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_line_in_is_connected_obj,
+                                 mp_line_in_is_connected);
 STATIC mp_obj_t mp_input_set_source(mp_obj_t source) {
     st3m_audio_input_set_source(mp_obj_get_int(source));
     return mp_const_none;
@@ -352,6 +356,8 @@ STATIC const mp_rom_map_elem_t mp_module_audio_globals_table[] = {
       MP_ROM_PTR(&mp_speaker_line_in_set_hardware_thru_obj) },
     { MP_ROM_QSTR(MP_QSTR_line_in_set_hardware_thru),
       MP_ROM_PTR(&mp_line_in_set_hardware_thru_obj) },
+    { MP_ROM_QSTR(MP_QSTR_line_in_is_connected),
+      MP_ROM_PTR(&mp_line_in_is_connected_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_input_set_source),
       MP_ROM_PTR(&mp_input_set_source_obj) },

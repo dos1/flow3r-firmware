@@ -43,6 +43,9 @@ bool st3m_audio_headphones_are_connected(void);
  */
 bool st3m_audio_headset_is_connected(void);
 
+/* Returns true if the lin-in jack is connected to a cable. */
+bool st3m_audio_line_in_is_connected(void);
+
 /* If a sleeve contact mic doesn't pull the detection pin low enough the
  * codec's built in headphone detection might fail. Calling this function
  * with 'enable = 1' overrides the detection and assumes there's headphones

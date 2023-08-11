@@ -465,6 +465,13 @@ bool st3m_audio_headphones_are_connected(void) {
     return res;
 }
 
+bool st3m_audio_line_in_is_connected(void) {
+    LOCK;
+    bool res = state.jacksense.line_in;
+    UNLOCK;
+    return res;
+}
+
 // Locked output getters/setters.
 
 #define LOCKED0(body) \

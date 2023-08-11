@@ -25,6 +25,10 @@ def headphones_are_connected() -> bool:
     return False
 
 
+def line_in_is_connected() -> bool:
+    return False
+
+
 def set_mute(v: bool) -> None:
     global _muted
     _muted = v

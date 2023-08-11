@@ -10,6 +10,9 @@ def adjust_volume_dB(v: float) -> float:
 def headphones_are_connected() -> bool:
     pass
 
+def line_in_is_connected() -> bool:
+    pass
+
 def set_mute(v: bool) -> None:
     pass
 

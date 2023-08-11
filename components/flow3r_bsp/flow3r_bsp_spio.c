@@ -121,7 +121,7 @@ static const flow3r_bsp_iodef_t iodef = {
             .ring_badgelink_enable = OPEX(3, 0),
         },
     .charger_state = IPEX(2, 1),
-    .jacksense_right = IPEX(6, 1),
+    .jacksense_right = IPEX(6, 1, .invert = true),
 };
 const flow3r_bsp_spio_programmable_pins_t flow3r_bsp_spio_programmable_pins = {
     .badgelink_left_tip = 7,

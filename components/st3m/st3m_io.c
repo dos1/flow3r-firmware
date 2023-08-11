@@ -29,10 +29,6 @@ void init_buttons() {
 
 bool st3m_io_charger_state_get() { return flow3r_bsp_spio_charger_state_get(); }
 
-bool st3m_io_line_in_jacksense_get() {
-    return flow3r_bsp_spio_jacksense_right_get();
-}
-
 st3m_tripos st3m_io_left_button_get() {
     return flow3r_bsp_spio_left_button_get();
 }
