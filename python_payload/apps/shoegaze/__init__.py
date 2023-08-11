@@ -80,14 +80,10 @@ class ShoegazeApp(Application):
         self.main_mixer.signals.gain = 2000
         self.main_lp.signals.reso = 2000
 
-        self.cp_prev = captouch.read()
-
         self._set_chord(3)
-        self.prev_captouch = [0] * 10
         self._tilt_bias = 0.0
         self._detune_prev = 0.0
         self._git_string_tuning = [0] * 4
-        self._button_prev = 0
         self._update_connections()
         self._spinny = -0.5
         self._gaze_counter = 0
@@ -202,24 +198,22 @@ class ShoegazeApp(Application):
         detune = (tilt - self._tilt_bias) * 0.5 + self._detune_prev * 0.5
         self._detune_prev = detune
 
-        cts = captouch.read()
-        button = ins.left_button
-        if button != self._button_prev:
-            if button == 1:
-                self.delay_toggle()
-            if button == -1:
-                pass
-                # self.fuzz_toggle()
-            self._button_prev = button
+        buttons = self.input.buttons
+        petals = self.input.captouch.petals
+        if buttons.app.right.pressed:
+            self.delay_toggle()
+        if buttons.app.left.pressed:
+            pass
+            # self.fuzz_toggle()
 
         for i in range(1, 10, 2):
-            if cts.petals[i].pressed and (not self.cp_prev.petals[i].pressed):
+            if petals[i].whole.pressed:
                 k = int((i - 1) / 2)
                 self._set_chord(k)
 
         for i in range(2, 10, 2):
             k = int(i / 2) - 1
-            if cts.petals[i].pressed and (not self.cp_prev.petals[i].pressed):
+            if petals[i].whole.pressed:
                 self._git_string_tuning[k] = self.chord[k] - 12
                 self.git_strings[k].signals.pitch.tone = self._git_string_tuning[k]
                 self.git_strings[k].decay = 3000
@@ -227,12 +221,10 @@ class ShoegazeApp(Application):
 
             self.git_strings[k].signals.pitch.tone = self._git_string_tuning[k] + detune
 
-        if cts.petals[0].pressed and (not self.cp_prev.petals[0].pressed):
+        if petals[0].whole.pressed:
             self.bass_string.signals.pitch.tone = self.chord[0] - 24
             self.bass_string.decay = 1000
             self.bass_string.signals.trigger.start()
-
-        self.cp_prev = cts
 
     def __del__(self) -> None:
         self.blm.clear()
