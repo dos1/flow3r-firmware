@@ -526,7 +526,7 @@ class ButtonsState:
     _left, _right and app_is_left.
     """
 
-    __slots__ = ("app", "os", "_left", "_right", "app_is_left")
+    __slots__ = ("app", "os", "_left", "_right", "app_is_left", "_app_is_left_prev")
 
     def __init__(self) -> None:
         self.app = TriSwitchState()
@@ -537,11 +537,21 @@ class ButtonsState:
         self._left = self.app
         self._right = self.os
         self.app_is_left = True
+        self._app_is_left_prev = self.app_is_left
 
     def _update(self, ts: int, hr: InputState) -> None:
+        # Check whether we swapped left/right buttons. If so, carry over changes
+        # from buttons as mapped previously, otherwise we get spurious presses.
+        self.app_is_left = hr.buttons.app_is_left
+        if self._app_is_left_prev != self.app_is_left:
+            # BUG(q3k): if something is holding on to controller button
+            # references, then this will break their code.
+            self.app, self.os = self.os, self.app
+
         self.app._update(ts, hr.buttons.app)
         self.os._update(ts, hr.buttons.os)
-        self.app_is_left = hr.buttons.app_is_left
+        self._app_is_left_prev = self.app_is_left
+
         if self.app_is_left:
             self._left = self.app
             self._right = self.os
