@@ -122,6 +122,10 @@ class Signal:
             ret += "\n"
             nl += "  "
         ret += nl.join(conret)
+
+        if isinstance(self, SignalPitchMixin):
+            ret += " / " + str(self.tone) + " semitones / " + str(self.freq) + "Hz"
+
         return ret
 
     @property
@@ -233,7 +237,7 @@ class SignalInput(Signal):
         return cons
 
 
-class SignalInputTrigger(SignalInput):
+class SignalTriggerMixin:
     def start(self, velocity=32767):
         if self.value > 0:
             self.value = -velocity
@@ -244,10 +248,7 @@ class SignalInputTrigger(SignalInput):
         self.value = 0
 
 
-class SignalInputPitch(SignalInput):
-    def __init__(self, plugin, signal_num):
-        SignalInput.__init__(self, plugin, signal_num)
-
+class SignalPitchMixin:
     @property
     def tone(self):
         return (self.value - (32767 - 2400 * 6)) / 200
@@ -269,10 +270,13 @@ class SignalInputPitch(SignalInput):
         tone = 12 * math.log(val / 440, 2)
         self.value = (32767 - 2400 * 6) + 200 * tone
 
-    def __repr__(self):
-        ret = SignalInput.__repr__(self)
-        ret += " / " + str(self.tone) + " semitones / " + str(self.freq) + "Hz"
-        return ret
+
+class SignalInputTrigger(SignalInput, SignalTriggerMixin):
+    pass
+
+
+class SignalInputPitch(SignalInput, SignalPitchMixin):
+    pass
 
 
 class SignalList:
