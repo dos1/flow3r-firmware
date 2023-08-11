@@ -111,5 +111,9 @@ if len(sys.argv) >= 2 and sys.argv[1] == "screenshot":
     import hardware
 
     hardware.SCREENSHOT = True
+elif len(sys.argv) == 2:
+    import st3m.run
+
+    st3m.run.override_main_app = sys.argv[1]
 
 import main

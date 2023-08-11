@@ -1,5 +1,5 @@
 from st3m.reactor import Reactor, Responder
-from st3m.goose import List
+from st3m.goose import List, Optional
 from st3m.ui.menu import (
     MenuItem,
     MenuItemBack,
@@ -22,6 +22,9 @@ import machine
 
 
 log = logging.Log(__name__, level=logging.INFO)
+
+#: Can be set to a bundle name that should be started instead of the main menu when run_main is called.
+override_main_app: Optional[str] = None
 
 
 def _make_reactor() -> Reactor:
@@ -144,6 +147,14 @@ def run_main() -> None:
             MenuItemForeground("System", menu_system),
         ],
     )
+    if override_main_app is not None:
+        requested = [b for b in bundles if b.name == override_main_app]
+        print([b.name for b in bundles])
+        if len(requested) > 1:
+            raise Exception(f"More than one bundle named {override_main_app}")
+        if len(requested) == 0:
+            raise Exception(f"Requested bundle {override_main_app} not found")
+        run_view(requested[0].load())
     run_view(menu_main)
 
 
