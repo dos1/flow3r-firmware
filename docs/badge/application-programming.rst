@@ -79,9 +79,9 @@ Example 1b: React to input
 --------------------------
 
 If we want to react to the user, we can use the :py:class:`InputState` which got
-handed to us. In this example we look at the state of the right shoulder button.
-The values contained in the input state are the same as used by the
-:py:mod:`hardware` module.
+handed to us. In this example we look at the state of the app (by default left)
+shoulder button.  The values contained in the input state are the same as used
+by the :py:mod:`hardware` module.
 
 .. code-block:: python
 
@@ -101,7 +101,7 @@ The values contained in the input state are the same as used by the
             ctx.rgb(255, 0, 0).rectangle(self._x, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
-            direction = ins.left_button
+            direction = ins.buttons.app
 
             if direction == BUTTON_PRESSED_LEFT:
                 self._x -= 1
@@ -111,7 +111,8 @@ The values contained in the input state are the same as used by the
 
     st3m.run.run_responder(Example())
 
-Try it: when you run this code, you can move the red square using the left shoulder button.
+Try it: when you run this code, you can move the red square using the app (by
+default left) shoulder button.
 
 
 Example 1c: Taking time into consideration
@@ -142,7 +143,7 @@ represents the time which has passed since the last call to `think()`.
             ctx.rgb(255, 0, 0).rectangle(self._x, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
-            direction = ins.left_button # -1 (left), 1 (right), or 2 (pressed)
+            direction = ins.buttons.app # -1 (left), 1 (right), or 2 (pressed)
 
             if direction == BUTTON_PRESSED_LEFT:
                 self._x -= 20 * delta_ms / 1000
@@ -164,6 +165,41 @@ Example 1d: Automatic input processing
 Working on the bare state of the buttons and the captouch petals can be cumbersome and error prone.
 the flow3r application framework gives you a bit of help in the form of the :py:class:`InputController`
 which processes an input state and gives you higher level information about what is happening.
+
+The `InputController` contains multiple :py:class:`Pressable` sub-objects, for
+example the app/OS buttons are available as following attributes on the
+`InputController`:
+
++-----------------------------------+--------------------------+
+| Attribute on ``InputControlller`` | Meaning                  |
++===================================+==========================+
+| ``.buttons.app.left``             | App button, pushed left  |
++-----------------------------------+--------------------------+
+| ``.buttons.app.middle``           | App button, pushed down  |
++-----------------------------------+--------------------------+
+| ``.buttons.app.right``            | App button, pushed right |
++-----------------------------------+--------------------------+
+| ``.buttons.os.left``              | OS button, pushed left   |
++-----------------------------------+--------------------------+
+| ``.buttons.os.middle``            | OS button, pushed down   |
++-----------------------------------+--------------------------+
+| ``.buttons.os.right``             | OS button, pushed right  |
++-----------------------------------+--------------------------+
+
+And each `Pressable` in turn contains the following attributes, all of which are
+valid within the context of a single `think()` call:
+
++----------------------------+--------------------------------------------------------------------+
+| Attribute on ``Pressable`` | Meaning                                                            |
++============================+====================================================================+
+| ``.pressed``               | Button has just started being pressed, ie. it's a Half Press down. |
++----------------------------+--------------------------------------------------------------------+
+| ``.down``                  | Button is being held down.                                         |
++----------------------------+--------------------------------------------------------------------+
+| ``.released``              | Button has just stopped being pressed, ie. it's a Half Press up.   |
++----------------------------+--------------------------------------------------------------------+
+| ``.up``                    | Button is not being held down.                                     |
++----------------------------+--------------------------------------------------------------------+
 
 The following example shows how to properly react to single button presses without having to
 think about what happens if the user presses the button for a long time. It uses the `InputController`
@@ -199,14 +235,12 @@ a square.
         def think(self, ins: InputState, delta_ms: int) -> None:
             self.input.think(ins, delta_ms) # let the input controller to its magic
 
-            direction = ins.left_button # -1 (left), 1 (right), or 2 (pressed)
-
-            if self.input.right_shoulder.middle.pressed:
+            if self.input.buttons.app.middle.pressed:
                 self._draw_rectangle = not self._draw_rectangle
 
-            if direction == BUTTON_PRESSED_LEFT:
+            if self.input.buttons.app.left.pressed:
                 self._x -= 20 * delta_ms / 1000
-            elif direction == BUTTON_PRESSED_RIGHT:
+            elif self.input.buttons.app.right.pressed:
                 self._x += 40 * delta_ms / 1000
 
 
@@ -222,8 +256,9 @@ With just the Responder class this can become a bit tricky as it never knows whe
 when it is not. It also doesn't directly allow you to launch a new screen.
 
 To help you with that you can use a :py:class:`View` instead. It can tell you when
-it becomes visible and you can also use it to bring a new screen or widget into the foreground or remove
-it again from the screen.
+it becomes visible, when it is about to become inactive (invisible) and you can
+also use it to bring a new screen or widget into the foreground or remove it
+again from the screen.
 
 Example 2a: Managing two views
 --------------------------------
@@ -259,8 +294,8 @@ into the two different views. We make use of an `InputController` again to handl
         def think(self, ins: InputState, delta_ms: int) -> None:
             self.input.think(ins, delta_ms) # let the input controller to its magic
 
-            if self.input.right_shoulder.middle.pressed:
-                self._vm.pop()
+            # No need to handle returning back to Example on button press - the
+            # flow3r's ViewManager takes care of that automatically.
 
 
     class Example(View):
@@ -277,11 +312,12 @@ into the two different views. We make use of an `InputController` again to handl
 
         def on_enter(self, vm: Optional[ViewManager]) -> None:
             self._vm = vm
+            self.input._ignore_pressed()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
             self.input.think(ins, delta_ms) # let the input controller to its magic
 
-            if self.input.right_shoulder.middle.pressed:
+            if self.input.buttons.app.middle.pressed:
                 self._vm.push(SecondScreen())
 
     st3m.run.run_view(Example())
@@ -293,9 +329,12 @@ the still pressed button immediately closes `SecondScreen` we make us of a speci
 Example 2b: Easier view management
 ----------------------------------
 
-The idea that a button (physical or captouch) is used to enter / exit a view is so universal that
-there is a special view which helps you with that: :py:class:`BaseView`. It integrates an
-`InputController` and handles the ignoring of extra presses:
+The above code is so universal that we provide a special view which takes care
+of this boilerplate: :py:class:`BaseView`. It integrated a local
+`InputController` on ``self.input`` and a copy of the :py:class:`ViewManager`
+which caused the View to enter on ``self.vm``.
+
+Here is our previous example rewritten to make use of `BaseView`:
 
 .. code-block:: python
 
@@ -304,10 +343,14 @@ there is a special view which helps you with that: :py:class:`BaseView`. It inte
 
     class SecondScreen(BaseView):
         def __init__(self) -> None:
+            # Remember to call super().__init__() if you implement your own
+            # constructor!
             super().__init__()
 
         def on_enter(self, vm: Optional[ViewManager]) -> None:
-            super().on_enter(vm) # Let BaseView do its thing
+            # Remember to call super().on_enter() if you implement your own
+            # on_enter!
+            super().on_enter(vm)
 
         def draw(self, ctx: Context) -> None:
             # Paint the background black
@@ -315,26 +358,12 @@ there is a special view which helps you with that: :py:class:`BaseView`. It inte
             # Green square
             ctx.rgb(0, 255, 0).rectangle(-20, -20, 40, 40).fill()
 
-        def think(self, ins: InputState, delta_ms: int) -> None:
-            super().think(ins, delta_ms) # Let BaseView do its thing
-
-            if self.input.right_shoulder.middle.pressed:
-                self.vm.pop()
-
-
     class Example(BaseView):
-        def __init__(self) -> None:
-            super().__init__()
-
         def draw(self, ctx: Context) -> None:
             # Paint the background black
             ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
             # Red square
             ctx.rgb(255, 0, 0).rectangle(-20, -20, 40, 40).fill()
-
-
-        def on_enter(self, vm: Optional[ViewManager]) -> None:
-            super().on_enter(vm) # Let BaseView do its thing
 
         def think(self, ins: InputState, delta_ms: int) -> None:
             super().think(ins, delta_ms) # Let BaseView do its thing
@@ -353,7 +382,11 @@ All fine and good, you were able to write an application that you can run with `
 but certainly you also want to run it from flow3r's menu system.
 
 Let's introduce the final class you should actually be using for application development:
-:py:class:`Application` (yeah, right).
+:py:class:`Application`. It builds upon `BaseView` (so you still have access to
+`self.input` and `self.vm`) but additionally is made aware of an
+:py:class:`ApplicationContext` on startup and can be registered into a menu.
+
+Here is our previous code changed to use `Application` for the base of its main view:
 
 .. code-block:: python
 
@@ -366,28 +399,16 @@ Let's introduce the final class you should actually be using for application dev
     from typing import Optional
 
     class SecondScreen(BaseView):
-        def __init__(self) -> None:
-            super().__init__()
-
-        def on_enter(self, vm: Optional[ViewManager]) -> None:
-            super().on_enter(vm) # Let BaseView do its thing
-
         def draw(self, ctx: Context) -> None:
             # Paint the background black
             ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
             # Green square
             ctx.rgb(0, 255, 0).rectangle(-20, -20, 40, 40).fill()
 
-        def think(self, ins: InputState, delta_ms: int) -> None:
-            super().think(ins, delta_ms) # Let BaseView do its thing
-
-            if self.input.right_shoulder.middle.pressed:
-                self.vm.pop()
-
-
     class MyDemo(Application):
         def __init__(self, app_ctx: ApplicationContext) -> None:
             super().__init__(app_ctx)
+            # Ignore the app_ctx for now.
 
         def draw(self, ctx: Context) -> None:
             # Paint the background black
@@ -395,24 +416,15 @@ Let's introduce the final class you should actually be using for application dev
             # Red square
             ctx.rgb(255, 0, 0).rectangle(-20, -20, 40, 40).fill()
 
-        def on_enter(self, vm: Optional[ViewManager]) -> None:
-            super().on_enter(vm) # Let Application do its thing
-
         def think(self, ins: InputState, delta_ms: int) -> None:
             super().think(ins, delta_ms) # Let Application do its thing
 
             if self.input.right_shoulder.middle.pressed:
-                self._view_manager.push(SecondScreen())
+                self.vm.push(SecondScreen())
 
-    ##### Uncomment when running the application via mpremote/Micro REPL ####
-    # st3m.run.run_view(MyDemo(ApplicationContext()))
-
-The `Application` class gives you the following extras:
-
- - Pressing the down the left shoulder button exits the app
- - You get a `_view_manager` member to manager your views
- - It can be picked up by the main menu system
-
+    if __name__ == '__main__':
+        # Continue to make runnable via mpremote run.
+        st3m.run.run_view(MyDemo(ApplicationContext()))
 
 To add the application to the menu we are missing one more thing: a `flow3r.toml`
 file which describes the application so flow3r knows where to put it in the menu system.

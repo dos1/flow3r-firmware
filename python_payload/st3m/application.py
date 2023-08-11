@@ -34,19 +34,8 @@ class Application(BaseView):
         self._app_ctx = app_ctx
         super().__init__()
 
-    def on_exit(self) -> None:
-        pass
-
-    def on_enter(self, vm: Optional[ViewManager]) -> None:
-        super().on_enter(vm)
-
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
-
-        if self.input.buttons.os.middle.pressed:
-            if self.vm is not None:
-                self.on_exit()
-                self.vm.pop(ViewTransitionSwipeRight())
 
 
 class BundleLoadException(BaseException):

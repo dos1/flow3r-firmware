@@ -15,8 +15,13 @@ class View(Responder):
 
     def on_enter(self, vm: Optional["ViewManager"]) -> None:
         """
-        Called when the View has just become active. This is guaranteed to be
-        called before think().
+        Called when the View has just become active.
+        """
+        pass
+
+    def on_exit(self) -> None:
+        """
+        Called when the View is about to become inactive.
         """
         pass
 
@@ -147,8 +152,14 @@ class ViewManager(Responder):
         self._transitioning = False
         self._transition = 0.0
         self._history: List[View] = []
+        self._input = InputController()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
+        self._input.think(ins, delta_ms)
+
+        if self._input.buttons.os.middle.pressed:
+            self.pop(ViewTransitionSwipeRight())
+
         if self._transitioning:
             self._transition += (delta_ms / 1000.0) * (1000 / self._time_ms)
             if self._transition >= 1.0:
@@ -186,6 +197,8 @@ class ViewManager(Responder):
         The new view will _not_ be added to history!
         """
         self._outgoing = self._incoming
+        if self._outgoing is not None:
+            self._outgoing.on_exit()
         self._incoming = r
         self._incoming.on_enter(self)
         self._overriden_vt = overide_vt
@@ -212,5 +225,7 @@ class ViewManager(Responder):
         override_vt will be used instead of the default ViewTransition
         animation.
         """
+        if len(self._history) < 1:
+            return
         r = self._history.pop()
         self.replace(r, override_vt)
