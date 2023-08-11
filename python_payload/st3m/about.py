@@ -101,14 +101,10 @@ class About(BaseView):
         super().think(ins, delta_ms)
         self.ts += delta_ms / 1000
 
-        if self.input.left_shoulder.middle.pressed:
-            if self.vm is not None:
-                self.vm.pop(ViewTransitionSwipeRight())
-
         # Change target screen intent.
-        if self.input.left_shoulder.left.pressed and self._can_left():
+        if self.input.buttons.app.left.pressed and self._can_left():
             self.screen_ix -= 1
-        if self.input.left_shoulder.right.pressed and self._can_right():
+        if self.input.buttons.app.right.pressed and self._can_right():
             self.screen_ix += 1
 
         # Calculate animation/transitions.

@@ -43,7 +43,7 @@ class Application(BaseView):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
 
-        if self.input.left_shoulder.middle.pressed:
+        if self.input.buttons.os.middle.pressed:
             if self.vm is not None:
                 self.on_exit()
                 self.vm.pop(ViewTransitionSwipeRight())

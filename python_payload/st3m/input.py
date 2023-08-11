@@ -28,6 +28,44 @@ class IMUState:
         self.pressure = pressure
 
 
+class InputButtonState:
+    """
+    State of the tri-state switches/buttons on the shoulders of the badge.
+
+    If you want to detect edges, use the stateful InputController.
+
+    By default, the left shoulder button is the 'app' button and the right
+    shoulder button is the 'os' button. The user can switch this behaviour in
+    the settings menu.
+
+    The 'app' button can be freely used by applicaton code. The 'os' menu has
+    fixed functions: volume up/down and back.
+
+    In cases you want to access left/right buttons independently of app/os
+    mapping (for example in applications where the handedness of the user
+    doesn't matter), then you can use _left and _right to access their state
+    directly.
+
+    'app_is_left' is provided to let you figure out on which side of the badge
+    the app button is, eg. for use when highlighting buttons on the screen or
+    with LEDs.
+    """
+
+    __slots__ = ("app", "os", "_left", "_right", "app_is_left")
+
+    def __init__(self, left: int, right: int, swapped: bool):
+        app = left
+        os = right
+        if swapped:
+            app, os = os, app
+
+        self.app = app
+        self.os = os
+        self._left = left
+        self._right = right
+        self.app_is_left = not swapped
+
+
 class InputState:
     """
     Current state of inputs from badge user. Passed via think() to every
@@ -39,16 +77,14 @@ class InputState:
     def __init__(
         self,
         captouch: captouch.CaptouchState,
-        left_button: int,
-        right_button: int,
+        buttons: InputButtonState,
         imu: IMUState,
         temperature: float,
         battery_voltage: float,
     ) -> None:
         # self.petal_pads = petal_pads
         self.captouch = captouch
-        self.left_button = left_button
-        self.right_button = right_button
+        self.buttons = buttons
         self.imu = imu
         self.temperature = temperature
         self.battery_voltage = battery_voltage
@@ -60,10 +96,9 @@ class InputState:
         Reactor.
         """
         cts = captouch.read()
-        left_button = hardware.left_button_get()
-        right_button = hardware.right_button_get()
-        if swapped_buttons:
-            left_button, right_button = right_button, left_button
+        left = hardware.left_button_get()
+        right = hardware.right_button_get()
+        buttons = InputButtonState(left, right, swapped_buttons)
 
         acc = imu.acc_read()
         gyro = imu.gyro_read()
@@ -73,8 +108,7 @@ class InputState:
         battery_voltage = power.battery_voltage
         return InputState(
             cts,
-            left_button,
-            right_button,
+            buttons,
             imu_state,
             temperature,
             battery_voltage,
@@ -461,35 +495,19 @@ class CaptouchState:
             petal.whole._ignore_pressed()
 
 
-class TriSwitchHandedness(Enum):
-    """
-    Left or right shoulder button.
-    """
-
-    left = "left"
-    right = "right"
-
-
 class TriSwitchState:
     """
     State of a tri-stat shoulder button
     """
 
-    __slots__ = ("left", "middle", "right", "handedness")
+    __slots__ = ("left", "middle", "right")
 
-    def __init__(self, h: TriSwitchHandedness) -> None:
-        self.handedness = h
-
+    def __init__(self) -> None:
         self.left = Pressable(False)
         self.middle = Pressable(False)
         self.right = Pressable(False)
 
-    def _update(self, ts: int, hr: InputState) -> None:
-        st = (
-            hr.left_button
-            if self.handedness == TriSwitchHandedness.left
-            else hr.right_button
-        )
+    def _update(self, ts: int, st: int) -> None:
         self.left._update(ts, st == -1)
         self.middle._update(ts, st == 2)
         self.right._update(ts, st == 1)
@@ -498,6 +516,42 @@ class TriSwitchState:
         self.left._ignore_pressed()
         self.middle._ignore_pressed()
         self.right._ignore_pressed()
+
+
+class ButtonsState:
+    """
+    Edge-trigger detection for input button state.
+
+    See  InputButtonState for more information about the meaning of app, os,
+    _left, _right and app_is_left.
+    """
+
+    __slots__ = ("app", "os", "_left", "_right", "app_is_left")
+
+    def __init__(self) -> None:
+        self.app = TriSwitchState()
+        self.os = TriSwitchState()
+
+        # Defaults. Real data coming from _update will change this to the
+        # correct values from an InputState.
+        self._left = self.app
+        self._right = self.os
+        self.app_is_left = True
+
+    def _update(self, ts: int, hr: InputState) -> None:
+        self.app._update(ts, hr.buttons.app)
+        self.os._update(ts, hr.buttons.os)
+        self.app_is_left = hr.buttons.app_is_left
+        if self.app_is_left:
+            self._left = self.app
+            self._right = self.os
+        else:
+            self._left = self.os
+            self._right = self.app
+
+    def _ignore_pressed(self) -> None:
+        self.app._ignore_pressed()
+        self.os._ignore_pressed()
 
 
 class InputController:
@@ -514,22 +568,19 @@ class InputController:
 
     __slots__ = (
         "captouch",
-        "left_shoulder",
-        "right_shoulder",
+        "buttons",
         "_ts",
     )
 
     def __init__(self) -> None:
         self.captouch = CaptouchState()
-        self.left_shoulder = TriSwitchState(TriSwitchHandedness.left)
-        self.right_shoulder = TriSwitchState(TriSwitchHandedness.right)
+        self.buttons = ButtonsState()
         self._ts = 0
 
     def think(self, hr: InputState, delta_ms: int) -> None:
         self._ts += delta_ms
         self.captouch._update(self._ts, hr)
-        self.left_shoulder._update(self._ts, hr)
-        self.right_shoulder._update(self._ts, hr)
+        self.buttons._update(self._ts, hr)
 
     def _ignore_pressed(self) -> None:
         """
@@ -538,5 +589,4 @@ class InputController:
         have just been foregrounded.
         """
         self.captouch._ignore_pressed()
-        self.left_shoulder._ignore_pressed()
-        self.right_shoulder._ignore_pressed()
+        self.buttons._ignore_pressed()

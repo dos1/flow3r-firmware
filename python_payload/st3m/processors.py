@@ -37,13 +37,13 @@ class AudioProcessor(Processor):
         adjusted = False
         # Whether the volume is so low that we should enable mute.
         should_mute = False
-        if self.input.right_shoulder.left.pressed:
+        if self.input.buttons.os.left.pressed:
             started_at = audio.get_volume_dB()
             if started_at <= -20:
                 should_mute = True
             audio.adjust_volume_dB(-5)
             adjusted = True
-        if self.input.right_shoulder.right.pressed:
+        if self.input.buttons.os.right.pressed:
             if not audio.get_mute():
                 audio.adjust_volume_dB(5)
             adjusted = True

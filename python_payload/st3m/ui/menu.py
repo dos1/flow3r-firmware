@@ -172,8 +172,8 @@ class MenuController(BaseView):
         super().on_enter(vm)
 
     def _parse_state(self) -> None:
-        left = self.input.left_shoulder.left
-        right = self.input.left_shoulder.right
+        left = self.input.buttons.app.left
+        right = self.input.buttons.app.right
 
         if left.pressed:
             self._scroll_controller.scroll_left()
@@ -197,7 +197,7 @@ class MenuController(BaseView):
 
         self._scroll_controller.think(ins, delta_ms)
 
-        if self.input.left_shoulder.middle.pressed:
+        if self.input.buttons.app.middle.pressed:
             self.select()
         self._parse_state()
 
