@@ -1,8 +1,7 @@
 from st3m.application import Application, ApplicationContext
-from st3m.goose import Dict, Any, List
+from st3m.goose import Dict, Any, List, Optional
 from st3m.ui.view import View, ViewManager
 from st3m.input import InputState
-from typing import Optional
 from ctx import Context
 
 import json
