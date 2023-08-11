@@ -49,8 +49,8 @@ class Channel:
     free: bool
 
     def clear(self) -> None: ...
-    def new_patch(self, patch: Type[T], init_var: Optional[Any] = None) -> T: ...
-    def new_bud(
+    def _new_patch(self, patch: Type[T], init_var: Optional[Any] = None) -> T: ...
+    def _new_bud(
         self,
         thing: bl00mbox._plugins._Plugin | int,
         init_var: Optional[int | float] = None,

@@ -190,8 +190,15 @@ and we can get them individually:
       [channel mixer] (1 connections)
         output in [bud 1] lowpass
 
-As we can see this channel has quite a lot going on. Ideally each application should have
-its own channel(s), so in order to get a free one we'll create a new one without argument:
+As we can see this channel has quite a lot going on. Each application should have its own
+channel(s), so in order to get a free one we'll request a free one from the backend by
+skipping the argument:
+
+.. note::
+    Do not use .Channel(n) in application code, it's for REPL purposes only. Each
+    application manages their own channel(s), so they might clear out your plugins
+    or drag down your performance or other kinds of nasty interferences. Don't do it.
+    
 
 .. code-block:: pycon
 

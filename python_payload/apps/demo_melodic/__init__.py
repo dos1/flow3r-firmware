@@ -74,7 +74,7 @@ def run(ins: InputState) -> None:
 def init() -> None:
     global synths
     for i in range(1):
-        synths += [blm.new_patch(bl00mbox.patches.tinysynth_fm)]
+        synths += [blm.new(bl00mbox.patches.tinysynth_fm)]
     for synth in synths:
         synth.decay(100)
 
