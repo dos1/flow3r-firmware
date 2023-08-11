@@ -91,7 +91,7 @@ class Otamatone(Application):
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
-        for i in range(10, 14 + 1):
+        for i in range(26, 30 + 1):
             leds.set_rgb(i, 62, 159, 229)
         leds.update()
 

@@ -17,7 +17,9 @@
 void st3m_leds_init();
 
 // Set a single/all LEDs to change color with the next (auto) update. Index
-// starts above USB-C port and increments ccw. There are 8 LEDs per top petal.
+// starts above USB-C port and increments clockwise.
+//
+// There are 8 LEDs per top petal, or 4 LEDs per petal.
 //
 // After you're ready setting up your blink, call st3m_leds_update, or enable
 // autoupdates.

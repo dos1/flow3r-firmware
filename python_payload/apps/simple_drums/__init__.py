@@ -166,8 +166,8 @@ class SimpleDrums(Application):
             leds.set_all_rgb(*[int(x / 4) for x in rgb])
         else:
             leds.set_all_rgb(0, 0, 0)
-        self._highlight_petal(4 - (st // 4), *rgb)
-        self._highlight_petal(6 + (st % 4), *rgb)
+        self._highlight_petal(10 - (4 - (st // 4)), *rgb)
+        self._highlight_petal(10 - (6 + (st % 4)), *rgb)
         leds.update()
 
         petals = self.input.captouch.petals

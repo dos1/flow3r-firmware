@@ -45,7 +45,7 @@ SemaphoreHandle_t mutex_incoming;
 #define UNLOCK_INCOMING xSemaphoreGive(mutex_incoming)
 
 static void set_single_led(uint8_t index, st3m_rgb_t c) {
-    index = ((39 - index) + 1 + 32) % 40;
+    index = (index + 29) % 40;
     flow3r_bsp_leds_set_pixel(index, c.r, c.g, c.b);
 }
 
@@ -95,8 +95,7 @@ void st3m_leds_update_hardware() {
         c.b = led_get_slew(state.hardware_value[i].b, c.b, state.slew_rate);
         state.hardware_value[i] = c;
 
-        int8_t index = i + 3 % 40;
-        set_single_led(index, c);
+        set_single_led(i, c);
     }
     UNLOCK;
 

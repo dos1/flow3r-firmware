@@ -1,23 +1,46 @@
 """
 Leds API.
 
-Index starts above USB-C port and increments ccw. There are 8 LEDs per top
-petal.
+Index starts above USB-C port and increments clockwise.
+
+There are 8 LEDs per top petal, or 4 LEDs per petal.
 
 After you're ready setting up your blink, call update(), or enable autoupdates.
 """
 
 def set_rgb(ix: int, r: int, g: int, b: int) -> None:
-    """Set LED `ix` to rgb value r, g, b"""
+    """Set LED `ix` to rgb value r, g, b
 
-def set_hsv(ix: int, h: float, s: float, v: float) -> None:
-    """Set LED `ix` to hsv value h, s, v"""
+    :param ix: LED index, from 0 to 39
+    :param r: Red value, from 0 to 255
+    :param g: Green value, from 0 to 255
+    :param b: Blue value, from 0 to 255
+    """
+
+def set_hsv(ix: int, hue: float, sat: float, val: float) -> None:
+    """Set LED `ix` to hsv value hue, sat, val
+
+    :param ix: LED index, from 0 to 39
+    :param hue: Hue, from 0 to 360
+    :param sat: Saturation, from 0.0 to 1.0
+    :param val: Value, from 0.0 to 1.0
+    """
 
 def set_all_rgb(r: int, g: int, b: int) -> None:
-    """Set all LEDs to rgb value r, g, b"""
+    """Set all LEDs to rgb value r, g, b
+
+    :param r: Red value, from 0 to 255
+    :param g: Green value, from 0 to 255
+    :param b: Blue value, from 0 to 255
+    """
 
 def set_all_hsv(h: float, s: float, v: float) -> None:
-    """Set all LEDs to hsv value h, s, v"""
+    """Set all LEDs to hsv value hue, sat, val
+
+    :param hue: Hue, from 0 to 360
+    :param sat: Saturation, from 0.0 to 1.0
+    :param val: Value, from 0.0 to 1.0
+    """
 
 def update() -> None:
     """

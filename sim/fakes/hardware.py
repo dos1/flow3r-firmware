@@ -233,6 +233,17 @@ class Simulation:
     # Pixel coordinates of each LED. The order is the same as the hardware
     # WS2812 chain, not the order as expected by the micropython API!
     LED_POSITIONS = [
+        (404, 0),
+        (456, 64),
+        (490, 131),
+        (511, 186),
+        (529, 250),
+        (595, 247),
+        (663, 250),
+        (738, 264),
+        (810, 292),
+        (755, 371),
+        (705, 419),
         (660, 455),
         (608, 490),
         (631, 554),
@@ -262,17 +273,6 @@ class Simulation:
         (295, 190),
         (318, 129),
         (351, 65),
-        (404, 0),
-        (456, 64),
-        (490, 131),
-        (511, 186),
-        (529, 250),
-        (595, 247),
-        (663, 250),
-        (738, 264),
-        (810, 292),
-        (755, 371),
-        (705, 419),
     ]
 
     def __init__(self):

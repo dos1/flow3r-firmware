@@ -105,7 +105,7 @@ STATIC mp_obj_t mp_leds_update() {
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_leds_update_obj, mp_leds_update);
 
 STATIC const mp_rom_map_elem_t mp_module_leds_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_audio) },
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_leds) },
     { MP_ROM_QSTR(MP_QSTR_set_rgb), MP_ROM_PTR(&mp_led_set_rgb_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_hsv), MP_ROM_PTR(&mp_led_set_hsv_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_all_rgb), MP_ROM_PTR(&mp_led_set_all_rgb_obj) },

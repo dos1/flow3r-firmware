@@ -47,10 +47,9 @@ class HarmonicApp(Application):
         hue = int(72 * (i + 0.5)) % 360
         if i != self.chord_index:
             self.chord_index = i
-            for j in range(40):
-                leds.set_hsv(j, hue, 1, 0.2)
-            self.chord = chords[i]
+            leds.set_all_hsv(hue, 1, 0.2)
             leds.update()
+            self.chord = chords[i]
 
     def draw(self, ctx: Context) -> None:
         i = self.color_intensity
