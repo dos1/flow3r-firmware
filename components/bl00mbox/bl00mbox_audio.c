@@ -108,6 +108,18 @@ uint8_t bl00mbox_channel_get_free_index(){
     return ret;
 }
 
+char * bl00mbox_channel_get_name(uint8_t channel_index){
+    if(channel_index >= BL00MBOX_CHANNELS) return NULL;
+    return bl00mbox_get_channel(channel_index)->name;
+}
+
+void bl00mbox_channel_set_name(uint8_t channel_index, char * new_name){
+    if(channel_index >= BL00MBOX_CHANNELS) return;
+    bl00mbox_channel_t * chan =  bl00mbox_get_channel(channel_index);
+    if(chan->name != NULL) free(chan->name);
+    chan->name = strdup(new_name);
+}
+
 void bl00mbox_channels_init(){
     for(uint8_t i = 0; i < BL00MBOX_CHANNELS; i++){
         bl00mbox_channel_t * chan = bl00mbox_get_channel(i);
@@ -117,6 +129,7 @@ void bl00mbox_channels_init(){
         chan->connections = NULL;
         chan->is_active = true;
         chan->is_free = true;
+        chan->name = NULL;
     }
     is_initialized = true;
 }

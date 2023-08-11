@@ -1,6 +1,6 @@
 import bl00mbox
 
-blm = bl00mbox.Channel()
+blm = bl00mbox.Channel("Melodic Demo")
 
 from hardware import *
 import captouch

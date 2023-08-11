@@ -40,7 +40,7 @@ class SimpleDrums(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
         # ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
-        self.blm = bl00mbox.Channel()
+        self.blm = bl00mbox.Channel("simple drums")
         self.seq = self.blm.new(bl00mbox.patches.step_sequencer)
         self.hat = self.blm.new(bl00mbox.patches.sampler, "hihat.wav")
         # Dot(10, 10, -30, 0, self._track_col(0)).draw(0,ctx)

@@ -403,16 +403,26 @@ class Bud:
 
 
 class Channel:
-    def __init__(self, num=None):
-        if num == None:
+    def __init__(self, name=None):
+        if name == None:
             self._channel_num = sys_bl00mbox.channel_get_free_index()
-        elif (int(num) < sys_bl00mbox.NUM_CHANNELS) and (int(num >= 0)):
-            self._channel_num = int(num)
+            self.name = "repl"
+        elif type(name) == str:
+            self._channel_num = sys_bl00mbox.channel_get_free_index()
+            self.name = name
+        elif type(name) == int:
+            if (int(name) < sys_bl00mbox.NUM_CHANNELS) and (int(name >= 0)):
+                self._channel_num = int(name)
+            else:
+                self._channel_num = sys_bl00mbox.NUM_CHANNELS - 1  # garbage channel
         else:
-            self._channel_num = 31
+            self._channel_num = sys_bl00mbox.NUM_CHANNELS - 1  # garbage channel
 
     def __repr__(self):
-        ret = "[channel " + str(self.channel_num) + "]"
+        ret = "[channel " + str(self.channel_num)
+        if self.name != "":
+            ret += ": " + self.name
+        ret += "]"
         if self.foreground:
             ret += " (foreground)"
         if self.background_mute_override:
@@ -427,6 +437,21 @@ class Channel:
 
     def clear(self):
         sys_bl00mbox.channel_clear(self.channel_num)
+
+    @property
+    def name(self):
+        if self._channel_num == 0:
+            return "system"
+        if self._channel_num == 31:
+            return "garbage"
+        name = sys_bl00mbox.channel_get_name(self.channel_num)
+        if name is None:
+            return ""
+        return name
+
+    @name.setter
+    def name(self, newname: str):
+        sys_bl00mbox.channel_set_name(self._channel_num, newname)
 
     @property
     def free(self):
@@ -457,12 +482,16 @@ class Channel:
 
     @staticmethod
     def print_overview():
+        ret = []
         for i in range(sys_bl00mbox.NUM_CHANNELS):
             c = Channel(i)
             if c.free:
                 continue
-            ret += "\n" + repr(c)
-        print(ret)
+            ret += [repr(c)]
+        if len(ret) != 0:
+            print("\n".join(ret))
+        else:
+            print("no active channels")
 
     def new(self, thing, init_var=None):
         self.free = False

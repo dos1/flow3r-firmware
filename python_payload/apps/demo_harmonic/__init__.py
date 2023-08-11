@@ -1,7 +1,7 @@
 import captouch
 import bl00mbox
 
-blm = bl00mbox.Channel()
+blm = bl00mbox.Channel("Harmonic Demo")
 import leds
 import hardware
 

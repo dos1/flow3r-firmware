@@ -184,28 +184,30 @@ and we can get them individually:
     # returns specific channel
     >>> chan_one = bl00mbox.Channel(1)
     >>> chan_one
-    [channel 1] (foreground)
+    [channel 1: shoegaze] (foreground)
       volume: 3000
       buds: 18
       [channel mixer] (1 connections)
         output in [bud 1] lowpass
 
-As we can see this channel has quite a lot going on. Each application should have its own
-channel(s), so in order to get a free one we'll request a free one from the backend by
-skipping the argument:
+We have accidentially grabbed the channel used by the shoegaze application! Each application
+should have its own channel(s), so in order to get a free one we'll request a free one from the
+backend by skipping the number. We can also provide a name for a new channel instead.
 
 .. note::
-    Do not use .Channel(n) in application code, it's for REPL purposes only. Each
+    Do not use .Channel(<in>) in application code, it's for REPL purposes only. Each
     application manages their own channel(s), so they might clear out your plugins
-    or drag down your performance or other kinds of nasty interferences. Don't do it.
+    or drag down your performance or other kinds of nasty interferences. In fact,
+    only .Channel(<string>) is allowed for in the current CI of flower to enforce
+    applications to name their channels.
     
 
 .. code-block:: pycon
 
     # returns free or garbage channel
-    >>> chan_free = bl00mbox.Channel()
+    >>> chan_free = bl00mbox.Channel("hewwo")
     >>> chan_free
-    [channel 3] (foreground)
+    [channel 3: hewwo] (foreground)
       volume: 3000
       buds: 0
       [channel mixer] (0 connections)
@@ -220,7 +222,7 @@ a free channel, bl00mbox automatically moved it to foreground. Let's look at cha
 .. code-block:: pycon
 
     >>> chan_one
-    [channel 1]
+    [channel 1: shoegaze]
     ...
 
 Note that the (foreground) marker has disappeared. This means no audio from channel 1 is rendered at
@@ -232,16 +234,16 @@ doing so:
     # mark channel as foregrounded manually
     >>> chan_one.foreground = True
     >>> chan_one
-    [channel 1] (foreground)
+    [channel 1: shoegaze] (foreground)
     ...
     >>> chan_free
-    [channel 3]
+    [channel 3: hewwo]
     ...
     # override the background mute for a channel;
     # chan_free is always rendered now
     >>> chan_free.background_mute_override = True
     >>> chan_one
-    [channel 1] (foreground)
+    [channel 1: shoegaze] (foreground)
     ...
     >>> chan_free
     [channel 3]
@@ -249,10 +251,10 @@ doing so:
     # into foreground
     >>> chan_free.new(bl00mbox.plugins.osc_fm)
     >>> chan_one
-    [channel 1]
+    [channel 1: shoegaze]
     ...
     >>> chan_free (foreground)
-    [channel 3]
+    [channel 3: hewwo]
 
 What constitutes a channel interaction for auto channel foregrounding is a bit in motion at this point
 and generally unreliable. For applications it is ideal to mark the channel manually when using it. When
@@ -274,7 +276,7 @@ Some other misc channel operations for live coding mostly:
     >>> chan_free.clear()
     # show all non-free channels
     >>> bl00mbox.Channels.print_overview()
-    [channel 3] (foreground)
+    [channel 3: hewwo] (foreground)
       volume: 3000
       buds: 0
       [channel mixer] (0 connections)

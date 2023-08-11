@@ -82,7 +82,7 @@ class Otamatone(Application):
         self._ts = 0
         self._blob = Blob()
 
-        self._blm = bl00mbox.Channel()
+        self._blm = bl00mbox.Channel("Otamatone")
         self._osc = self._blm.new(bl00mbox.patches.tinysynth)
         self._osc.waveform(2)
         self._intensity = 0.0

@@ -133,6 +133,21 @@ STATIC mp_obj_t mp_channel_get_volume(mp_obj_t chan) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_channel_get_volume_obj,
                                  mp_channel_get_volume);
 
+STATIC mp_obj_t mp_channel_set_name(mp_obj_t chan, mp_obj_t name) {
+    char *tmp = strdup(mp_obj_str_get_str(name));
+    bl00mbox_channel_set_name(mp_obj_get_int(chan), tmp);
+    free(tmp);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_channel_set_name_obj, mp_channel_set_name);
+
+STATIC mp_obj_t mp_channel_get_name(mp_obj_t chan) {
+    char *name = bl00mbox_channel_get_name(mp_obj_get_int(chan));
+    if (name == NULL) return mp_const_none;
+    return mp_obj_new_str(name, strlen(name));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_channel_get_name_obj, mp_channel_get_name);
+
 STATIC mp_obj_t mp_channel_buds_num(mp_obj_t chan) {
     return mp_obj_new_int(bl00mbox_channel_buds_num(mp_obj_get_int(chan)));
 }
@@ -492,6 +507,10 @@ STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
       MP_ROM_PTR(&mp_channel_set_volume_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_get_volume),
       MP_ROM_PTR(&mp_channel_get_volume_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_set_name),
+      MP_ROM_PTR(&mp_channel_set_name_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_get_name),
+      MP_ROM_PTR(&mp_channel_get_name_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_buds_num),
       MP_ROM_PTR(&mp_channel_buds_num_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_get_bud_by_list_pos),

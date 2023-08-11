@@ -46,7 +46,7 @@ class ShoegazeApp(Application):
 
     def _build_synth(self) -> None:
         if self.blm is None:
-            self.blm = bl00mbox.Channel()
+            self.blm = bl00mbox.Channel("shoegaze")
         self.main_lp = self.blm.new(bl00mbox.plugins.lowpass)
         self.main_fuzz = self.blm.new(bl00mbox.patches.fuzz)
         self.main_mixer = self.blm.new(bl00mbox.plugins.mixer, 2)

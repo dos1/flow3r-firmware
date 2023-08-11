@@ -23,6 +23,7 @@ struct _bl00mbox_channel_t;
 
 typedef struct _bl00mbox_bud_t{
     radspa_t * plugin; // plugin
+    char * name;
     uint64_t index; // unique index number for bud
     uint32_t render_pass_id; // may be used by host to determine whether recomputation is necessary
     uint8_t channel; // index of channel that owns the plugin
@@ -54,6 +55,7 @@ typedef struct _bl00mbox_channel_root_t{
 typedef struct{
     bool is_active; // rendering can be skipped if false
     bool is_free;
+    char * name;
     int32_t volume;
     struct _bl00mbox_channel_root_t * root_list; // list of all roots associated with channels
     uint32_t render_pass_id; // may be used by host to determine whether recomputation is necessary
@@ -79,6 +81,8 @@ bool bl00mbox_channel_set_free(uint8_t channel_index, bool free);
 bool bl00mbox_channel_get_background_mute_override(uint8_t channel_index);
 bool bl00mbox_channel_set_background_mute_override(uint8_t channel_index, bool enable);
 
+char * bl00mbox_channel_get_name(uint8_t channel_index);
+void bl00mbox_channel_set_name(uint8_t channel_index, char * new_name);
 
 bool bl00mbox_audio_waitfor_pointer_change(void ** ptr, void * new_val);
 void bl00mbox_audio_bud_render(bl00mbox_bud_t * bud, uint16_t num_samples);
