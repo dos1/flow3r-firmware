@@ -54,7 +54,31 @@ void flow3r_bsp_max98091_register_poke(uint8_t reg, uint8_t data) {
     max98091_check(reg, data);
 }
 
+static void onboard_mic_set_power(bool enable) {
+    if (enable) {
+        // XXX: The codec outputs a DC bias on th speakers
+        // if the microphone clock is active and the hardware through
+        // is active. Make sure this can't happen.
+        flow3r_bsp_max98091_speaker_line_in_set_hardware_thru(false);
+    }
+
+    // DMICCLK = 3 => f_DMC = f_PCLK / 5
+    max98091_check(MAX98091_DIGITAL_MIC_ENABLE,
+                   MAX98091_BITS(DIGITAL_MIC_ENABLE_DMICCLK, 3) |
+                       MAX98091_BOOL(DIGITAL_MIC_ENABLE_DIGMIC1L, enable) |
+                       MAX98091_BOOL(DIGITAL_MIC_ENABLE_DIGMIC1R, enable));
+}
+
 void flow3r_bsp_max98091_headphones_line_in_set_hardware_thru(bool enable) {
+    if (enable) {
+        // XXX: The codec outputs a DC bias on th speakers
+        // if the microphone clock is active and the hardware through
+        // is active. Make sure this can't happen.
+        // TODO(schneider): Not sure if this actually applies to the
+        // HP through as well. Don't want to chances now.
+        onboard_mic_set_power(false);
+    }
+
     // Enable headphone mixer.
     max98091_check(MAX98091_HPCONTROL, MAX98091_ON(HPCONTROL_MIXHP_RSEL) |
                                            MAX98091_ON(HPCONTROL_MIXHP_LSEL));
@@ -69,6 +93,13 @@ void flow3r_bsp_max98091_headphones_line_in_set_hardware_thru(bool enable) {
 }
 
 void flow3r_bsp_max98091_speaker_line_in_set_hardware_thru(bool enable) {
+    if (enable) {
+        // XXX: The codec outputs a DC bias on th speakers
+        // if the microphone clock is active and the hardware through
+        // is active. Make sure this can't happen.
+        onboard_mic_set_power(false);
+    }
+
     // TODO(q3k): left/right DAC seem to have been swapped before, double-check.
     // Line A -> Left Speaker
     max98091_check(MAX98091_LEFT_SPK_MIXER,
@@ -83,14 +114,6 @@ void flow3r_bsp_max98091_speaker_line_in_set_hardware_thru(bool enable) {
 void flow3r_bsp_max98091_line_in_set_hardware_thru(bool enable) {
     flow3r_bsp_max98091_speaker_line_in_set_hardware_thru(enable);
     flow3r_bsp_max98091_headphones_line_in_set_hardware_thru(enable);
-}
-
-static void onboard_mic_set_power(bool enable) {
-    // DMICCLK = 3 => f_DMC = f_PCLK / 5
-    max98091_check(MAX98091_DIGITAL_MIC_ENABLE,
-                   MAX98091_BITS(DIGITAL_MIC_ENABLE_DMICCLK, 3) |
-                       MAX98091_BOOL(DIGITAL_MIC_ENABLE_DIGMIC1L, enable) |
-                       MAX98091_BOOL(DIGITAL_MIC_ENABLE_DIGMIC1R, enable));
 }
 
 void flow3r_bsp_max98091_input_set_source(
