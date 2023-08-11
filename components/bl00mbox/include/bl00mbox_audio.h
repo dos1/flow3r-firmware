@@ -72,10 +72,13 @@ void bl00mbox_channel_event(uint8_t chan);
 uint8_t bl00mbox_channel_get_free_index();
 void bl00mbox_channels_init();
 uint8_t bl00mbox_channel_get_foreground_index();
-void bl00mbox_channel_set_foreground_index(uint8_t index);
+void bl00mbox_channel_set_foreground_index(uint8_t channel_index);
+bool bl00mbox_channel_get_free(uint8_t channel_index);
+bool bl00mbox_channel_set_free(uint8_t channel_index, bool free);
 
 bool bl00mbox_channel_get_background_mute_override(uint8_t channel_index);
 bool bl00mbox_channel_set_background_mute_override(uint8_t channel_index, bool enable);
+
 
 bool bl00mbox_audio_waitfor_pointer_change(void ** ptr, void * new_val);
 void bl00mbox_audio_bud_render(bl00mbox_bud_t * bud, uint16_t num_samples);

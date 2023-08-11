@@ -19,7 +19,7 @@ Upcoming features
 
 4) Better signal/bud representation in patches
 
-Using patches
+Patches
 -------------
 
 In bl00mbox all sound sources live in a channel. This allows for easy 
@@ -52,7 +52,7 @@ create one:
     >>> tiny.fm_waveform(tiny.SAW)
     >>> tiny.start()
 
-Using buds
+Buds
 ----------
 
 We can inspect the patch we created earlier:
@@ -172,6 +172,105 @@ automatically stop after calling .start()
     # ...until you call this!
     >>> env.signals.trigger.stop()
 
+Channels
+--------
+
+As mentioned earlier all plugins live inside of a channel. It is up to bl00mbox to decide
+which channels to skip and which ones to render. In this instance bl00mbox has 32 channels,
+and we can get them individually:
+
+.. code-block:: pycon
+
+    # returns specific channel
+    >>> chan_one = bl00mbox.Channel(1)
+    >>> chan_one
+    [channel 1] (foreground)
+      volume: 3000
+      buds: 18
+      [channel mixer] (1 connections)
+        output in [bud 1] lowpass
+
+As we can see this channel has quite a lot going on. Ideally each application should have
+its own channel(s), so in order to get a free one we'll create a new one without argument:
+
+.. code-block:: pycon
+
+    # returns free or garbage channel
+    >>> chan_free = bl00mbox.Channel()
+    >>> chan_free
+    [channel 3] (foreground)
+      volume: 3000
+      buds: 0
+      [channel mixer] (0 connections)
+
+In case there's no free channel yet you get channel 31, the garbage channel. It behaves like
+any other channel has a high chance to be cleared by other applications, more on that later.
+
+Channels accept volume from 0-32767. This can be used to mix different sounds together, however
+there also is an auto-foregrounding that we need to be aware of before doing that. When we requested
+a free channel, bl00mbox automatically moved it to foreground. Let's look at channel 1 again:
+
+.. code-block:: pycon
+
+    >>> chan_one
+    [channel 1]
+    ...
+
+Note that the (foreground) marker has disappeared. This means no audio from channel 1 is rendered at
+the moment, but it is still in memory and ready to be used at any time. We have several methods of
+doing so:
+
+.. code-block:: pycon
+
+    # mark channel as foregrounded manually
+    >>> chan_one.foreground = True
+    >>> chan_one
+    [channel 1] (foreground)
+    ...
+    >>> chan_free
+    [channel 3]
+    ...
+    # override the background mute for a channel;
+    # chan_free is always rendered now
+    >>> chan_free.background_mute_override = True
+    >>> chan_one
+    [channel 1] (foreground)
+    ...
+    >>> chan_free
+    [channel 3]
+    # interact with channel to automatically pull it
+    # into foreground
+    >>> chan_free.new(bl00mbox.plugins.osc_fm)
+    >>> chan_one
+    [channel 1]
+    ...
+    >>> chan_free (foreground)
+    [channel 3]
+
+What constitutes a channel interaction for auto channel foregrounding is a bit in motion at this point
+and generally unreliable. For applications it is ideal to mark the channel manually when using it. When
+exiting, an application should free the channel with automatically clears all buds. A channel should
+be no longer used after freeing:
+
+.. code-block:: pycon
+
+    # this clears all buds and sets the internal "free" marker to zero
+    >>> chan_one.free = True
+    # good practice to not accidentially use a free channel
+    >>> chan_one = None 
+
+Some other misc channel operations for live coding mostly:
+
+.. code-block:: pycon
+    
+    # drop all plugins
+    >>> chan_free.clear()
+    # show all non-free channels
+    >>> bl00mbox.Channels.print_overview()
+    [channel 3] (foreground)
+      volume: 3000
+      buds: 0
+      [channel mixer] (0 connections)
 
 Example 1: Auto bassline
 ------------------------

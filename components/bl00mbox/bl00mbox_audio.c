@@ -71,18 +71,29 @@ void bl00mbox_channel_event(uint8_t chan){
     last_chan_event = chan;
 }
 
-bl00mbox_channel_t * bl00mbox_get_channel(uint8_t index){
-    if(index >= BL00MBOX_CHANNELS) return NULL;
-    return &(channels[index]);
+bl00mbox_channel_t * bl00mbox_get_channel(uint8_t channel_index){
+    if(channel_index >= BL00MBOX_CHANNELS) return NULL;
+    return &(channels[channel_index]);
 }
 
 uint8_t bl00mbox_channel_get_foreground_index(){
     return bl00mbox_channel_foreground;
 }
 
-void bl00mbox_channel_set_foreground_index(uint8_t index){
-    if(index >= BL00MBOX_CHANNELS) return;
-    bl00mbox_channel_foreground = index;
+void bl00mbox_channel_set_foreground_index(uint8_t channel_index){
+    if(channel_index >= BL00MBOX_CHANNELS) return;
+    bl00mbox_channel_foreground = channel_index;
+}
+
+bool bl00mbox_channel_get_free(uint8_t channel_index){
+    if(channel_index >= BL00MBOX_CHANNELS) return false;
+    return bl00mbox_get_channel(channel_index)->is_free;
+}
+
+bool bl00mbox_channel_set_free(uint8_t channel_index, bool free){
+    if(channel_index >= BL00MBOX_CHANNELS) return false;
+    bl00mbox_get_channel(channel_index)->is_free = free;
+    return true;
 }
 
 uint8_t bl00mbox_channel_get_free_index(){

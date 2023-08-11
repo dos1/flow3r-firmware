@@ -45,6 +45,8 @@ P = TypeVar("P", bound=bl00mbox.patches._Patch)
 class Channel:
     background_mute_override: bool
     mixer: "ChannelMixer"
+    foreground: bool
+    free: bool
 
     def clear(self) -> None: ...
     def new_patch(self, patch: Type[T], init_var: Optional[Any] = None) -> T: ...

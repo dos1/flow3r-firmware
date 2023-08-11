@@ -184,6 +184,7 @@ class SimpleDrums(Application):
         if petals[0].whole.pressed:
             if self.stopped:
                 self.seq.bpm = self.bpm
+                self.blm.background_mute_override = True
                 self.stopped = False
             elif self.delta_acc < 3000 and self.delta_acc > 10:
                 bpm = int(60000 / self.delta_acc)
@@ -196,6 +197,7 @@ class SimpleDrums(Application):
             if self.tap_tempo_press_counter > 500:
                 self.seq.bpm = 0
                 self.stopped = True
+                self.blm.background_mute_override = False
             else:
                 self.tap_tempo_press_counter += delta_ms
         else:

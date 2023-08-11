@@ -60,10 +60,23 @@ STATIC mp_obj_t mp_channel_clear(mp_obj_t index) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_channel_clear_obj, mp_channel_clear);
 
-STATIC mp_obj_t mp_channel_get_free() {
+static mp_obj_t mp_channel_get_free(mp_obj_t index) {
+    return mp_obj_new_int(bl00mbox_channel_get_free(mp_obj_get_int(index)));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_channel_get_free_obj, mp_channel_get_free);
+
+static mp_obj_t mp_channel_set_free(mp_obj_t index, mp_obj_t free) {
+    return mp_obj_new_int(
+        bl00mbox_channel_set_free(mp_obj_get_int(index), mp_obj_is_true(free)));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_channel_set_free_obj, mp_channel_set_free);
+
+static mp_obj_t mp_channel_get_free_index() {
     return mp_obj_new_int(bl00mbox_channel_get_free_index());
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_channel_get_free_obj, mp_channel_get_free);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_channel_get_free_index_obj,
+                                 mp_channel_get_free_index);
 
 STATIC mp_obj_t mp_channel_get_foreground() {
     return mp_obj_new_int(bl00mbox_channel_get_foreground_index());
@@ -459,6 +472,10 @@ STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
     // CHANNEL OPERATIONS
     { MP_ROM_QSTR(MP_QSTR_channel_get_free),
       MP_ROM_PTR(&mp_channel_get_free_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_set_free),
+      MP_ROM_PTR(&mp_channel_set_free_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_get_free_index),
+      MP_ROM_PTR(&mp_channel_get_free_index_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_get_foreground),
       MP_ROM_PTR(&mp_channel_get_foreground_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_set_foreground),
@@ -560,6 +577,7 @@ STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
       MP_ROM_INT(RADSPA_SIGNAL_HINT_GAIN) },
     { MP_ROM_QSTR(MP_QSTR_RADSPA_SIGNAL_HINT_TRIGGER),
       MP_ROM_INT(RADSPA_SIGNAL_HINT_TRIGGER) },
+    { MP_ROM_QSTR(MP_QSTR_BL00MBOX_CHANNELS), MP_ROM_INT(BL00MBOX_CHANNELS) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_bl00mbox_globals, bl00mbox_globals_table);

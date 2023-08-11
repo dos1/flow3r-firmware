@@ -402,35 +402,14 @@ class Bud:
         return struct.table
 
 
-class ChannelOverview:
-    def __init__(self, nonempty=False):
-        self._nonempty = nonempty
-
-    def __repr__(self):
-        nonempty = self._nonempty
-        ret = (
-            "[channel list]\n  foreground: [channel "
-            + str(sys_bl00mbox.channel_get_foreground())
-            + "]"
-        )
-        for i in range(sys_bl00mbox.NUM_CHANNELS):
-            c = Channel(i)
-            if nonempty:
-                if not len(c.buds):
-                    continue
-            ret += "\n" + repr(c)
-        return ret
-
-
 class Channel:
-    show_all = ChannelOverview()
-    show_nonempty = ChannelOverview(nonempty=True)
-
     def __init__(self, num=None):
         if num == None:
-            self._channel_num = sys_bl00mbox.channel_get_free()
+            self._channel_num = sys_bl00mbox.channel_get_free_index()
         elif (int(num) < sys_bl00mbox.NUM_CHANNELS) and (int(num >= 0)):
             self._channel_num = int(num)
+        else:
+            self._channel_num = 31
 
     def __repr__(self):
         ret = "[channel " + str(self.channel_num) + "]"
@@ -449,7 +428,17 @@ class Channel:
     def clear(self):
         sys_bl00mbox.channel_clear(self.channel_num)
 
-    def new_bud(self, thing, init_var=None):
+    @property
+    def free(self):
+        return sys_bl00mbox.channel_get_free(self.channel_num)
+
+    @free.setter
+    def free(self, val):
+        if val:
+            self.clear()
+        sys_bl00mbox.channel_set_free(self.channel_num, val)
+
+    def _new_bud(self, thing, init_var=None):
         bud_init_var = 0
         if (type(init_var) == int) or (type(init_var) == float):
             bud_init_var = int(init_var)
@@ -460,30 +449,28 @@ class Channel:
             bud = Bud(self, thing, bud_init_var)
         return bud
 
-    def new_patch(self, patch, init_var=None):
+    def _new_patch(self, patch, init_var=None):
         if init_var == None:
             return patch(self)
         else:
             return patch(self, init_var)
 
     @staticmethod
-    def all():
-        ret = (
-            "[channel list]\n  foreground: [channel "
-            + str(sys_bl00mbox.channel_get_foreground())
-            + "]"
-        )
+    def print_overview():
         for i in range(sys_bl00mbox.NUM_CHANNELS):
             c = Channel(i)
+            if c.free:
+                continue
             ret += "\n" + repr(c)
-        return ret
+        print(ret)
 
     def new(self, thing, init_var=None):
+        self.free = False
         if type(thing) == type:
             if issubclass(thing, bl00mbox.patches._Patch):
-                return self.new_patch(thing, init_var)
+                return self._new_patch(thing, init_var)
         if isinstance(thing, bl00mbox._plugins._Plugin) or (type(thing) == int):
-            return self.new_bud(thing, init_var)
+            return self._new_bud(thing, init_var)
 
     @property
     def buds(self):

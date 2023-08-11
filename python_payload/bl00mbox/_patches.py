@@ -30,9 +30,9 @@ class tinysynth(_Patch):
         self.SQUARE = 1
         self.SAW = 32767
 
-        self.osc = chan.new_bud(420)
-        self.env = chan.new_bud(42)
-        self.amp = chan.new_bud(69)
+        self.osc = chan._new_bud(420)
+        self.env = chan._new_bud(42)
+        self.amp = chan._new_bud(69)
         self.amp.signals.output.value = chan.mixer
         self.amp.signals.gain.value = self.env.signals.output
         self.amp.signals.input.value = self.osc.signals.output
@@ -81,7 +81,7 @@ class tinysynth(_Patch):
 class tinysynth_fm(tinysynth):
     def __init__(self, chan):
         tinysynth.__init__(self, chan)
-        self.mod_osc = chan.new_bud(420)
+        self.mod_osc = chan._new_bud(420)
         self.fm_mult = 2.5
         self.mod_osc.signals.output.value = self.osc.signals.lin_fm
         self.decay(1000)
@@ -127,7 +127,7 @@ class sampler(_Patch):
         f = wave.open("/flash/sys/samples/" + filename, "r")
 
         self.len_frames = f.getnframes()
-        self.sampler = chan.new_bud(696969, self.len_frames)
+        self.sampler = chan._new_bud(696969, self.len_frames)
 
         assert f.getsampwidth() == 2
         assert f.getnchannels() in (1, 2)
@@ -165,7 +165,7 @@ class step_sequencer(_Patch):
     def __init__(self, chan):
         self.seqs = []
         for i in range(4):
-            seq = chan.new_bud(56709)
+            seq = chan._new_bud(56709)
             seq.table = [-32767] + ([0] * 16)
             if len(self.seqs):
                 self.seqs[-1].signals.sync_out = seq.signals.sync_in
@@ -295,10 +295,10 @@ class karplus_strong(_Patch):
         self.buds = _PatchBudList()
         self.signals = _PatchSignalList()
 
-        self.buds.noise = chan.new_bud(bl00mbox.plugins.noise_burst)
+        self.buds.noise = chan._new_bud(bl00mbox.plugins.noise_burst)
         self.buds.noise.signals.length = 25
 
-        self.buds.flanger = chan.new_bud(bl00mbox.plugins.flanger)
+        self.buds.flanger = chan._new_bud(bl00mbox.plugins.flanger)
 
         self.buds.flanger.signals.resonance = 32500
         self.buds.flanger.signals.manual.tone = "A2"

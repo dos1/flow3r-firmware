@@ -1,6 +1,8 @@
 from st3m.application import Application, ApplicationContext
 from st3m.goose import Dict, Any, List
+from st3m.ui.view import View, ViewManager
 from st3m.input import InputState
+from typing import Optional
 from ctx import Context
 
 import json
@@ -27,12 +29,25 @@ class ShoegazeApp(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
 
-        self.blm = bl00mbox.Channel()
-
-        self.delay_on = True
-        self.fuzz_on = True
+        # synth is initialized in on_enter!
+        self.blm: Optional[bl00mbox.Channel] = None
         self.chord_index = 0
         self.chord: List[int] = []
+        self._set_chord(3)
+        self._tilt_bias = 0.0
+        self._detune_prev = 0.0
+        self._git_string_tuning = [0] * 4
+        self._spinny = -0.5
+        self._gaze_counter = 0
+        self._rand_counter = 0
+        self._rand_limit = 16
+        self._rand_rot = 0.0
+        self.delay_on = True
+        self.fuzz_on = True
+
+    def _build_synth(self) -> None:
+        if self.blm is None:
+            self.blm = bl00mbox.Channel()
         self.main_lp = self.blm.new(bl00mbox.plugins.lowpass)
         self.main_fuzz = self.blm.new(bl00mbox.patches.fuzz)
         self.main_mixer = self.blm.new(bl00mbox.plugins.mixer, 2)
@@ -79,19 +94,11 @@ class ShoegazeApp(Application):
 
         self.main_mixer.signals.gain = 2000
         self.main_lp.signals.reso = 2000
-
-        self._set_chord(3)
-        self._tilt_bias = 0.0
-        self._detune_prev = 0.0
-        self._git_string_tuning = [0] * 4
         self._update_connections()
-        self._spinny = -0.5
-        self._gaze_counter = 0
-        self._rand_counter = 0
-        self._rand_limit = 16
-        self._rand_rot = 0.0
 
     def _update_connections(self) -> None:
+        if self.blm is None:
+            return
         if self.fuzz_on:
             self.bass_lp.signals.gain = 32767
             self.git_lp.signals.gain = 32767
@@ -211,6 +218,8 @@ class ShoegazeApp(Application):
                 k = int((i - 1) / 2)
                 self._set_chord(k)
 
+        if self.blm is None:
+            return
         for i in range(2, 10, 2):
             k = int(i / 2) - 1
             if petals[i].whole.pressed:
@@ -226,5 +235,13 @@ class ShoegazeApp(Application):
             self.bass_string.decay = 1000
             self.bass_string.signals.trigger.start()
 
-    def __del__(self) -> None:
-        self.blm.clear()
+    def on_enter(self, vm: Optional[ViewManager]) -> None:
+        if self.blm is None:
+            self._build_synth()
+        if self.blm is not None:  # silly mypy
+            self.blm.foreground = True
+
+    def on_exit(self) -> None:
+        if self.blm is not None:
+            self.blm.free = True  # yeeting the channel in the backend
+        self.blm = None
