@@ -147,17 +147,88 @@ static inline void check_for_exceptions(void) {
     mp_handle_pending(true);
 }
 
+// Returns a tuple of (address as string, port as number) from a sockaddr for
+// either AF_INET or AF_INET6 addresses.
+STATIC mp_obj_t _tuple_from_sockaddr(struct sockaddr *addr) {
+    uint8_t *ip;
+    mp_uint_t port;
+    switch (addr->sa_family) {
+    case AF_INET:
+        ip = (uint8_t *)&((struct sockaddr_in *)addr)->sin_addr;
+        port = lwip_ntohs(((struct sockaddr_in *)addr)->sin_port);
+        return netutils_format_inet_addr(ip, port, NETUTILS_BIG);
+    case AF_INET6:
+        ip = (uint8_t *)&((struct sockaddr_in6 *)addr)->sin6_addr;
+        port = lwip_ntohs(((struct sockaddr_in6 *)addr)->sin6_port);
+        return netutils_format_inet6_addr(ip, port);
+    default:
+        return mp_const_none;
+    }
+}
+
+
+// Parses a '%zone' suffix on nodename and adds it to the resulting addrinfo if
+// necessary.
+static void _add_zone(const char *nodename, struct addrinfo *addrs) {
+    // A % must be present in the address.
+    const char *zone = strstr(nodename, "%");
+    if (zone == NULL) {
+        return;
+    }
+
+    // A % must be followed by at least one character.
+    size_t len = strlen(zone);
+    if (len < 2) {
+        return;
+    }
+    zone++;
+    len--;
+
+    // There must not be another % after the %.
+    if (strstr(zone, "%") != NULL) {
+        return;
+    }
+
+    unsigned long scope = 0;
+
+
+    if (sscanf(zone, "%lu", &scope) != strlen(zone)){
+        scope = 0;
+        // Try resolving as interface name.
+        struct netif *nif = netif_find(zone);
+        if (nif != NULL) {
+            scope = netif_get_index(nif);
+        }
+    }
+
+    if (scope == 0) {
+        return;
+    }
+    ESP_LOGI("mpy", "addr %s -> zone %lu", nodename, scope);
+    for (struct addrinfo *ai = addrs; ai != NULL; ai = ai->ai_next) {
+        if (ai->ai_addr->sa_family != AF_INET6) {
+            continue;
+        }
+        struct sockaddr_in6 *sa = (struct sockaddr_in6 *)ai->ai_addr;
+        sa->sin6_scope_id = scope;
+    }
+}
+
 // This function mimics lwip_getaddrinfo, with added support for mDNS queries
 static int _socket_getaddrinfo3(const char *nodename, const char *servname,
     const struct addrinfo *hints, struct addrinfo **res) {
 
     // Normal query
-    return lwip_getaddrinfo(nodename, servname, hints, res);
+    int ret = lwip_getaddrinfo(nodename, servname, hints, res);
+    if (ret == 0) {
+        _add_zone(nodename, *res);
+    }
+    return ret;
 }
 
-static int _socket_getaddrinfo2(const mp_obj_t host, const mp_obj_t portx, struct addrinfo **resp) {
+static int _socket_getaddrinfo2(const mp_obj_t host, const mp_obj_t portx, struct addrinfo **resp, int domain) {
     const struct addrinfo hints = {
-        .ai_family = AF_INET,
+        .ai_family = domain,
         .ai_socktype = SOCK_STREAM,
     };
 
@@ -194,10 +265,10 @@ static int _socket_getaddrinfo2(const mp_obj_t host, const mp_obj_t portx, struc
     return res;
 }
 
-STATIC void _socket_getaddrinfo(const mp_obj_t addrtuple, struct addrinfo **resp) {
+STATIC void _socket_getaddrinfo(const mp_obj_t addrtuple, struct addrinfo **resp, int domain) {
     mp_obj_t *elem;
     mp_obj_get_array_fixed_n(addrtuple, 2, &elem);
-    _socket_getaddrinfo2(elem[0], elem[1], resp);
+    _socket_getaddrinfo2(elem[0], elem[1], resp, domain);
 }
 
 STATIC mp_obj_t socket_make_new(const mp_obj_type_t *type_in, size_t n_args, size_t n_kw, const mp_obj_t *args) {
@@ -232,7 +303,7 @@ STATIC mp_obj_t socket_make_new(const mp_obj_type_t *type_in, size_t n_args, siz
 STATIC mp_obj_t socket_bind(const mp_obj_t arg0, const mp_obj_t arg1) {
     socket_obj_t *self = MP_OBJ_TO_PTR(arg0);
     struct addrinfo *res;
-    _socket_getaddrinfo(arg1, &res);
+    _socket_getaddrinfo(arg1, &res, self->domain);
     self->state = SOCKET_STATE_CONNECTED;
     int r = lwip_bind(self->fd, res->ai_addr, res->ai_addrlen);
     lwip_freeaddrinfo(res);
@@ -265,13 +336,14 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(socket_listen_obj, 1, 2, socket_liste
 STATIC mp_obj_t socket_accept(const mp_obj_t arg0) {
     socket_obj_t *self = MP_OBJ_TO_PTR(arg0);
 
-    struct sockaddr addr;
-    socklen_t addr_len = sizeof(addr);
+    uint8_t buf[64];
+    struct sockaddr *addr = (struct sockaddr*)buf;
+    socklen_t addr_len = sizeof(buf);
 
     int new_fd = -1;
     for (int i = 0; i <= self->retries; i++) {
         MP_THREAD_GIL_EXIT();
-        new_fd = lwip_accept(self->fd, &addr, &addr_len);
+        new_fd = lwip_accept(self->fd, addr, &addr_len);
         MP_THREAD_GIL_ENTER();
         if (new_fd >= 0) {
             break;
@@ -300,11 +372,9 @@ STATIC mp_obj_t socket_accept(const mp_obj_t arg0) {
     _socket_settimeout(sock, UINT64_MAX);
 
     // make the return value
-    uint8_t *ip = (uint8_t *)&((struct sockaddr_in *)&addr)->sin_addr;
-    mp_uint_t port = lwip_ntohs(((struct sockaddr_in *)&addr)->sin_port);
     mp_obj_tuple_t *client = mp_obj_new_tuple(2, NULL);
     client->items[0] = sock;
-    client->items[1] = netutils_format_inet_addr(ip, port, NETUTILS_BIG);
+    client->items[1] = _tuple_from_sockaddr(addr);
 
     return client;
 }
@@ -313,7 +383,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(socket_accept_obj, socket_accept);
 STATIC mp_obj_t socket_connect(const mp_obj_t arg0, const mp_obj_t arg1) {
     socket_obj_t *self = MP_OBJ_TO_PTR(arg0);
     struct addrinfo *res;
-    _socket_getaddrinfo(arg1, &res);
+    _socket_getaddrinfo(arg1, &res, self->domain);
     MP_THREAD_GIL_EXIT();
     self->state = SOCKET_STATE_CONNECTED;
     int r = lwip_connect(self->fd, res->ai_addr, res->ai_addrlen);
@@ -509,16 +579,13 @@ STATIC mp_obj_t socket_recv(mp_obj_t self_in, mp_obj_t len_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(socket_recv_obj, socket_recv);
 
 STATIC mp_obj_t socket_recvfrom(mp_obj_t self_in, mp_obj_t len_in) {
-    struct sockaddr from;
-    socklen_t fromlen = sizeof(from);
+    uint8_t buf[64];
+    struct sockaddr *from = (struct sockaddr*)buf;
+    socklen_t fromlen = sizeof(buf);
 
     mp_obj_t tuple[2];
-    tuple[0] = _socket_recvfrom(self_in, len_in, &from, &fromlen);
-
-    uint8_t *ip = (uint8_t *)&((struct sockaddr_in *)&from)->sin_addr;
-    mp_uint_t port = lwip_ntohs(((struct sockaddr_in *)&from)->sin_port);
-    tuple[1] = netutils_format_inet_addr(ip, port, NETUTILS_BIG);
-
+    tuple[0] = _socket_recvfrom(self_in, len_in, from, &fromlen);
+    tuple[1] = _tuple_from_sockaddr(from);
     return mp_obj_new_tuple(2, tuple);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(socket_recvfrom_obj, socket_recvfrom);
@@ -574,16 +641,13 @@ STATIC mp_obj_t socket_sendto(mp_obj_t self_in, mp_obj_t data_in, mp_obj_t addr_
     mp_buffer_info_t bufinfo;
     mp_get_buffer_raise(data_in, &bufinfo, MP_BUFFER_READ);
 
-    // create the destination address
-    struct sockaddr_in to;
-    to.sin_len = sizeof(to);
-    to.sin_family = AF_INET;
-    to.sin_port = lwip_htons(netutils_parse_inet_addr(addr_in, (uint8_t *)&to.sin_addr, NETUTILS_BIG));
+    struct addrinfo *res = NULL;
+    _socket_getaddrinfo(addr_in, &res, self->domain);
 
     // send the data
     for (int i = 0; i <= self->retries; i++) {
         MP_THREAD_GIL_EXIT();
-        int ret = lwip_sendto(self->fd, bufinfo.buf, bufinfo.len, 0, (struct sockaddr *)&to, sizeof(to));
+        int ret = lwip_sendto(self->fd, bufinfo.buf, bufinfo.len, 0, res->ai_addr, res->ai_addrlen);
         MP_THREAD_GIL_ENTER();
         if (ret > 0) {
             return mp_obj_new_int_from_uint(ret);
@@ -746,7 +810,7 @@ STATIC mp_obj_t esp_socket_getaddrinfo(size_t n_args, const mp_obj_t *args) {
     // TODO support additional args beyond the first two
 
     struct addrinfo *res = NULL;
-    _socket_getaddrinfo2(args[0], args[1], &res);
+    _socket_getaddrinfo2(args[0], args[1], &res, AF_INET);
     mp_obj_t ret_list = mp_obj_new_list(0, NULL);
 
     for (struct addrinfo *resi = res; resi; resi = resi->ai_next) {
@@ -758,17 +822,8 @@ STATIC mp_obj_t esp_socket_getaddrinfo(size_t n_args, const mp_obj_t *args) {
             mp_const_none
         };
 
-        if (resi->ai_family == AF_INET) {
-            struct sockaddr_in *addr = (struct sockaddr_in *)resi->ai_addr;
-            // This looks odd, but it's really just a u32_t
-            ip4_addr_t ip4_addr = { .addr = addr->sin_addr.s_addr };
-            char buf[16];
-            ip4addr_ntoa_r(&ip4_addr, buf, sizeof(buf));
-            mp_obj_t inaddr_objs[2] = {
-                mp_obj_new_str(buf, strlen(buf)),
-                mp_obj_new_int(ntohs(addr->sin_port))
-            };
-            addrinfo_objs[4] = mp_obj_new_tuple(2, inaddr_objs);
+        if (resi->ai_family == AF_INET || resi->ai_family == AF_INET6) {
+            addrinfo_objs[4] = _tuple_from_sockaddr(resi->ai_addr);
         }
         mp_obj_list_append(ret_list, mp_obj_new_tuple(5, addrinfo_objs));
     }

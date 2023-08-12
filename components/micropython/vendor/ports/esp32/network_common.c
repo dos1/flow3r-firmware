@@ -153,6 +153,50 @@ STATIC mp_obj_t esp_ifconfig(size_t n_args, const mp_obj_t *args) {
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(esp_network_ifconfig_obj, 1, 2, esp_ifconfig);
 
+static void _ipv6_format_addr(esp_ip6_addr_t *addr, char *out, size_t out_size) {
+    uint8_t *addrb = (uint8_t *)addr->addr;
+    size_t offs = 0;
+
+    bool in_zero = false;
+    bool had_zero = false;
+    for (int i = 0; i < 8; i++) {
+        uint16_t word = (addrb[i * 2] << 8) | addrb[i*2+1];
+        if (!in_zero && !had_zero && word == 0) {
+            had_zero = true;
+            in_zero = true;
+        }
+        if (in_zero && word != 0) {
+            in_zero = false;
+            offs += snprintf(out+offs, out_size-offs, ":");
+        }
+        if (!in_zero) {
+            offs += snprintf(out+offs, out_size-offs, "%04x", word);
+            if (i != 7) {
+                offs += snprintf(out+offs, out_size-offs, ":");
+            }
+        }
+    }
+}
+
+STATIC mp_obj_t esp_ifconfig6(size_t n_args, const mp_obj_t *args) {
+    base_if_obj_t *self = MP_OBJ_TO_PTR(args[0]);
+    esp_ip6_addr_t addrs[CONFIG_LWIP_IPV6_NUM_ADDRESSES];
+    int naddrs = esp_netif_get_all_ip6(self->netif, addrs);
+    if (n_args == 1) {
+        mp_obj_t list = mp_obj_new_list(0, NULL);
+        for (int i = 0; i < naddrs; i++) {
+            char str[128];
+            _ipv6_format_addr(&addrs[i], str, sizeof(str));
+            mp_obj_list_append(list, mp_obj_new_str(str, strlen(str)));
+        }
+        return list;
+    } else {
+        mp_raise_NotImplementedError("cannot configure ipv6");
+        return mp_const_none;
+    }
+}
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(esp_network_ifconfig6_obj, 1, 2, esp_ifconfig6);
+
 STATIC mp_obj_t esp_phy_mode(size_t n_args, const mp_obj_t *args) {
     return mp_const_none;
 }

@@ -47,6 +47,12 @@ mp_obj_t netutils_format_ipv4_addr(uint8_t *ip, netutils_endian_t endian);
 // tuple such as ('192.168.0.1', 8080).
 mp_obj_t netutils_format_inet_addr(uint8_t *ip, mp_uint_t port, netutils_endian_t endian);
 
+// Takes an array with a raw IPv6 address and returns something like '2a0d:eb01::1337'.
+mp_obj_t netutils_format_ipv6_addr(uint8_t *ip);
+// Takes an array with a raw IPv6 address, and a port, and returns a net-address
+// tuple such as ('2a0d:eb01::1337', 8080).
+mp_obj_t netutils_format_inet6_addr(uint8_t *ip, mp_uint_t port);
+
 void netutils_parse_ipv4_addr(mp_obj_t addr_in, uint8_t *out_ip, netutils_endian_t endian);
 
 // Takes an address of the form ('192.168.0.1', 8080), returns the port and

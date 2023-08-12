@@ -54,6 +54,43 @@ mp_obj_t netutils_format_inet_addr(uint8_t *ip, mp_uint_t port, netutils_endian_
     return mp_obj_new_tuple(2, tuple);
 }
 
+
+mp_obj_t netutils_format_ipv6_addr(uint8_t *addrb) {
+    size_t offs = 0;
+
+    char out[128];
+    size_t out_size = sizeof(out);
+
+    bool in_zero = false;
+    bool had_zero = false;
+    for (int i = 0; i < 8; i++) {
+        uint16_t word = (addrb[i * 2] << 8) | addrb[i*2+1];
+        if (!in_zero && !had_zero && word == 0) {
+            had_zero = true;
+            in_zero = true;
+        }
+        if (in_zero && word != 0) {
+            in_zero = false;
+            offs += snprintf(out+offs, out_size-offs, ":");
+        }
+        if (!in_zero) {
+            offs += snprintf(out+offs, out_size-offs, "%04x", word);
+            if (i != 7) {
+                offs += snprintf(out+offs, out_size-offs, ":");
+            }
+        }
+    }
+    return mp_obj_new_str(out, strlen(out));
+}
+
+mp_obj_t netutils_format_inet6_addr(uint8_t *ip, mp_uint_t port) {
+    mp_obj_t tuple[2] = {
+        tuple[0] = netutils_format_ipv6_addr(ip),
+        tuple[1] = mp_obj_new_int(port),
+    };
+    return mp_obj_new_tuple(2, tuple);
+}
+
 void netutils_parse_ipv4_addr(mp_obj_t addr_in, uint8_t *out_ip, netutils_endian_t endian) {
     size_t addr_len;
     const char *addr_str = mp_obj_str_get_data(addr_in, &addr_len);
