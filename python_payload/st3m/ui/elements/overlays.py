@@ -13,6 +13,7 @@ from ctx import Context
 
 import math
 import audio
+import hardware
 
 
 class OverlayKind(Enum):
@@ -319,3 +320,73 @@ class OverlayVolume(Overlay):
         ctx.fill()
 
         ctx.end_group()
+
+
+class Icon(Responder):
+    """
+    A tray icon that might or might not be shown in the top icon tray.
+
+    Should render into a 240x240 viewport. Will be scaled down by the IconTray
+    that contains it.
+    """
+
+    @abstractmethod
+    def visible(self) -> bool:
+        ...
+
+
+class USBIcon(Icon):
+    """
+    Found in the bargain bin at an Aldi Süd.
+
+    Might or might not be related to a certain serial bus.
+    """
+
+    def visible(self) -> bool:
+        return hardware.usb_connected()
+
+    def draw(self, ctx: Context) -> None:
+        ctx.gray(1.0)
+        ctx.arc(-90, 0, 20, 0, 6.28, 0).fill()
+        ctx.line_width = 10.0
+        ctx.move_to(-90, 0).line_to(90, 0).stroke()
+        ctx.move_to(100, 0).line_to(70, 15).line_to(70, -15).line_to(100, 0).fill()
+        ctx.move_to(-50, 0).line_to(-10, -40).line_to(20, -40).stroke()
+        ctx.arc(20, -40, 15, 0, 6.28, 0).fill()
+        ctx.move_to(-30, 0).line_to(10, 40).line_to(40, 40).stroke()
+        ctx.rectangle(40 - 15, 40 - 15, 30, 30).fill()
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        pass
+
+
+class IconTray(Overlay):
+    """
+    An overlay which renders Icons.
+    """
+
+    kind = OverlayKind.Indicators
+
+    def __init__(self) -> None:
+        self.icons = [
+            USBIcon(),
+        ]
+        self.visible: List[Icon] = []
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        self.visible = [i for i in self.icons if i.visible()]
+        for v in self.visible:
+            v.think(ins, delta_ms)
+
+    def draw(self, ctx: Context) -> None:
+        nicons = len(self.visible)
+        dist = 20
+        width = (nicons - 1) * dist
+        x0 = width / -2
+        for i, v in enumerate(self.visible):
+            x = x0 + i * dist
+            ctx.save()
+            ctx.translate(x, -100)
+            ctx.scale(0.1, 0.1)
+            v.draw(ctx)
+            ctx.restore()

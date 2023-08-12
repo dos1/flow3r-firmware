@@ -85,6 +85,9 @@ def _make_compositor(reactor: Reactor, r: Responder) -> overlays.Compositor:
     _onoff_debug_touch_update()
     settings.onoff_debug_touch.subscribe(_onoff_debug_touch_update)
     compositor.add_overlay(debug_touch)
+
+    # Add icon tray.
+    compositor.add_overlay(overlays.IconTray())
     return compositor
 
 
