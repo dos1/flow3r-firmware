@@ -40,11 +40,12 @@ On other Linux-based distributions, you will have to manually install ESP-IDF al
 
 ::
 
-	$ git clone https://git.flow3r.garden/flow3r/esp-idf
+	$ git clone --recursive https://git.flow3r.garden/flow3r/esp-idf
 	$ cd esp-idf
-	$ git submodule update --init --recursive
 	$ ./install.sh
 	$ source export.sh
+
+To compile, see `Working on C st3m code`_.
 
 For running the simulator, you'll need Python 3 with pygame and wasmer:
 
@@ -87,6 +88,8 @@ You should also run typechecks:
 
 Working on C st3m code
 ----------------------
+
+Make sure you have ``ninja`` installed - CMake will happily generate code for Make if Ninja is missing, but it won't necessarily work.
 
 To compile:
 
