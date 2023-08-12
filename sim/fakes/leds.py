@@ -4,11 +4,6 @@ import pygame
 
 
 def set_rgb(ix, r, g, b):
-    ix = ((39 - ix) - 2 + 32) % 40
-
-    r = r << 3
-    g = g << 2
-    b = b << 3
     if r > 255:
         r = 255
     if g > 255:
