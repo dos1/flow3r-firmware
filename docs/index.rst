@@ -17,6 +17,7 @@ Welcome to flow3r's documentation!
    badge/firmware.rst
    badge/firmware-development.rst
    badge/badge_link.rst
+   badge/badge_net.rst
    badge/bl00mbox.rst
 
 .. toctree::
@@ -25,6 +26,7 @@ Welcome to flow3r's documentation!
 
    api/audio.rst
    api/badgelink.rst
+   api/badgenet.rst
    api/captouch.rst
    api/ctx.rst
    api/leds.rst

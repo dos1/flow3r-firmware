@@ -30,6 +30,7 @@ Typical use cases include:
  * :ref:`badge-link-uart`
  * :ref:`badge-link-midi`
  * :ref:`badge-link-eurorack-cv`
+ * :ref:`badge net` (Ethernet/IPv6 over Badge Link)
 
 
 .. _badge-link-uart:
