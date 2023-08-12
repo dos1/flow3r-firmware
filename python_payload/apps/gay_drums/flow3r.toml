@@ -1,9 +1,9 @@
 [app]
-name = "Simple Drums"
+name = "gay drums"
 menu = "Music"
 
 [entry]
-class = "SimpleDrums"
+class = "GayDrums"
 
 [metadata]
 author = "Flow3r Badge Authors"

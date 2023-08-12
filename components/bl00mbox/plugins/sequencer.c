@@ -11,14 +11,17 @@ radspa_descriptor_t sequencer_desc = {
     .destroy_plugin_instance = radspa_standard_plugin_destroy
 };
 
-#define SEQUENCER_NUM_SIGNALS 6
+#define SEQUENCER_NUM_SIGNALS 7
 #define SEQUENCER_STEP 0
-#define SEQUENCER_STEP_LEN 1
-#define SEQUENCER_SYNC_OUT 2
-#define SEQUENCER_SYNC_IN 3
-#define SEQUENCER_BPM 4
-#define SEQUENCER_BEAT_DIV 5
-#define SEQUENCER_OUTPUT 6
+#define SEQUENCER_SYNC_OUT 1
+#define SEQUENCER_SYNC_IN 2
+#define SEQUENCER_START_STEP 3
+#define SEQUENCER_END_STEP 4
+#define SEQUENCER_BPM 5
+#define SEQUENCER_BEAT_DIV 6
+
+// mpx'd
+#define SEQUENCER_OUTPUT 7
 
 static uint64_t target(uint64_t step_len, uint64_t bpm, uint64_t beat_div){
         if(bpm == 0) return 0;
@@ -37,20 +40,22 @@ void sequencer_run(radspa_t * sequencer, uint16_t num_samples, uint32_t render_p
 
     radspa_signal_t * step_sig = radspa_signal_get_by_index(sequencer, SEQUENCER_STEP);
     if(step_sig->buffer != NULL) output_request = true;
-    radspa_signal_t * step_len_sig = radspa_signal_get_by_index(sequencer, SEQUENCER_STEP_LEN);
     radspa_signal_t * sync_out_sig = radspa_signal_get_by_index(sequencer, SEQUENCER_SYNC_OUT);
     if(sync_out_sig->buffer != NULL) output_request = true;
     if(!output_request) return;
 
     radspa_signal_t * sync_in_sig = radspa_signal_get_by_index(sequencer, SEQUENCER_SYNC_IN);
+    radspa_signal_t * start_step_sig = radspa_signal_get_by_index(sequencer, SEQUENCER_START_STEP);
+    radspa_signal_t * end_step_sig = radspa_signal_get_by_index(sequencer, SEQUENCER_END_STEP);
     radspa_signal_t * bpm_sig = radspa_signal_get_by_index(sequencer, SEQUENCER_BPM);
     radspa_signal_t * beat_div_sig = radspa_signal_get_by_index(sequencer, SEQUENCER_BEAT_DIV);
 
     int16_t * table = sequencer->plugin_table;
 
-    int16_t s1 = radspa_signal_get_value(step_len_sig, 0, num_samples, render_pass_id);
-    int16_t s2 = data->track_step_len;
-    data->step_target = s1 > 0 ? (s1 > s2 ? s2 : s1) : 1;
+    int16_t s1 = radspa_signal_get_value(end_step_sig, 0, num_samples, render_pass_id);
+    int16_t s2 = data->track_step_len - 1;
+    data->step_end = s1 > 0 ? (s1 > s2 ? s2 : s1) : 1;
+    data->step_start = radspa_signal_get_value(start_step_sig, 0, num_samples, render_pass_id);
 
     int16_t bpm = bpm_sig->get_value(bpm_sig, 0, num_samples, render_pass_id);
     int16_t beat_div = beat_div_sig->get_value(beat_div_sig, 0, num_samples, render_pass_id);
@@ -65,8 +70,8 @@ void sequencer_run(radspa_t * sequencer, uint16_t num_samples, uint32_t render_p
             if(data->counter >= data->counter_target){
                 data->counter = 0;
                 data->step++;
-                if(data->step >= data->step_target){
-                    data->step = 0;
+                if(data->step > data->step_end){
+                    data->step = data->step_start;
                     data->sync_out = -data->sync_out;
                 }
             }
@@ -74,7 +79,7 @@ void sequencer_run(radspa_t * sequencer, uint16_t num_samples, uint32_t render_p
             int16_t sync_in = sync_in_sig->get_value(sync_in_sig, i, num_samples, render_pass_id);
             if(((sync_in > 0) && (data->sync_in_prev <= 0)) || ((sync_in > 0) && (data->sync_in_prev <= 0))){
                 data->counter = 0;
-                data->step = 0;
+                data->step = data->step_start;
                 data->sync_out = -data->sync_out;
             }
             data->sync_in_prev = sync_in;
@@ -131,9 +136,10 @@ radspa_t * sequencer_create(uint32_t init_var){
     data->beat_div_prev = 16;
     data->counter_target = target(data->track_step_len, data->bpm_prev, data->beat_div_prev);
     radspa_signal_set(sequencer, SEQUENCER_STEP, "step", RADSPA_SIGNAL_HINT_OUTPUT, 0);
-    radspa_signal_set(sequencer, SEQUENCER_STEP_LEN, "step_len", RADSPA_SIGNAL_HINT_INPUT, num_pixels);
     radspa_signal_set(sequencer, SEQUENCER_SYNC_OUT, "sync_out", RADSPA_SIGNAL_HINT_OUTPUT, 0);
     radspa_signal_set(sequencer, SEQUENCER_SYNC_IN, "sync_in", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_TRIGGER, 0);
+    radspa_signal_set(sequencer, SEQUENCER_START_STEP, "step_start", RADSPA_SIGNAL_HINT_INPUT, 0);
+    radspa_signal_set(sequencer, SEQUENCER_END_STEP, "step_end", RADSPA_SIGNAL_HINT_INPUT, num_pixels-1);
     radspa_signal_set(sequencer, SEQUENCER_BPM, "bpm", RADSPA_SIGNAL_HINT_INPUT, data->bpm_prev);
     radspa_signal_set(sequencer, SEQUENCER_BEAT_DIV, "beat_div", RADSPA_SIGNAL_HINT_INPUT, data->beat_div_prev);
     radspa_signal_set_group(sequencer, data->num_tracks, 1, SEQUENCER_OUTPUT, "track",

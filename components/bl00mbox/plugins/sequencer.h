@@ -11,7 +11,8 @@ typedef struct {
 typedef struct {
     uint8_t num_tracks;
     uint16_t track_step_len;
-    uint8_t step_target;
+    uint8_t step_end;
+    uint8_t step_start;
     uint8_t step;
     uint64_t counter;
     uint64_t counter_target;
