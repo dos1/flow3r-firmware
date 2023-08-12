@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: CC0-1.0
 #include "radspa_helpers.h"
 
-#define RADSPA_SIGNAL_CACHING
+// #define RADSPA_SIGNAL_CACHING
 
 radspa_signal_t * radspa_signal_get_by_index(radspa_t * plugin, uint16_t signal_index){
     radspa_signal_t * ret = NULL;
