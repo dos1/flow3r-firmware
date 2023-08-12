@@ -1,6 +1,7 @@
 #include "bl00mbox.h"
 #include "flow3r_bsp.h"
 #include "st3m_audio.h"
+#include "st3m_badgenet.h"
 #include "st3m_captouch.h"
 #include "st3m_console.h"
 #include "st3m_gfx.h"
@@ -130,6 +131,7 @@ void flow3r_startup(void) {
     st3m_scope_init();
     st3m_audio_init();
     bl00mbox_init();
+    st3m_badgenet_init();
 
     st3m_mode_set(st3m_mode_kind_starting, "micropython");
     st3m_mode_update_display(NULL);

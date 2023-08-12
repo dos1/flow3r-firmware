@@ -23,6 +23,8 @@ idf_component_register(
         st3m_fs_flash.c
         st3m_fs_sd.c
         "${ST3M_VERSION_PATH}"
+        st3m_badgenet.c
+        st3m_badgenet_switch.c
     INCLUDE_DIRS
         .
     REQUIRES
@@ -32,6 +34,7 @@ idf_component_register(
         tinyusb
         esp_ringbuf
         esp_timer
+        esp_netif
         usb
 )
 
