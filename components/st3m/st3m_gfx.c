@@ -350,6 +350,8 @@ void st3m_gfx_show_textview(st3m_gfx_textview_t *tv) {
 
     st3m_ctx_desc_t *target = st3m_gfx_drawctx_free_get(portMAX_DELAY);
 
+    ctx_save(target->ctx);
+
     // Draw background.
     ctx_rgb(target->ctx, 0, 0, 0);
     ctx_rectangle(target->ctx, -120, -120, 240, 240);
@@ -390,6 +392,8 @@ void st3m_gfx_show_textview(st3m_gfx_textview_t *tv) {
     ctx_gray(target->ctx, 0.6);
     ctx_move_to(target->ctx, 0, 100);
     ctx_text(target->ctx, st3m_version);
+
+    ctx_restore(target->ctx);
 
     st3m_gfx_drawctx_pipe_put(target);
 }
