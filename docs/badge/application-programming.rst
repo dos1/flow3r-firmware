@@ -368,7 +368,7 @@ Here is our previous example rewritten to make use of `BaseView`:
         def think(self, ins: InputState, delta_ms: int) -> None:
             super().think(ins, delta_ms) # Let BaseView do its thing
 
-            if self.input.right_shoulder.middle.pressed:
+            if self.input.buttons.app.middle.pressed:
                 self.vm.push(SecondScreen())
 
     st3m.run.run_view(Example())
@@ -419,7 +419,7 @@ Here is our previous code changed to use `Application` for the base of its main 
         def think(self, ins: InputState, delta_ms: int) -> None:
             super().think(ins, delta_ms) # Let Application do its thing
 
-            if self.input.right_shoulder.middle.pressed:
+            if self.input.buttons.app.middle.pressed:
                 self.vm.push(SecondScreen())
 
     if __name__ == '__main__':
