@@ -7,6 +7,7 @@ add_library(usermod_badge23 INTERFACE)
 target_sources(usermod_badge23 INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/mp_audio.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_badgelink.c
+    ${CMAKE_CURRENT_LIST_DIR}/mp_badgenet.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_captouch.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_imu.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_leds.c
