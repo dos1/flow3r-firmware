@@ -6,6 +6,7 @@ serialized ctx protocol as described in [1].
 [1] - https://ctx.graphics/protocol/
 """
 import os
+import math
 
 import wasmer
 import wasmer_compiler_cranelift
@@ -285,3 +286,16 @@ class Context:
             "Camp Font 3",
             "Material Icons",
         ][i]
+
+    def scope(self):
+        x = -120
+        self.move_to(x, 0)
+        for i in range(240):
+            x2 = x + i
+            y2 = math.sin(i / 10) * 80
+            self.line_to(x2, y2)
+        self.line_to(130, 0)
+        self.line_to(130, 130)
+        self.line_to(-130, 130)
+        self.line_to(-130, 0)
+        return self

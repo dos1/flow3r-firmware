@@ -2,7 +2,9 @@ from st3m.goose import ABCBase, abstractmethod, List, Optional
 from st3m.input import InputState
 from ctx import Context
 
-import time, hardware
+import time
+import sys_display
+import kernel
 
 
 class Responder(ABCBase):
@@ -126,7 +128,7 @@ class Reactor:
         self.stats.record_run_time(elapsed)
         wait = deadline - end
         if wait > 0:
-            hardware.freertos_sleep(wait)
+            kernel.freertos_sleep(wait)
 
     def _run_top(self, start: int) -> None:
         # Skip if we have no top Responder.
@@ -148,7 +150,7 @@ class Reactor:
 
         # Draw!
         if self._ctx is None:
-            self._ctx = hardware.get_ctx()
+            self._ctx = sys_display.get_ctx()
             if self._ctx is not None:
                 if self._last_ctx_get is not None:
                     diff = start - self._last_ctx_get
@@ -158,6 +160,6 @@ class Reactor:
                 self._ctx.save()
                 self._top.draw(self._ctx)
                 self._ctx.restore()
-        if self._ctx is not None and not hardware.display_pipe_full():
-            hardware.display_update(self._ctx)
+        if self._ctx is not None and not sys_display.pipe_full():
+            sys_display.update(self._ctx)
             self._ctx = None

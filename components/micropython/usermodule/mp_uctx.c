@@ -4,16 +4,8 @@
 #include "py/objarray.h"
 #include "py/runtime.h"
 
-// clang-format off
-#include "ctx_config.h"
-#include "ctx.h"
-// clang-format on
-
-typedef struct _mp_ctx_obj_t {
-    mp_obj_base_t base;
-    Ctx *ctx;
-    mp_obj_t user_data;
-} mp_ctx_obj_t;
+#include "mp_uctx.h"
+#include "st3m_scope.h"
 
 void gc_collect(void);
 #ifdef EMSCRIPTEN
@@ -244,6 +236,13 @@ MP_CTX_COMMON_FUN_4F(linear_gradient);
 MP_CTX_COMMON_FUN_6F(radial_gradient);
 
 MP_CTX_COMMON_FUN_3F(logo);
+
+static mp_obj_t mp_ctx_scope(mp_obj_t self_in) {
+    mp_ctx_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    st3m_scope_draw(self->ctx);
+    return self_in;
+}
+MP_DEFINE_CONST_FUN_OBJ_1(mp_ctx_scope_obj, mp_ctx_scope);
 
 static mp_obj_t mp_ctx_key_down(size_t n_args, const mp_obj_t *args) {
     mp_ctx_obj_t *self = MP_OBJ_TO_PTR(args[0]);
@@ -513,8 +512,6 @@ STATIC void generic_method_lookup(mp_obj_t obj, qstr attr, mp_obj_t *dest) {
         }
     }
 }
-
-extern const mp_obj_type_t mp_ctx_type;
 
 #if CTX_TINYVG
 static mp_obj_t mp_ctx_tinyvg_get_size(mp_obj_t self_in, mp_obj_t buffer_in) {
@@ -857,6 +854,7 @@ static const mp_rom_map_elem_t mp_ctx_locals_dict_table[] = {
 #endif
 #endif
     MP_CTX_METHOD(logo),
+    MP_CTX_METHOD(scope),
 
     // Instance attributes
     MP_CTX_ATTR(x),

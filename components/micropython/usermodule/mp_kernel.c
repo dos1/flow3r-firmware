@@ -4,8 +4,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "flow3r_bsp.h"
 #include "py/obj.h"
 #include "py/runtime.h"
+#include "st3m_console.h"
+#include "st3m_usb.h"
 #include "st3m_version.h"
 
 #if (configUSE_TRACE_FACILITY != 1)
@@ -299,12 +302,89 @@ STATIC mp_obj_t mp_firmware_version(void) {
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_firmware_version_obj, mp_firmware_version);
 
+STATIC mp_obj_t mp_hardware_version(void) {
+    mp_obj_t str =
+        mp_obj_new_str(flow3r_bsp_hw_name, strlen(flow3r_bsp_hw_name));
+    return str;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_hardware_version_obj, mp_hardware_version);
+
+STATIC mp_obj_t mp_freertos_sleep(mp_obj_t ms_in) {
+    uint32_t ms = mp_obj_get_int(ms_in);
+    MP_THREAD_GIL_EXIT();
+    vTaskDelay(ms / portTICK_PERIOD_MS);
+    MP_THREAD_GIL_ENTER();
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_freertos_sleep_obj, mp_freertos_sleep);
+
+STATIC mp_obj_t mp_usb_connected(void) {
+    static int64_t last_check = 0;
+    static bool value = false;
+    int64_t now = esp_timer_get_time();
+
+    if (last_check == 0) {
+        last_check = now;
+        value = st3m_usb_connected();
+    }
+
+    if ((now - last_check) > 10000) {
+        value = st3m_usb_connected();
+        last_check = now;
+    }
+    return mp_obj_new_bool(value);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_usb_connected_obj, mp_usb_connected);
+
+STATIC mp_obj_t mp_usb_console_active(void) {
+    static int64_t last_check = 0;
+    static bool value = false;
+    int64_t now = esp_timer_get_time();
+
+    if (last_check == 0) {
+        last_check = now;
+        value = st3m_console_active();
+    }
+
+    if ((now - last_check) > 10000) {
+        value = st3m_console_active();
+        last_check = now;
+    }
+    return mp_obj_new_bool(value);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_usb_console_active_obj,
+                                 mp_usb_console_active);
+
+STATIC mp_obj_t mp_i2c_scan(void) {
+    flow3r_bsp_i2c_scan_result_t scan;
+    flow3r_bsp_i2c_scan(&scan);
+
+    mp_obj_t res = mp_obj_new_list(0, NULL);
+    for (int i = 0; i < 127; i++) {
+        size_t ix = i / 32;
+        size_t offs = i % 32;
+        if (scan.res[ix] & (1 << offs)) {
+            mp_obj_list_append(res, mp_obj_new_int_from_uint(i));
+        }
+    }
+    return res;
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_i2c_scan_obj, mp_i2c_scan);
+
 STATIC const mp_rom_map_elem_t globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_scheduler_snapshot),
       MP_ROM_PTR(&mp_scheduler_snapshot_obj) },
     { MP_ROM_QSTR(MP_QSTR_heap_stats), MP_ROM_PTR(&mp_heap_stats_obj) },
     { MP_ROM_QSTR(MP_QSTR_firmware_version),
       MP_ROM_PTR(&mp_firmware_version_obj) },
+    { MP_ROM_QSTR(MP_QSTR_hardware_version),
+      MP_ROM_PTR(&mp_hardware_version_obj) },
+    { MP_ROM_QSTR(MP_QSTR_freertos_sleep), MP_ROM_PTR(&mp_freertos_sleep_obj) },
+    { MP_ROM_QSTR(MP_QSTR_usb_connected), MP_ROM_PTR(&mp_usb_connected_obj) },
+    { MP_ROM_QSTR(MP_QSTR_usb_console_active),
+      MP_ROM_PTR(&mp_usb_console_active_obj) },
+    { MP_ROM_QSTR(MP_QSTR_i2c_scan), MP_ROM_PTR(&mp_i2c_scan_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_RUNNING), MP_ROM_INT(eRunning) },
     { MP_ROM_QSTR(MP_QSTR_READY), MP_ROM_INT(eReady) },

@@ -1,4 +1,4 @@
-from hardware import _sim
+from _sim import _sim
 
 import pygame
 

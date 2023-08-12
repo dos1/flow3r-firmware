@@ -2,7 +2,6 @@ import bl00mbox
 
 blm = bl00mbox.Channel("Melodic Demo")
 
-from hardware import *
 import captouch
 import leds
 
@@ -97,7 +96,7 @@ class MelodicApp(Application):
     def draw(self, ctx: Context) -> None:
         ctx.rgb(1, 1, 1).rectangle(-120, -120, 240, 240).fill()
         ctx.rgb(0, 0, 0)
-        scope_draw(ctx)
+        ctx.scope()
         ctx.fill()
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:

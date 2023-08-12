@@ -1,5 +1,4 @@
 import bl00mbox
-import hardware
 import captouch
 import leds
 

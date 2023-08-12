@@ -80,13 +80,14 @@ Example 1b: React to input
 
 If we want to react to the user, we can use the :py:class:`InputState` which got
 handed to us. In this example we look at the state of the app (by default left)
-shoulder button.  The values contained in the input state are the same as used
-by the :py:mod:`hardware` module.
+shoulder button. The values for buttons contained in the input state are one of
+``InputButtonState.PRESSED_LEFT``, ``PRESSED_RIGHT``, ``PRESSED_DOWN``,
+``NOT_PRESSED`` - same values as in the low-level
+:py:mod:`sys_buttons`.
 
 .. code-block:: python
 
     from st3m.reactor import Responder
-    from hardware import BUTTON_PRESSED_LEFT, BUTTON_PRESSED_RIGHT, BUTTON_PRESSED_DOWN
     import st3m.run
 
     class Example(Responder):
@@ -103,9 +104,9 @@ by the :py:mod:`hardware` module.
         def think(self, ins: InputState, delta_ms: int) -> None:
             direction = ins.buttons.app
 
-            if direction == BUTTON_PRESSED_LEFT:
+            if direction == ins.buttons.PRESSED_LEFT:
                 self._x -= 1
-            elif direction == BUTTON_PRESSED_RIGHT:
+            elif direction == ins.buttons.PRESSED_RIGHT:
                 self._x += 1
 
 
@@ -128,7 +129,6 @@ represents the time which has passed since the last call to `think()`.
 .. code-block:: python
 
     from st3m.reactor import Responder
-    from hardware import BUTTON_PRESSED_LEFT, BUTTON_PRESSED_RIGHT, BUTTON_PRESSED_DOWN
     import st3m.run
 
     class Example(Responder):
@@ -145,9 +145,9 @@ represents the time which has passed since the last call to `think()`.
         def think(self, ins: InputState, delta_ms: int) -> None:
             direction = ins.buttons.app # -1 (left), 1 (right), or 2 (pressed)
 
-            if direction == BUTTON_PRESSED_LEFT:
+            if direction == ins.buttons.PRESSED_LEFT:
                 self._x -= 20 * delta_ms / 1000
-            elif direction == BUTTON_PRESSED_RIGHT:
+            elif direction == ins.buttons.PRESSED_RIGHT:
                 self._x += 40 * delta_ms / 1000
 
 
@@ -213,7 +213,6 @@ a square.
     from st3m.input import InputController
     from st3m.utils import tau
 
-    from hardware import BUTTON_PRESSED_LEFT, BUTTON_PRESSED_RIGHT, BUTTON_PRESSED_DOWN
     import st3m.run
 
     class Example(Responder):

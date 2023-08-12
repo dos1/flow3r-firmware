@@ -108,9 +108,9 @@ def _stat(path):
 os.stat = _stat
 
 if len(sys.argv) >= 2 and sys.argv[1] == "screenshot":
-    import hardware
+    import _sim
 
-    hardware.SCREENSHOT = True
+    _sim.SCREENSHOT = True
 elif len(sys.argv) == 2:
     import st3m.run
 

@@ -440,10 +440,6 @@ class Simulation:
 _sim = Simulation()
 
 
-def init_done():
-    return True
-
-
 import ctx
 
 
@@ -501,14 +497,6 @@ def display_update(subctx):
     fbm.put(fbp, c)
 
 
-def display_pipe_full():
-    return False
-
-
-def set_global_volume_dB(a):
-    pass
-
-
 def get_button_state(left):
     _sim.process_events()
     _sim.render_gui_lazy()
@@ -528,64 +516,3 @@ def get_button_state(left):
     elif sub[2]:
         return +1
     return 0
-
-
-menu_button_left = 0
-
-
-def menu_button_get():
-    return get_button_state(menu_button_left)
-
-
-def application_button_get():
-    return get_button_state(1 - menu_button_left)
-
-
-def left_button_get():
-    return get_button_state(1)
-
-
-def right_button_get():
-    return get_button_state(0)
-
-
-def menu_button_set_left(_broken):
-    global menu_button_left
-    menu_button_left = 1
-
-
-def menu_button_get_left():
-    return menu_button_left
-
-
-def freertos_sleep(ms):
-    import _time
-
-    _time.sleep(ms / 1000.0)
-
-
-def scope_draw(ctx):
-    import math
-
-    x = -120
-    ctx.move_to(x, 0)
-    for i in range(240):
-        x2 = x + i
-        y2 = math.sin(i / 10) * 80
-        ctx.line_to(x2, y2)
-    ctx.line_to(130, 0)
-    ctx.line_to(130, 130)
-    ctx.line_to(-130, 130)
-    ctx.line_to(-130, 0)
-
-
-def usb_connected():
-    return True
-
-
-def usb_console_active():
-    return True
-
-
-def i2c_scan():
-    return [16, 44, 45, 85, 109, 110]

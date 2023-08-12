@@ -13,7 +13,7 @@ from ctx import Context
 
 import math
 import audio
-import hardware
+import kernel
 
 
 class OverlayKind(Enum):
@@ -343,7 +343,7 @@ class USBIcon(Icon):
     """
 
     def visible(self) -> bool:
-        return hardware.usb_connected()
+        return kernel.usb_connected()
 
     def draw(self, ctx: Context) -> None:
         ctx.gray(1.0)

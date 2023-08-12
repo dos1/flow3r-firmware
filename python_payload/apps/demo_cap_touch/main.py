@@ -11,8 +11,6 @@ import cmath
 import math
 import time
 
-import hardware
-
 
 class Dot:
     def __init__(self, size: float, imag: float, real: float) -> None:

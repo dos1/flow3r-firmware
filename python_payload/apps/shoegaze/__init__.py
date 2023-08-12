@@ -10,7 +10,6 @@ import captouch
 import bl00mbox
 
 import leds
-import hardware
 import random
 
 chords = [

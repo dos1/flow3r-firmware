@@ -67,11 +67,11 @@ class CaptouchState:
 
 
 def read() -> CaptouchState:
-    import hardware
+    import _sim
 
-    hardware._sim.process_events()
-    hardware._sim.render_gui_lazy()
-    petals = hardware._sim.petals
+    _sim._sim.process_events()
+    _sim._sim.render_gui_lazy()
+    petals = _sim._sim.petals
 
     res = []
     for petal in range(10):

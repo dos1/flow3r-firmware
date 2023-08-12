@@ -1,6 +1,6 @@
 from st3m.goose import List, Optional, Enum, Tuple
 
-import hardware
+import sys_buttons
 import captouch
 import imu
 from st3m.power import Power
@@ -53,6 +53,11 @@ class InputButtonState:
 
     __slots__ = ("app", "os", "_left", "_right", "app_is_left")
 
+    PRESSED_LEFT = sys_buttons.PRESSED_LEFT
+    PRESSED_RIGHT = sys_buttons.PRESSED_RIGHT
+    PRESSED_DOWN = sys_buttons.PRESSED_DOWN
+    NOT_PRESSED = sys_buttons.NOT_PRESSED
+
     def __init__(self, left: int, right: int, swapped: bool):
         app = left
         os = right
@@ -96,8 +101,8 @@ class InputState:
         Reactor.
         """
         cts = captouch.read()
-        left = hardware.left_button_get()
-        right = hardware.right_button_get()
+        left = sys_buttons.get_left()
+        right = sys_buttons.get_right()
         buttons = InputButtonState(left, right, swapped_buttons)
 
         acc = imu.acc_read()

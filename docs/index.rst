@@ -26,10 +26,11 @@ Welcome to flow3r's documentation!
    api/audio.rst
    api/badgelink.rst
    api/captouch.rst
-   api/hardware.rst
    api/kernel.rst
    api/leds.rst
    api/ctx.rst
+   api/sys_buttons.rst
+   api/sys_display.rst
 
 Indices and tables
 ==================

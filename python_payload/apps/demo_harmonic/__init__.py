@@ -3,7 +3,6 @@ import bl00mbox
 
 blm = bl00mbox.Channel("Harmonic Demo")
 import leds
-import hardware
 
 from st3m.goose import List
 from st3m.input import InputState
@@ -57,7 +56,7 @@ class HarmonicApp(Application):
         ctx.rgb(i, i, i).rectangle(-120, -120, 240, 240).fill()
 
         ctx.rgb(0, 0, 0)
-        hardware.scope_draw(ctx)
+        ctx.scope()
         ctx.fill()
 
     def think(self, ins: InputState, delta_ms: int) -> None:

@@ -5,7 +5,7 @@
 add_library(usermod_badge23 INTERFACE)
 
 target_sources(usermod_badge23 INTERFACE
-    ${CMAKE_CURRENT_LIST_DIR}/mp_hardware.c
+    ${CMAKE_CURRENT_LIST_DIR}/mp_sys_buttons.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_leds.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_audio.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_sys_bl00mbox.c
@@ -14,6 +14,7 @@ target_sources(usermod_badge23 INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/mp_kernel.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_uctx.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_captouch.c
+    ${CMAKE_CURRENT_LIST_DIR}/mp_sys_display.c
 )
 
 target_include_directories(usermod_badge23 INTERFACE

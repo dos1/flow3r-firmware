@@ -313,3 +313,11 @@ class Context(Protocol):
         TOD(q3k): document
         """
         pass
+    def scope(self) -> "Context":
+        """
+        Draw an audio 'oscilloscope'-style visualizer at -120,-120,120,120
+        bounding box.
+
+        Needs to be stroked/filled afterwards.
+        """
+        pass
