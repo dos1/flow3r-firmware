@@ -58,7 +58,6 @@ set(MICROPY_SOURCE_PORT
     ${MICROPY_PORT_DIR}/modmachine.c
     ${MICROPY_PORT_DIR}/network_common.c
     ${MICROPY_PORT_DIR}/network_lan.c
-    ${MICROPY_PORT_DIR}/network_ppp.c
     ${MICROPY_PORT_DIR}/network_wlan.c
     ${MICROPY_PORT_DIR}/mpnimbleport.c
     ${MICROPY_PORT_DIR}/modsocket.c
@@ -68,7 +67,6 @@ set(MICROPY_SOURCE_PORT
     ${MICROPY_PORT_DIR}/modesp32.c
     ${MICROPY_PORT_DIR}/mpthreadport.c
     ${MICROPY_PORT_DIR}/machine_rtc.c
-    ${MICROPY_PORT_DIR}/ppp_set_auth.c
 )
 
 set(MICROPY_SOURCE_QSTR
