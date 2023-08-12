@@ -278,6 +278,28 @@ Some other misc channel operations for live coding mostly:
       plugins: 0
       [channel mixer] (0 connections)
 
+Radspa signal types
+------------------------
+
+Radspa is a C plugin format that all bl00mbox plugins are written in. Its main feature is that all signals
+are expressed in the same manner so that every input->output connection is valid. This means that for real
+world value interpretation some decoding is sometimes necessary. While the REPL informs you of these
+quanta and helper functions such as .start() or .dB() help with first contact, for interfacing with these
+signals with another signal some understanding is helpful. The data is represented as an int16_t stream.
+
+[pitch] provides a logarithmic frequency input. A value of 18367 represents A440, going up by 1 represents
+0.5 cent or 1/2400 octaves or a factor of 2^(1/2400). Special methods: .tone can be set to (float) semitones
+distance from A440 or a note name such as "F#4", .freq can be set to a value in Hz
+
+[gain] provides a linear volume input. A value of 4096 represents unity gain. Special methods: .mult is linear
+and represents unity gain as 1, .dB is 20*log_10(x) and represents unity gain as 0.
+
+[trigger] provides an input for note start/stop events. A start event with a given velocity (midi term, think
+loudness, 1..32767) from a stopped state is encoded by a permanent signal change to the velocity value. A
+restart from this "running" state is encoded as permanently flipping the signal sign, i.e to [-1..-32676] and
+back to [1..32767] on the next restart. A change from nonzero to zero encodes a signal stop. Note: This API is
+still subject to change.
+
 Example 1: Auto bassline
 ------------------------
 

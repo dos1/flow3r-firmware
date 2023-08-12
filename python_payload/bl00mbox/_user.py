@@ -87,6 +87,12 @@ class Signal:
         self._hints = ""
 
     def __repr__(self):
+        ret = self._no_desc()
+        if len(self._description):
+            ret += "\n  " + "\n  ".join(self._description.split("\n"))
+        return ret
+
+    def _no_desc(self):
         self._plugin._check_existence()
 
         ret = self.name
@@ -125,6 +131,9 @@ class Signal:
 
         if isinstance(self, SignalPitchMixin):
             ret += " / " + str(self.tone) + " semitones / " + str(self.freq) + "Hz"
+
+        if isinstance(self, SignalVolumeMixin):
+            ret += " / " + str(self.dB) + "dB / x" + str(self.mult)
 
         return ret
 
@@ -271,11 +280,33 @@ class SignalPitchMixin:
         self.value = (32767 - 2400 * 6) + 200 * tone
 
 
+class SignalVolumeMixin:
+    @property
+    def dB(self):
+        return 20 * math.log((self.value / 4096), 10)
+
+    @dB.setter
+    def dB(self, val):
+        self.value = int(4096 * (10 ** (val / 20)))
+
+    @property
+    def mult(self):
+        return self.value / 4096
+
+    @mult.setter
+    def mult(self, val):
+        self.value = int(4096 * val)
+
+
 class SignalInputTrigger(SignalInput, SignalTriggerMixin):
     pass
 
 
 class SignalInputPitch(SignalInput, SignalPitchMixin):
+    pass
+
+
+class SignalInputVolume(SignalInput, SignalVolumeMixin):
     pass
 
 
@@ -298,6 +329,9 @@ class SignalList:
                 elif hints & 32:
                     signal = SignalInputPitch(plugin, signal_num)
                     signal._hints = "input/pitch"
+                elif hints & 8:
+                    signal = SignalInputVolume(plugin, signal_num)
+                    signal._hints = "input/volume"
                 else:
                     signal = SignalInput(plugin, signal_num)
                     signal._hints = "input"
@@ -335,7 +369,7 @@ class Plugin:
         self._check_existence()
         ret = "[plugin " + str(self.bud_num) + "] " + self.name
         for sig in self.signals._list:
-            ret += "\n  " + "\n  ".join(repr(sig).split("\n"))
+            ret += "\n  " + "\n  ".join(sig._no_desc().split("\n"))
         return ret
 
     def __del__(self):
@@ -501,6 +535,10 @@ class Channel:
             print("\n".join(ret))
         else:
             print("no active channels")
+
+    def print_plugins(self):
+        for plugin in self.plugins:
+            print(repr(plugin))
 
     def new(self, thing, init_var=None):
         self.free = False
