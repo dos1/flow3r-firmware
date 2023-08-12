@@ -249,14 +249,18 @@ class Pressable:
         """
         True if the button is held down, after first being pressed.
         """
-        return self.state == self.DOWN
+        return (
+            (self.state == self.DOWN)
+            or (self.state == self.PRESSED)
+            or (self.state == self.REPEATED)
+        )
 
     @property
     def up(self) -> bool:
         """
         True if the button is currently not being held down.
         """
-        return self.state == self.UP
+        return not self.down
 
     def _ignore_pressed(self) -> None:
         """
