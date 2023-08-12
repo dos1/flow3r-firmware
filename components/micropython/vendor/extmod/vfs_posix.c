@@ -206,7 +206,6 @@ STATIC mp_obj_t vfs_posix_ilistdir_it_iternext(mp_obj_t self_in) {
             t->items[0] = mp_obj_new_bytes((const byte *)fn, strlen(fn));
         }
 
-        #ifdef _DIRENT_HAVE_D_TYPE
         #ifdef DTTOIF
         t->items[1] = MP_OBJ_NEW_SMALL_INT(DTTOIF(dirent->d_type));
         #else
@@ -218,16 +217,8 @@ STATIC mp_obj_t vfs_posix_ilistdir_it_iternext(mp_obj_t self_in) {
             t->items[1] = MP_OBJ_NEW_SMALL_INT(dirent->d_type);
         }
         #endif
-        #else
-        // DT_UNKNOWN should have 0 value on any reasonable system
-        t->items[1] = MP_OBJ_NEW_SMALL_INT(0);
-        #endif
 
-        #ifdef _DIRENT_HAVE_D_INO
         t->items[2] = MP_OBJ_NEW_SMALL_INT(dirent->d_ino);
-        #else
-        t->items[2] = MP_OBJ_NEW_SMALL_INT(0);
-        #endif
 
         return MP_OBJ_FROM_PTR(t);
     }
