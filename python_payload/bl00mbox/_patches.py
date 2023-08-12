@@ -17,8 +17,8 @@ class _Patch:
 
     def __repr__(self):
         ret = "[patch] " + type(self).__name__
-        ret += "\n  [signals:]\n    " + "\n    ".join(repr(self.signals).split("\n"))
-        ret += "\n  [plugins:]\n    " + "\n    ".join(repr(self.plugins).split("\n"))
+        ret += "\n  [signals:]    " + "\n    ".join(repr(self.signals).split("\n"))
+        ret += "\n  [plugins:]    " + "\n    ".join(repr(self.plugins).split("\n"))
         return ret
 
 
@@ -30,7 +30,12 @@ class _PatchItemList:
         return iter(self._items)
 
     def __repr__(self):
-        return "\n".join([x + ": " + repr(getattr(self, x)) for x in self._items])
+        rets = ""
+        for x in self._items:
+            a = "\n" + repr(getattr(self, x)).split("]")
+            a[0] += ": " + x
+            ret += "]".join(a)
+        return ret
 
     def __setattr__(self, key, value):
         current_value = getattr(self, key, None)
@@ -82,18 +87,20 @@ class tinysynth_fm(tinysynth):
     def __init__(self, chan):
         super().__init__(chan)
         self.plugins.mod_osc = self._channel.new(bl00mbox.plugins.osc_fm)
+        self.plugins.mult = self._channel.new(bl00mbox.plugins.multipitch, 1)
         self.plugins.mod_osc.signals.output = self.plugins.osc.signals.lin_fm
         self.signals.fm_waveform = self.plugins.mod_osc.signals.waveform
-        self.signals.fm_pitch = self.plugins.mod_osc.signals.pitch
+        self.plugins.mod_osc.signals.pitch = self.plugins.mult.signals.output0
+        self.plugins.osc.signals.pitch = self.plugins.mult.signals.thru
+
+        self.signals.fm = self.plugins.mult.signals.shift0
+        self.signals.pitch = self.plugins.mult.signals.input
         self.signals.decay = 1000
         self.signals.attack = 20
         self.signals.waveform = -1
         self.signals.fm_waveform = 0
 
-        self.sync_mod_osc(2.5)
-
-    def sync_mod_osc(self, val):
-        self.signals.fm_pitch.freq = int(val) * self.signals.pitch.freq
+        self.signals.fm = 3173  # weird but eh
 
 
 class sampler(_Patch):
@@ -109,7 +116,7 @@ class sampler(_Patch):
         f = wave.open("/flash/sys/samples/" + filename, "r")
 
         self.len_frames = f.getnframes()
-        self.plugins.sampler = chan._new_plugin(696969, self.len_frames)
+        self.plugins.sampler = chan.new(bl00mbox.plugins._sampler_ram, self.len_frames)
 
         assert f.getsampwidth() == 2
         assert f.getnchannels() in (1, 2)
@@ -138,7 +145,7 @@ class sampler(_Patch):
         return self._filename
 
 
-class step_sequencer(_Patch):
+class sequencer(_Patch):
     def __init__(self, chan, num=4):
         super().__init__(chan)
         if num > 32:
@@ -147,19 +154,16 @@ class step_sequencer(_Patch):
             num = 0
         self.seqs = []
         prev_seq = None
-        for i in range(num):
-            seq = chan._new_plugin(56709)
-            seq.table = [-32767] + ([0] * 16)
-            if prev_seq is None:
-                self.signals.bpm = seq.signals.bpm
-                self.signals.beat_div = seq.signals.beat_div
-                self.signals.step = seq.signals.step
-                self.signals.step_len = seq.signals.step_len
-            else:
-                prev_seq.signals.sync_out = seq.signals.sync_in
-            prev_seq = seq
-            self.seqs += [seq]
-            setattr(self.plugins, "sequencer" + str(i), seq)
+        self.num_pixels = 16
+        self.num_tracks = num
+        init_var = (self.num_pixels * 256) + (self.num_tracks)  # magic
+        self.plugins.seq = chan.new(bl00mbox.plugins._sequencer, init_var)
+        self.signals.bpm = self.plugins.seq.signals.bpm
+        self.signals.beat_div = self.plugins.seq.signals.beat_div
+        self.signals.step = self.plugins.seq.signals.step
+        self.signals.step_len = self.plugins.seq.signals.step_len
+        tracktable = [-32767] + ([0] * self.num_pixels)
+        self.plugins.seq.table = tracktable * self.num_tracks
 
     def __repr__(self):
         ret = "[patch] step sequencer"
@@ -188,19 +192,22 @@ class step_sequencer(_Patch):
         ret += "\n" + "\n".join(super().__repr__().split("\n")[1:])
         return ret
 
+    def _get_table_index(self, track, step):
+        return step + 1 + track * (self.num_pixels + 1)
+
     def trigger_start(self, track, step):
-        a = self.seqs[track].table
-        a[step + 1] = 32767
-        self.seqs[track].table = a
+        a = self.plugins.seq.table
+        a[self._get_table_index(track, step)] = 32767
+        self.plugins.seq.table = a
 
     def trigger_stop(self, track, step):
-        a = self.seqs[track].table
-        a[step + 1] = 0
-        self.seqs[track].table = a
+        a = self.plugins.seq.table
+        a[self._get_table_index(track, step)] = 0
+        self.plugins.seq.table = a
 
     def trigger_state(self, track, step):
-        a = self.seqs[track].table
-        return a[step + 1]
+        a = self.plugins.seq.table
+        return a[self._get_table_index(track, step)]
 
     def trigger_toggle(self, track, step):
         if self.trigger_state(track, step) == 0:
@@ -212,7 +219,7 @@ class step_sequencer(_Patch):
 class fuzz(_Patch):
     def __init__(self, chan):
         super().__init__(chan)
-        self.plugins.dist = chan.new(bl00mbox.plugins.distortion)
+        self.plugins.dist = chan.new(bl00mbox.plugins._distortion)
         self.signals.input = self.plugins.dist.signals.input
         self.signals.output = self.plugins.dist.signals.output
         self._intensity = 2

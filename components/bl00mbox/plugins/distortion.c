@@ -2,7 +2,7 @@
 
 radspa_t * distortion_create(uint32_t init_var);
 radspa_descriptor_t distortion_desc = {
-    .name = "distortion",
+    .name = "_distortion",
     .id = 9000,
     .description = "distortion with linear interpolation between int16 values in plugin_table[129]",
     .create_plugin_instance = distortion_create,

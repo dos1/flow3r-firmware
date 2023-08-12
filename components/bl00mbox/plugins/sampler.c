@@ -2,7 +2,7 @@
 
 radspa_t * sampler_create(uint32_t init_var);
 radspa_descriptor_t sampler_desc = {
-    .name = "sampler_ram",
+    .name = "_sampler_ram",
     .id = 696969,
     .description = "simple sampler that stores a copy of the sample in ram",
     .create_plugin_instance = sampler_create,

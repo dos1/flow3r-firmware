@@ -6,8 +6,11 @@
 int16_t radspa_signal_add(radspa_t * plugin, char * name, uint32_t hints, int16_t value);
 // as above, but sets parameters of an already existing signal with at list position signal_index
 void radspa_signal_set(radspa_t * plugin, uint8_t signal_index, char * name, uint32_t hints, int16_t value);
-void radspa_signal_set_group(radspa_t * plugin, uint8_t group_len, uint8_t signal_index, char * name,
+void radspa_signal_set_group(radspa_t * plugin, uint8_t group_len, uint8_t step, uint8_t signal_index, char * name,
                                     uint32_t hints, int16_t value);
+void radspa_signal_set_description(radspa_t * plugin, uint8_t signal_index, char * description);
+void radspa_signal_set_group_description(radspa_t * plugin, uint8_t group_len, uint8_t step, uint8_t signal_index,
+                                    char * description);
 
 
 // get signal struct from a signal index

@@ -13,6 +13,7 @@ idf_component_register(
         plugins/sampler.c
         plugins/delay.c
         plugins/flanger.c
+        plugins/multipitch.c
         plugins/sequencer.c
         plugins/noise.c
         plugins/noise_burst.c

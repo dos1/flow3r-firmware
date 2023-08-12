@@ -25,8 +25,7 @@ class _PatchPluginList:
 class tinysynth(_Patch): ...
 class tinysynth_fm(tinysynth): ...
 
-class step_sequencer(_Patch):
-    seqs: List[bl00mbox.Plugin]
+class sequencer(_Patch):
     bpm: int
 
     def trigger_state(self, track: int, i: int) -> bool: ...

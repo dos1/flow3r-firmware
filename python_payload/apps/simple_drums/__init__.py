@@ -41,7 +41,7 @@ class SimpleDrums(Application):
         super().__init__(app_ctx)
         # ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
         self.blm = bl00mbox.Channel("simple drums")
-        self.seq = self.blm.new(bl00mbox.patches.step_sequencer)
+        self.seq = self.blm.new(bl00mbox.patches.sequencer)
         self.hat = self.blm.new(bl00mbox.patches.sampler, "hihat.wav")
         # Dot(10, 10, -30, 0, self._track_col(0)).draw(0,ctx)
         self.kick = self.blm.new(bl00mbox.patches.sampler, "kick.wav")
@@ -51,9 +51,9 @@ class SimpleDrums(Application):
         self.kick.signals.output = self.blm.mixer
         self.snare.signals.output = self.blm.mixer
         self.hat.signals.output = self.blm.mixer
-        self.kick.signals.trigger = self.seq.plugins.sequencer0.signals.output
-        self.hat.signals.trigger = self.seq.plugins.sequencer1.signals.output
-        self.snare.signals.trigger = self.seq.plugins.sequencer2.signals.output
+        self.kick.signals.trigger = self.seq.plugins.seq.signals.track0
+        self.hat.signals.trigger = self.seq.plugins.seq.signals.track1
+        self.snare.signals.trigger = self.seq.plugins.seq.signals.track2
         self.seq.signals.bpm.value = 80
 
         self.track_names = ["kick", "hihat", "snare"]

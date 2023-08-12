@@ -1,12 +1,32 @@
 //SPDX-License-Identifier: CC0-1.0
 #include "radspa_helpers.h"
 
+#define RADSPA_SIGNAL_CACHING
+
 radspa_signal_t * radspa_signal_get_by_index(radspa_t * plugin, uint16_t signal_index){
-    radspa_signal_t * ret = plugin->signals;
-    for(uint16_t i = 0; i < signal_index; i++){
-        ret = ret->next;
-        if(ret == NULL) break;
+    radspa_signal_t * ret = NULL;
+    if(plugin == NULL) return ret; // clang-tidy
+#ifdef RADSPA_SIGNAL_CACHING
+    static radspa_signal_t * cache_s = NULL;
+    static radspa_t * cache_p = NULL;
+    static uint16_t cache_i = 0;
+
+    if((plugin == cache_p) && (signal_index == cache_i + 1) && (cache_s != NULL)){
+        ret = cache_s->next;
     }
+    if(ret == NULL){
+#endif
+        ret = plugin->signals;
+        for(uint16_t i = 0; i < signal_index; i++){
+            ret = ret->next;
+            if(ret == NULL) break;
+        }
+#ifdef RADSPA_SIGNAL_CACHING
+    }
+    cache_s = ret;
+    cache_p = plugin;
+    cache_i = signal_index;
+#endif
     return ret;
 }
 
@@ -18,15 +38,30 @@ void radspa_signal_set(radspa_t * plugin, uint8_t signal_index, char * name, uin
     sig->value = value;
 }
 
-void radspa_signal_set_group(radspa_t * plugin, uint8_t group_len, uint8_t signal_index, char * name,
+void radspa_signal_set_description(radspa_t * plugin, uint8_t signal_index, char * description){
+    radspa_signal_t * sig = radspa_signal_get_by_index(plugin, signal_index);
+    if(sig == NULL) return;
+    sig->description = description;
+}
+
+void radspa_signal_set_group(radspa_t * plugin, uint8_t group_len, uint8_t step, uint8_t signal_index, char * name,
                                     uint32_t hints, int16_t value){
     for(uint8_t i = 0; i < group_len; i++){
-        radspa_signal_t * sig = radspa_signal_get_by_index(plugin, signal_index + i);
+        radspa_signal_t * sig = radspa_signal_get_by_index(plugin, signal_index + i * step);
         if(sig == NULL) return;
         sig->name = name;
         sig->hints = hints;
         sig->value = value;
         sig->name_multiplex = i;
+    }
+}
+
+void radspa_signal_set_group_description(radspa_t * plugin, uint8_t group_len, uint8_t step, uint8_t signal_index,
+                                    char * description){
+    for(uint8_t i = 0; i < group_len; i++){
+        radspa_signal_t * sig = radspa_signal_get_by_index(plugin, signal_index + i * step);
+        if(sig == NULL) return;
+        sig->description = description;
     }
 }
 

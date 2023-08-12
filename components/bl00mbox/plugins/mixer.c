@@ -45,7 +45,7 @@ radspa_t * mixer_create(uint32_t init_var){
     radspa_signal_set(mixer, 0, "output", RADSPA_SIGNAL_HINT_OUTPUT, 0);
     int16_t gain = RADSPA_SIGNAL_VAL_UNITY_GAIN/init_var;
     radspa_signal_set(mixer, 1, "gain", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_GAIN, gain);
-    radspa_signal_set_group(mixer, init_var, 2, "input", RADSPA_SIGNAL_HINT_INPUT, 0);
+    radspa_signal_set_group(mixer, init_var, 1, 2, "input", RADSPA_SIGNAL_HINT_INPUT, 0);
     int32_t * dc_acc = mixer->plugin_data;
     (* dc_acc) = 0;
     return mixer;
