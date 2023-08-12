@@ -30,6 +30,7 @@ Welcome to flow3r's documentation!
    api/captouch.rst
    api/ctx.rst
    api/leds.rst
+   api/uos.rst
    api/sys_buttons.rst
    api/sys_display.rst
    api/sys_kernel.rst
