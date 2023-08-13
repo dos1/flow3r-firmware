@@ -3,7 +3,7 @@ name = "Clouds"
 menu = "Apps"
 
 [entry]
-class = "CloudsApp"
+class = "Clouds"
 
 [metadata]
 author = "Flow3r Badge Authors"

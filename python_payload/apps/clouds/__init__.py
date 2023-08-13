@@ -1,9 +1,8 @@
+import st3m.run, random
+
 from st3m.application import Application, ApplicationContext
 from st3m.input import InputState
-
 from ctx import Context
-
-import random
 
 
 class Cloud:
@@ -26,7 +25,7 @@ class Cloud:
         )
 
 
-class CloudsApp(Application):
+class Clouds(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
         self.clouds = []
@@ -58,3 +57,8 @@ class CloudsApp(Application):
 
         for c in self.clouds:
             c.draw(ctx)
+
+
+if __name__ == "__main__":
+    # Continue to make runnable via mpremote run.
+    st3m.run.run_view(Clouds(ApplicationContext()))
