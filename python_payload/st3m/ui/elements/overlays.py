@@ -10,6 +10,7 @@ from st3m import Responder, InputState, Reactor
 from st3m.goose import Dict, Enum, List, ABCBase, abstractmethod, Optional
 from st3m.utils import tau
 from st3m.ui.view import ViewManager
+from st3m.input import power
 from ctx import Context
 
 import math
@@ -120,6 +121,17 @@ class DebugReactorStats(DebugFragment):
             res.append(f"fps: {int(1/(avg/1000))}")
 
         return " ".join(res)
+
+
+class DebugBattery(DebugFragment):
+    """
+    DebugFragment which provides the OverlayDebug with information about the
+    battery voltage.
+    """
+
+    def text(self) -> str:
+        v = power.battery_voltage
+        return f"bat: {v:.2f}V"
 
 
 class OverlayDebug(Overlay):
