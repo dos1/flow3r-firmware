@@ -11,7 +11,21 @@ if [ ! -f sdkconfig.defaults ] || [ ! -f recovery/sdkconfig.defaults ]; then
     exit 1
 fi
 
-version="$(python3 components/st3m/host-tools/version.py)"
+if [ ! -z "${CI}" ]; then
+    if [ ! -z "${CI_COMMIT_TAG}" ]; then
+        # If we're building a tag, just use that as a version.
+        version="v${CI_COMMIT_TAG}"
+    else
+        # Otherwise, let normal version machinery run, but fetch all changes
+        # and check out the correct branch. Otherwise we'll get weird version
+        # strings.
+        git fetch origin "$CI_COMMIT_REF_NAME"
+        git checkout "$CI_COMMIT_REF_NAME"
+        version="$(python3 components/st3m/host-tools/version.py)"
+    fi
+else
+    version="$(python3 components/st3m/host-tools/version.py)"
+fi
 
 rm -rf sdkconfig build
 rm -rf recovery/sdkconfig recovery/build
