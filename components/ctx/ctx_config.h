@@ -56,7 +56,7 @@
 #define CTX_ENABLE_SHADOW_BLUR  0
 #define CTX_FONTS_FROM_FILE     0
 #define CTX_MAX_KEYDB          16
-#define CTX_MAX_TEXTURES        16
+#define CTX_MAX_TEXTURES        32
 #define CTX_PARSER_MAXLEN       512
 #define CTX_PARSER_FIXED_TEMP   1
 #define CTX_CURRENT_PATH        1
