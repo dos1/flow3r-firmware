@@ -25,6 +25,13 @@ class View(Responder):
         """
         pass
 
+    def show_icons(self) -> bool:
+        """
+        View should return True if it accepts having system icons drawn on top
+        if it.
+        """
+        return False
+
 
 class BaseView(View):
     """
@@ -229,3 +236,12 @@ class ViewManager(Responder):
             return
         r = self._history.pop()
         self.replace(r, override_vt)
+
+    def wants_icons(self) -> bool:
+        """
+        Returns true if the current active view wants icon to be drawn on top of it.
+        """
+        if self._incoming is not None:
+            return self._incoming.show_icons()
+        else:
+            return True

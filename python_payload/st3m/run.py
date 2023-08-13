@@ -56,11 +56,11 @@ def _make_bundle_menu(bundles: List[BundleMetadata], kind: str) -> SimpleMenu:
     return SimpleMenu(entries)
 
 
-def _make_compositor(reactor: Reactor, r: Responder) -> overlays.Compositor:
+def _make_compositor(reactor: Reactor, vm: ViewManager) -> overlays.Compositor:
     """
     Set up top-level compositor (for combining viewmanager with overlays).
     """
-    compositor = overlays.Compositor(r)
+    compositor = overlays.Compositor(vm)
 
     volume = overlays.OverlayVolume()
     compositor.add_overlay(volume)

@@ -211,3 +211,6 @@ class MenuController(BaseView):
         Automatically called on canonical user input.
         """
         self._items[self._scroll_controller.target_position()].press(self.vm)
+
+    def show_icons(self) -> bool:
+        return True
