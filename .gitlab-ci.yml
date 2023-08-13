@@ -72,3 +72,12 @@ pages:
   artifacts:
     paths: ['public']
     expire_in: 1d
+
+dist:
+  stage: deploy
+  only:
+    - /^release\/[0-9]+\.[0-9]+\.[0-9]+.*$/
+  script:
+    - bash tools/dist.sh
+  artifacts:
+    paths: ['dist']
