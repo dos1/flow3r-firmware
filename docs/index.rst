@@ -19,6 +19,7 @@ Welcome to flow3r's documentation!
    badge/badge_link.rst
    badge/badge_net.rst
    badge/bl00mbox.rst
+   badge/fonts.rst
 
 .. toctree::
    :maxdepth: 1
