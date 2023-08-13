@@ -62,7 +62,7 @@ static void xQueueReceiveNotifyStarved(QueueHandle_t q, void *dst,
             return;
         }
         if (!starved) {
-            ESP_LOGE(TAG, "%s", desc);
+            ESP_LOGI(TAG, "%s", desc);
             starved = 1;
         }
     }
