@@ -24,7 +24,7 @@ Welcome to flow3r's documentation!
    :caption: API:
 
    api/audio.rst
-   api/badge_link.rst
+   api/badgelink.rst
    api/captouch.rst
    api/hardware.rst
    api/kernel.rst

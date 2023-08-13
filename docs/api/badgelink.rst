@@ -1,12 +1,12 @@
 .. _Badge Link API:
 
-``badge_link`` module
-=====================
+``badgelink`` module
+====================
 
 .. note::
 
    See also: :ref:`Badge link overview<Badge link>`
 
-.. automodule:: badge_link
+.. automodule:: badgelink
    :members:
    :undoc-members:

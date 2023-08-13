@@ -15,7 +15,7 @@
 
 // Badgelink API.
 //
-// See mypystubs/badge_link.pyi for more information.
+// See mypystubs/badgelink.pyi for more information.
 
 typedef struct _badgelink_jack_pin_t {
     mp_obj_base_t base;
@@ -226,18 +226,18 @@ MP_DEFINE_CONST_OBJ_TYPE(badgelink_jack_type, MP_QSTR_Jack, MP_TYPE_FLAG_NONE,
                          print, badgelink_jack_print, attr, badgelink_jack_attr,
                          locals_dict, &badgelink_jack_locals_dict);
 
-STATIC const mp_rom_map_elem_t mp_module_badge_link_globals_table[] = {
-    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badge_link) },
+STATIC const mp_rom_map_elem_t mp_module_badgelink_globals_table[] = {
+    { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_badgelink) },
     { MP_ROM_QSTR(MP_QSTR_left), MP_ROM_PTR(&left) },
     { MP_ROM_QSTR(MP_QSTR_right), MP_ROM_PTR(&right) },
 };
 
-STATIC MP_DEFINE_CONST_DICT(mp_module_badge_link_globals,
-                            mp_module_badge_link_globals_table);
+STATIC MP_DEFINE_CONST_DICT(mp_module_badgelink_globals,
+                            mp_module_badgelink_globals_table);
 
-const mp_obj_module_t mp_module_badge_link = {
+const mp_obj_module_t mp_module_badgelink = {
     .base = { &mp_type_module },
-    .globals = (mp_obj_dict_t *)&mp_module_badge_link_globals,
+    .globals = (mp_obj_dict_t *)&mp_module_badgelink_globals,
 };
 
-MP_REGISTER_MODULE(MP_QSTR_badge_link, mp_module_badge_link);
+MP_REGISTER_MODULE(MP_QSTR_badgelink, mp_module_badgelink);
