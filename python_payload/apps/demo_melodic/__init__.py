@@ -10,7 +10,7 @@ from st3m.ui.view import ViewManager
 from ctx import Context
 
 octave = 0
-synths: List[bl00mbox.patches.tinysynth_fm] = []
+synths: List[bl00mbox.patches.tinysynth] = []
 scale = [0, 2, 4, 5, 7, 9, 11]
 
 
@@ -79,7 +79,7 @@ def run(input: InputController) -> None:
 def init() -> None:
     global synths
     for i in range(1):
-        synth = blm.new(bl00mbox.patches.tinysynth_fm)
+        synth = blm.new(bl00mbox.patches.tinysynth)
         synth.signals.output = blm.mixer
         synths += [synth]
     for synth in synths:
