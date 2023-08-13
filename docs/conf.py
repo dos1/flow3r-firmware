@@ -1,6 +1,8 @@
 import os
 import sys
 import shutil
+import subprocess
+import time
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -13,6 +15,14 @@ import shutil
 project = 'flow3r'
 copyright = '2023'
 author = 'ccc'
+
+# The full version, including alpha/beta/rc tags
+release = (
+    subprocess.check_output(["git", "describe", "--tags", "--long", "--always"]).decode().strip()
+)
+release += "\n"
+release += time.strftime("%F %R")
+version = release
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
