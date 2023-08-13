@@ -30,9 +30,9 @@ class _PatchItemList:
         return iter(self._items)
 
     def __repr__(self):
-        rets = ""
+        ret = ""
         for x in self._items:
-            a = "\n" + repr(getattr(self, x)).split("]")
+            a = ("\n" + repr(getattr(self, x))).split("]")
             a[0] += ": " + x
             ret += "]".join(a)
         return ret
