@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar, Any, Type, List, overload
+from typing import Optional, TypeVar, Any, Type, List, overload, Annotated
 import bl00mbox
 
 class Signal:
@@ -30,6 +30,7 @@ class SignalList:
 
 class Plugin:
     signals: SignalList
+    table: Annotated[List[int], 129]
 
     def __init__(
         self,

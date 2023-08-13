@@ -83,9 +83,33 @@ class Otamatone(Application):
         self._blob = Blob()
 
         self._blm = bl00mbox.Channel("Otamatone")
+
+        # Sawtooth oscillator
         self._osc = self._blm.new(bl00mbox.patches.tinysynth)
-        self._osc.signals.output = self._blm.mixer
-        self._osc.signals.waveform = 2
+        # Distortion plugin used as a LUT to convert sawtooth into custom square
+        # wave.
+        self._dist = self._blm.new(bl00mbox.plugins._distortion)
+        # Lowpass.
+        self._lp = self._blm.new(bl00mbox.plugins.lowpass)
+
+        # Wire sawtooth -> distortion -> lowpass
+        self._osc.signals.output = self._dist.signals.input
+        self._dist.signals.output = self._lp.signals.input
+        self._lp.signals.output = self._blm.mixer
+
+        # Closest thing to a waveform number for 'saw'.
+        self._osc.signals.waveform = 20000
+        self._osc.signals.attack = 1
+        self._osc.signals.decay = 0
+
+        # Built custom square wave (low duty cycle)
+        table_len = 129
+        self._dist.table = [
+            32767 if i > (0.1 * table_len) else -32768 for i in range(table_len)
+        ]
+
+        self._lp.signals.freq = 4000
+
         self._intensity = 0.0
 
         self.input.captouch.petals[self.PETAL_NO].whole.repeat_disable()
