@@ -15,7 +15,7 @@ from st3m.utils import tau
 from st3m import logging
 # from st3m.ui.interactions import CapScrollController
 import leds
-import st3m.run
+# import st3m.run
 
 log = logging.Log(__name__, level=logging.INFO)
 log.info("hello led painter")
@@ -104,56 +104,56 @@ class LEDPainter(Application):
                 self._cursor -= 1
             else:
                 self._cursor = 39
-            log.info(self._cursor)
+            # log.info(self._cursor)
 
         elif self.input.buttons.app.right.pressed:
             if self._cursor != 39:
                 self._cursor += 1
             else:
                 self._cursor = 0
-            log.info(self._cursor)
+            # log.info(self._cursor)
         
         if self.input.captouch.petals[self.PETAL_R_PLUS].whole.pressed:
             if self.r + self.STEPS <= 255:
                 self.r += self.STEPS
             else:
                 self.r = 255
-            log.info(self.r)
+            # log.info(self.r)
         
         if self.input.captouch.petals[self.PETAL_R_MINUS].whole.pressed:
             if self.r-self.STEPS >= 0:
                 self.r -= self.STEPS
             else:
                 self.r = 0
-            log.info(self.r)
+            # log.info(self.r)
  
         if self.input.captouch.petals[self.PETAL_G_PLUS].whole.pressed:
             if self.g + self.STEPS <= 255:
                 self.g += self.STEPS
             else:
                 self.g = 255
-            log.info(self.g)
+            # log.info(self.g)
         
         if self.input.captouch.petals[self.PETAL_G_MINUS].whole.pressed:
             if self.g-self.STEPS >= 0:
                 self.g -= self.STEPS
             else:
                 self.g = 0
-            log.info(self.g)
+            # log.info(self.g)
       
         if self.input.captouch.petals[self.PETAL_B_PLUS].whole.pressed:
             if self.b + self.STEPS <= 255:
                 self.b += self.STEPS
             else:
                 self.b = 255
-            log.info(self.b)
+            # log.info(self.b)
         
         if self.input.captouch.petals[self.PETAL_B_MINUS].whole.pressed:
             if self.b-self.STEPS >= 0:
                 self.b -= self.STEPS
             else:
                 self.b = 0
-            log.info(self.b)
+            # log.info(self.b)
 
         if self.input.captouch.petals[self.PETAL_BLACK].whole.pressed:
             self.r = 0
@@ -167,6 +167,6 @@ class LEDPainter(Application):
 
     
 
-if __name__ == '__main__':
-    # Continue to make runnable via mpremote run.
-    st3m.run.run_view(LEDPainter(ApplicationContext()))
+# if __name__ == '__main__':
+#     # Continue to make runnable via mpremote run.
+#     st3m.run.run_view(LEDPainter(ApplicationContext()))
