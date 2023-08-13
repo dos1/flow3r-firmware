@@ -9,6 +9,7 @@ etc.
 from st3m import Responder, InputState, Reactor
 from st3m.goose import Dict, Enum, List, ABCBase, abstractmethod, Optional
 from st3m.utils import tau
+from st3m.ui.view import ViewManager
 from ctx import Context
 
 import math
@@ -43,11 +44,11 @@ class Overlay(Responder):
 
 class Compositor(Responder):
     """
-    A Compositor blends together some main Responder (usually a ViewManager)
-    alongside with active Overlays. Overlays can be enabled/disabled by kind.
+    A Compositor blends together some ViewManager alongside with active
+    Overlays. Overlays can be enabled/disabled by kind.
     """
 
-    def __init__(self, main: Responder):
+    def __init__(self, main: ViewManager):
         self.main = main
         self.overlays: Dict[OverlayKind, List[Responder]] = {}
         self.enabled: Dict[OverlayKind, bool] = {
@@ -60,6 +61,8 @@ class Compositor(Responder):
         res: List[Responder] = []
         for kind in _all_kinds:
             if not self.enabled.get(kind, False):
+                continue
+            if kind == OverlayKind.Indicators and not self.main.wants_icons():
                 continue
             for overlay in self.overlays.get(kind, []):
                 res.append(overlay)
