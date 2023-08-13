@@ -13,7 +13,6 @@ Welcome to flow3r's documentation!
    badge/hardware_specs.rst
    badge/usage.rst
    badge/programming.rst
-   badge/application-programming.rst
    badge/firmware.rst
    badge/firmware-development.rst
    badge/badge_link.rst
