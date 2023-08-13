@@ -4,7 +4,7 @@ from ctx import Context
 
 import time
 import sys_display
-import kernel
+import sys_kernel
 
 
 class Responder(ABCBase):
@@ -128,7 +128,7 @@ class Reactor:
         self.stats.record_run_time(elapsed)
         wait = deadline - end
         if wait > 0:
-            kernel.freertos_sleep(wait)
+            sys_kernel.freertos_sleep(wait)
 
     def _run_top(self, start: int) -> None:
         # Skip if we have no top Responder.
