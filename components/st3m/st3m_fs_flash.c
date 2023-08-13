@@ -110,7 +110,7 @@ static esp_err_t _st3m_fs_flash_mount_unlocked(void) {
     }
 
     FATFS *fs;
-    esp_vfs_fat_mount_config_t mount_config = { .max_files = 16,
+    esp_vfs_fat_mount_config_t mount_config = { .max_files = 32,
                                                 .format_if_mount_failed = true,
                                                 .allocation_unit_size =
                                                     CONFIG_WL_SECTOR_SIZE };
