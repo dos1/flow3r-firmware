@@ -75,6 +75,9 @@ pages:
 
 dist:
   stage: deploy
+  variables:
+    # Force a full clone to make version machinery work.
+    GIT_STRATEGY: clone
   only:
     - /^release\/[0-9]+\.[0-9]+\.[0-9]+.*$/
   script:
