@@ -43,30 +43,12 @@ format:
     - "bash tools/format.sh"
     - "[ -z \"$(git status --porcelain)\" ] || (echo 'Differences found, please run tools/format.sh.' && git diff HEAD && exit 1)"
 
-build-p3:
+build:
   stage: build
   script:
-    - idf.py -g p3 build
+    - idf.py -g c23 build
   artifacts:
-    expose_as: 'Proto 3 ELF'
-    paths: ['build/flow3r.elf']
-    expire_in: 5 hours
-
-build-p4:
-  stage: build
-  script:
-    - idf.py -g p4 build
-  artifacts:
-    expose_as: 'Proto 4 ELF'
-    paths: ['build/flow3r.elf']
-    expire_in: 5 hours
-
-build-p6:
-  stage: build
-  script:
-    - idf.py -g p6 build
-  artifacts:
-    expose_as: 'Proto 6 ELF'
+    expose_as: 'C23 ELF'
     paths: ['build/flow3r.elf']
     expire_in: 5 hours
 

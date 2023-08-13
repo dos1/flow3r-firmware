@@ -55,7 +55,7 @@ static const pad_mapping_t _map_bot[13] = {
 static gpio_num_t _interrupt_gpio_top = GPIO_NUM_15;
 static gpio_num_t _interrupt_gpio_bot = GPIO_NUM_15;
 static bool _interrupt_shared = true;
-#elif defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_P6)
+#elif defined(CONFIG_FLOW3R_HW_GEN_P4) || defined(CONFIG_FLOW3R_HW_GEN_C23)
 static const pad_mapping_t _map_top[12] = {
     { 0, petal_pad_ccw },   // 0
     { 0, petal_pad_base },  // 1

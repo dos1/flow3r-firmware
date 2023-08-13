@@ -25,7 +25,7 @@ const flow3r_i2c_addressdef flow3r_i2c_addresses = {
     .touch_bottom = 0x2d,
     .portexp = { 0x6e, 0x6d },
 };
-#elif defined(CONFIG_FLOW3R_HW_GEN_P6)
+#elif defined(CONFIG_FLOW3R_HW_GEN_C23)
 const flow3r_i2c_addressdef flow3r_i2c_addresses = {
     .codec = 0x10,
     .touch_top = 0x2c,

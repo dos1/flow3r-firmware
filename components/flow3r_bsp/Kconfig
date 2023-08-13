@@ -1,7 +1,7 @@
 menu "Flow3r Config"
     choice FLOW3R_HW_GEN
         prompt "Badge23 Hardware Generation"
-        default FLOW3R_HW_GEN_P4
+        default FLOW3R_HW_GEN_C23
         config FLOW3R_HW_GEN_P3
             help
                 Prototype version 3, a.k.a. proto3
@@ -16,12 +16,12 @@ menu "Flow3r Config"
                   - Sticker with B4xx (xx being arbitrary digits) on the back
             select FLOW3R_ESP32S3
             bool "Prototype 4"
-        config FLOW3R_HW_GEN_P6
+        config FLOW3R_HW_GEN_C23
             help
-                Prototype version 6, a.k.a. proto6
-                  - Sticker with B6xx (xx being arbitrary digits) on the back
+                As seen on CCCamp 2023.
+                Previously known as prototype version 6, a.k.a. proto6.
             select FLOW3R_ESP32S3
-            bool "Prototype 6"
+            bool "CCCamp 2023"
     endchoice
 
     config FLOW3R_ESP32S3

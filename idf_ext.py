@@ -16,7 +16,7 @@ def action_extensions(base_actions, project_path=os.getcwd()):
     GENERATIONS = {
         'p3': ['proto3'],
         'p4': ['proto4'],
-        'p6': ['proto6'],
+        'c23': ['proto6', 'camp23', 'cccamp23', 'cccamp2023', 'camp2023'],
     }
 
     def generation_callback(ctx, global_args, tasks):
@@ -26,7 +26,7 @@ def action_extensions(base_actions, project_path=os.getcwd()):
         """
         generation = global_args.generation
         if generation is None:
-            generation = os.environ.get('BADGE_GENERATION', 'proto6')
+            generation = os.environ.get('BADGE_GENERATION', 'camp23')
 
         name = None
         if generation in GENERATIONS:
@@ -62,7 +62,7 @@ def action_extensions(base_actions, project_path=os.getcwd()):
     extensions = {
         'global_options': [{
             'names': ['-g', '--generation'],
-            'help': 'Specify badge generation to build for (one of: proto1, proto3, proto4, proto6, proto6-spiral). Defaults to proto4.',
+            'help': 'Specify badge generation to build for (one of: proto1, proto3, proto4, camp23). Defaults to proto4.',
             'scope': 'shared',
             'multiple': False,
         }],

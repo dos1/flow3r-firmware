@@ -96,7 +96,7 @@ const flow3r_bsp_spio_programmable_pins_t flow3r_bsp_spio_programmable_pins = {
     .badgelink_right_ring = 5,
 };
 #define PORTEXP_MAX7321S
-#elif defined(CONFIG_FLOW3R_HW_GEN_P6)
+#elif defined(CONFIG_FLOW3R_HW_GEN_C23)
 static const flow3r_bsp_iodef_t iodef = {
     .tripos_left =
         {
