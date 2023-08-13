@@ -26,19 +26,17 @@ class HarmonicApp(Application):
         self.color_intensity = 0.0
         self.chord_index = 0
         self.chord: List[int] = []
-        self.synths = [blm.new(bl00mbox.patches.tinysynth_fm) for i in range(5)]
+        self.synths = [blm.new(bl00mbox.patches.tinysynth) for i in range(5)]
         self.cp_prev = captouch.read()
 
         for i, synth in enumerate(self.synths):
             synth.signals.decay = 500
-            synth.signals.waveform = -32767
+            synth.signals.waveform = 0
             synth.signals.attack = 50
             synth.signals.volume = 0.3 * 32767
             synth.signals.sustain = 0.9 * 32767
             synth.signals.release = 800
-            synth.signals.fm_waveform = -32767
             synth.signals.output = blm.mixer
-            # synth.fm = 1.5
 
         self._set_chord(3)
         self.prev_captouch = [0] * 10
