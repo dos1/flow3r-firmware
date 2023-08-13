@@ -74,7 +74,7 @@ class tinysynth(_Patch):
         self.signals.sustain = self.plugins.env.signals.sustain
         self.signals.decay = self.plugins.env.signals.decay
         self.signals.release = self.plugins.env.signals.release
-        self.signals.volume = self.plugins.env.signals.input.value
+        self.signals.volume = self.plugins.env.signals.input
         self.signals.release = 100
 
 
@@ -84,10 +84,10 @@ class tinysynth_fm(tinysynth):
         self.plugins.mod_osc = self._channel.new(bl00mbox.plugins.osc_fm)
         self.plugins.mult = self._channel.new(bl00mbox.plugins.multipitch, 1)
         self.plugins.mod_osc.signals.output = self.plugins.osc.signals.lin_fm
-        self.signals.fm_waveform = self.plugins.mod_osc.signals.waveform
         self.plugins.mod_osc.signals.pitch = self.plugins.mult.signals.output0
         self.plugins.osc.signals.pitch = self.plugins.mult.signals.thru
 
+        self.signals.fm_waveform = self.plugins.mod_osc.signals.waveform
         self.signals.fm = self.plugins.mult.signals.shift0
         self.signals.pitch = self.plugins.mult.signals.input
         self.signals.decay = 1000
@@ -95,7 +95,7 @@ class tinysynth_fm(tinysynth):
         self.signals.waveform = -1
         self.signals.fm_waveform = 0
 
-        self.signals.fm = 3173  # weird but eh
+        self.signals.fm.tone = 3173/200
 
 
 class sampler(_Patch):
