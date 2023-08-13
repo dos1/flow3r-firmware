@@ -110,8 +110,6 @@ static void st3m_gfx_crtc_task(void *_arg) {
     }
 }
 
-void st3m_ctx_increment_frame(Ctx *ctx);
-
 static void st3m_gfx_rast_task(void *_arg) {
     (void)_arg;
 
@@ -131,7 +129,8 @@ static void st3m_gfx_rast_task(void *_arg) {
         end = esp_timer_get_time();
         st3m_counter_timer_sample(&rast_read_dctx_time, end - start);
 
-        st3m_ctx_increment_frame(framebuffer_descs[0].ctx);
+        ctx_set_textureclock(framebuffer_descs[0].ctx,
+                             ctx_textureclock(framebuffer_descs[0].ctx) + 1);
 
         // Render drawctx into fbctx.
         start = esp_timer_get_time();
