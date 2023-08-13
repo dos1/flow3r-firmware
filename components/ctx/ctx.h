@@ -1,4 +1,4 @@
-/* ctx git commit: 4349079e */
+/* ctx git commit: aeaa8b2b */
 /* 
  * ctx.h is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2508,6 +2508,10 @@ void _ctx_write_png (const char *dst_path, int w, int h, int num_chans, void *da
 void ctx_vt_write (Ctx *ctx, uint8_t byte);
 int ctx_vt_has_data (Ctx *ctx);
 int ctx_vt_read (Ctx *ctx);
+
+
+void ctx_set_textureclock (Ctx *ctx, int frame);
+int  ctx_textureclock (Ctx *ctx);
 
 #ifdef __cplusplus
 }
@@ -6121,8 +6125,7 @@ void ctx_buffer_set_data (CtxBuffer *buffer,
                           void (*freefunc) (void *pixels, void *user_data),
                           void *user_data);
 
-int _ctx_set_frame (Ctx *ctx, int frame);
-int _ctx_frame (Ctx *ctx);
+int ctx_textureclock (Ctx *ctx);
 
 
 void ctx_exit (Ctx *ctx);
@@ -53372,14 +53375,15 @@ void ctx_texture (Ctx *ctx, const char *eid, float x, float y)
     //fclose (f);
 }
 int
-_ctx_frame (Ctx *ctx)
+ctx_textureclock (Ctx *ctx)
 {
    return ctx->frame;
 }
-int
-_ctx_set_frame (Ctx *ctx, int frame)
+
+void
+ctx_set_textureclock (Ctx *ctx, int textureclock)
 {
-   return ctx->frame = frame;
+   ctx->frame = textureclock;
 }
 
 void ctx_define_texture (Ctx *ctx,
@@ -60980,8 +60984,8 @@ static void vt_ctx_exit (void *data)
   vt->current_line->ctx = vt->current_line->ctx_copy;
   vt->current_line->ctx_copy = tmp;
 
-  _ctx_set_frame (vt->current_line->ctx, _ctx_frame (vt->current_line->ctx) + 1);
-  _ctx_set_frame (vt->current_line->ctx_copy, _ctx_frame (vt->current_line->ctx));
+  ctx_set_textureclock (vt->current_line->ctx, ctx_textureclock (vt->current_line->ctx) + 1);
+  ctx_set_textureclock (vt->current_line->ctx_copy, ctx_textureclock (vt->current_line->ctx));
 #if 1
   if (vt->ctxp) // XXX: ugly hack to aid double buffering
     ((void**)vt->ctxp)[0]= vt->current_line->ctx;
@@ -67126,7 +67130,7 @@ void vt_draw (VT *vt, Ctx *ctx, double x0, double y0)
 
             if (line->ctx_copy)
               {
-                //fprintf (stderr, " [%i]\n", _ctx_frame (ctx));
+                //fprintf (stderr, " [%i]\n", ctx_textureclock (ctx));
                 //ctx_render_stream (line->ctx_copy, stderr, 1);
 
                 ctx_begin_path (ctx);

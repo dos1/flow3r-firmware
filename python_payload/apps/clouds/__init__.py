@@ -59,6 +59,5 @@ class Clouds(Application):
             c.draw(ctx)
 
 
-if __name__ == "__main__":
-    # Continue to make runnable via mpremote run.
-    st3m.run.run_view(Clouds(ApplicationContext()))
+# uncomment to make runnable via mpremote
+# st3m.run.run_view(Clouds(ApplicationContext()))
