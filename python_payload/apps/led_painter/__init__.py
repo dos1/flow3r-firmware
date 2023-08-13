@@ -57,7 +57,7 @@ class LEDPainter(Application):
 
         ctx.rgb(self.r/255, self.g/255, self.b/255).rectangle(-30, -30, 60, 60).fill()
 
-        if self.r == 0 & self.g == 0 & self.b == 0:
+        if (self.r == 0) and (self.g == 0) and (self.b == 0):
             ctx.font_size = 20
             ctx.move_to(-30, 0).rgb(255, 255, 255).text("BLACK")
 
@@ -74,7 +74,7 @@ class LEDPainter(Application):
             for i in range(len(self.LEDS)):
                 leds.set_rgb(i, self.LEDS[i][0],self.LEDS[i][1],self.LEDS[i][2])
             leds.set_rgb(self._cursor, 255,255,255)
-            if self.r == 255 & self.g == 255 & self.b == 255:
+            if (self.r == 255) and (self.g == 255) and (self.b == 255):
                 leds.set_rgb(self._cursor, 0,0,255)
 
         leds.update()
@@ -114,46 +114,46 @@ class LEDPainter(Application):
             log.info(self._cursor)
         
         if self.input.captouch.petals[self.PETAL_R_PLUS].whole.pressed:
-            if self.r != 255:
+            if self.r + self.STEPS <= 255:
                 self.r += self.STEPS
-            else:
-                self.r = 0
-            log.info(self.r)
-        
-        if self.input.captouch.petals[self.PETAL_R_MINUS].whole.pressed:
-            if self.r != 0:
-                self.r -= self.STEPS
             else:
                 self.r = 255
             log.info(self.r)
+        
+        if self.input.captouch.petals[self.PETAL_R_MINUS].whole.pressed:
+            if self.r-self.STEPS >= 0:
+                self.r -= self.STEPS
+            else:
+                self.r = 0
+            log.info(self.r)
  
         if self.input.captouch.petals[self.PETAL_G_PLUS].whole.pressed:
-            if self.g != 255:
+            if self.g + self.STEPS <= 255:
                 self.g += self.STEPS
-            else:
-                self.g = 0
-            log.info(self.g)
-        
-        if self.input.captouch.petals[self.PETAL_G_MINUS].whole.pressed:
-            if self.g != 0:
-                self.g -= self.STEPS
             else:
                 self.g = 255
             log.info(self.g)
+        
+        if self.input.captouch.petals[self.PETAL_G_MINUS].whole.pressed:
+            if self.g-self.STEPS >= 0:
+                self.g -= self.STEPS
+            else:
+                self.g = 0
+            log.info(self.g)
       
         if self.input.captouch.petals[self.PETAL_B_PLUS].whole.pressed:
-            if self.b != 255:
+            if self.b + self.STEPS <= 255:
                 self.b += self.STEPS
             else:
-                self.b = 0
+                self.b = 255
             log.info(self.b)
         
         if self.input.captouch.petals[self.PETAL_B_MINUS].whole.pressed:
-            if self.b != 0:
+            if self.b-self.STEPS >= 0:
                 self.b -= self.STEPS
             else:
-                self.b = 255
-                log.info(self.b)
+                self.b = 0
+            log.info(self.b)
 
         if self.input.captouch.petals[self.PETAL_BLACK].whole.pressed:
             self.r = 0
