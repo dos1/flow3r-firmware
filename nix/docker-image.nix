@@ -31,6 +31,8 @@ pkgs.dockerTools.buildImage {
       gcc gnused findutils gnugrep
       git wget gnumake
       cmake ninja pkgconfig
+      gnutar curl bzip2
+      cacert
     ];
     pathsToLink = [ "/bin" ];
   };
@@ -47,6 +49,7 @@ pkgs.dockerTools.buildImage {
       "IDF_PATH=${pkgs.esp-idf}"
       "IDF_COMPONENT_MANAGER=0"
       "TMPDIR=/tmp"
+      "NIX_SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
     ];
   };
 }
