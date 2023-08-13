@@ -53,6 +53,18 @@ html_theme_options = {
     'style_external_links': True,
 }
 
+# Show "Edit on GitLab" links
+html_show_sourcelink = False
+html_context = {
+    'display_gitlab': True,
+    'gitlab_host': "git.flow3r.garden",
+    'gitlab_user': "flow3r",
+    'gitlab_repo': "flow3r-firmware",
+    'gitlab_version': "main/",
+    'conf_py_path': "docs/",
+    'theme_vcs_pageview_mode': "edit",
+}
+
 def setup(app):
     tmpdir = "_build/mypystubs"
     shutil.rmtree(tmpdir, ignore_errors=True)
