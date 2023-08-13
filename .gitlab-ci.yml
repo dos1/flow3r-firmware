@@ -73,13 +73,27 @@ pages:
     paths: ['public']
     expire_in: 1d
 
-dist:
+dist-branch:
   stage: deploy
   variables:
     # Force a full clone to make version machinery work.
     GIT_STRATEGY: clone
   only:
-    - /^release\/[0-9]+\.[0-9]+\.[0-9]+.*$/
+    - /^release\/[0-9]+\.[0-9]+\.[0-9]+$/
+    - branches
+  script:
+    - bash tools/dist.sh
+  artifacts:
+    paths: ['dist']
+
+dist-tag:
+  stage: deploy
+  variables:
+    # Force a full clone to make version machinery work.
+    GIT_STRATEGY: clone
+  only:
+    - /^v\/[0-9]+\.[0-9]+\.[0-9]+.*$/
+    - tags
   script:
     - bash tools/dist.sh
   artifacts:
