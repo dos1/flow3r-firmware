@@ -139,4 +139,7 @@
 #include "MaterialIcons.h"
 #define CTX_FONT_7 CTX_STATIC_FONT(MaterialIcons)
 
+#include "Comic-Mono.h"
+#define CTX_FONT_8 CTX_STATIC_FONT(Comic_Mono)
+
 #endif
