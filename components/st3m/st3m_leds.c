@@ -105,12 +105,17 @@ void st3m_leds_update_hardware() {
     }
 }
 
-void st3m_leds_set_single_rgb(uint8_t index, uint8_t red, uint8_t green,
-                              uint8_t blue) {
+void st3m_leds_set_single_rgb(uint8_t index, float red, float green,
+                              float blue) {
+
+    if (red > 1.0) red /= 255.0;
+    if (green > 1.0) green /= 255.0;
+    if (blue > 1.0) blue /= 255.0;
+
     LOCK_INCOMING;
-    state.target_buffer[index].r = red;
-    state.target_buffer[index].g = green;
-    state.target_buffer[index].b = blue;
+    state.target_buffer[index].r = (uint8_t) (red * 255);
+    state.target_buffer[index].g = (uint8_t) (green * 255);
+    state.target_buffer[index].b = (uint8_t) (blue * 255);
     UNLOCK_INCOMING;
 }
 
@@ -125,7 +130,7 @@ void st3m_leds_set_single_hsv(uint8_t index, float hue, float sat, float val) {
     UNLOCK_INCOMING;
 }
 
-void st3m_leds_set_all_rgb(uint8_t red, uint8_t green, uint8_t blue) {
+void st3m_leds_set_all_rgb(float red, float green, float blue) {
     for (int i = 0; i < 40; i++) {
         st3m_leds_set_single_rgb(i, red, green, blue);
     }

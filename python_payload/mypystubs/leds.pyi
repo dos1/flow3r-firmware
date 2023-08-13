@@ -8,13 +8,13 @@ There are 8 LEDs per top petal, or 4 LEDs per petal.
 After you're ready setting up your blink, call update(), or enable autoupdates.
 """
 
-def set_rgb(ix: int, r: int, g: int, b: int) -> None:
+def set_rgb(ix: int, r: float, g: float, b: float) -> None:
     """Set LED `ix` to rgb value r, g, b
 
     :param ix: LED index, from 0 to 39
-    :param r: Red value, from 0 to 255
-    :param g: Green value, from 0 to 255
-    :param b: Blue value, from 0 to 255
+    :param r: Red value, from 0.0 to 1.0
+    :param g: Green value, from 0.0 to 1.0
+    :param b: Blue value, from 0.0 to 1.0
     """
 
 def set_hsv(ix: int, hue: float, sat: float, val: float) -> None:
@@ -26,12 +26,12 @@ def set_hsv(ix: int, hue: float, sat: float, val: float) -> None:
     :param val: Value, from 0.0 to 1.0
     """
 
-def set_all_rgb(r: int, g: int, b: int) -> None:
+def set_all_rgb(r: float, g: float, b: float) -> None:
     """Set all LEDs to rgb value r, g, b
 
-    :param r: Red value, from 0 to 255
-    :param g: Green value, from 0 to 255
-    :param b: Blue value, from 0 to 255
+    :param r: Red value, from 0.0 to 1.0
+    :param g: Green value, from 0.0 to 1.0
+    :param b: Blue value, from 0.0 to 1.0
     """
 
 def set_all_hsv(h: float, s: float, v: float) -> None:

@@ -23,10 +23,10 @@ void st3m_leds_init();
 //
 // After you're ready setting up your blink, call st3m_leds_update, or enable
 // autoupdates.
-void st3m_leds_set_single_rgb(uint8_t index, uint8_t red, uint8_t green,
-                              uint8_t blue);
+void st3m_leds_set_single_rgb(uint8_t index, float red, float green,
+                              float blue);
 void st3m_leds_set_single_hsv(uint8_t index, float hue, float sat, float value);
-void st3m_leds_set_all_rgb(uint8_t red, uint8_t green, uint8_t blue);
+void st3m_leds_set_all_rgb(float red, float green, float blue);
 void st3m_leds_set_all_hsv(float hue, float sat, float value);
 
 // Set/get global LED brightness, 0-255. Default 69.
