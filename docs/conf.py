@@ -50,6 +50,7 @@ html_css_files = [
 html_theme_options = {
     'logo_only': True,
     'style_nav_header_background': "#000",
+    'style_external_links': True,
 }
 
 def setup(app):
