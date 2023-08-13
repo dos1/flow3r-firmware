@@ -14,7 +14,7 @@ fi
 if [ ! -z "${CI}" ]; then
     if [ ! -z "${CI_COMMIT_TAG}" ]; then
         # If we're building a tag, just use that as a version.
-        version="v${CI_COMMIT_TAG}"
+        version="${CI_COMMIT_TAG}"
     else
         # Otherwise, let normal version machinery run, but fetch all changes
         # and check out the correct branch. Otherwise we'll get weird version
@@ -94,8 +94,20 @@ mkdir -p dist
 tar="dist/${name}.tar.bz2"
 tar -cjf "${tar}" -C "${tmpdir}" "${name}"
 
-if [ ! -z "$CI_JOB_TOKEN" ]; then
-    curl --header "JOB-TOKEN: $CI_JOB_TOKEN" \
-         --upload-file "${tar}" \
-         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/flow3r-firmware/${version}/${name}.tar.bz2"
-fi
+function upload() {
+    from=$1
+    to=$2
+    if [ ! -z "$CI_JOB_TOKEN" ]; then
+        curl --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+             --upload-file "${from}" \
+             "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/flow3r-firmware/${version}/${to}"
+    else
+        echo Would upload $from to $to
+    fi
+}
+
+upload "${tar}" "${name}.tar.bz2"
+upload "${distdir}/recovery.bin" "recovery.bin"
+upload "${distdir}/partition-table.bin" "partition-table.bin"
+upload "${distdir}/bootloader.bin" "bootloader.bin"
+upload "${distdir}/flow3r.bin" "flow3r.bin"
