@@ -43,6 +43,16 @@ necessarily mean lower baud rates (higher cable capacity)
 
 .. _badge-link-midi:
 
+.. code-block:: pycon
+
+  >>> import badgelink
+  >>> jack = badgelink.right
+  >>> jack.enable()
+  True
+  >>> import machine
+  >>> uart = machine.UART(1, baudrate=9600, tx=jack.tip.pin.num(), rx=jack.ring.pin.num())
+  >>> uart.write('hello')
+
 MIDI
 ----
 
