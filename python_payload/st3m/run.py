@@ -135,7 +135,6 @@ def run_main() -> None:
             MenuItemAction("Disk Mode (SD)", machine.disk_mode_sd),
             MenuItemLaunchPersistentView("About", About),
             MenuItemAction("Yeet Local Changes", _yeet_local_changes),
-            MenuItemAction("Reboot", lambda: machine.reset()),
             MenuItemAction("Reboot", machine.reset),
         ],
     )
