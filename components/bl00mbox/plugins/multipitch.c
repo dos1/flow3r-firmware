@@ -18,8 +18,8 @@ void multipitch_run(radspa_t * multipitch, uint16_t num_samples, uint32_t render
     radspa_signal_t * output_sigs[num_outputs];
     radspa_signal_t * pitch_sigs[num_outputs];
     for(uint8_t j = 0; j < num_outputs; j++){
-        output_sigs[j] = radspa_signal_get_by_index(multipitch, 2 + j);
-        pitch_sigs[j] = radspa_signal_get_by_index(multipitch, 3 + j);
+        output_sigs[j] = radspa_signal_get_by_index(multipitch, 2 + 2*j);
+        pitch_sigs[j] = radspa_signal_get_by_index(multipitch, 3 + 2*j);
         if(output_sigs[j]->buffer != NULL) output_request = true;
     }
     if(!output_request) return;
