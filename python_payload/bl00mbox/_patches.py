@@ -95,7 +95,7 @@ class tinysynth_fm(tinysynth):
         self.signals.waveform = -1
         self.signals.fm_waveform = 0
 
-        self.signals.fm.tone = 3173/200
+        self.signals.fm.tone = 3173 / 200
 
 
 class sampler(_Patch):
