@@ -275,6 +275,7 @@ class GayDrums(Application):
             ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
 
             ctx.font = ctx.get_font_name(0)
+            ctx.text_align = ctx.MIDDLE
             ctx.font_size = 24
             ctx.move_to(0, -10)
             ctx.rgb(0.8, 0.8, 0.8)
@@ -328,6 +329,7 @@ class GayDrums(Application):
     def draw_track_name(self, ctx: Context, data: None) -> None:
         self.ctx_draw_centered_rect(ctx, 0, 60, 200, 30, self.background_col)
         ctx.font = ctx.get_font_name(1)
+        ctx.text_align = ctx.MIDDLE
 
         ctx.font_size = 20
         ctx.rgb(1, 1, 1)
