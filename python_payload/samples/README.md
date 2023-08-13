@@ -2,3 +2,8 @@ Credits:
 https://freesound.org/people/sandyrb/sounds/35633/
 https://freesound.org/people/kaonaya/sounds/131363/
 https://freesound.org/people/Vrezerino/sounds/16709/
+https://freesound.org/people/collinb1000/sounds/634854/
+https://freesound.org/people/exotonestudio/sounds/416249/
+https://freesound.org/people/TheEndOfACycle/sounds/674293/
+https://freesound.org/people/KurireeVA/sounds/476588/
+https://freesound.org/people/boop_7/sounds/684369/

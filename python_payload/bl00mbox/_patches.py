@@ -1,12 +1,7 @@
 # SPDX-License-Identifier: CC0-1.0
 import math
-
 import bl00mbox
-
-try:
-    import cpython.wave as wave
-except ImportError:
-    wave = None
+import cpython.wave as wave
 
 
 class _Patch:
@@ -105,15 +100,15 @@ class tinysynth_fm(tinysynth):
 
 class sampler(_Patch):
     """
-    needs a wave file with path relative to /flash/sys/samples/
+    requires a wave file. default path: /sys/samples/
     """
 
     def __init__(self, chan, filename):
         super().__init__(chan)
-        if wave is None:
-            pass
-            # raise Bl00mboxError("wave library not found")
-        f = wave.open("/flash/sys/samples/" + filename, "r")
+        if filename.startswith("/"):
+            f = wave.open("/flash/" + filename, "r")
+        else:
+            f = wave.open("/flash/sys/samples/" + filename, "r")
 
         self.len_frames = f.getnframes()
         self.plugins.sampler = chan.new(bl00mbox.plugins._sampler_ram, self.len_frames)
@@ -146,23 +141,21 @@ class sampler(_Patch):
 
 
 class sequencer(_Patch):
-    def __init__(self, chan, num=4):
+    def __init__(self, chan, num_tracks, num_steps):
         super().__init__(chan)
-        if num > 32:
-            num = 32
-        if num < 0:
-            num = 0
-        self.seqs = []
-        prev_seq = None
-        self.num_pixels = 16
-        self.num_tracks = num
-        init_var = (self.num_pixels * 256) + (self.num_tracks)  # magic
+        self.num_steps = num_steps
+        self.num_tracks = num_tracks
+        init_var = (self.num_steps * 256) + (self.num_tracks)  # magic
+
         self.plugins.seq = chan.new(bl00mbox.plugins._sequencer, init_var)
         self.signals.bpm = self.plugins.seq.signals.bpm
         self.signals.beat_div = self.plugins.seq.signals.beat_div
         self.signals.step = self.plugins.seq.signals.step
-        self.signals.step_len = self.plugins.seq.signals.step_len
-        tracktable = [-32767] + ([0] * self.num_pixels)
+        self.signals.step_end = self.plugins.seq.signals.step_end
+        self.signals.step_start = self.plugins.seq.signals.step_start
+        self.signals.step_start = self.plugins.seq.signals.step_start
+
+        tracktable = [-32767] + ([0] * self.num_steps)
         self.plugins.seq.table = tracktable * self.num_tracks
 
     def __repr__(self):
@@ -193,14 +186,19 @@ class sequencer(_Patch):
         return ret
 
     def _get_table_index(self, track, step):
-        return step + 1 + track * (self.num_pixels + 1)
+        return step + 1 + track * (self.num_steps + 1)
 
-    def trigger_start(self, track, step):
+    def trigger_start(self, track, step, val=32767):
         a = self.plugins.seq.table
-        a[self._get_table_index(track, step)] = 32767
+        a[self._get_table_index(track, step)] = val
         self.plugins.seq.table = a
 
-    def trigger_stop(self, track, step):
+    def trigger_stop(self, track, step, val=32767):
+        a = self.plugins.seq.table
+        a[self._get_table_index(track, step)] = -1
+        self.plugins.seq.table = a
+
+    def trigger_clear(self, track, step):
         a = self.plugins.seq.table
         a[self._get_table_index(track, step)] = 0
         self.plugins.seq.table = a
@@ -213,7 +211,7 @@ class sequencer(_Patch):
         if self.trigger_state(track, step) == 0:
             self.trigger_start(track, step)
         else:
-            self.trigger_stop(track, step)
+            self.trigger_clear(track, step)
 
 
 class fuzz(_Patch):

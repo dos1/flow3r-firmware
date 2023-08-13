@@ -517,12 +517,6 @@ class Channel:
             plugin = Plugin(self, thing, plugin_init_var)
         return plugin
 
-    def _new_patch(self, patch, init_var=None):
-        if init_var == None:
-            return patch(self)
-        else:
-            return patch(self, init_var)
-
     @staticmethod
     def print_overview():
         ret = []
@@ -540,13 +534,13 @@ class Channel:
         for plugin in self.plugins:
             print(repr(plugin))
 
-    def new(self, thing, init_var=None):
+    def new(self, thing, *args, **kwargs):
         self.free = False
         if type(thing) == type:
             if issubclass(thing, bl00mbox.patches._Patch):
-                return self._new_patch(thing, init_var)
+                return thing(self, *args, **kwargs)
         if isinstance(thing, bl00mbox._plugins._Plugin) or (type(thing) == int):
-            return self._new_plugin(thing, init_var)
+            return self._new_plugin(thing, *args, **kwargs)
 
     @property
     def plugins(self):
