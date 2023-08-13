@@ -4,7 +4,7 @@ from st3m.goose import Dict, Any
 from st3m.input import InputState
 from ctx import Context
 import leds
-import hardware
+#import hardware
 from st3m.ui.menu import (
     MenuItem,
     MenuItemBack,
@@ -240,7 +240,8 @@ class NickApp(Application):
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
         ctx.rgb(0,1,0)
 
-        btn = hardware.application_button_get()
+#        btn = hardware.application_button_get()
+        btn = 0 # TODO
 
 #        ctx.move_to(-100, 0)
 #        ctx.save()
