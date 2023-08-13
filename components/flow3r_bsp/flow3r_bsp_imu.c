@@ -210,7 +210,7 @@ esp_err_t flow3r_bsp_imu_init(flow3r_bsp_imu_t *imu) {
 
     rslt = bmp5_init(&imu->bmp);
     bmp5_error_codes_print_result("bmp5_init", rslt);
-    if (rslt != BMP5_OK) return ESP_FAIL;
+    if (rslt != BMP5_OK && rslt != BMP5_E_POWER_UP) return ESP_FAIL;
 
     rslt = set_bmp_config(&imu->osr_odr_press_cfg, &imu->bmp);
     if (rslt != BMP5_OK) return ESP_FAIL;
