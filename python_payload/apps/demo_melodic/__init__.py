@@ -2,11 +2,10 @@ import bl00mbox
 
 blm = bl00mbox.Channel("Melodic Demo")
 
-import captouch
 import leds
 
 from st3m.goose import List, Optional
-from st3m.input import InputState
+from st3m.input import InputState, InputController
 from st3m.ui.view import ViewManager
 from ctx import Context
 
@@ -44,13 +43,17 @@ def adjust_playing_field_to_octave() -> None:
         change_playing_field_color(0, 55, 0)
 
 
-def run(ins: InputState) -> None:
+def run(input: InputController) -> None:
     global scale
     global octave
     global synths
+    any_down = False
     for i in range(10):
-        petal = ins.captouch.petals[i]
+        petal = input.captouch.petals[i].whole
+        if petal.down:
+            any_down = True
         if petal.pressed:
+            any_down = True
             if i == 6:
                 octave = -1
                 adjust_playing_field_to_octave()
@@ -68,6 +71,9 @@ def run(ins: InputState) -> None:
                 note = scale[k] + 12 * octave
                 synths[0].signals.pitch.tone = note
                 synths[0].signals.trigger.start()
+
+    if not any_down:
+        synths[0].signals.trigger.stop()
 
 
 def init() -> None:
@@ -105,4 +111,4 @@ class MelodicApp(Application):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
-        run(ins)
+        run(self.input)
