@@ -107,15 +107,14 @@ void st3m_leds_update_hardware() {
 
 void st3m_leds_set_single_rgb(uint8_t index, float red, float green,
                               float blue) {
-
     if (red > 1.0) red /= 255.0;
     if (green > 1.0) green /= 255.0;
     if (blue > 1.0) blue /= 255.0;
 
     LOCK_INCOMING;
-    state.target_buffer[index].r = (uint8_t) (red * 255);
-    state.target_buffer[index].g = (uint8_t) (green * 255);
-    state.target_buffer[index].b = (uint8_t) (blue * 255);
+    state.target_buffer[index].r = (uint8_t)(red * 255);
+    state.target_buffer[index].g = (uint8_t)(green * 255);
+    state.target_buffer[index].b = (uint8_t)(blue * 255);
     UNLOCK_INCOMING;
 }
 
