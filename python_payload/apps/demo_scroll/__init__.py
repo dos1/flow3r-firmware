@@ -14,7 +14,7 @@ from ctx import Context
 
 
 class ScrollDemo(Application):
-    PETAL_NO = 8
+    PETAL_NO = 2
 
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
@@ -32,7 +32,7 @@ class ScrollDemo(Application):
         ctx.text_baseline = ctx.MIDDLE
         ctx.text_align = ctx.CENTER
 
-        ctx.rotate((self.PETAL_NO * -tau / 10))
+        ctx.rotate((self.PETAL_NO * tau / 10))
         ctx.translate(0, -90)
         ctx.gray(1)
         ctx.text("\ue5c4\ue5c8")

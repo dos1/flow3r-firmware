@@ -42,7 +42,7 @@ static inline void _petal_process(st3m_petal_state_t *petal, bool top) {
         int32_t right = ringbuffer_avg(&petal->cw.rb);
         int32_t base = ringbuffer_avg(&petal->base.rb);
         petal->pos_distance = (left + right) / 2 - base;
-        petal->pos_angle = left - right;
+        petal->pos_angle = right - left;
 #if defined(CONFIG_FLOW3R_HW_GEN_P3)
         petal->pos_distance = -petal->pos_distance;
 #endif

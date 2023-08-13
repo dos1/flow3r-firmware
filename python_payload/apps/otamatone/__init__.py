@@ -75,7 +75,7 @@ class Otamatone(Application):
     A friendly lil' guy that is not annoying at all.
     """
 
-    PETAL_NO = 3
+    PETAL_NO = 7
 
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)

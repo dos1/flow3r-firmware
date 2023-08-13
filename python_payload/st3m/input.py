@@ -483,7 +483,7 @@ class CaptouchState:
     State of capacitive touch petals.
 
     The petals are indexed from 0 to 9 (inclusive). Petal 0 is above the USB-C
-    socket, then the numbering continues counter-clockwise.
+    socket, then the numbering continues clockwise.
     """
 
     __slots__ = "petals"

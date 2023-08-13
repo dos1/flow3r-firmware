@@ -37,13 +37,13 @@ class LEDPainter(Application):
         self.g = 40
         self.b = 155
         self.PETAL_R_PLUS = 0
-        self.PETAL_R_MINUS = 9
-        self.PETAL_G_PLUS = 8
-        self.PETAL_G_MINUS = 7
-        self.PETAL_B_PLUS = 6
+        self.PETAL_R_MINUS = 1
+        self.PETAL_G_PLUS = 2
+        self.PETAL_G_MINUS = 3
+        self.PETAL_B_PLUS = 4
         self.PETAL_B_MINUS = 5
-        self.PETAL_BLACK = 4
-        self.PETAL_WHITE = 3
+        self.PETAL_BLACK = 6
+        self.PETAL_WHITE = 7
         self.LEDS = [[0, 0, 0] for i in range(40)]
         #  https://www.sr-research.com/circular-coordinate-calculator/
         self.PETAL_POS = [

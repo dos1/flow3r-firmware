@@ -172,10 +172,10 @@ class OverlayCaptouch(Overlay):
                 return
 
             a = (tau / 10) * self.ix
-            ctx.rotate(-a)
+            ctx.rotate(a)
             ctx.translate(0, -80)
 
-            offs_x = -self.phi / 1000
+            offs_x = self.phi / 1000
             offs_y = -self.rad / 1000
             ctx.rectangle(-5 + offs_x, -5 + offs_y, 10, 10)
             ctx.rgb(1, 0, 1)

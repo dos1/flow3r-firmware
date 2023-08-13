@@ -75,7 +75,7 @@ class CaptouchPetalState(Protocol):
         An increase in distance means the touch is further away from the centre
         of the badge.
 
-        An increase in angle means the touch is more counter-clockwise.
+        An increase in angle means the touch is more clockwise.
         """
         ...
 
@@ -90,7 +90,7 @@ class CaptouchState(Protocol):
         State of individual petals.
 
         Contains 10 elements, with the zeroth element being the pad closest to
-        the USB port. Then, every other pad in a counter-clockwise direction.
+        the USB port. Then, every other pad in a clockwise direction.
 
         Pads 0, 2, 4, 6, 8 are Top pads.
 

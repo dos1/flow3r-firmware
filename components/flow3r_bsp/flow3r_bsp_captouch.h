@@ -9,8 +9,8 @@
 // pads.
 //
 // The petals are numbered from 0 to 9 (inclusive). Petal 0 is next to the USB
-// port, and is a top petal. Petal 1 is a bottom petal to its left. Petal 2 is a
-// top petal to its left, and the rest continue counter-clockwise accordingly.
+// port, and is a top petal. Petal 1 is a bottom petal to its right. Petal 2 is
+// a top petal to its right, and the rest continue clockwise accordingly.
 
 #include "esp_err.h"
 

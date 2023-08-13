@@ -51,17 +51,17 @@ def run(ins: InputState) -> None:
     for i in range(10):
         petal = ins.captouch.petals[i]
         if petal.pressed:
-            if i == 4:
+            if i == 6:
                 octave = -1
                 adjust_playing_field_to_octave()
             elif i == 5:
                 octave = 0
                 adjust_playing_field_to_octave()
-            elif i == 6:
+            elif i == 4:
                 octave = 1
                 adjust_playing_field_to_octave()
             else:
-                k = i
+                k = 10 - i
                 if k > 3:
                     k -= 10
                 k = 3 - k

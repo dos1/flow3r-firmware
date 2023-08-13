@@ -22,7 +22,7 @@
 // layout (tip, cw, ccw). This API pretends base == tip in this case.
 //
 // Petals are numbered. 0 is the top petal above the USB-C jack, increases
-// counter-clockwise so that bottom petals are uneven and top petals even.
+// clockwise so that bottom petals are uneven and top petals even.
 //
 // Processing:
 //
@@ -106,7 +106,7 @@ typedef struct {
 
 typedef struct {
     // Petal 0 is a top petal next to the USB socket. Then, all other petals
-    // follow counter-clockwise.
+    // follow clockwise.
     st3m_petal_state_t petals[10];
 } st3m_captouch_state_t;
 

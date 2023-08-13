@@ -60,8 +60,8 @@ class CapTouchDemo(Application):
             if petal.pressed:
                 size += 4
             x = 70 + (rad / 1000) + 0j
-            x += (phi / 600) * 1j
-            rot = cmath.exp(2j * math.pi * i / 10)
+            x += ((-phi) / 600) * 1j
+            rot = cmath.exp(-2j * math.pi * i / 10)
             x = x * rot
 
             self.dots.append(Dot(size, x.imag, x.real))

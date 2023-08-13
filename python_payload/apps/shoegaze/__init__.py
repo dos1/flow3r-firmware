@@ -212,13 +212,13 @@ class ShoegazeApp(Application):
 
         for i in range(1, 10, 2):
             if petals[i].whole.pressed:
-                k = int((i - 1) / 2)
+                k = int(((10 - i) - 1) / 2)
                 self._set_chord(k)
 
         if self.blm is None:
             return
         for i in range(2, 10, 2):
-            k = int(i / 2) - 1
+            k = int((10 - i) / 2) - 1
             if petals[i].whole.pressed:
                 self._git_string_tuning[k] = self.chord[k] - 12
                 self.git_strings[k].signals.pitch.tone = self._git_string_tuning[k]

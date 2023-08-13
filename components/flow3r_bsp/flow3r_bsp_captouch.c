@@ -22,35 +22,35 @@ static const pad_mapping_t _map_top[12] = {
     { 0, petal_pad_tip },  // 0
     { 0, petal_pad_ccw },  // 1
     { 0, petal_pad_cw },   // 2
-    { 2, petal_pad_cw },   // 3
-    { 2, petal_pad_ccw },  // 4
-    { 2, petal_pad_tip },  // 5
-    { 6, petal_pad_tip },  // 6
-    { 6, petal_pad_ccw },  // 7
-    { 6, petal_pad_cw },   // 8
-    { 4, petal_pad_cw },   // 9
-    { 4, petal_pad_ccw },  // 10
-    { 4, petal_pad_tip },  // 11
+    { 8, petal_pad_cw },   // 3
+    { 8, petal_pad_ccw },  // 4
+    { 8, petal_pad_tip },  // 5
+    { 4, petal_pad_tip },  // 6
+    { 4, petal_pad_ccw },  // 7
+    { 4, petal_pad_cw },   // 8
+    { 6, petal_pad_cw },   // 9
+    { 6, petal_pad_ccw },  // 10
+    { 6, petal_pad_tip },  // 11
 };
 static const pad_mapping_t _map_bot[13] = {
-    { 1, petal_pad_base },  // 0
-    { 1, petal_pad_tip },   // 1
+    { 9, petal_pad_base },  // 0
+    { 9, petal_pad_tip },   // 1
 
-    { 3, petal_pad_base },  // 2
-    { 3, petal_pad_tip },   // 3
+    { 7, petal_pad_base },  // 2
+    { 7, petal_pad_tip },   // 3
 
     { 5, petal_pad_base },  // 4
     { 5, petal_pad_tip },   // 5
 
-    { 7, petal_pad_tip },   // 6
-    { 7, petal_pad_base },  // 7
+    { 3, petal_pad_tip },   // 6
+    { 3, petal_pad_base },  // 7
 
-    { 9, petal_pad_tip },   // 8
-    { 9, petal_pad_base },  // 9
+    { 1, petal_pad_tip },   // 8
+    { 1, petal_pad_base },  // 9
 
-    { 8, petal_pad_tip },  // 10
-    { 8, petal_pad_cw },   // 11
-    { 8, petal_pad_ccw },  // 12
+    { 2, petal_pad_tip },  // 10
+    { 2, petal_pad_cw },   // 11
+    { 2, petal_pad_ccw },  // 12
 };
 static gpio_num_t _interrupt_gpio_top = GPIO_NUM_15;
 static gpio_num_t _interrupt_gpio_bot = GPIO_NUM_15;
@@ -60,35 +60,35 @@ static const pad_mapping_t _map_top[12] = {
     { 0, petal_pad_ccw },   // 0
     { 0, petal_pad_base },  // 1
     { 0, petal_pad_cw },    // 2
-    { 2, petal_pad_cw },    // 3
-    { 2, petal_pad_base },  // 4
-    { 2, petal_pad_ccw },   // 5
-    { 6, petal_pad_ccw },   // 6
-    { 6, petal_pad_base },  // 7
-    { 6, petal_pad_cw },    // 8
-    { 4, petal_pad_ccw },   // 9
-    { 4, petal_pad_base },  // 10
-    { 4, petal_pad_cw },    // 11
+    { 8, petal_pad_cw },    // 3
+    { 8, petal_pad_base },  // 4
+    { 8, petal_pad_ccw },   // 5
+    { 4, petal_pad_ccw },   // 6
+    { 4, petal_pad_base },  // 7
+    { 4, petal_pad_cw },    // 8
+    { 6, petal_pad_ccw },   // 9
+    { 6, petal_pad_base },  // 10
+    { 6, petal_pad_cw },    // 11
 };
 static const pad_mapping_t _map_bot[13] = {
-    { 1, petal_pad_base },  // 0
-    { 1, petal_pad_tip },   // 1
+    { 9, petal_pad_base },  // 0
+    { 9, petal_pad_tip },   // 1
 
-    { 3, petal_pad_base },  // 2
-    { 3, petal_pad_tip },   // 3
+    { 7, petal_pad_base },  // 2
+    { 7, petal_pad_tip },   // 3
 
     { 5, petal_pad_base },  // 4
     { 5, petal_pad_tip },   // 5
 
-    { 7, petal_pad_tip },   // 6
-    { 7, petal_pad_base },  // 7
+    { 3, petal_pad_tip },   // 6
+    { 3, petal_pad_base },  // 7
 
-    { 9, petal_pad_tip },   // 8
-    { 9, petal_pad_base },  // 9
+    { 1, petal_pad_tip },   // 8
+    { 1, petal_pad_base },  // 9
 
-    { 8, petal_pad_ccw },   // 10
-    { 8, petal_pad_cw },    // 11
-    { 8, petal_pad_base },  // 12
+    { 2, petal_pad_ccw },   // 10
+    { 2, petal_pad_cw },    // 11
+    { 2, petal_pad_base },  // 12
 };
 #if defined(CONFIG_FLOW3R_HW_GEN_P4)
 static gpio_num_t _interrupt_gpio_top = GPIO_NUM_15;

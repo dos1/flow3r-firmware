@@ -391,13 +391,13 @@ class GayDrums(Application):
 
         ct = captouch.read()
         for i in range(4):
-            if ct.petals[4 - i].pressed:
+            if ct.petals[6 + i].pressed:
                 if not self._group_highlight_on[i]:
                     self._group_highlight_redraw[i] = True
                 self._group_highlight_on[i] = True
                 for j in range(4):
-                    if ct.petals[6 + j].pressed and not (
-                        self.ct_prev.petals[6 + j].pressed
+                    if ct.petals[4 - j].pressed and not (
+                        self.ct_prev.petals[4 - j].pressed
                     ):
                         self.track_incr_state(self.track, self.bar * 16 + i * 4 + j)
 
