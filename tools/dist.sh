@@ -19,7 +19,7 @@ if [ ! -z "${CI}" ]; then
         # Otherwise, let normal version machinery run, but fetch all changes
         # and check out the correct branch. Otherwise we'll get weird version
         # strings.
-        git fetch origin "$CI_COMMIT_REF_NAME"
+        git fetch --unshallow origin "$CI_COMMIT_REF_NAME"
         git checkout "$CI_COMMIT_REF_NAME"
         version="$(python3 components/st3m/host-tools/version.py)"
     fi
