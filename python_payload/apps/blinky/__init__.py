@@ -5,9 +5,140 @@ from st3m.input import InputState
 from ctx import Context
 import leds
 import hardware
+from st3m.ui.menu import (
+    MenuItem,
+    MenuItemBack,
+    MenuItemForeground,
+    MenuItemNoop,
+    MenuItemAction,
+    MenuItemLaunchPersistentView,
+)
+from st3m.ui.elements.menus import SimpleMenu
+from st3m.ui.view import View, ViewManager, ViewTransitionBlend
+from st3m.reactor import Reactor, Responder
+from st3m.ui.elements import overlays
+from st3m import settings, logging, processors
 
 import json
 import math
+
+LEFT = -1
+ENTER = 0
+RIGHT = 1
+
+class LessSimpleMenu(SimpleMenu):
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        super().think(ins, delta_ms)
+
+        rbut = None
+        if self.input.buttons.os.left.pressed:
+            rbut = -1
+        elif self.input.buttons.os.right.pressed:
+            rbut = 1
+        elif self.input.buttons.os.middle.pressed:
+            rbut = 0
+        if rbut is not None:
+            self.action(rbut)
+
+#        dotime=self._fractime+delta_ms
+#        self._fractime=dotime%self._timescale
+#        if dotime >= self._timescale:
+#            for s in range(dotime//self._timescale):
+#                update_leds()
+#            for idx, led in enumerate(rgb):
+#                leds.set_rgb(idx,*rgb[idx])
+#            leds.update()
+
+    def action(self, rbut) -> None:
+        """
+        Do an (right-button) action on a MenuItem
+        """
+        self._items[self._scroll_controller.target_position()].action(self.vm, rbut)
+
+
+class ActionableMenuItemForeground(MenuItemForeground):
+    def action(self, vm, rbut) -> None:
+        print("I got a right action", rbut)
+        pass
+
+class ActionableMenuItemNoop(MenuItemNoop):
+    def action(self, vm, rbut) -> None:
+        pass
+
+class ActionableMenuItem(MenuItem):
+    """
+    A MenuItem which does something.
+    """
+
+    def __init__(self, label: str) -> None:
+        self._label = label
+
+    def press(self, vm) -> None:
+        pass
+
+    def action(self, vm, rbut) -> None:
+        print("I got a right action", rbut)
+        pass
+
+    def label(self) -> str:
+        return self._label
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+#        print("thinking")
+        pass
+
+class ActionableMenuItemCounter(ActionableMenuItem):
+    def __init__(self, label: str, method) -> None:
+        self._label = label
+        self._method = method
+
+    def press(self, vm) -> None:
+        pass
+
+    def draw(self, ctx: Context) -> None:
+        super().draw(ctx)
+        ctx.text(" : ")
+        ctx.text(self._method.get())
+
+    def action(self, vm, rbut) -> None:
+        self._method.add(rbut)
+        pass
+
+class wrapobjattr:
+    def __init__(self, obj, attr):
+        self._obj=obj
+        self._attr=attr
+        print("Wrapped",obj, attr)
+
+    def set(self, val):
+        self._obj.__dict__[self._attr]=val
+
+    def get(self):
+        return self._obj.__dict__[self._attr]
+
+    def add(self, val):
+        self.set(self.get()+val)
+
+
+class ActionableMenuItemRGB(ActionableMenuItem):
+    def __init__(self, label: str, r, g, b) -> None:
+        self._label = label
+        self._rgb = (r,g,b)
+
+    def press(self, vm) -> None:
+        pass
+
+    def action(self, vm, rbut) -> None:
+        print("I got a right action", rbut)
+        pass
+
+    def draw(self, ctx: Context) -> None:
+        ctx.save()
+        ctx.text(self.label()+":")
+#        ctx.rgb(*self._rgb).rectangle(-10,-10,20,20).fill()
+        ctx.rgb(*self._rgb).rectangle(25,-10,20,20).fill()
+        ctx.restore()
 
 rgb=[(0,0,0)]*40 # Number of LEDs
 
@@ -59,6 +190,46 @@ class NickApp(Application):
         self._timescale = 20
         self.sl=0
         self.inhibit=False
+        self._action=False
+
+
+        mine=waldos[0]
+
+        #submenu
+        mact=mine.__dict__["action"]
+        settings=[MenuItemBack()]
+        settings.append(ActionableMenuItemNoop(mact.__class__.__name__))
+        for x in mact.cfg:
+            if x == 'action':
+                settings.append(ActionableMenuItemNoop(x+": "+str(mact.__dict__[x].__class__.__name__)))
+            elif x in ['src', 'dst']:
+                settings.append(ActionableMenuItemRGB(x, *mact.__dict__[x]))
+            else:
+                settings.append(ActionableMenuItemNoop(x+": "+str(mact.__dict__[x])))
+        menu_sub=LessSimpleMenu(settings)
+
+        #normalmenu
+        settings=[]
+        settings.append(ActionableMenuItemNoop(mine.__class__.__name__))
+        for x in mine.cfg:
+            if x == 'action':
+#                settings.append(MenuItemNoop(x+": "+str(mine.__dict__[x].__class__.__name__)))
+                settings.append(ActionableMenuItemForeground(str(mine.__dict__[x].__class__.__name__), menu_sub))
+            elif x in ['steps', 'count', 'src']:
+                settings.append(ActionableMenuItemCounter(x, wrapobjattr(mine, x)))
+            else:
+                settings.append(ActionableMenuItem(x+": "+str(mine.__dict__[x])))
+        self._menu=LessSimpleMenu(settings)
+
+        vm = ViewManager(ViewTransitionBlend())
+        vm.push(self._menu)
+        reactor = Reactor()
+        compositor = overlays.Compositor(vm)
+
+        top = processors.ProcessorMidldeware(compositor)
+        reactor.set_top(top)
+        reactor.run()
+
 
     def draw(self, ctx: Context) -> None:
 #        ctx.text_align = ctx.RIGHT
@@ -69,34 +240,62 @@ class NickApp(Application):
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
         ctx.rgb(0,1,0)
 
+        btn = hardware.application_button_get()
+
 #        ctx.move_to(-100, 0)
 #        ctx.save()
 #        ctx.scale(self._scale, 1)
         eidx=0
-
         mine=waldos[0]
 
         lno=-1
         lh=22
-        ctx.move_to(-55, -45+lno*lh)
-        ctx.text("Waldo[%d]\n"%eidx)
-        lno+=1
-        ctx.move_to(-90, -45+lno*lh)
-        ctx.text(mine.__class__.__name__)
-        ctx.text("\n")
-        for x in mine.cfg:
+        if self._action:
+            mine=mine.__dict__["action"]
+            ctx.move_to(-55, -45+lno*lh)
+            ctx.text("Action[%d]\n"%eidx)
             lno+=1
             ctx.move_to(-90, -45+lno*lh)
             if self.sl==lno:
                 ctx.text(">")
-            ctx.text(x)
-            ctx.text(": ")
-            if x == "action":
-                ctx.text(mine.__dict__[x].__class__.__name__)
-            else:
-                ctx.text(mine.__dict__[x])
+            ctx.text(mine.__class__.__name__)
+            ctx.text("\n")
+            for x in mine.cfg:
+                lno+=1
+                ctx.move_to(-90, -45+lno*lh)
+                if self.sl==lno:
+                    ctx.text(">")
+                ctx.text(x)
+                ctx.text(": ")
+                if x in ['src', 'dst']:
+                    ctx.save()
+#                    ctx.rgb(*mine.__dict__[x]).move_to(0,-45+(lno-1)*lh+lh).rectangle(0, 0, 22, 22).fill()
+                    ctx.rgb(*mine.__dict__[x]).rectangle(0, -45+lno*lh-lh+2, lh-2, lh-2).fill()
+                    ctx.restore()
+                else:
+                    ctx.text(mine.__dict__[x])
+
+        else:
+            ctx.move_to(-55, -45+lno*lh)
+            ctx.text("Waldo[%d]\n"%eidx)
+            lno+=1
+            ctx.move_to(-90, -45+lno*lh)
+            if self.sl==lno:
+                ctx.text(">")
+            ctx.text(mine.__class__.__name__)
+            ctx.text("\n")
+            for x in mine.cfg:
+                lno+=1
+                ctx.move_to(-90, -45+lno*lh)
+                if self.sl==lno:
+                    ctx.text(">")
+                ctx.text(x)
+                ctx.text(": ")
+                if x == "action":
+                    ctx.text(mine.__dict__[x].__class__.__name__)
+                else:
+                    ctx.text(mine.__dict__[x])
         lno+=1
-        btn = hardware.application_button_get()
         if self.inhibit:
             match btn:
                 case 0:
@@ -109,6 +308,11 @@ class NickApp(Application):
                 case 1: # hardware.BUTTON_PRESSED_RIGHT:
                     self.sl+=1
                     self.inhibit=True
+                case 2: # hardware.BUTTON_PRESSED_DOWN:
+                    if self.sl==1 and not self._action:
+                        self._action=True
+                    elif self.sl==0 and self._action:
+                        self._action=False
         ctx.move_to(-90, -45+lno*lh)
         ctx.text("%d %d"%(btn, self.sl))
 #        ctx.restore()
@@ -147,6 +351,7 @@ class Action:
         return self.color
 
   class Fade:
+    cfg = ['src','dst','steps']
     def __init__(self, src, dst, step):
         self.src = src
         self.dst = dst
@@ -159,7 +364,7 @@ class Action:
                 ))
         second=self.list[1:self.steps]
         self.list += second[::-1]
-        print("fade:",self.list)
+#        print("fade:",self.list)
     def start(self):
         print("Fader started",self)
         self.idx = -1
@@ -170,6 +375,7 @@ class Action:
         return self.list[self.idx]
 
   class Fade1:
+    cfg = ['src','dst','steps']
     def __init__(self, src, dst, step):
         self.src = src
         self.dst = dst
@@ -189,6 +395,7 @@ class Action:
             return self.list[-1]
         return self.list[self.idx]
   class Fade2:
+    cfg = ['src','dst','steps']
     def __init__(self, src, dst, step):
         self.src = src
         self.dst = dst
@@ -258,7 +465,7 @@ current=[None]*len(rgb)
 
 #waldos=[
 #        Waldo.Mover(0,Action.Fade2((255,255,255),(0,0,255),10),0,+1,40),
-#        Waldo.Mover(50,Action.Fade2((255,255,255),(0,0,255),10),39,-1,40) 
+#        Waldo.Mover(50,Action.Fade2((255,255,255),(0,0,255),10),39,-1,40)
 #        ]
 
 waldos=[
