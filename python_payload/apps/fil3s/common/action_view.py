@@ -47,7 +47,7 @@ class ActionView(BaseView):
         self.input = InputController()
 
         for i in range(0, 5):
-            petal_angle = 2.0 * pi / 5.0
+            petal_angle = 2.0 * -pi / 5.0
             self.action_x[i] = int(cos(-petal_angle * float(i) - pi / 2.0) * 100.0)
             self.action_y[i] = int(sin(-petal_angle * float(i) - pi / 2.0) * 100.0)
 
