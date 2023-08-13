@@ -117,11 +117,18 @@ class Browser(ActionView):
     def _select(self) -> None:
         name = self.dir_entries[self.current_pos][0]
 
-        if self._is_dir(self.path + name):
-            self._change_path(self.path + name + "/")
-        else:
-            self.update_path(self.path + name)
-            self.navigate("reader")
+        old_path = self.path
+        new_path = self.path + name
+        try:
+            if self._is_dir(new_path):
+                self._change_path(new_path + "/")
+            else:
+                self.update_path(self.path + name)
+                self.navigate("reader")
+        except Exception as e:
+            # TODO: Create error view
+            print(f"Failed to open {new_path}: {e}")
+            self._change_path(old_path)
 
     def _up(self) -> None:
         if not self.up_enabled or len(self.path) <= 1:
