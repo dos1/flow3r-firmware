@@ -189,8 +189,6 @@ class ShoegazeApp(Application):
             ctx.rgb(0, 0.6, 0)
             ctx.text("fuzz off")
 
-        ctx.restore()
-
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
 
