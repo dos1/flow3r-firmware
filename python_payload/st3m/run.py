@@ -75,6 +75,7 @@ def _make_compositor(reactor: Reactor, vm: ViewManager) -> overlays.Compositor:
     # Configure debug overlay fragments.
     debug = overlays.OverlayDebug()
     debug.add_fragment(overlays.DebugReactorStats(reactor))
+    debug.add_fragment(overlays.DebugBattery())
     compositor.add_overlay(debug)
 
     debug_touch = overlays.OverlayCaptouch()
