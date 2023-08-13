@@ -42,10 +42,10 @@ class Reader(ActionView):
 
         self.actions = [
             None,
-            Action(icon="\ue8d4", label="Scroll X"),
-            Action(icon="\ue5c4", label="Back"),
-            Action(icon="\ue8b6", label="Zoom"),
             Action(icon="\ue8d5", label="Scroll Y"),
+            Action(icon="\ue8b6", label="Zoom"),
+            Action(icon="\ue5c4", label="Back"),
+            Action(icon="\ue8d4", label="Scroll X"),
         ]
 
         # TODO: Buffered reading?
@@ -62,14 +62,14 @@ class Reader(ActionView):
         if self.is_loading:
             return
 
-        if self.input.captouch.petals[4].whole.pressed:
+        if self.input.captouch.petals[6].whole.pressed:
             self._back()
-        elif self.input.captouch.petals[6].whole.pressed:
+        elif self.input.captouch.petals[4].whole.pressed:
             self.zoom_enabled = not self.zoom_enabled
 
         # TODO: Use "joystick-style" input for scrolling
-        self.scroll_x.update(self.input.captouch.petals[2].gesture, delta_ms)
-        self.scroll_y.update(self.input.captouch.petals[8].gesture, delta_ms)
+        self.scroll_x.update(self.input.captouch.petals[8].gesture, delta_ms)
+        self.scroll_y.update(self.input.captouch.petals[2].gesture, delta_ms)
         x = self.scroll_x.position[0] * 0.2
         y = self.scroll_y.position[0] * 0.2
         self.viewport_offset = (x - 80, y - 80)

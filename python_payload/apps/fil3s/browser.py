@@ -39,15 +39,15 @@ class Browser(ActionView):
         self._scan_path()
 
     def _on_action(self, index: int) -> None:
-        if index == 1:
+        if index == 4:
             if self.current_pos > 0:
                 self.current_pos -= 1
                 self._update_position()
-        if index == 2:
-            self._up()
         if index == 3:
+            self._up()
+        if index == 2:
             self._select()
-        elif index == 4:
+        elif index == 1:
             if self.current_pos < len(self.dir_entries) - 1:
                 self.current_pos += 1
                 self._update_position()
@@ -144,10 +144,10 @@ class Browser(ActionView):
     def _update_actions(self) -> None:
         self.actions = [
             Action(icon="\ue3e3", label="Menu", enabled=False),
-            Action(icon="\ue5cb", label="Prev", enabled=self.prev_enabled),
-            Action(icon="\ue5c4", label="Back", enabled=self.up_enabled),
-            Action(icon="\ue876", label="Select"),
             Action(icon="\ue409", label="Next", enabled=self.next_enabled),
+            Action(icon="\ue876", label="Select"),
+            Action(icon="\ue5c4", label="Back", enabled=self.up_enabled),
+            Action(icon="\ue5cb", label="Prev", enabled=self.prev_enabled),
         ]
 
     def _update_position(self) -> None:
