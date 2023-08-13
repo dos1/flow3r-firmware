@@ -31,6 +31,7 @@ pkgs.dockerTools.buildImage {
       gcc gnused findutils gnugrep
       git wget gnumake
       cmake ninja pkgconfig
+      gnutar curl
     ];
     pathsToLink = [ "/bin" ];
   };

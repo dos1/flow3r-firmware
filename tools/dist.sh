@@ -77,4 +77,11 @@ Then, run esptool.py with the following arguments:
 EOF
 
 mkdir -p dist
-tar -cjf "dist/${name}.tar.bz2" -C "${tmpdir}" "${name}"
+tar="dist/${name}.tar.bz2"
+tar -cjf "${tar}" -C "${tmpdir}" "${name}"
+
+if [ ! -z "$CI_JOB_TOKEN" ]; then
+    curl --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+         --upload-file "${tar}" \
+         "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/flow3r-firmware/${version}/${name}.tar.bz2"
+fi
