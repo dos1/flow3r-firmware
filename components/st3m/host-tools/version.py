@@ -10,6 +10,7 @@ and the release process.
 
 import subprocess
 import sys
+import os
 
 
 class Tag:
@@ -50,7 +51,7 @@ def tags_for_commit(release, commit):
     return res
 
 
-def get_version():
+def get_git_based_version():
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"]).decode().strip()
     branches = (
         subprocess.check_output(
@@ -118,7 +119,15 @@ if len(sys.argv) > 1:
     if sys.argv[1] == "-c":
         fmt = "C"
 
-v = get_version()
+v = None
+if os.environ.get('CI') is not None:
+    tag = os.environ.get('CI_COMMIT_TAG')
+    if tag is not None:
+        # If we're building a tag, just use that as a version.
+        v = tag
+if v is None:
+    v = get_git_based_version()
+
 if fmt == "C":
     print('const char *st3m_version = "' + v + '";')
 else:
