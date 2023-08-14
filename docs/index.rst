@@ -36,6 +36,12 @@ Welcome to flow3r's documentation!
    api/sys_display.rst
    api/sys_kernel.rst
 
+.. toctree::
+   :maxdepth: 1
+   :caption: About:
+
+   badge/license.rst
+
 Indices and tables
 ==================
 
