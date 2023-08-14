@@ -1,7 +1,7 @@
 Assembly
 ========
 
-We have a `video guide showing how to assemble the badge <https://media.ccc.de>`_. For those who prefer a text version, keep reading.
+We have a `video guide showing how to assemble the badge <https://static.flow3r.garden/assembly.mp4>`_. For those who prefer a text version, keep reading.
 
 Check what you've got
 ---------------------
