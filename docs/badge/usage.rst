@@ -50,11 +50,11 @@ connect your badge to a computer and edit a file to change your nick.
 
 From the main menu, navigate to System |rarr| Disk Mode (Flash). Connect your badge
 to a computer, and it will appear as a mass storage device (a.k.a. pendrive).
-Oen the file ```nick.json`` in a text editor and change your nick, the size of
+Open the file ```nick.json`` in a text editor and change your nick, the size of
 the font, and whatever else you wish.
 
 When you're done editing, unmount/eject the badge from your computer
-(``unmount`` on Linux is enough) and press the left shoulder button to exit Disk
+(``umount`` on Linux is enough) and press the left shoulder button to exit Disk
 Mode. Then, go to Badge |rarr| Nick to see your changes!
 
 Playing Music
