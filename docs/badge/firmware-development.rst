@@ -42,6 +42,7 @@ On other Linux-based distributions, you will have to manually install ESP-IDF al
 
 	$ git clone --recursive https://git.flow3r.garden/flow3r/esp-idf
 	$ cd esp-idf
+    $ git checkout 5.1-flow3r
 	$ ./install.sh
 	$ source export.sh
 
