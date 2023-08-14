@@ -168,7 +168,7 @@ You should be greeted with a purple screen from which multiple actions can be se
 1. **Reboot**: reboots the badge back into the current (non-recovery) firmware.
 2. **Disk Mode**: mounts the internal SPI flash FAT partition as a USB mass storage. This is effectively a copy of the :ref:`Disk Mode` from the main firmware.
 3. **Format FAT partition**: fully wipes the internal SPI flash, which should let you recover from most cases of bricking. On next reboot, the badge will re-populate the FAT partition with :ref:`st3m` files and should start up normally.
-4. **Update firmware**: flashes a file from the FAT partition onto the main firmware partition_. This can be used to update your badge to the newest firmware (**TODO**) or to an alternative firmware.
+4. **Update firmware**: flashes a file from the FAT partition onto the main firmware partition_. This can be used to update your badge to the `newest firmware <https://git.flow3r.garden/flow3r/flow3r-firmware/-/releases>`_ or to an alternative firmware.
 
 .. _flash:
 
@@ -189,9 +189,9 @@ Instructions on how to run ``esptool.py`` are given with every firmware update r
 Updating Firmware
 -----------------
 
-Download a release from **TODO**, extract the tarball and follow instructions in the README. There will be notes on how to perform updates through either :ref:`Disk Mode`, `Recovery Mode`_ or through a low-level flash_.
+Download a `release <https://git.flow3r.garden/flow3r/flow3r-firmware/-/releases>`_, extract the tarball and follow instructions in the README. There will be notes on how to perform updates through either :ref:`Disk Mode`, `Recovery Mode`_ or through a low-level flash_.
 
-Or, if you're at CCCamp2023, visit one of our firmware update stations.
+Or, if you're at CCCamp2023, visit our firmware update station, once it is availble.
 
 .. [#WL] Wear leveling, to protect internal flash from death by repeat sector write.
 
