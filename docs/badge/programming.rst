@@ -528,8 +528,6 @@ Here is our previous code changed to use `Application` for the base of its main 
     from ctx import Context
     import st3m.run
 
-    from typing import Optional
-
     class SecondScreen(BaseView):
         def draw(self, ctx: Context) -> None:
             # Paint the background black
