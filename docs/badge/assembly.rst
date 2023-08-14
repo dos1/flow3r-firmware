@@ -17,6 +17,7 @@ Your flow3r badge should've come in a brown paper bag, in which you will find:
 7. A bag containg: 6 M3 screws, 6 plastic feet, an adhesive sheet, an allen (imbus) wrench, sandpaper
 8. A lanyard
 9. An instruction booklet
+10. A 3.5 mm aux cable (to be used for badgelink/badgenet)
 
 Prepare the top PCB
 -------------------
