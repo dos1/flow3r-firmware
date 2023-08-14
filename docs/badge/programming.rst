@@ -49,7 +49,7 @@ These are the tools we've tested and are known to work:
 
 In the rest of these docs we'll use mpremote. But you should be able to follow
 along with any of the aforementioned tools. If you are on Linux and your flow3r
-came up as ``/dev/ttyACM1``, add an ``a1`` after ``mprempote``.
+came up as ``/dev/ttyACM1``, add an ``a1`` after ``mpremote``.
 
 After connecting your badge and making sure it runs:
 
