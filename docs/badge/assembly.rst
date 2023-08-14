@@ -53,7 +53,7 @@ Prepare the bottom PCB
 ----------------------
 
 Put the top PCB aside and take the bottom PCB. It has two sides: the one with
-components is the side that will mate with the top PCB, 'though' the spacer.
+components is the side that will mate with the top PCB, 'through' the spacer.
 
 Take the battery and connect it to the battery connector on the bottom PCB.
 Route the cable through the notch on the PCB to the back of the board, where the
