@@ -11,6 +11,7 @@ Welcome to flow3r's documentation!
    :caption: The badge:
 
    badge/hardware_specs.rst
+   badge/assembly.rst
    badge/usage.rst
    badge/programming.rst
    badge/firmware.rst
