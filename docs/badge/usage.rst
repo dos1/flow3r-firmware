@@ -48,7 +48,7 @@ You can navigate to Badge |rarr| Nick to display your nick. If your nick is
 ``flow3r``, congratulations! You're ready to go. Otherwise, you'll have to
 connect your badge to a computer and edit a file to change your nick.
 
-From the main menu, navigate to System |rarr| Disk Mode (SD). Connect your badge
+From the main menu, navigate to System |rarr| Disk Mode (Flash). Connect your badge
 to a computer, and it will appear as a mass storage device (a.k.a. pendrive).
 Oen the file ```nick.json`` in a text editor and change your nick, the size of
 the font, and whatever else you wish.
