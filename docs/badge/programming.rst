@@ -39,7 +39,7 @@ These are the tools we've tested and are known to work:
 +---------------+-----------------------+
 | Tool          | Platforms             |
 +===============+=======================+
-| mpremote_     | Linux, macOS, Windows | 
+| mpremote_     | Linux, macOS, Windows |
 +---------------+-----------------------+
 | `Micro REPL`_ | Android               |
 +---------------+-----------------------+
@@ -68,10 +68,10 @@ firmware and break into a Python REPL (read-eval-print-loop) prompt:
 	Traceback (most recent call last):
 	  File "/flash/sys/main.py", line 254, in <module>
 	  [... snip ...]
-	KeyboardInterrupt: 
+	KeyboardInterrupt:
 	MicroPython c48f94151-dirty on 1980-01-01; badge23 with ESP32S3
 	Type "help()" for more information.
-	>>> 
+	>>>
 
 The badge's display will now switch to 'In REPL' to indicate that software
 execution has been interrupted and that the badge is waiting for a command over
@@ -110,7 +110,7 @@ You can also access the filesystem over the same Micropython serial port:
 	['flash']
 	>>> os.listdir('/flash/sys')
 	['main.py', 'st3m', '.sys-installed']
-	>>> 
+	>>>
 
 	$ mpremote ls :flash/sys
 	ls :flash/sys
