@@ -22,6 +22,8 @@ Your flow3r badge should've come in a brown paper bag, in which you will find:
 Prepare the top PCB
 -------------------
 
+Make sure the power switch of the badge is turned off (switch towards the badge center). Be careful with switch, it is not very sturdy and breaks easily.
+
 Disconnect the top (pink, smaller) and bottom (white, larger) PCBs. Put the
 bottom PCB aside for now.
 
