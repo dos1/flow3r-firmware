@@ -75,8 +75,24 @@ This is the SPI flash partition layout we use:
 | ``vfs``      | 12MiB  | FAT32 filesystem (with [#WL]_ layer). |
 +--------------+--------+---------------------------------------+
 
-Accessing files from a PC
+
+
+Setup USB access rules
 -------------------------
+
+.. warning::
+   **Did you set up USB access rules already?**
+
+   To let ``mpremote`` to work properly your user needs to have access rights to ttyACM.
+
+   Quick fix: ``sudo chmod a+rw /dev/ttyACM[Your Device Id here]```
+
+   More sustainable fix: Setup an systemd rule to automatically allow the logged in user to access ttyUSB
+
+	    1. To use this, add the following to /etc/udev/rules.d/60-extra-acl.rules: ``KERNEL=="ttyACM[0-9]*", TAG+="udev-acl", TAG+="uaccess"``
+	    2. Reload ``udevadm control --reload-rules && udevadm trigger``
+	
+
 
 If the badge is running correctly, you can access the filesystem over the micropython REPL, using tools like mpremote.
 
