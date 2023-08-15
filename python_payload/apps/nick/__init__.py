@@ -4,7 +4,7 @@ from st3m.goose import Dict, Any
 from st3m.input import InputState
 from ctx import Context
 import leds
-
+import st3m.run
 import json
 import math
 
@@ -87,3 +87,7 @@ class NickApp(Application):
         self._led += delta_ms / 45
         if self._led >= 40:
             self._led = 0
+
+
+if __name__ == "__main__":
+    st3m.run.run_view(NickApp(ApplicationContext()))
