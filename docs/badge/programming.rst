@@ -613,6 +613,13 @@ environment with the required packages:
     $ python3 -m venv venv
     $ venv/bin/pip install pygame wasmer wasmer-compiler-cranelift
 
+.. note::
+    The wasmer python module `doesn't work with Python versions 3.10 or 3.11
+    <https://github.com/wasmerio/wasmer-python/issues/539>`_, use Python 3.9
+    instead. You will get
+    ``ImportError: Wasmer is not available on this system`` when trying to run
+    the Simulator.
+
 *TODO: set up a pyproject/poetry/... file?*
 
 You can then run the simulator:
