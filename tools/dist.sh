@@ -59,8 +59,8 @@ down the right trigger) and selecting 'Disk Mode (SD)' from there.
 Now, with the badge connected to a computer, you should see a USB Mass Storage
 ('pendrive') appear. Copy flow3r.bin from this archive there.
 
-Then, stop disk mode, and from either the System menu or Recovery Mode, select
-'Flash Firmware Image', then flow3r.bin.
+Then, stop disk mode, and from the Recovery Mode (boot the badge with the right
+trigger pushed down), select 'Flash Firmware Image', then flow3r.bin.
 
 // Option 3: Update using esptool.py
 
