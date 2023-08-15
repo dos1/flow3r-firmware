@@ -60,7 +60,22 @@ After connecting your badge and making sure it runs:
 	Use Ctrl-] or Ctrl-x to exit this shell
 	[... logs here... ]
 
-The badge will continue to run. Now, if you press Ctrl-C, you will interrupt the
+The badge will continue to run.
+
+.. warning::
+   **Your flow3r is not showing up using Linux?**
+
+   To let ``mpremote`` to work properly your user needs to have access rights to ttyACM.
+
+   Quick fix: ``sudo chmod a+rw /dev/ttyACM[Your Device Id here]```
+
+   More sustainable fix: Setup an udev rule to automatically allow the logged in user to access ttyUSB
+
+	    1. To use this, add the following to /etc/udev/rules.d/60-extra-acl.rules: ``KERNEL=="ttyACM[0-9]*", TAG+="udev-acl", TAG+="uaccess"``
+	    2. Reload ``udevadm control --reload-rules && udevadm trigger``
+	
+
+Now, if you press Ctrl-C, you will interrupt the
 firmware and break into a Python REPL (read-eval-print-loop) prompt:
 
 ::
