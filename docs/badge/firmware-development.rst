@@ -50,7 +50,7 @@ To compile, see `Working on C st3m code`_.
 
 For running the simulator, you'll need Python 3 with pygame and wasmer:
 
-::
+A::
 
 	$ python3 -m venv venv
 	$ . venv/bin/activate
@@ -222,6 +222,14 @@ Writing Docs
 ------------
 
 Automatically updated on CI runs of the main branch and lives under https://docs.flow3r.garden.
+
+You will need ``sphinx`` and ``sphinx_rtd_theme`` installed. If you're not usinx Nix, install these via venv:
+
+::
+
+    $ python3 -m venv venv
+    $ venv/bin/pip install sphinx sphinx_rtd_theme
+    $ . venv/bin/activate
 
 To build the docs locally:
 
