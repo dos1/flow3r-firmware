@@ -576,10 +576,10 @@ Together with the Python code this file forms a so called bundle
     url = "https://git.flow3r.garden/you/mydemo"
 
 
-Save this as `flow3r.toml` together with the Python code as `__init__.py` in a folder (name doesn't matter)
-and put that folder into the `apps` folder on your flow3r (if there is no `apps` folder visible,
-there might be an `apps` folder in the `sys` folder). Restart the flow3r and it should pick up your
-new application.
+Save this as `flow3r.toml` together with the Python code as `__init__.py` in a
+folder (name doesn't matter) and put that folder into the ``/flash/sys/apps``
+folder on your flow3r (visible as ``sys/apps`` in `Disk Mode`_). Restart the
+flow3r and it should pick up your new application.
 
 Distributing applications
 -------------------------
