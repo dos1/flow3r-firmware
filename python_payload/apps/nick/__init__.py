@@ -1,6 +1,6 @@
 from st3m.application import Application, ApplicationContext
 from st3m.ui.colours import PUSH_RED, GO_GREEN, BLACK
-from st3m.goose import Dict, Any
+from st3m.goose import Dict, Any, Tuple
 from st3m.input import InputState
 from ctx import Context
 import leds
@@ -15,6 +15,7 @@ class Configuration:
         self.font: int = 5
         self.pronouns: list[str] = []
         self.pronouns_size: int = 25
+        self.color = "0x40ff22"
 
     @classmethod
     def load(cls, path: str) -> "Configuration":
@@ -46,6 +47,13 @@ class Configuration:
                 res.pronouns_size = int(data["pronouns_size"])
             if type(data["pronouns_size"]) == int:
                 res.pronouns_size = data["pronouns_size"]
+        if (
+            "color" in data
+            and type(data["color"]) == str
+            and data["color"][0:2] == "0x"
+            and len(data["color"]) == 8
+        ):
+            res.color = data["color"]
         return res
 
     def save(self, path: str) -> None:
@@ -55,11 +63,19 @@ class Configuration:
             "font": self.font,
             "pronouns": self.pronouns,
             "pronouns_size": self.pronouns_size,
+            "color": self.color,
         }
         jsondata = json.dumps(d)
         with open(path, "w") as f:
             f.write(jsondata)
             f.close()
+
+    def to_normalized_tuple(self) -> Tuple[float, float, float]:
+        return (
+            int(self.color[2:4], 16) / 255.0,
+            int(self.color[4:6], 16) / 255.0,
+            int(self.color[6:8], 16) / 255.0,
+        )
 
 
 class NickApp(Application):
@@ -80,7 +96,7 @@ class NickApp(Application):
         ctx.font = ctx.get_font_name(self._config.font)
 
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
-        ctx.rgb(*GO_GREEN)
+        ctx.rgb(*self._config.to_normalized_tuple())
 
         ctx.move_to(0, 0)
         ctx.save()
