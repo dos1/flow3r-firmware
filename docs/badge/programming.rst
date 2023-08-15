@@ -584,8 +584,9 @@ flow3r and it should pick up your new application.
 Distributing applications
 -------------------------
 
-*TODO*
+We have an "App Store" where you can submit your applications: https://flow3r.garden/apps/
 
+To add your application, follow the guide in this repository: https://git.flow3r.garden/flow3r/flow3r-apps
 
 Using the simulator
 -------------------
