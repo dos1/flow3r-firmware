@@ -77,22 +77,8 @@ This is the SPI flash partition layout we use:
 
 
 
-Setup USB access rules
+Accessing files from a PC
 -------------------------
-
-.. warning::
-   **Did you set up USB access rules already?**
-
-   To let ``mpremote`` to work properly your user needs to have access rights to ttyACM.
-
-   Quick fix: ``sudo chmod a+rw /dev/ttyACM[Your Device Id here]```
-
-   More sustainable fix: Setup an systemd rule to automatically allow the logged in user to access ttyUSB
-
-	    1. To use this, add the following to /etc/udev/rules.d/60-extra-acl.rules: ``KERNEL=="ttyACM[0-9]*", TAG+="udev-acl", TAG+="uaccess"``
-	    2. Reload ``udevadm control --reload-rules && udevadm trigger``
-	
-
 
 If the badge is running correctly, you can access the filesystem over the micropython REPL, using tools like mpremote.
 
@@ -114,6 +100,18 @@ If the badge is running correctly, you can access the filesystem over the microp
 	           0 st3m
 	           0 .sys-installed
 
+.. warning::
+   **Your flow3r is not showing up using Linux?**
+
+   To let ``mpremote`` to work properly your user needs to have access rights to ttyACM.
+
+   Quick fix: ``sudo chmod a+rw /dev/ttyACM[Your Device Id here]```
+
+   More sustainable fix: Setup an udev rule to automatically allow the logged in user to access ttyUSB
+
+	    1. To use this, add the following to /etc/udev/rules.d/60-extra-acl.rules: ``KERNEL=="ttyACM[0-9]*", TAG+="udev-acl", TAG+="uaccess"``
+	    2. Reload ``udevadm control --reload-rules && udevadm trigger``
+	
 
 You can also put the badge into :ref:`Disk Mode` to make it appear as a USB pendrive
 on your PC. However, only one of the two FAT32 block devices (internal flash
