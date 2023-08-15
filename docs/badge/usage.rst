@@ -53,9 +53,15 @@ to a computer, and it will appear as a mass storage device (a.k.a. pendrive).
 Open the file ```nick.json`` in a text editor and change your nick, the size of
 the font, and whatever else you wish.
 
+For the ``nick.json`` file to appear, you must have started the Nick app at
+least once.
+
 When you're done editing, unmount/eject the badge from your computer
 (``umount`` on Linux is enough) and press the left shoulder button to exit Disk
 Mode. Then, go to Badge |rarr| Nick to see your changes!
+
+If the ``nick.json`` file is unparseable or otherwise gets corrupted, it will be
+overwritten with the default contents on next nick app startup.
 
 Playing Music
 -------------
