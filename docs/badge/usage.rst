@@ -66,7 +66,7 @@ overwritten with the default contents on next nick app startup.
 Playing Music
 -------------
 
-We ship some noise-making apps by default:
+We ship some noise-making apps by default: 
 
 shoegaze
 ^^^^^^^^
@@ -76,19 +76,25 @@ shoegaze
 Otamatone
 ^^^^^^^^^
 
-*TODO*
+The highlighted blue petal makes noise.
 
 Simple Drums
 ^^^^^^^^^^^^
 
-*TODO*
+A simple gay step sequencer. Four groups of four steps, six insturments.
+
+Hold one of the four left petals to select one of the four groups of steps, then short-press one of the four right petals to toggle the state of the sequencer.
+
+Use the top petal to set BPM (tap a rhythm) or long-press to start/stop.
+
+Use the bottom petal to switch instruments.
 
 Melodic
 ^^^^^^^
 
-*TODO*
+Toy synthesizer. Bottom three petals select octave, Top 7 petals play a note from that octave.
 
 Harmonic
 ^^^^^^^^
 
-*TODO*
+Toy synthesizer. White petals select chord, pink petals play note.
