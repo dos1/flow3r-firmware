@@ -27,6 +27,7 @@
 #define CTX_ENABLE_FLOAT              0
 #define CTX_32BIT_SEGMENTS            0
 #define CTX_ENABLE_RGBA8              1
+#define CTX_ENABLE_RGB8               1
 #define CTX_ENABLE_RGB332             0
 #define CTX_ENABLE_GRAY1              0
 #define CTX_ENABLE_GRAY2              0
