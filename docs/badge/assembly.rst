@@ -12,7 +12,7 @@ Your flow3r badge should've come in a brown paper bag, in which you will find:
 2. A black plastic spacer
 3. A round LCD display
 4. A blue battery
-5. A metal batery cover
+5. A metal battery cover
 6. Two speakers
 7. A bag containg: 6 M3 screws, 6 plastic feet, an adhesive sheet, an allen (imbus) wrench, sandpaper
 8. A lanyard
