@@ -112,8 +112,8 @@ You can also access the filesystem over the same Micropython serial port:
 	['main.py', 'st3m', '.sys-installed']
 	>>>
 
-	$ mpremote ls :flash/sys
-	ls :flash/sys
+	$ mpremote ls :/flash/sys
+	ls :/flash/sys
 	           0 main.py
 	           0 st3m
 	           0 .sys-installed
