@@ -430,8 +430,10 @@ static mp_obj_t mp_ctx_get_font_name(mp_obj_t self_in, mp_obj_t no_in) {
     mp_ctx_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int no = mp_obj_get_int(no_in);
     const char *name = ctx_get_font_name(self->ctx, no);
-    if (name) return mp_obj_new_str(name, strlen(name));
-    return mp_const_none;
+    if (name)
+        return mp_obj_new_str(name, strlen(name));
+    else
+        mp_raise_ValueError("font with given index does not exist");
 }
 MP_DEFINE_CONST_FUN_OBJ_2(mp_ctx_get_font_name_obj, mp_ctx_get_font_name);
 
