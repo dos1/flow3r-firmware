@@ -240,3 +240,10 @@ class ShoegazeApp(Application):
         if self.blm is not None:
             self.blm.free = True  # yeeting the channel in the backend
         self.blm = None
+
+
+# For running with `mpremote run`:
+if __name__ == "__main__":
+    import st3m.run
+
+    st3m.run.run_view(ShoegazeApp(ApplicationContext()))

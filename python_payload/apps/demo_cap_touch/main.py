@@ -80,3 +80,10 @@ class CapTouchDemo(Application):
     #    log.info("Performing captouch autocalibration")
     #    captouch.calibration_request()
     #    self.last_calib = 50
+
+
+# For running with `mpremote run`:
+if __name__ == "__main__":
+    import st3m.run
+
+    st3m.run.run_view(CapTouchDemo(ApplicationContext()))

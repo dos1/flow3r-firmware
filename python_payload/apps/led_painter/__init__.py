@@ -194,6 +194,8 @@ class LEDPainter(Application):
             self.b = 255
 
 
-# if __name__ == '__main__':
-#     # Continue to make runnable via mpremote run.
-#     st3m.run.run_view(LEDPainter(ApplicationContext()))
+# For running with `mpremote run`:
+if __name__ == "__main__":
+    import st3m.run
+
+    st3m.run.run_view(LEDPainter(ApplicationContext()))

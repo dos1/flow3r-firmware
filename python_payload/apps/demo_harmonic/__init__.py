@@ -79,3 +79,10 @@ class HarmonicApp(Application):
                     k = int(i / 2)
                     self.synths[k].signals.trigger.stop()
         self.cp_prev = cts
+
+
+# For running with `mpremote run`:
+if __name__ == "__main__":
+    import st3m.run
+
+    st3m.run.run_view(HarmonicApp(ApplicationContext()))

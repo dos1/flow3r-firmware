@@ -70,3 +70,10 @@ class ScrollDemo(Application):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
         self.scroll.update(self.input.captouch.petals[self.PETAL_NO].gesture, delta_ms)
+
+
+# For running with `mpremote run`:
+if __name__ == "__main__":
+    import st3m.run
+
+    st3m.run.run_view(ScrollDemo(ApplicationContext()))

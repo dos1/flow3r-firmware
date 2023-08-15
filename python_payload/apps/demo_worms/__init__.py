@@ -140,3 +140,10 @@ class Worm:
             self.direction = -math.atan2(dy, dx)
             self.mutate()
         self._lastdist = dist
+
+
+# For running with `mpremote run`:
+if __name__ == "__main__":
+    import st3m.run
+
+    st3m.run.run_view(AppWorms(ApplicationContext()))

@@ -37,3 +37,10 @@ class IMUDemo(Application):
         else:
             self.v_x = 0
             self.v_y = 0
+
+
+# For running with `mpremote run`:
+if __name__ == "__main__":
+    import st3m.run
+
+    st3m.run.run_view(IMUDemo(ApplicationContext()))

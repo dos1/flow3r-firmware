@@ -4,7 +4,6 @@ from st3m.goose import Dict, Any
 from st3m.input import InputState
 from ctx import Context
 import leds
-import st3m.run
 import json
 import math
 
@@ -89,5 +88,8 @@ class NickApp(Application):
             self._led = 0
 
 
+# For running with `mpremote run`:
 if __name__ == "__main__":
+    import st3m.run
+
     st3m.run.run_view(NickApp(ApplicationContext()))
