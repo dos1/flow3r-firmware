@@ -41,17 +41,20 @@ You can plug in a pair of headphones to the 3.5mm jack on the bottom-left petal.
 The built-in speakers will then turn off and audio will go out through the
 headphones. You can adjust their volume in the same way.
 
-Showing your nick
------------------
+Showing your nick and pronouns
+------------------------------
 
-You can navigate to Badge |rarr| Nick to display your nick. If your nick is
-``flow3r``, congratulations! You're ready to go. Otherwise, you'll have to
-connect your badge to a computer and edit a file to change your nick.
+You can navigate to Badge |rarr| Nick to display your nick and pronouns. If
+your nick is ``flow3r``, and you have no pronouns, congratulations! You're
+ready to go. Otherwise, you'll have to connect your badge to a computer and
+edit a file to change your nick and pronouns.
 
-From the main menu, navigate to System |rarr| Disk Mode (Flash). Connect your badge
-to a computer, and it will appear as a mass storage device (a.k.a. pendrive).
-Open the file ```nick.json`` in a text editor and change your nick, the size of
-the font, and whatever else you wish.
+From the main menu, navigate to System |rarr| Disk Mode (Flash). Connect your
+badge to a computer, and it will appear as a mass storage device (a.k.a.
+pendrive). Open the file ```nick.json`` in a text editor and change your nick,
+pronouns, font sizes for nick and pronouns, and whatever else you wish. Please
+note that ``pronouns`` is a list, and should be formatted as such. for example:
+``"pronouns": ["aa/bb", "cc/dd"],``
 
 For the ``nick.json`` file to appear, you must have started the Nick app at
 least once.
