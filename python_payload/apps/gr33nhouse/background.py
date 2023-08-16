@@ -28,7 +28,7 @@ class Flow3rView(BaseView):
             c.y += (10 * delta_ms / 1000.0) * 200 / c.z
             if c.y > 300:
                 c.y = -300
-            c.rot += delta_ms * c.rot_speed
+            c.rot += float(delta_ms) * c.rot_speed
         self.flowers = sorted(self.flowers, key=lambda c: -c.z)
 
     def draw(self, ctx: Context) -> None:
@@ -47,10 +47,10 @@ class Flower:
         self.x = x
         self.y = y
         self.z = z
-        self.rot = 0
+        self.rot = 0.0
         self.rot_speed = (((random.getrandbits(16) - 32767) / 32767.0) - 0.5) / 800
 
-    def draw(self, ctx: Context):
+    def draw(self, ctx: Context) -> None:
         ctx.save()
         ctx.translate(-78 + self.x, -70 + self.y)
         ctx.translate(50, 40)
