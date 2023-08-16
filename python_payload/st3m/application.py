@@ -20,13 +20,20 @@ log = Log(__name__)
 
 class ApplicationContext:
     """
-    Container for future application context.
+    Container for application context.
 
-    Envisioned are: path to the bundle, bundle data,
+    Further envisioned are: path to bundle data,
     path to a data directory, etc...
     """
 
-    pass
+    _bundle_path: str
+
+    def __init__(self, bundle_path: str = "") -> None:
+        self._bundle_path = bundle_path
+
+    @property
+    def bundle_path(self) -> str:
+        return self._bundle_path
 
 
 class Application(BaseView):
@@ -152,7 +159,7 @@ class BundleMetadata:
             log.info(f"Loaded {self.name} module: {m}")
             klass = getattr(m, class_entry)
             log.info(f"Loaded {self.name} class: {klass}")
-            inst = klass(ApplicationContext())
+            inst = klass(ApplicationContext(self.path))
             log.info(f"Instantiated {self.name} class: {inst}")
             return inst  # type: ignore
         except Exception as e:
