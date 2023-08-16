@@ -13,7 +13,7 @@ from st3m.ui.view import View, ViewManager, ViewTransitionBlend
 from st3m.ui.elements.menus import SimpleMenu, SunMenu
 from st3m.application import discover_bundles, BundleMetadata
 from st3m.about import About
-from st3m import settings, logging, processors
+from st3m import settings, logging, processors, wifi
 
 import captouch, audio, leds, gc
 import os
@@ -35,6 +35,9 @@ def _make_reactor() -> Reactor:
 
     settings.onoff_button_swap.subscribe(_onoff_button_swap_update)
     _onoff_button_swap_update()
+
+    settings.onoff_camp_wifi.subscribe(wifi._onoff_camp_wifi_update)
+    wifi._onoff_camp_wifi_update()
     return reactor
 
 
