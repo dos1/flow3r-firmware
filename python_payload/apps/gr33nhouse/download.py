@@ -1,8 +1,8 @@
-import network
 from st3m.input import InputState
+from st3m.goose import Optional
 import urequests
 import gzip
-import utarfile
+from utarfile import TarFile, DIRTYPE
 import io
 import os
 from st3m.ui.view import BaseView
@@ -10,6 +10,8 @@ from ctx import Context
 
 
 class DownloadView(BaseView):
+    response: Optional[urequests.Response]
+
     def __init__(self, url: str) -> None:
         super().__init__()
         self._state = 1
@@ -38,7 +40,8 @@ class DownloadView(BaseView):
             try:
                 print("Getting it")
                 self.response = urequests.get(self._url)
-                if self.response.content is not None:
+
+                if self.response is not None and self.response.content is not None:
                     print("Got something")
                     self._state = 3
                     return
@@ -49,12 +52,15 @@ class DownloadView(BaseView):
             self._try += 1
 
         elif self._state == 4:
+            if self.response is None:
+                raise RuntimeError("response is None")
+
             tar = gzip.decompress(self.response.content)
             self.response = None
-            t = utarfile.TarFile(fileobj=io.BytesIO(tar))
+            t = TarFile(fileobj=io.BytesIO(tar))
             for i in t:
                 print(i.name)
-                if i.type == utarfile.DIRTYPE:
+                if i.type == DIRTYPE:
                     print("dirtype")
                     dirname = "/flash/sys/apps/" + i.name
                     if not os.path.exists(dirname):
@@ -69,4 +75,7 @@ class DownloadView(BaseView):
                     with open(filename, "wb") as of:
                         of.write(f.read())
             self._state = 5
+
+            if self.vm is None:
+                raise RuntimeError("vm is None")
             self.vm.pop()

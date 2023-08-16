@@ -1,4 +1,4 @@
-from st3m.goose import Optional, Enum
+from st3m.goose import Optional, Enum, Any
 from st3m.input import InputController, InputState
 from st3m.ui import colours
 from st3m.ui.view import BaseView, ViewManager
@@ -20,7 +20,7 @@ class AppList(BaseView):
     initial_ticks: int = 0
     _state: ViewState = ViewState.INITIAL
 
-    apps: list[any] = []
+    apps: list[Any] = []
     selection: int = 0
 
     input: InputController
@@ -153,13 +153,13 @@ class AppList(BaseView):
                 self.selection += 1
 
         elif self.input.buttons.app.middle.pressed:
-            print(f"state {self._state}")
-            print(f">> {self.apps[self.selection]}")
+            if self.vm is None:
+                raise RuntimeError("vm is None")
+
             app = self.apps[self.selection]
             url = app["tarDownloadUrl"]
             name = app["name"]
             author = app["author"]
-            # self.vm.push(DownloadView(url))
             self.vm.push(
                 ConfirmationView(
                     url=url,

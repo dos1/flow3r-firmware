@@ -62,6 +62,9 @@ class Gr33nhouseApp(Application):
         ctx.restore()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
+        if self.vm is None:
+            raise RuntimeError("vm is None")
+
         self.background.think(ins, delta_ms)
         self.input.think(ins, delta_ms)
 
