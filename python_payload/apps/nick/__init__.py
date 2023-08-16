@@ -16,6 +16,7 @@ class Configuration:
         self.pronouns: list[str] = []
         self.pronouns_size: int = 25
         self.color = "0x40ff22"
+        self.mode = 0
 
     @classmethod
     def load(cls, path: str) -> "Configuration":
@@ -54,6 +55,11 @@ class Configuration:
             and len(data["color"]) == 8
         ):
             res.color = data["color"]
+        if "mode" in data:
+            if type(data["mode"]) == float:
+                res.mode = int(data["mode"])
+            if type(data["mode"]) == int:
+                res.mode = data["mode"]
         return res
 
     def save(self, path: str) -> None:
@@ -88,6 +94,7 @@ class NickApp(Application):
         self._filename = "/flash/nick.json"
         self._config = Configuration.load(self._filename)
         self._pronouns_serialized = " ".join(self._config.pronouns)
+        self._angle = 0.0
 
     def draw(self, ctx: Context) -> None:
         ctx.text_align = ctx.CENTER
@@ -100,7 +107,10 @@ class NickApp(Application):
 
         ctx.move_to(0, 0)
         ctx.save()
-        ctx.scale(self._scale_name, 1)
+        if self._config.mode == 0:
+            ctx.scale(self._scale_name, 1)
+        elif self._config.mode == 1:
+            ctx.rotate(self._angle)
         ctx.text(self._config.name)
         ctx.restore()
 
@@ -108,7 +118,10 @@ class NickApp(Application):
             ctx.move_to(0, -60)
             ctx.font_size = self._config.pronouns_size
             ctx.save()
-            ctx.scale(1, self._scale_pronouns)
+            if self._config.mode == 0:
+                ctx.scale(self._scale_pronouns, 1)
+            elif self._config.mode == 1:
+                ctx.rotate(self._angle)
             ctx.text(self._pronouns_serialized)
             ctx.restore()
 
@@ -126,6 +139,13 @@ class NickApp(Application):
         self._phase += delta_ms / 1000
         self._scale_name = math.sin(self._phase)
         self._scale_pronouns = math.cos(self._phase)
+
+        iy = ins.imu.acc[0] * delta_ms / 10.0
+        ix = ins.imu.acc[1] * delta_ms / 10.0
+        ang = math.atan2(ix, iy)
+        d_ang = self._angle + (ang + math.pi / 8 * math.sin(self._phase))
+        self._angle -= d_ang / 20
+
         self._led += delta_ms / 45
         if self._led >= 40:
             self._led = 0

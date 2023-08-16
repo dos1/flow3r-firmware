@@ -61,6 +61,8 @@ least once.
 
 Use ``"color": "0xffffff",`` to color your name and pronouns.
 
+Use ``"mode": "1",`` to use a different animation mode rotating your nick based on badge orientation.
+
 When you're done editing, unmount/eject the badge from your computer
 (``umount`` on Linux is enough) and press the left shoulder button to exit Disk
 Mode. Then, go to Badge |rarr| Nick to see your changes!
