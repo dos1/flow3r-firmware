@@ -320,13 +320,25 @@ def load_all() -> None:
         setting.load(data)
 
 
+def _update(d: Dict[str, Any], u: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Recursive update dictionary.
+    """
+    for k, v in u.items():
+        if type(v) == type({}):
+            d[k] = _update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
+
+
 def save_all() -> None:
     """
     Save all settings to flash.
     """
-    res = {}
+    res: Dict[str, Any] = {}
     for setting in all_settings:
-        res.update(setting.save())
+        res = _update(res, setting.save())
     try:
         with open("/flash/settings.json", "w") as f:
             json.dump(res, f)
