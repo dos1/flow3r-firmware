@@ -1,6 +1,6 @@
 [app]
 name = "Get Apps"
-menu = "Apps"
+menu = "Hidden"
 
 [entry]
 class = "Gr33nhouseApp"
