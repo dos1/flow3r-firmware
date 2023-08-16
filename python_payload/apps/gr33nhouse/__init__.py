@@ -10,7 +10,7 @@ from .manual import ManualInputView
 
 
 class Gr33nhouseApp(Application):
-    items = ["Browse apps", "Record App Seed", "Enter App Seed"]
+    items = ["Browse apps", "Record flow3r seed", "Enter flow3r seed"]
     selection = 0
 
     input: InputController
