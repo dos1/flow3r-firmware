@@ -107,6 +107,7 @@ set(IDF_COMPONENTS
     heap
     log
     lwip
+    mbedtls
     newlib
     nvs_flash
     sdmmc
