@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -e -u
 
 if [ ! -f sdkconfig.defaults ] || [ ! -f recovery/sdkconfig.defaults ]; then
     echo >/dev/stderr "Run this script for the root of the repository (ie. tools/mypy.sh)."
@@ -28,7 +28,7 @@ _mypy python_payload/main.py
 for f in python_payload/apps/*/flow3r.toml; do
     app_name="$(basename $(dirname $f))"
     echo "Checking ${app_name}..."
-    _mypy python_payload/apps/${app}
+    _mypy python_payload/apps/${app_name}
 done
 
 if [ $failed ]; then
