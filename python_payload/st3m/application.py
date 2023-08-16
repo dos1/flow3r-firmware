@@ -121,7 +121,7 @@ class BundleMetadata:
         if "menu" not in app or type(app["menu"]) != str:
             raise BundleMetadataBroken("missing app.menu key")
         self.menu = app["menu"]
-        if self.menu not in ["Apps", "Music", "Badge"]:
+        if self.menu not in ["Apps", "Music", "Badge", "Hidden"]:
             raise BundleMetadataBroken("app.menu must be either Apps, Music or Badge")
 
         self._t = t
