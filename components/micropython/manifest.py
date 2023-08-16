@@ -1,4 +1,6 @@
 include("vendor/ports/esp32/boards")
 include("vendor/lib/micropython-lib/python-stdlib/os-path")
 include("vendor/lib/micropython-lib/python-stdlib/stat")
+include("vendor/lib/micropython-lib/python-stdlib/gzip")
+include("vendor/lib/micropython-lib/micropython/utarfile")
 include("frozen")
