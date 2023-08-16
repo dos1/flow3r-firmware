@@ -1,7 +1,7 @@
 from st3m.application import Application, ApplicationContext
 #from st3m.property import PUSH_RED, GO_GREEN, BLACK
 from st3m.goose import Dict, Any
-from st3m.input import InputState
+import st3m
 from ctx import Context
 import leds
 #import hardware
@@ -18,6 +18,12 @@ from st3m.ui.view import View, ViewManager, ViewTransitionBlend
 from st3m.reactor import Reactor, Responder
 from st3m.ui.elements import overlays
 from st3m import settings, logging, processors
+
+from st3m.ui.colours import BLUE, WHITE
+from st3m.goose import Optional, Tuple
+from st3m.utils import xy_from_polar
+from st3m.input import InputController, InputState
+from st3m.utils import tau
 
 import json
 import math
@@ -221,14 +227,8 @@ class NickApp(Application):
                 settings.append(ActionableMenuItem(x+": "+str(mine.__dict__[x])))
         self._menu=LessSimpleMenu(settings)
 
-        vm = ViewManager(ViewTransitionBlend())
-        vm.push(self._menu)
-        reactor = Reactor()
-        compositor = overlays.Compositor(vm)
-
-        top = processors.ProcessorMidldeware(compositor)
-        reactor.set_top(top)
-        reactor.run()
+        st3m.run.run_view(self._menu)
+#        self._vm.push(self._menu)
 
 
     def draw(self, ctx: Context) -> None:
