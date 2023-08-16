@@ -293,10 +293,12 @@ class SettingsMenu(SimpleMenu):
 
 
 # Actual tunables / settings.
+onoff_camp_wifi = OnOffTunable("Connect Camp WiFi", "system.camp_wifi_enabled", False)
 onoff_button_swap = OnOffTunable("Swap Buttons", "system.swap_buttons", False)
 onoff_debug = OnOffTunable("Debug Overlay", "system.debug", False)
 onoff_debug_touch = OnOffTunable("Touch Overlay", "system.debug_touch", False)
 all_settings: List[UnaryTunable] = [
+    onoff_camp_wifi,
     onoff_button_swap,
     onoff_debug,
     onoff_debug_touch,
