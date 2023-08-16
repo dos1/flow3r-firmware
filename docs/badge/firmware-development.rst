@@ -34,7 +34,7 @@ If you've already cloned without ``--recursive`` you can update your submodules 
 Dependencies
 ------------
 
-If you're using Nix(OS), just run ``nix-shell nix/shell.nix``.
+If you're using Nix(OS), just run ``nix-shell nix/shell.nix``. There is also a flake available for ``nix develop``.
 
 On other Linux-based distributions, you will have to manually install ESP-IDF alongside our custom patches (note that install.sh installs stuff to your $HOME so that you may want to use a container or nix):
 

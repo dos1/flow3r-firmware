@@ -45,6 +45,7 @@ stdenv.mkDerivation rec {
     description = "Espressif LLVM/Clang fork binary build";
     homepage = "https://docs.espressif.com/projects/esp-idf/en/stable/get-started/linux-setup.html";
     license = licenses.gpl3;
+    priority = -23;
   };
 }
 

@@ -18,3 +18,9 @@ __pycache__
 
 # sphinx
 docs/_build/
+
+# direnv
+.direnv
+
+# nix
+result*
