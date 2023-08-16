@@ -11,7 +11,7 @@ from st3m.ui.menu import (
 from st3m.ui.elements import overlays
 from st3m.ui.view import View, ViewManager, ViewTransitionBlend
 from st3m.ui.elements.menus import SimpleMenu, SunMenu
-from st3m.application import discover_bundles, BundleMetadata
+from st3m.application import discover_bundles, BundleMetadata, MenuItemAppLaunch
 from st3m.about import About
 from st3m import settings, logging, processors, wifi
 
@@ -139,6 +139,7 @@ def run_main() -> None:
             MenuItemAction("Disk Mode (SD)", machine.disk_mode_sd),
             MenuItemLaunchPersistentView("About", About),
             MenuItemAction("Yeet Local Changes", _yeet_local_changes),
+            MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/clouds")),
             MenuItemAction("Reboot", machine.reset),
         ],
     )
