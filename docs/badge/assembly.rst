@@ -61,9 +61,19 @@ Take the battery and connect it to the battery connector on the bottom PCB.
 Route the cable through the notch on the PCB to the back of the board, where the
 battery will live.
 
+Option A Direct Attachment:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Take a round piece of adhesive from the adhesive sheet and use it to glue the
 battery to the back. Use the metal battery cover to make sure the battery is in
-the right spot of the back of the PCB.
+the right spot on the back of the PCB.
+
+Option B Replaceable Attachment:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Take a round piece of adhesive from the adhesive sheet and use it to glue the
+battery to the metal battery cover. Make sure the battery is oriented correctly
+for the assembly of the cover.
 
 Mating the PCBs
 ---------------
