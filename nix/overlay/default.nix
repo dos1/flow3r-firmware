@@ -5,4 +5,5 @@
   esp-llvm = super.callPackage ./esp-llvm.nix {};
   esp-gdb = super.callPackage ./esp-gdb.nix {};
   run-clang-tidy = super.callPackage ./run-clang-tidy {};
+  mpremote = super.python310Packages.callPackage ./mpremote {};
 })

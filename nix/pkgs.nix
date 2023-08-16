@@ -35,5 +35,6 @@ in with nixpkgs; rec {
     emscripten
     ncurses5
     esp-gdb
+    mpremote
   ];
 }
