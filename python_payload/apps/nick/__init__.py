@@ -70,6 +70,7 @@ class Configuration:
             "pronouns": self.pronouns,
             "pronouns_size": self.pronouns_size,
             "color": self.color,
+            "mode": self.mode,
         }
         jsondata = json.dumps(d)
         with open(path, "w") as f:
