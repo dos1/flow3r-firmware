@@ -1,6 +1,7 @@
 from st3m.goose import Enum
 from st3m.application import Application, ApplicationContext
 from st3m.input import InputController, InputState
+from st3m.ui.interactions import ScrollController
 from st3m.ui import colours
 from st3m.ui.view import ViewManager
 from ctx import Context
@@ -18,7 +19,6 @@ class ViewState(Enum):
 
 class Gr33nhouseApp(Application):
     items = ["Browse apps", "Record flow3r seed", "Enter flow3r seed"]
-    selection = 0
 
     input: InputController
     background: Flow3rView
@@ -29,6 +29,8 @@ class Gr33nhouseApp(Application):
 
         self.input = InputController()
         self.background = Flow3rView()
+        self._sc = ScrollController()
+        self._sc.set_item_count(3)
 
         self.state = ViewState.CONTENT
 
@@ -76,7 +78,7 @@ class Gr33nhouseApp(Application):
             30.0,
         ).fill()
 
-        ctx.translate(0, -30 * self.selection)
+        ctx.translate(0, -30 * self._sc.current_position())
 
         offset = 0
 
@@ -86,7 +88,7 @@ class Gr33nhouseApp(Application):
         ctx.text_baseline = ctx.MIDDLE
 
         for idx, item in enumerate(self.items):
-            if idx == self.selection:
+            if idx == self._sc.target_position():
                 ctx.gray(0.0)
             else:
                 ctx.gray(1.0)
@@ -99,6 +101,7 @@ class Gr33nhouseApp(Application):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.input.think(ins, delta_ms)
+        self._sc.think(ins, delta_ms)
 
         if self.vm is None:
             raise RuntimeError("vm is None")
@@ -112,17 +115,14 @@ class Gr33nhouseApp(Application):
         self.background.think(ins, delta_ms)
 
         if self.input.buttons.app.left.pressed:
-            if self.selection > 0:
-                self.selection -= 1
-
+            self._sc.scroll_left()
         elif self.input.buttons.app.right.pressed:
-            if self.selection < len(self.items) - 1:
-                self.selection += 1
-
+            self._sc.scroll_right()
         elif self.input.buttons.app.middle.pressed:
-            if self.selection == 0:
+            pos = self._sc.target_position()
+            if pos == 0:
                 self.vm.push(AppList())
-            elif self.selection == 1:
+            elif pos == 1:
                 self.vm.push(RecordView())
-            elif self.selection == 2:
+            elif pos == 2:
                 self.vm.push(ManualInputView())

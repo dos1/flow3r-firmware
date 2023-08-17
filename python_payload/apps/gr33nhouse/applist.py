@@ -2,6 +2,7 @@ from st3m.goose import Optional, Enum, Any
 from st3m.input import InputController, InputState
 from st3m.ui import colours
 from st3m.ui.view import BaseView, ViewManager
+from st3m.ui.interactions import ScrollController
 from ctx import Context
 import urequests
 import time
@@ -21,7 +22,6 @@ class AppList(BaseView):
     _state: ViewState = ViewState.INITIAL
 
     apps: list[Any] = []
-    selection: int = 0
 
     input: InputController
     background: Flow3rView
@@ -30,6 +30,7 @@ class AppList(BaseView):
         self.input = InputController()
         self.vm = None
         self.background = Flow3rView()
+        self._sc = ScrollController()
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         self.vm = vm
@@ -89,7 +90,7 @@ class AppList(BaseView):
                 30.0,
             ).fill()
 
-            ctx.translate(0, -30 * self.selection)
+            ctx.translate(0, -30 * self._sc.current_position())
 
             offset = 0
 
@@ -100,7 +101,7 @@ class AppList(BaseView):
 
             ctx.move_to(0, 0)
             for idx, app in enumerate(self.apps):
-                if idx == self.selection:
+                if idx == self._sc.target_position():
                     ctx.gray(0.0)
                 else:
                     ctx.gray(1.0)
@@ -114,6 +115,7 @@ class AppList(BaseView):
             raise RuntimeError(f"Invalid view state {self._state}")
 
     def think(self, ins: InputState, delta_ms: int) -> None:
+        self._sc.think(ins, delta_ms)
         if self.initial_ticks == 0 or time.ticks_ms() < self.initial_ticks + 300:
             return
 
@@ -132,6 +134,7 @@ class AppList(BaseView):
                     return
 
                 self._state = ViewState.LOADED
+                self._sc.set_item_count(len(self.apps))
                 print("App list loaded")
             except Exception as e:
                 print(f"Load failed: {e}")
@@ -145,18 +148,14 @@ class AppList(BaseView):
         self.background.think(ins, delta_ms)
 
         if self.input.buttons.app.left.pressed:
-            if self.selection > 0:
-                self.selection -= 1
-
+            self._sc.scroll_left()
         elif self.input.buttons.app.right.pressed:
-            if self.selection < len(self.apps) - 1:
-                self.selection += 1
-
+            self._sc.scroll_right()
         elif self.input.buttons.app.middle.pressed:
             if self.vm is None:
                 raise RuntimeError("vm is None")
 
-            app = self.apps[self.selection]
+            app = self.apps[self._sc.target_position()]
             url = app["tarDownloadUrl"]
             name = app["name"]
             author = app["author"]
