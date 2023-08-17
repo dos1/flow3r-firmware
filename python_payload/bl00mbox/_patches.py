@@ -105,7 +105,9 @@ class sampler(_Patch):
 
     def __init__(self, chan, filename):
         super().__init__(chan)
-        if filename.startswith("/"):
+        if filename.startswith("/flash/") or filename.startswith("/sd/"):
+            f = wave.open(filename, "r")
+        elif filename.startswith("/"):
             f = wave.open("/flash/" + filename, "r")
         else:
             f = wave.open("/flash/sys/samples/" + filename, "r")
