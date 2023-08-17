@@ -6,10 +6,10 @@ class WLAN:
         pass
 
     def active(self, active):
-        return False
+        return True
 
     def connect(self, ssid, key=None):
         pass
 
     def isconnected(self):
-        return False
+        return True

@@ -30,7 +30,7 @@ class UnderscoreFinder(importlib.abc.MetaPathFinder):
             return self.builtin.find_spec("time", path, target)
         if fullname in ["random", "math"]:
             return self.builtin.find_spec(fullname, path, target)
-        if fullname in ["json"]:
+        if fullname in ["json", "tarfile"]:
             sys_path_saved = sys.path
             sys.path = sys_path_orig
             res = self.pathfinder.find_spec(fullname, path, target)

@@ -170,8 +170,20 @@ class Context:
         self._emit(f"moveTo {int(x)} {int(y)}")
         return self
 
+    def curve_to(self, a, b, c, d, e, f):
+        self._emit(f"curveTo {int(a)} {int(b)} {int(c)} {int(d)}")
+        return self
+
     def rel_move_to(self, x, y):
         self._emit(f"relMoveTo {int(x)} {int(y)}")
+        return self
+
+    def rel_curve_to(self, a, b, c, d, e, f):
+        self._emit(f"relCurveTo {int(a)} {int(b)} {int(c)} {int(d)}")
+        return self
+
+    def close_path(self):
+        self._emit(f"closePath")
         return self
 
     def translate(self, x, y):
