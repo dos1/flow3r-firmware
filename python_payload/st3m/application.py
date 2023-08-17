@@ -6,7 +6,7 @@ from st3m.ui.view import (
 )
 from st3m.ui.menu import MenuItem
 from st3m.input import InputState
-from st3m.goose import Optional, List, Enum
+from st3m.goose import Optional, List, Enum, Dict
 from st3m.logging import Log
 
 import toml
@@ -97,7 +97,7 @@ class BundleMetadata:
     This data is used to discover bundles and load them as applications.
     """
 
-    __slots__ = ["path", "name", "menu", "_t"]
+    __slots__ = ["path", "name", "menu", "_t", "version"]
 
     def __init__(self, path: str) -> None:
         self.path = path.rstrip("/")
@@ -125,6 +125,11 @@ class BundleMetadata:
         self.menu = app["menu"]
         if self.menu not in ["Apps", "Music", "Badge", "Hidden"]:
             raise BundleMetadataBroken("app.menu must be either Apps, Music or Badge")
+
+        version = 0
+        if t.get("metadata") is not None:
+            version = t["metadata"].get("version", 0)
+        self.version = version
 
         self._t = t
 
@@ -193,8 +198,16 @@ class BundleMetadata:
             return []
         return [MenuItemAppLaunch(self)]
 
+    @property
+    def source(self) -> str:
+        return os.path.dirname(self.path)
+
+    @property
+    def id(self) -> str:
+        return os.path.basename(self.path)
+
     def __repr__(self) -> str:
-        return f"<BundleMetadata: {self.name} at {self.path}>"
+        return f"<BundleMetadata: {self.id} at {self.path}>"
 
 
 class MenuItemAppLaunch(MenuItem):
@@ -224,6 +237,80 @@ class MenuItemAppLaunch(MenuItem):
 
     def label(self) -> str:
         return self._bundle.name
+
+
+class BundleManager:
+    """
+    The BundleManager maintains information about BundleMetadata at different
+    locations in the badge filesystem.
+
+    It also manages updating/reloading bundles.
+    """
+
+    def __init__(self) -> None:
+        self.bundles: Dict[str, BundleMetadata] = {}
+
+    @staticmethod
+    def _source_trumps(a: str, b: str) -> bool:
+        prios = {
+            "/flash/sys/apps": 200,
+            "/sd/apps": 120,
+            "/flash/apps": 100,
+        }
+        prio_a = prios.get(a, 0)
+        prio_b = prios.get(b, 0)
+        return prio_a > prio_b
+
+    def _discover_at(self, path: str) -> None:
+        path = path.rstrip("/")
+        try:
+            l = os.listdir(path)
+        except Exception as e:
+            log.warning(f"Could not discover bundles in {path}: {e}")
+            l = []
+
+        for d in l:
+            dirpath = path + "/" + d
+            st = os.stat(dirpath)
+            if not stat.S_ISDIR(st[0]):
+                continue
+
+            tomlpath = dirpath + "/flow3r.toml"
+            try:
+                st = os.stat(tomlpath)
+                if not stat.S_ISREG(st[0]):
+                    continue
+            except Exception:
+                continue
+
+            try:
+                b = BundleMetadata(dirpath)
+            except BundleLoadException as e:
+                log.error(f"Failed to bundle from {dirpath}: {e}")
+                continue
+
+            id_ = b.id
+            if id_ not in self.bundles:
+                self.bundles[id_] = b
+                continue
+            ex = self.bundles[id_]
+
+            # Do we have a newer version?
+            if b.version > ex.version:
+                self.bundles[id_] = b
+                continue
+            # Do we have a higher priority source?
+            if self._source_trumps(b.source, ex.source):
+                self.bundles[id_] = b
+                continue
+            log.warning(
+                f"Ignoring {id_} at {b.source} as it already exists at {ex.source}"
+            )
+
+    def update(self) -> None:
+        self._discover_at("/flash/sys/apps")
+        self._discover_at("/flash/apps")
+        self._discover_at("/sd/apps")
 
 
 def discover_bundles(path: str) -> List[BundleMetadata]:

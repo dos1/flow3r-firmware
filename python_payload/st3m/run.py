@@ -11,7 +11,7 @@ from st3m.ui.menu import (
 from st3m.ui.elements import overlays
 from st3m.ui.view import View, ViewManager, ViewTransitionBlend
 from st3m.ui.elements.menus import SimpleMenu, SunMenu
-from st3m.application import discover_bundles, BundleMetadata, MenuItemAppLaunch
+from st3m.application import BundleManager, BundleMetadata, MenuItemAppLaunch
 from st3m.about import About
 from st3m import settings, logging, processors, wifi
 
@@ -52,9 +52,11 @@ def run_responder(r: Responder) -> None:
     reactor.run()
 
 
-def _make_bundle_menu(bundles: List[BundleMetadata], kind: str) -> SimpleMenu:
+def _make_bundle_menu(mgr: BundleManager, kind: str) -> SimpleMenu:
     entries: List[MenuItem] = [MenuItemBack()]
-    for bundle in bundles:
+    ids = sorted(mgr.bundles.keys())
+    for id in ids:
+        bundle = mgr.bundles[id]
         entries += bundle.menu_entries(kind)
     return SimpleMenu(entries)
 
@@ -127,7 +129,8 @@ def run_main() -> None:
     audio.set_volume_dB(-10)
     leds.set_rgb(0, 255, 0, 0)
     leds.update()
-    bundles = discover_bundles("/flash/sys/apps")
+    bundles = BundleManager()
+    bundles.update()
 
     settings.load_all()
     menu_settings = settings.build_menu()
@@ -152,8 +155,7 @@ def run_main() -> None:
         ],
     )
     if override_main_app is not None:
-        requested = [b for b in bundles if b.name == override_main_app]
-        print([b.name for b in bundles])
+        requested = [b for b in bundles.bundles.values() if b.name == override_main_app]
         if len(requested) > 1:
             raise Exception(f"More than one bundle named {override_main_app}")
         if len(requested) == 0:
