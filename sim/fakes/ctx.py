@@ -297,6 +297,7 @@ class Context:
             "Camp Font 2",
             "Camp Font 3",
             "Material Icons",
+            "Comic Mono",
         ][i]
 
     def scope(self):
