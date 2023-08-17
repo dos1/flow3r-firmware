@@ -108,6 +108,8 @@ class BundleMetadata:
 
         try:
             t = toml.load(f)
+        except toml.TomlDecodeError as e:
+            raise BundleMetadataCorrupt(str(e))
         except Exception as e:
             raise BundleMetadataCorrupt(str(e))
 
