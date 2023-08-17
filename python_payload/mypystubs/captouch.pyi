@@ -89,12 +89,12 @@ class CaptouchState(Protocol):
         """
         State of individual petals.
 
-        Contains 10 elements, with the zeroth element being the pad closest to
-        the USB port. Then, every other pad in a clockwise direction.
+        Contains 10 elements, with the zeroth element being the petal closest to
+        the USB port. Then, every other petal in a clockwise direction.
 
-        Pads 0, 2, 4, 6, 8 are Top pads.
+        Petals 0, 2, 4, 6, 8 are Top petals.
 
-        Pads 1, 3, 5, 7, 9 are Bottom pads.
+        Petals 1, 3, 5, 7, 9 are Bottom petals.
         """
         ...
 
