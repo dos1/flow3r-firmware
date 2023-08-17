@@ -1,7 +1,7 @@
 try:
-    from typing import Protocol
+    from typing import Protocol, Tuple
 except ImportError:
-    from typing_extensions import Protocol  # type: ignore
+    from typing_extensions import Protocol, Tuple  # type: ignore
 
 class Context(Protocol):
     """
@@ -275,13 +275,31 @@ class Context(Protocol):
         TOD(q3k): document
         """
         pass
+    def add_stop(
+        self, pos: float, color: Tuple[float, float, float], alpha: float
+    ) -> "Context":
+        """
+        Adds a color stop for a linear or radial gradient. Pos is a position between 0.0 and 1.0.
+        Should be called after linear_gradient or radial_gradient.
+        """
+        pass
     def linear_gradient(self, x0: float, y0: float, x1: float, y1: float) -> "Context":
         """
         Change the source to a linear gradient from x0,y0 to x1,y1, by default
         an empty gradient from black to white exists, add stops with
-        gradient_add_stop to specify a custom gradient.
+        add_stop to specify a custom gradient.
 
-        TODO(q3k): check gradient_add_stop
+        This is a simple example rendering a rainbow gradient on the right side of the screen:
+
+        >>> ctx.linear_gradient(0.18*120,0.5*120,0.95*120,0.5*120)
+        >>> ctx.add_stop(0.0, [255,0,0], 1.0)
+        >>> ctx.add_stop(0.2, [255,255,0], 1.0)
+        >>> ctx.add_stop(0.4, [0,255,0], 1.0)
+        >>> ctx.add_stop(0.6, [0,255,255], 1.0)
+        >>> ctx.add_stop(0.8, [0,0,255], 1.0)
+        >>> ctx.add_stop(1.0, [255,0,255], 1.0)
+        >>> ctx.rectangle(-120, -120, 240, 240)
+        >>> ctx.fill()
         """
         pass
     def radial_gradient(
