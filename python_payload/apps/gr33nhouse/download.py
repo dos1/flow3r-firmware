@@ -1,5 +1,6 @@
-from st3m.input import InputState
+from st3m.input import InputController, InputState
 from st3m.goose import Optional
+from st3m.ui import colours
 import urequests
 import gzip
 from utarfile import TarFile, DIRTYPE
@@ -12,29 +13,74 @@ from ctx import Context
 class DownloadView(BaseView):
     response: Optional[urequests.Response]
 
+    """
+    View state
+
+    1 = Init
+    2 = Fetching
+    3 = Extracting
+    4 = Extracting
+    5 = Done
+    """
+    state: int
+
+    input: InputController
+
     def __init__(self, url: str) -> None:
         super().__init__()
         self._state = 1
         self._try = 1
         self._url = url
 
+        self.input = InputController()
+
     def draw(self, ctx: Context) -> None:
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
 
+        ctx.save()
+        ctx.move_to(0, 0)
         if self._state == 1 or self._state == 2:
             # Fetching
-            ctx.rgb(255, 0, 0).rectangle(-20, -20, 40, 40).fill()
+            ctx.rgb(*colours.WHITE)
+            ctx.font = "Camp Font 3"
+            ctx.font_size = 24
+            ctx.text_align = ctx.CENTER
+            ctx.text_baseline = ctx.MIDDLE
+            ctx.text("Downloading...")
+
             self._state = 2
         elif self._state == 3 or self._state == 4:
             # Extracting
-            ctx.rgb(0, 0, 255).rectangle(-20, -20, 40, 40).fill()
+            ctx.rgb(*colours.WHITE)
+            ctx.font = "Camp Font 3"
+            ctx.font_size = 24
+            ctx.text_align = ctx.CENTER
+            ctx.text_baseline = ctx.MIDDLE
+            ctx.text("Extracting...")
+
             self._state = 4
         elif self._state == 5:
             # Done
-            ctx.rgb(0, 255, 0).rectangle(-20, -20, 40, 40).fill()
+            ctx.move_to(0, -30)
+
+            ctx.rgb(*colours.WHITE)
+            ctx.font = "Camp Font 3"
+            ctx.font_size = 24
+            ctx.text_align = ctx.CENTER
+            ctx.text_baseline = ctx.MIDDLE
+            ctx.text("All done!")
+
+            ctx.move_to(0, 0)
+            ctx.text("The app will be")
+
+            ctx.move_to(0, 30)
+            ctx.text("available after reboot")
+
+        ctx.restore()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
-        super().think(ins, delta_ms)  # Let BaseView do its thing
+        # super().think(ins, delta_ms)  # Let BaseView do its thing
+        self.input.think(ins, delta_ms)
 
         if self._state == 2:
             try:
@@ -76,6 +122,7 @@ class DownloadView(BaseView):
                         of.write(f.read())
             self._state = 5
 
+        if self.input.buttons.app.middle.pressed:
             if self.vm is None:
                 raise RuntimeError("vm is None")
             self.vm.pop()

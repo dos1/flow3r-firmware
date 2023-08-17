@@ -78,7 +78,7 @@ class ConfirmationView(BaseView):
             raise RuntimeError("vm is None")
 
         if self.input.buttons.app.middle.pressed:
-            self.vm.push(
+            self.vm.replace(
                 DownloadView(
                     url=self.url,
                 )
