@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2023-08-17
+
+### Fixed
+- Crash on WiFi startup
+
+
 ## [1.1.0] - 2023-08-17
 
 ### Added
@@ -42,6 +48,7 @@ Initial Release
 
 
 [unreleased]: https://git.flow3r.garden/flow3r/flow3r-firmware/-/compare/v1.1.0...main
+[1.1.1]: https://git.flow3r.garden/flow3r/flow3r-firmware/-/compare/v1.1.0...v1.1.1
 [1.1.0]: https://git.flow3r.garden/flow3r/flow3r-firmware/-/compare/v1.0.0...v1.1.0
 [1.0.0]: https://git.flow3r.garden/flow3r/flow3r-firmware/-/tags/v1.0.0
 
