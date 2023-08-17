@@ -2,6 +2,7 @@ from st3m.goose import Optional, List, ABCBase, abstractmethod
 from st3m.ui.view import ViewManager
 from st3m.ui.elements.visuals import Sun, GroupRing, FlowerIcon
 from st3m.ui.menu import MenuController, MenuItem
+from st3m.application import discover_bundles, BundleMetadata
 
 from st3m import InputState
 
@@ -54,12 +55,17 @@ class SunMenu(MenuController):
     def __init__(self, items: List[MenuItem]) -> None:
         self._ts = 0
         self._sun = Sun()
+        self._action_ts = 0
+        self.timeout = 3000
         super().__init__(items)
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
         self._sun.think(ins, delta_ms)
         self._ts += delta_ms
+        if self.input.buttons.app.left.pressed or self.input.buttons.app.middle.pressed or self.input.buttons.app.middle.pressed:
+            self._action_ts = self._ts
+
 
     def _draw_item_angled(
         self, ctx: Context, item: MenuItem, angle: float, activity: float
@@ -75,6 +81,10 @@ class SunMenu(MenuController):
         ctx.rgba(1.0, 1.0, 1.0, color).move_to(0, 0)
         item.draw(ctx)
         ctx.restore()
+
+    def on_enter(self, vm: Optional["ViewManager"]) -> None:
+        self._vm = vm
+        super().on_enter(vm)
 
     def draw(self, ctx: Context) -> None:
         ctx.gray(0)
@@ -93,6 +103,12 @@ class SunMenu(MenuController):
         for ix, item in enumerate(self._items):
             rot = (ix - current) * angle_per_item
             self._draw_item_angled(ctx, item, rot, 1 - abs(rot))
+
+        if self._ts > self._action_ts + self.timeout:
+            bundles = discover_bundles("/flash/sys/apps")
+            requested = [b for b in bundles if b.name == "Nick"]
+            self._vm.push(requested[0].load())
+            self._action_ts = self._ts
 
 
 class FlowerMenu(MenuController):
