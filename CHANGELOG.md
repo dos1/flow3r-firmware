@@ -20,9 +20,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 - `ctx.get_font_name()` now raises an exception for unknown fonts.
+- Raised umber of concurrent textures to 32.
 
 ### Fixed
-- Fixed JPEG support by enabling `CTX_FORMAT_RGB8`.
+- Fixed PNG without alpha and JPEG support by enabling `CTX_FORMAT_RGB8`.
+- Fixed image cache eviction by introducing a ctx frameclock.
 - Fixed incorrect merging of settings dicts in `st3m.settings`.
 
 
