@@ -55,7 +55,7 @@ build:
 simulate:
   stage: build
   script:
-    - python3 sim/run.py screenshot
+    - python3 sim/run.py --screenshot
   artifacts:
     expose_as: 'Smulator Screenshot'
     paths: ['flow3r.png']

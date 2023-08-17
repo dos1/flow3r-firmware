@@ -6,6 +6,7 @@ import importlib.util
 import os
 import sys
 import builtins
+import argparse
 
 
 projectpath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -112,13 +113,24 @@ def _stat(path):
 
 os.stat = _stat
 
-if len(sys.argv) >= 2 and sys.argv[1] == "screenshot":
+
+def sim_main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--screenshot", action="store_true", default=False)
+    parser.add_argument("override_app", nargs="?")
+    args = parser.parse_args()
+
     import _sim
 
-    _sim.SCREENSHOT = True
-elif len(sys.argv) == 2:
-    import st3m.run
+    _sim.SCREENSHOT = args.screenshot
 
-    st3m.run.override_main_app = sys.argv[1]
+    if args.override_app is not None:
+        import st3m.run
 
-import main
+        st3m.run.override_main_app = args.override_app
+
+    import main
+
+
+if __name__ == "__main__":
+    sim_main()
