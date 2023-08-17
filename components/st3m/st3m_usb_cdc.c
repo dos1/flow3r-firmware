@@ -46,6 +46,7 @@ void st3m_usb_cdc_txpoll(void) {
     for (;;) {
         uint32_t space = tud_cdc_n_write_available(st3m_usb_interface_app_cdc);
         if (space == 0) {
+            tud_cdc_n_write_flush(st3m_usb_interface_app_cdc);
             return;
         }
 
