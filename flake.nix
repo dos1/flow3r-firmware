@@ -1,6 +1,17 @@
 {
   description = "flow3r badge flake";
 
+  nixConfig = {
+    substituters = [
+      "https://cache.nixos.org"
+      "https://flow3r.cachix.org"
+    ];
+    trusted-public-keys = [
+      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      "flow3r.cachix.org-1:/v8059Hm6UdEVNKE15uxltpYM0z+pulaTpobjIvFM5A="
+    ];
+  };
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-compat = {
@@ -69,6 +80,8 @@
     {
       overlays.default = import ./nix/overlay;
 
+      legacyPackages = forAllPkgs (pkgs: pkgs);
+
       packages = forAllPkgs (pkgs:
         {
           dockerImage = pkgs.dockerTools.buildImage {
@@ -84,9 +97,8 @@
               pathsToLink = [ "/bin" ];
             };
 
-            runAsRoot = ''
-              #!${pkgs.runtimeShell}
-              mkdir -p /tmp
+            extraCommands = ''
+              mkdir -m 1777 tmp
             '';
 
             config = {
@@ -101,6 +113,44 @@
             };
           };
         });
+
+      hydraJobs = let inherit (nixpkgs.lib) hydraJob; in {
+        dockerImage = forAllSystems (system: hydraJob self.packages.${system}.dockerImage);
+        devShell = forAllSystems (system: hydraJob self.devShells.${system}.default);
+      };
+
+      apps = forAllPkgs (pkgs: {
+        cache-flake-inputs = {
+          type = "app";
+          program = toString (pkgs.writers.writeBash "cache-flake-inputs" ''
+            set +e +o pipefail
+            nix flake archive --json \
+              | ${pkgs.jq}/bin/jq -r '.path,(.inputs|to_entries[].value.path)' \
+              | ${pkgs.cachix}/bin/cachix push flow3r
+          '');
+        };
+        build-and-cache = {
+          type = "app";
+          program = toString (pkgs.writers.writeBash "build-and-cache" ''
+            set +e +o pipefail
+            PACKAGE="$1"
+
+            IS_CACHED=$(
+              ${pkgs.nix-eval-jobs}/bin/nix-eval-jobs \
+                --gc-roots-dir gcroot \
+                --flake ".#hydraJobs.$PACKAGE" \
+                --check-cache-status \
+                | ${pkgs.jq}/bin/jq '.isCached'
+            )
+
+            if [ "$IS_CACHED" == "false" ]; then
+              nix build -L --json ".#hydraJobs.$PACKAGE.${pkgs.system}" \
+                | ${pkgs.jq}/bin/jq -r '.[].outputs | to_entries[].value' \
+                | ${pkgs.cachix}/bin/cachix push flow3r
+            fi
+          '');
+        };
+      });
 
       devShells = forAllPkgs (pkgs:
         {
