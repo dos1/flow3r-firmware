@@ -12,10 +12,12 @@ from st3m.utils import tau
 from st3m.ui.view import ViewManager
 from st3m.input import power
 from ctx import Context
+import st3m.wifi
 
 import math
 import audio
 import sys_kernel
+import network
 
 
 class OverlayKind(Enum):
@@ -375,6 +377,33 @@ class USBIcon(Icon):
         pass
 
 
+class WifiIcon(Icon):
+    def __init__(self) -> None:
+        super().__init__()
+        self._rssi: float = -120
+
+    def visible(self) -> bool:
+        return st3m.wifi.enabled()
+
+    def draw(self, ctx: Context) -> None:
+        ctx.gray(1.0)
+        ctx.line_width = 10.0
+        w = 1.5
+        a = -w / 2 - 3.14 / 2
+        b = w / 2 - 3.14 / 2
+
+        r = self._rssi
+        ctx.gray(1.0 if r > -775 else 0.2)
+        ctx.arc(0, 60, 100, a, b, 0).stroke()
+        ctx.gray(1.0 if r > -85 else 0.2)
+        ctx.arc(0, 60, 70, a, b, 0).stroke()
+        ctx.gray(1.0 if r > -95 else 0.2)
+        ctx.arc(0, 60, 40, a, b, 0).stroke()
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        self._rssi = st3m.wifi.rssi()
+
+
 class IconTray(Overlay):
     """
     An overlay which renders Icons.
@@ -385,6 +414,7 @@ class IconTray(Overlay):
     def __init__(self) -> None:
         self.icons = [
             USBIcon(),
+            WifiIcon(),
         ]
         self.visible: List[Icon] = []
 
@@ -395,7 +425,7 @@ class IconTray(Overlay):
 
     def draw(self, ctx: Context) -> None:
         nicons = len(self.visible)
-        dist = 20
+        dist = 25
         width = (nicons - 1) * dist
         x0 = width / -2
         for i, v in enumerate(self.visible):

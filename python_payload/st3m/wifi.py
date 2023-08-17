@@ -18,8 +18,14 @@ def setup_camp_wifi() -> None:
 
 
 def disable() -> None:
+    global iface
     if iface is not None:
         iface.active(False)
+        iface = None
+
+
+def enabled() -> bool:
+    return iface is not None
 
 
 def is_connected() -> bool:
@@ -34,3 +40,12 @@ def _onoff_camp_wifi_update() -> None:
         setup_camp_wifi()
     else:
         disable()
+
+
+def rssi() -> float:
+    if iface is None:
+        return -120
+    try:
+        return iface.status("rssi")
+    except OSError:
+        return -120
