@@ -571,6 +571,11 @@ Here is our previous code changed to use `Application` for the base of its main 
         # Continue to make runnable via mpremote run.
         st3m.run.run_view(MyDemo(ApplicationContext()))
 
+Using `Application` also gives you access to the `ApplicationContext`, which for example
+gives you a way to find out the base path of your app, in `app_ctx.bundle_path`. For a
+sample app using this, see `schneider's nyan-cat fork
+<https://git.flow3r.garden/chubbson/nyan-cat/-/tree/schneider/bundle-path>`_.
+
 To add the application to the menu we are missing one more thing: a `flow3r.toml`
 file which describes the application so flow3r knows where to put it in the menu system.
 Together with the Python code this file forms a so called bundle
