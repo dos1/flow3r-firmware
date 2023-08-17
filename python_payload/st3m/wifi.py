@@ -1,5 +1,8 @@
 import network
 from st3m import settings
+from st3m.logging import Log
+
+log = Log(__name__)
 
 iface = None
 
@@ -8,7 +11,10 @@ def setup_camp_wifi() -> None:
     global iface
     iface = network.WLAN(network.STA_IF)
     iface.active(True)
-    iface.connect(b"Camp2023-open")
+    try:
+        iface.connect(b"Camp2023-open")
+    except OSError as e:
+        log.error(f"Could not connect to camp wifi: {e}")
 
 
 def disable() -> None:
