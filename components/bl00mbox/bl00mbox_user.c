@@ -705,6 +705,9 @@ int16_t bl00mbox_channel_bud_get_signal_value(uint8_t channel, uint32_t bud_inde
     radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, bud_signal_index);
     if(sig == NULL) return false;
 
+    if((sig->hints & RADSPA_SIGNAL_HINT_OUTPUT) && (sig->buffer != NULL)){
+        return sig->buffer[0];
+    }
     return sig->value;
 }
 

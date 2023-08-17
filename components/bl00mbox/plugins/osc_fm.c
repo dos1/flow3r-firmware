@@ -52,9 +52,8 @@ void osc_fm_run(radspa_t * osc_fm, uint16_t num_samples, uint32_t render_pass_id
         int32_t tmp = (plugin_data->counter) >> 17;
         tmp = (tmp*2) - 32767;
         ret = waveshaper(tmp, wave);
-        (output_sig->buffer)[i] = ret;
+        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
     }
-    output_sig->value = ret;
 }
 
 static inline int16_t triangle(int16_t saw){

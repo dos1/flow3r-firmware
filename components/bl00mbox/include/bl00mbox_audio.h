@@ -21,6 +21,8 @@ struct _bl00mbox_connection_source_t;
 struct _bl00mbox_channel_root_t;
 struct _bl00mbox_channel_t;
 
+extern int16_t * bl00mbox_line_in_interlaced;
+
 typedef struct _bl00mbox_bud_t{
     radspa_t * plugin; // plugin
     char * name;

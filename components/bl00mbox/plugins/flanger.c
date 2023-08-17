@@ -78,9 +78,8 @@ void flanger_run(radspa_t * flanger, uint16_t num_samples, uint32_t render_pass_
 
         ret = radspa_add_sat(radspa_mult_shift(dry, dry_vol), radspa_mult_shift(radspa_clip(wet), mix));
         ret = radspa_clip(radspa_gain(ret, level));
-        (output_sig->buffer)[i] = ret;
+        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
     }
-    output_sig->value = ret;
 }
 
 radspa_t * flanger_create(uint32_t init_var){

@@ -38,9 +38,8 @@ void noise_burst_run(radspa_t * noise_burst, uint16_t num_samples, uint32_t rend
     radspa_signal_t * trigger_sig = radspa_signal_get_by_index(noise_burst, NOISE_BURST_TRIGGER);
     radspa_signal_t * length_ms_sig = radspa_signal_get_by_index(noise_burst, NOISE_BURST_LENGTH_MS);
 
-    int16_t ret = output_sig->value;
-
     for(uint16_t i = 0; i < num_samples; i++){
+        int16_t ret = 0;
 
         int16_t trigger = trigger_sig->get_value(trigger_sig, i, num_samples, render_pass_id);
         int16_t vel = radspa_trigger_get(trigger, &(plugin_data->trigger_prev));
@@ -55,10 +54,7 @@ void noise_burst_run(radspa_t * noise_burst, uint16_t num_samples, uint32_t rend
         if(plugin_data->counter < plugin_data->limit){
             ret = radspa_random();
             plugin_data->counter++;
-        } else {
-            ret = 0;
         }
-        if(output_sig->buffer != NULL) (output_sig->buffer)[i] = ret;
+        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
     }
-    output_sig->value = ret;
 }

@@ -21,11 +21,13 @@ idf_component_register(
         plugins/lowpass.c
         plugins/mixer.c
         plugins/slew_rate_limiter.c
+        plugins/bl00mbox/bl00mbox_line_in.c
         radspa/radspa_helpers.c
         extern/xoroshiro64star.c
     INCLUDE_DIRS
         include
         plugins
+        plugins/bl00mbox
         radspa
         extern
     REQUIRES

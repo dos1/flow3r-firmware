@@ -8,6 +8,8 @@ void bl00mbox_audio_disable(){ bl00mbox_audio_run = false; }
 
 static uint32_t render_pass_id;
 
+int16_t * bl00mbox_line_in_interlaced = NULL;
+
 // fixed-length list of channels
 static bl00mbox_channel_t channels[BL00MBOX_CHANNELS];
 static int8_t last_chan_event = 0;
@@ -97,7 +99,7 @@ bool bl00mbox_channel_set_free(uint8_t channel_index, bool free){
 }
 
 uint8_t bl00mbox_channel_get_free_index(){
-    uint8_t ret = 1;
+    uint8_t ret = 1; // never return system channel
     for(; ret < BL00MBOX_CHANNELS; ret++){
         if(bl00mbox_get_channel(ret)->is_free){
             bl00mbox_get_channel(ret)->is_free = false;
@@ -226,6 +228,7 @@ void bl00mbox_audio_render(int16_t * rx, int16_t * tx, uint16_t len){
 
     render_pass_id++; // fresh pass, all relevant sources must be recomputed
     uint16_t mono_len = len/2;
+    bl00mbox_line_in_interlaced = rx;
     int16_t acc[mono_len];
     // system channel always runs non-adding
     bl00mbox_audio_channel_render(&(channels[0]), acc, mono_len, 0);

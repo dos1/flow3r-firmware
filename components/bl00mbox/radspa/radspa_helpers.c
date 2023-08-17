@@ -77,6 +77,7 @@ int16_t radspa_signal_add(radspa_t * plugin, char * name, uint32_t hints, int16_
     sig->value = value;
     sig->name_multiplex = -1;
     sig->get_value = radspa_signal_get_value;
+    sig->set_value = radspa_signal_set_value;
     
     //find end of linked list
     uint16_t list_index = 0;
@@ -97,14 +98,39 @@ int16_t radspa_signal_add(radspa_t * plugin, char * name, uint32_t hints, int16_
 }
 
 int16_t radspa_signal_get_value(radspa_signal_t * sig, int16_t index, uint16_t num_samples, uint32_t render_pass_id){
-    if(sig->buffer != NULL){
-        if(sig->render_pass_id != render_pass_id){
-            radspa_host_request_buffer_render(sig->buffer, num_samples); //, render_pass_id);
-            sig->render_pass_id = render_pass_id;
-        }
-        return sig->buffer[index];
+    if(sig->buffer == NULL){
+        return radspa_signal_get_value_disconnected(sig, index, num_samples, render_pass_id);
+    } else {
+        return radspa_signal_get_value_connected(sig, index, num_samples, render_pass_id);
     }
+}
+
+inline int16_t radspa_signal_get_value_connected(radspa_signal_t * sig, int16_t index, uint16_t num_samples, uint32_t render_pass_id){
+    if(sig->render_pass_id != render_pass_id){
+        radspa_host_request_buffer_render(sig->buffer, num_samples); //, render_pass_id);
+        sig->render_pass_id = render_pass_id;
+    }
+    return sig->buffer[index];
+}
+
+inline int16_t radspa_signal_get_value_disconnected(radspa_signal_t * sig, int16_t index, uint16_t num_samples, uint32_t render_pass_id){
     return sig->value;
+}
+
+void radspa_signal_set_value(radspa_signal_t * sig, int16_t index, int16_t value, uint16_t num_samples, uint32_t render_pass_id){
+    if(sig->buffer == NULL){
+        radspa_signal_set_value_disconnected(sig, index, value, num_samples, render_pass_id);
+    } else {
+        radspa_signal_set_value_connected(sig, index, value, num_samples, render_pass_id);
+    }
+}
+
+inline void radspa_signal_set_value_connected(radspa_signal_t * sig, int16_t index, int16_t value, uint16_t num_samples, uint32_t render_pass_id){
+    sig->buffer[index] = value;
+}
+
+inline void radspa_signal_set_value_disconnected(radspa_signal_t * sig, int16_t index, int16_t value, uint16_t num_samples, uint32_t render_pass_id){
+    sig->value = value;
 }
 
 radspa_t * radspa_standard_plugin_create(radspa_descriptor_t * desc, uint8_t num_signals, size_t plugin_data_size, uint32_t plugin_table_size){

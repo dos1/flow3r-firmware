@@ -4,7 +4,7 @@
 // this file, kindly append "-modified" to the version string below so it is not mistaken
 // for an official release.
 
-// Version 0.1.0+
+// Version 0.2.0
 
 /* Realtime Audio Developer's Simple Plugin Api
  *
@@ -43,6 +43,10 @@
 #define RADSPA_SIGNAL_HINT_TRIGGER (1<<2)
 #define RADSPA_SIGNAL_HINT_GAIN (1<<3)
 #define RADSPA_SIGNAL_HINT_SCT (1<<5)
+#define RADSPSA_SIGNAL_HINT_REDUCED_RANGE (1<<6)
+#define RADSPSA_SIGNAL_HINT_POS_SHIFT (1<<7)
+// 6 bit number, 0 for non-stepped, else number of steps
+#define RADSPSA_SIGNAL_HINT_STEPPED_LSB (1<<8)
 
 #define RADSPA_SIGNAL_VAL_SCT_A440 (INT16_MAX - 6*2400)
 #define RADSPA_SIGNAL_VAL_UNITY_GAIN (1<<12)
@@ -60,21 +64,30 @@ typedef struct _radspa_descriptor_t{
 } radspa_descriptor_t;
 
 typedef struct _radspa_signal_t{
+    // this bitfield determines the type of the signal, see RADSPA_SIGNAL_HINTS_*
     uint32_t hints;
+    // this is the name of the signal as shown to the user.
+    // allowed characters: lowercase, numbers, underscore, may not start with number
+    // if name_multplex >= 0: may not end with number
     char * name;
+    // arbitrary formatted string to describe what the signal is for
     char * description;
+    // unit that corresponds to value, may be empty. note: some RADSPA_SIGNAL_HINTS_*
+    // imply units. field may be empty.
     char * unit;
+    // -1 to disable signal multiplexing
     int8_t name_multiplex;
-
-    int16_t * buffer; // full buffer of num_samples. may be NULL.
-
-    // used for input channels only
-    int16_t value;  //static value, should be used if buffer is NULL.
+    // buffer full of samples, may be NULL
+    int16_t * buffer;
+    // static value to be used when buffer is NULL for input signals only
+    int16_t value;
     uint32_t render_pass_id;
-    // function to retrieve value. radspa_helpers provides an example.
+    // function for input signals to retrieve their value at a buffer index. radspa_helpers provides an example. this function should be set by the host.
     int16_t (* get_value)(struct _radspa_signal_t * sig, int16_t index, uint16_t num_samples, uint32_t render_pass_id);
-
-    struct _radspa_signal_t * next; //signals are in a linked list
+    // function for output signals to set a value at a buffer index. radspa_helpers provides an example. this function should be set by the host.
+    void (* set_value)(struct _radspa_signal_t * sig, int16_t index, int16_t value, uint16_t num_samples, uint32_t render_pass_id);
+    // linked list pointer
+    struct _radspa_signal_t * next;
 } radspa_signal_t;
 
 typedef struct _radspa_t{

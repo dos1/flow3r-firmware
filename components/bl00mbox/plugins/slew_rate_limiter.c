@@ -44,8 +44,7 @@ void slew_rate_limiter_run(radspa_t * slew_rate_limiter, uint16_t num_samples, u
         } else {
             ret = input;
         }
-        (output_sig->buffer)[i] = ret;
+        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
     }
-    output_sig->value = ret;
 }
 

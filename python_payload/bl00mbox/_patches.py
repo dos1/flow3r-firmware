@@ -103,39 +103,53 @@ class sampler(_Patch):
     requires a wave file. default path: /sys/samples/
     """
 
-    def __init__(self, chan, filename):
+    def __init__(self, chan, init_var):
+        # init can be filename to load into ram
         super().__init__(chan)
-        if filename.startswith("/flash/") or filename.startswith("/sd/"):
-            f = wave.open(filename, "r")
-        elif filename.startswith("/"):
-            f = wave.open("/flash/" + filename, "r")
+        if type(init_var) == str:
+            filename = init_var
+            if filename.startswith("/flash/") or filename.startswith("/sd/"):
+                f = wave.open(filename, "r")
+            elif filename.startswith("/"):
+                f = wave.open("/flash/" + filename, "r")
+            else:
+                f = wave.open("/flash/sys/samples/" + filename, "r")
+
+            self.len_frames = f.getnframes()
+            self.plugins.sampler = chan.new(
+                bl00mbox.plugins._sampler_ram, self.len_frames
+            )
+
+            assert f.getsampwidth() == 2
+            assert f.getnchannels() in (1, 2)
+            assert f.getcomptype() == "NONE"
+
+            if f.getnchannels() == 1:
+                # fast path for mono
+                table = self.plugins.sampler.table_bytearray
+                for i in range(0, self.len_frames * 2, 100):
+                    table[i : i + 100] = f.readframes(50)
+            else:
+                # somewhat fast path for stereo
+                table = self.plugins.sampler.table_int16_array
+                for i in range(self.len_frames):
+                    frame = f.readframes(1)
+                    value = int.from_bytes(frame[0:2], "little")
+                    table[i] = value
+
+            f.close()
+            self._filename = filename
         else:
-            f = wave.open("/flash/sys/samples/" + filename, "r")
+            self.len_frames = int(48 * init_var)
+            self.plugins.sampler = chan.new(
+                bl00mbox.plugins._sampler_ram, self.len_frames
+            )
+            self._filename = ""
 
-        self.len_frames = f.getnframes()
-        self.plugins.sampler = chan.new(bl00mbox.plugins._sampler_ram, self.len_frames)
-
-        assert f.getsampwidth() == 2
-        assert f.getnchannels() in (1, 2)
-        assert f.getcomptype() == "NONE"
-
-        if f.getnchannels() == 1:
-            # fast path for mono
-            table = self.plugins.sampler.table_bytearray
-            for i in range(0, self.len_frames * 2, 100):
-                table[i : i + 100] = f.readframes(50)
-        else:
-            # somewhat fast path for stereo
-            table = self.plugins.sampler.table_int16_array
-            for i in range(self.len_frames):
-                frame = f.readframes(1)
-                value = int.from_bytes(frame[0:2], "little")
-                table[i] = value
-
-        f.close()
-        self._filename = filename
         self.signals.trigger = self.plugins.sampler.signals.trigger
         self.signals.output = self.plugins.sampler.signals.output
+        self.signals.rec_in = self.plugins.sampler.signals.rec_in
+        self.signals.rec_trigger = self.plugins.sampler.signals.rec_trigger
 
     @property
     def filename(self):

@@ -48,6 +48,7 @@ class Channel:
     mixer: "ChannelMixer"
     foreground: bool
     free: bool
+    volume: int
 
     def __init__(self, name: str): ...
     def clear(self) -> None: ...

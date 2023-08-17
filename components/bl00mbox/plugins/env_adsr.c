@@ -129,10 +129,9 @@ void env_adsr_run(radspa_t * env_adsr, uint16_t num_samples, uint32_t render_pas
     radspa_signal_t * release_sig = NULL;
     radspa_signal_t * gate_sig = NULL;
 
-    int16_t ret = output_sig->value;
-
+    int16_t env = 0;
     for(uint16_t i = 0; i < num_samples; i++){
-        static int16_t env = 0;
+        int16_t ret = 0;
 
         int16_t trigger = trigger_sig->get_value(trigger_sig, i, num_samples, render_pass_id);
         int16_t vel = radspa_trigger_get(trigger, &(plugin_data->trigger_prev));
@@ -214,12 +213,8 @@ void env_adsr_run(radspa_t * env_adsr, uint16_t num_samples, uint32_t render_pas
         if(env){
             int16_t input = input_sig->get_value(input_sig, i, num_samples, render_pass_id);
             ret = radspa_mult_shift(env, input);
-        } else {
-            ret = 0;
         }
-        if(phase_sig->buffer != NULL) (phase_sig->buffer)[i] = plugin_data->env_phase;
-        if(output_sig->buffer != NULL) (output_sig->buffer)[i] = ret;
+        phase_sig->set_value(phase_sig, i, plugin_data->env_phase, num_samples, render_pass_id);
+        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
     }
-    phase_sig->value = plugin_data->env_phase;
-    output_sig->value = ret;
 }

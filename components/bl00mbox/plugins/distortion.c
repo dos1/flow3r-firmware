@@ -29,9 +29,8 @@ void distortion_run(radspa_t * distortion, uint16_t num_samples, uint32_t render
         int32_t blend = input & ((1<<7)-1);
         ret = dist[index]*((1<<7)-blend) + dist[index+1]*blend;
         ret = ret >> 7;
-        (output_sig->buffer)[i] = ret;
+        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
     }
-    output_sig->value = ret;
 }
 
 radspa_t * distortion_create(uint32_t init_var){

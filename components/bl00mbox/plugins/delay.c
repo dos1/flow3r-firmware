@@ -67,9 +67,8 @@ void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
         
         ret = radspa_add_sat(radspa_mult_shift(dry_vol,dry), radspa_mult_shift(wet,level));
 
-        (output_sig->buffer)[i] = ret;
+        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
     }
-    output_sig->value = ret;
 }
 
 radspa_t * delay_create(uint32_t init_var){

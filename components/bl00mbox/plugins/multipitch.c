@@ -18,40 +18,27 @@ void multipitch_run(radspa_t * multipitch, uint16_t num_samples, uint32_t render
     radspa_signal_t * output_sigs[num_outputs];
     radspa_signal_t * pitch_sigs[num_outputs];
     for(uint8_t j = 0; j < num_outputs; j++){
-        output_sigs[j] = radspa_signal_get_by_index(multipitch, 2 + j);
-        pitch_sigs[j] = radspa_signal_get_by_index(multipitch, 3 + j);
+        output_sigs[j] = radspa_signal_get_by_index(multipitch, 2 + 2 * j);
+        pitch_sigs[j] = radspa_signal_get_by_index(multipitch, 3 + 2 * j);
         if(output_sigs[j]->buffer != NULL) output_request = true;
     }
     if(!output_request) return;
 
-    int32_t ret = 0;
-    int32_t rets[num_outputs];
-
     for(uint16_t i = 0; i < num_samples; i++){
+        int32_t ret = 0;
         int32_t input = input_sig->get_value(input_sig, i, num_samples, render_pass_id);
         ret = input;
 
         if(thru_sig->buffer != NULL) (thru_sig->buffer)[i] = ret;
+        thru_sig->set_value(thru_sig, i, ret, num_samples, render_pass_id);
 
         int32_t pitch;
         for(uint8_t j = 0; j < num_outputs; j++){
             pitch = pitch_sigs[j]->get_value(pitch_sigs[j], i, num_samples, render_pass_id);
-            rets[j] = pitch + input - RADSPA_SIGNAL_VAL_SCT_A440;
-            if(output_sigs[j]->buffer != NULL) (output_sigs[j]->buffer)[i] = rets[j];
+            ret = pitch + input - RADSPA_SIGNAL_VAL_SCT_A440;
+            output_sigs[j]->set_value(output_sigs[j], i, ret, num_samples, render_pass_id);
         }
     }
-    
-    // clang-tidy only, num_samples is always nonzero
-    if(!num_samples){
-        for(uint8_t j = 0; j < num_outputs; j++){
-            rets[j] = 0;
-        }
-    }
-
-    for(uint8_t j = 0; j < num_outputs; j++){
-        output_sigs[j]->value = rets[j];
-    }
-    thru_sig->value = ret;
 }
 
 radspa_t * multipitch_create(uint32_t init_var){

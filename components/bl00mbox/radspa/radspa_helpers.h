@@ -28,3 +28,10 @@ void radspa_signals_free(radspa_t * plugin);
  * of radspa_host_request_buffer_render.
  */
 int16_t radspa_signal_get_value(radspa_signal_t * sig, int16_t index, uint16_t num_samples, uint32_t render_pass_id);
+
+int16_t radspa_signal_get_value_connected(radspa_signal_t * sig, int16_t index, uint16_t num_samples, uint32_t render_pass_id);
+int16_t radspa_signal_get_value_disconnected(radspa_signal_t * sig, int16_t index, uint16_t num_samples, uint32_t render_pass_id);
+
+void radspa_signal_set_value(radspa_signal_t * sig, int16_t index, int16_t value, uint16_t num_samples, uint32_t render_pass_id);
+void radspa_signal_set_value_connected(radspa_signal_t * sig, int16_t index, int16_t value, uint16_t num_samples, uint32_t render_pass_id);
+void radspa_signal_set_value_disconnected(radspa_signal_t * sig, int16_t index, int16_t value, uint16_t num_samples, uint32_t render_pass_id);

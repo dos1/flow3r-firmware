@@ -98,17 +98,12 @@ void sequencer_run(radspa_t * sequencer, uint16_t num_samples, uint32_t render_p
             }
           
             for(uint8_t j = 0; j < data->num_tracks; j++){
-                if(track_sigs[j]->buffer != NULL) (track_sigs[j]->buffer)[i] = data->tracks[j].track_fill;
+                track_sigs[j]->set_value(track_sigs[j], i, data->tracks[j].track_fill, num_samples, render_pass_id);
             }
-            if(sync_out_sig->buffer != NULL) (sync_out_sig->buffer)[i] = data->sync_out;
-            if(step_sig->buffer != NULL) (step_sig->buffer)[i] = data->step;
+            sync_out_sig->set_value(sync_out_sig, i, data->sync_out, num_samples, render_pass_id);
+            step_sig->set_value(step_sig, i, data->step, num_samples, render_pass_id);
         }
     }
-    for(uint8_t j = 0; j < data->num_tracks; j++){
-        track_sigs[j]->value = data->tracks[j].track_fill;
-    }
-    sync_out_sig->value = data->sync_out;
-    step_sig->value = data->step;
 }
 
 radspa_t * sequencer_create(uint32_t init_var){

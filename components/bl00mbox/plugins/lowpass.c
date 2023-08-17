@@ -98,8 +98,6 @@ void lowpass_run(radspa_t * lowpass, uint16_t num_samples, uint32_t render_pass_
     radspa_signal_t * q_sig = radspa_signal_get_by_index(lowpass, LOWPASS_Q);
     radspa_signal_t * gain_sig = radspa_signal_get_by_index(lowpass, LOWPASS_GAIN);
 
-    static int16_t ret = 0;
-    
     for(uint16_t i = 0; i < num_samples; i++){
         int16_t input = input_sig->get_value(input_sig, i, num_samples, render_pass_id);
         int32_t freq = freq_sig->get_value(freq_sig, i, num_samples, render_pass_id);
@@ -114,9 +112,8 @@ void lowpass_run(radspa_t * lowpass, uint16_t num_samples, uint32_t render_pass_
     
         float out = apply_lowpass(data, input) + 0.5;
         int16_t ret = radspa_clip(radspa_gain((int32_t) out, gain));
-        (output_sig->buffer)[i] = ret;
+        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
     }
-    output_sig->value = ret;
 }
 
 radspa_t * lowpass_create(uint32_t real_init_var){
