@@ -393,7 +393,7 @@ class WifiIcon(Icon):
         b = w / 2 - 3.14 / 2
 
         r = self._rssi
-        ctx.gray(1.0 if r > -775 else 0.2)
+        ctx.gray(1.0 if r > -75 else 0.2)
         ctx.arc(0, 60, 100, a, b, 0).stroke()
         ctx.gray(1.0 if r > -85 else 0.2)
         ctx.arc(0, 60, 70, a, b, 0).stroke()
