@@ -30,6 +30,9 @@ class ViewState(Enum):
 
 
 class ManualInputView(BaseView):
+    current_petal: Optional[int]
+    wait_timer: Optional[int]
+
     def __init__(self) -> None:
         self.input = InputController()
         self.vm = None
@@ -143,6 +146,9 @@ class ManualInputView(BaseView):
                 print(f"No app found for seed {self.flow3r_seed}!")
                 self.state = ViewState.SEED_NOT_FOUND
             else:
+                if self.vm is None:
+                    raise RuntimeError("vm is None")
+
                 app = res.json()
                 self.vm.push(
                     ConfirmationView(

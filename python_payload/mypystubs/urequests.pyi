@@ -3,6 +3,7 @@ from typing import Any
 class Response:
     text: str
     content: bytes
+    status_code: int
 
     def close(self) -> None: ...
     def json(self) -> Any: ...
