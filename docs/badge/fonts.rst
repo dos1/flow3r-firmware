@@ -8,29 +8,38 @@ The current selection of fonts is baked into the firmware for use with :ref:`Con
 Available Fonts
 ---------------
 
-Following fonts are currently available:
+Following fonts are currently available (previews in size 20):
 
-+-------------+----------------------+
-| Font Number | Font Name            |
-+=============+======================+
-| 0           | Arimo Regular        |
-+-------------+----------------------+
-| 1           | Arimo Bold           |
-+-------------+----------------------+
-| 2           | Arimo Italic         |
-+-------------+----------------------+
-| 3           | Arimo Bold Italic    |
-+-------------+----------------------+
-| 4           | Camp Font 1          |
-+-------------+----------------------+
-| 5           | Camp Font 2          |
-+-------------+----------------------+
-| 6           | Camp Font 3          |
-+-------------+----------------------+
-| 7           | Material Icons       |
-+-------------+----------------------+
-| 8           | Comic Mono           |
-+-------------+----------------------+
+.. |font0| image:: assets/0.png
+.. |font1| image:: assets/1.png
+.. |font2| image:: assets/2.png
+.. |font3| image:: assets/3.png
+.. |font4| image:: assets/4.png
+.. |font5| image:: assets/5.png
+.. |font6| image:: assets/6.png
+.. |font8| image:: assets/8.png
+
++-------------+----------------------+---------+
+| Font Number | Font Name            | Preview |
++=============+======================+=========+
+| 0           | Arimo Regular        | |font0| |
++-------------+----------------------+---------+
+| 1           | Arimo Bold           | |font1| |
++-------------+----------------------+---------+
+| 2           | Arimo Italic         | |font2| |
++-------------+----------------------+---------+
+| 3           | Arimo Bold Italic    | |font3| |
++-------------+----------------------+---------+
+| 4           | Camp Font 1          | |font4| |
++-------------+----------------------+---------+
+| 5           | Camp Font 2          | |font5| |
++-------------+----------------------+---------+
+| 6           | Camp Font 3          | |font6| |
++-------------+----------------------+---------+
+| 7           | Material Icons       |         |
++-------------+----------------------+---------+
+| 8           | Comic Mono           | |font8| |
++-------------+----------------------+---------+
 
 The Camp Fonts are based on Beon Regular, Saira Stencil One and Questrial Regular.
 
