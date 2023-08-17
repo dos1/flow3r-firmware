@@ -41,8 +41,17 @@ class GayDrums(Application):
         self.blm.background_mute_override = True
         self.tap_tempo_press_counter = 0
         self.track_back_press_counter = 0
-        self.delta_acc = 0
         self.stopped = False
+        self.tapping = False
+        self.tap = {
+            "sum_y": float(0),
+            "sum_x": float(1),
+            "sum_xy": float(0),
+            "sum_xx": float(1),
+            "last": float(0),
+            "time_ms": 0,
+            "count": 0,
+        }
         self.track_back = False
         self.bpm = self.seq.signals.bpm.value
 
@@ -490,13 +499,42 @@ class GayDrums(Application):
                 self._render_list_1 += [(self.draw_bpm, None)]
                 self.blm.background_mute_override = True
                 self.stopped = False
-            elif self.delta_acc < 3000 and self.delta_acc > 10:
-                bpm = int(60000 / self.delta_acc)
-                if bpm > 40 and bpm < 500:
+            elif self.tapping:
+                t = self.tap["time_ms"] * 0.001
+                n = self.tap["count"]
+                l = self.tap["last"]
+                self.tap["sum_y"] += t
+                self.tap["sum_x"] += n
+                self.tap["sum_xy"] += n * t
+                self.tap["sum_xx"] += n * n
+                self.tap["last"] = t
+
+                T = (
+                    self.tap["sum_xy"] / n
+                    - self.tap["sum_x"] / n * self.tap["sum_y"] / n
+                ) / (
+                    self.tap["sum_xx"] / n
+                    - self.tap["sum_x"] / n * self.tap["sum_x"] / n
+                )
+                if t - l < T / 1.2 or t - l > T * 1.2 or T <= 0.12 or T > 1.5:
+                    self.tapping = False
+                else:
+                    bpm = int(60 / T)
                     self.seq.signals.bpm = bpm
                     self._render_list_1 += [(self.draw_bpm, None)]
                     self.bpm = bpm
-            self.delta_acc = 0
+
+            if not self.tapping:
+                self.tap["sum_y"] = 0
+                self.tap["sum_x"] = 1
+                self.tap["sum_xy"] = 0
+                self.tap["sum_xx"] = 1
+                self.tap["count"] = 1
+                self.tap["last"] = 0
+                self.tap["time_ms"] = 0
+                self.tapping = True
+
+            self.tap["count"] += 1
 
         if ct.petals[0].pressed:
             if self.tap_tempo_press_counter > 500:
@@ -519,8 +557,7 @@ class GayDrums(Application):
         else:
             self.track_back_press_counter = 0
 
-        if self.delta_acc < 3000:
-            self.delta_acc += delta_ms
+        self.tap["time_ms"] += delta_ms
         self.ct_prev = ct
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
