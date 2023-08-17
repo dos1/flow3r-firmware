@@ -109,9 +109,12 @@ class BundleMetadata:
         try:
             t = toml.load(f)
         except toml.TomlDecodeError as e:
+            f.close()
             raise BundleMetadataCorrupt(str(e))
         except Exception as e:
+            f.close()
             raise BundleMetadataCorrupt(str(e))
+        f.close()
 
         if "app" not in t or type(t["app"]) != dict:
             raise BundleMetadataBroken("missing app section")
