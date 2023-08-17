@@ -17,6 +17,7 @@ class Configuration:
         self.pronouns_size: int = 25
         self.color = "0x40ff22"
         self.mode = 0
+        self._write = True
 
     @classmethod
     def load(cls, path: str) -> "Configuration":
@@ -27,6 +28,9 @@ class Configuration:
             data = json.loads(jsondata)
         except OSError:
             data = {}
+        except json.decoder.JSONDecodeError:
+            data = {"name": "json error"}
+            res._write = False
         if "name" in data and type(data["name"]) == str:
             res.name = data["name"]
         if "size" in data:
@@ -132,7 +136,8 @@ class NickApp(Application):
         # ctx.fill()
 
     def on_exit(self) -> None:
-        self._config.save(self._filename)
+        if self._config._write:
+            self._config.save(self._filename)
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
