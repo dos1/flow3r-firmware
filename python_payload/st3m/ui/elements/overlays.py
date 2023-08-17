@@ -11,6 +11,7 @@ from st3m.goose import Dict, Enum, List, ABCBase, abstractmethod, Optional
 from st3m.utils import tau
 from st3m.ui.view import ViewManager
 from st3m.input import power
+from st3m.power import approximate_battery_percentage
 from ctx import Context
 import st3m.wifi
 
@@ -347,6 +348,8 @@ class Icon(Responder):
     that contains it.
     """
 
+    WIDTH: int = 25
+
     @abstractmethod
     def visible(self) -> bool:
         ...
@@ -358,6 +361,8 @@ class USBIcon(Icon):
 
     Might or might not be related to a certain serial bus.
     """
+
+    WIDTH: int = 20
 
     def visible(self) -> bool:
         return sys_kernel.usb_connected()
@@ -378,6 +383,8 @@ class USBIcon(Icon):
 
 
 class WifiIcon(Icon):
+    WIDTH: int = 15
+
     def __init__(self) -> None:
         super().__init__()
         self._rssi: float = -120
@@ -404,6 +411,50 @@ class WifiIcon(Icon):
         self._rssi = st3m.wifi.rssi()
 
 
+class BatteryIcon(Icon):
+    def __init__(self) -> None:
+        super().__init__()
+        self._percent = 100.0
+        self._charging = False
+
+    def visible(self) -> bool:
+        return True
+
+    def draw(self, ctx: Context) -> None:
+        if self._percent > 30:
+            ctx.rgb(0.17, 0.55, 0.04)
+        else:
+            ctx.rgb(0.52, 0.04, 0.17)
+
+        height = 160 * self._percent / 100
+        ctx.rectangle(-80, -50, height, 100)
+        ctx.fill()
+
+        ctx.gray(0.8)
+        ctx.line_width = 10.0
+        ctx.rectangle(80, -50, -160, 100)
+        ctx.stroke()
+        ctx.rectangle(100, -30, -20, 60)
+        ctx.fill()
+
+        if self._charging:
+            ctx.gray(1)
+            ctx.line_width = 20
+            ctx.move_to(10, -65 - 10)
+            ctx.line_to(-30, 20 - 10)
+            ctx.line_to(30, -20 - 10)
+            ctx.line_to(-10, 65 - 10)
+            ctx.line_to(-20, 35 - 10)
+            ctx.stroke()
+            ctx.move_to(-10, 65 - 10)
+            ctx.line_to(40, 35 - 10)
+            ctx.stroke()
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        self._percent = approximate_battery_percentage(power.battery_voltage)
+        self._charging = power.battery_charging
+
+
 class IconTray(Overlay):
     """
     An overlay which renders Icons.
@@ -413,6 +464,7 @@ class IconTray(Overlay):
 
     def __init__(self) -> None:
         self.icons = [
+            BatteryIcon(),
             USBIcon(),
             WifiIcon(),
         ]
@@ -424,14 +476,16 @@ class IconTray(Overlay):
             v.think(ins, delta_ms)
 
     def draw(self, ctx: Context) -> None:
-        nicons = len(self.visible)
-        dist = 25
-        width = (nicons - 1) * dist
-        x0 = width / -2
+        if len(self.visible) < 1:
+            return
+        width = 0
+        for icon in self.visible:
+            width += icon.WIDTH
+        x0 = width / -2 + self.visible[0].WIDTH / 2
         for i, v in enumerate(self.visible):
-            x = x0 + i * dist
             ctx.save()
-            ctx.translate(x, -100)
+            ctx.translate(x0, -100)
             ctx.scale(0.1, 0.1)
             v.draw(ctx)
             ctx.restore()
+            x0 = x0 + v.WIDTH
