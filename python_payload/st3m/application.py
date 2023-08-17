@@ -8,12 +8,14 @@ from st3m.ui.menu import MenuItem
 from st3m.input import InputState
 from st3m.goose import Optional, List, Enum, Dict
 from st3m.logging import Log
+from ctx import Context
 
 import toml
 import os
 import os.path
 import stat
 import sys
+import random
 
 log = Log(__name__)
 
@@ -52,6 +54,7 @@ class BundleLoadException(BaseException):
         res = self.MSG
         if msg is not None:
             res += ": " + msg
+        self.msg = res
         super().__init__(res)
 
 
@@ -213,6 +216,64 @@ class BundleMetadata:
         return f"<BundleMetadata: {self.id} at {self.path}>"
 
 
+class LoadErrorView(BaseView):
+    def __init__(self, e: BundleLoadException) -> None:
+        super().__init__()
+        self.e = e
+        self.header = "oh no"
+
+    def on_enter(self, vm: Optional[ViewManager]) -> None:
+        self.header = random.choice(
+            [
+                "oh no",
+                "aw shucks",
+                "whoopsie",
+                "ruh-roh",
+                "aw crud",
+            ]
+        )
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        pass
+
+    def draw(self, ctx: Context) -> None:
+        ctx.rgb(0.8, 0.1, 0.1)
+        ctx.rectangle(-120, -120, 240, 240)
+        ctx.fill()
+
+        ctx.gray(1)
+        ctx.font_size = 20
+        ctx.font = "Camp Font 1"
+        ctx.text_align = ctx.MIDDLE
+        ctx.move_to(0, -70)
+        ctx.text(self.header)
+
+        lines: List[List[str]] = []
+        msg = self.e.msg
+        for word in msg.split():
+            if len(lines) == 0:
+                lines.append([word])
+                continue
+            lastline = lines[-1][:]
+            lastline.append(word)
+            if sum(len(l) for l in lastline) + len(lastline) - 1 > 30:
+                lines.append([word])
+            else:
+                lines[-1].append(word)
+
+        ctx.gray(0)
+        ctx.rectangle(-120, -60, 240, 240).fill()
+        y = -40
+        ctx.gray(1)
+        ctx.font_size = 15
+        ctx.font = "Arimo Regular"
+        ctx.text_align = ctx.LEFT
+        for line in lines:
+            ctx.move_to(-90, y)
+            ctx.text(" ".join(line))
+            y += 15
+
+
 class MenuItemAppLaunch(MenuItem):
     """
     A MenuItem which launches an app from a BundleMetadata.
@@ -234,6 +295,8 @@ class MenuItemAppLaunch(MenuItem):
                 self._instance = self._bundle.load()
             except BundleLoadException as e:
                 log.error(f"Could not load {self.label()}: {e}")
+                err = LoadErrorView(e)
+                vm.push(err)
                 return
         assert self._instance is not None
         vm.push(self._instance, ViewTransitionSwipeLeft())
