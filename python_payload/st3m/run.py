@@ -95,6 +95,15 @@ def _make_compositor(reactor: Reactor, vm: ViewManager) -> overlays.Compositor:
     settings.onoff_debug_touch.subscribe(_onoff_debug_touch_update)
     compositor.add_overlay(debug_touch)
 
+    # Tie compositor's icon visibility to setting.
+    def _onoff_show_tray_update() -> None:
+        compositor.enabled[
+            overlays.OverlayKind.Indicators
+        ] = settings.onoff_show_tray.value
+
+    _onoff_show_tray_update()
+    settings.onoff_show_tray.subscribe(_onoff_show_tray_update)
+
     # Add icon tray.
     compositor.add_overlay(overlays.IconTray())
     return compositor
