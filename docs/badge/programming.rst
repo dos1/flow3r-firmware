@@ -104,7 +104,7 @@ But that's not super interesting. Let's try to turn on some LEDs:
 ::
 
 	>>> import leds
-	>>> leds.set_rgb(0, 255, 0, 0)
+	>>> leds.set_rgb(0, 1, 0, 0)
 	>>> leds.update()
 
 The LED right next to the USB connector should light up red. You can continue
@@ -191,7 +191,7 @@ Let's have a look at a very simple example involving a responder:
             ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
 
             # Paint a red square in the middle of the display
-            ctx.rgb(255, 0, 0).rectangle(-20, -20, 40, 40).fill()
+            ctx.rgb(1, 0, 0).rectangle(-20, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
             pass
@@ -247,7 +247,7 @@ shoulder button. The values for buttons contained in the input state are one of
             ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
 
             # Paint a red square in the middle of the display
-            ctx.rgb(255, 0, 0).rectangle(self._x, -20, 40, 40).fill()
+            ctx.rgb(1, 0, 0).rectangle(self._x, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
             direction = ins.buttons.app
@@ -288,7 +288,7 @@ represents the time which has passed since the last call to `think()`.
             ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
 
             # Paint a red square in the middle of the display
-            ctx.rgb(255, 0, 0).rectangle(self._x, -20, 40, 40).fill()
+            ctx.rgb(1, 0, 0).rectangle(self._x, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
             direction = ins.buttons.app # -1 (left), 1 (right), or 2 (pressed)
@@ -375,9 +375,9 @@ a square.
 
             # Paint a red square in the middle of the display
             if self._draw_rectangle:
-                ctx.rgb(255, 0, 0).rectangle(self._x, -20, 40, 40).fill()
+                ctx.rgb(1, 0, 0).rectangle(self._x, -20, 40, 40).fill()
             else:
-                ctx.rgb(255, 0, 0).arc(self._x, -20, 40, 0, tau, 0).fill()
+                ctx.rgb(1, 0, 0).arc(self._x, -20, 40, 0, tau, 0).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
             self.input.think(ins, delta_ms) # let the input controller to its magic
@@ -436,7 +436,7 @@ into the two different views. We make use of an `InputController` again to handl
             # Paint the background black
             ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
             # Green square
-            ctx.rgb(0, 255, 0).rectangle(-20, -20, 40, 40).fill()
+            ctx.rgb(0, 1, 0).rectangle(-20, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
             self.input.think(ins, delta_ms) # let the input controller to its magic
@@ -454,7 +454,7 @@ into the two different views. We make use of an `InputController` again to handl
             # Paint the background black
             ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
             # Red square
-            ctx.rgb(255, 0, 0).rectangle(-20, -20, 40, 40).fill()
+            ctx.rgb(1, 0, 0).rectangle(-20, -20, 40, 40).fill()
 
 
         def on_enter(self, vm: Optional[ViewManager]) -> None:
@@ -511,14 +511,14 @@ Here is our previous example rewritten to make use of `BaseView`:
             # Paint the background black
             ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
             # Green square
-            ctx.rgb(0, 255, 0).rectangle(-20, -20, 40, 40).fill()
+            ctx.rgb(0, 1, 0).rectangle(-20, -20, 40, 40).fill()
 
     class Example(BaseView):
         def draw(self, ctx: Context) -> None:
             # Paint the background black
             ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
             # Red square
-            ctx.rgb(255, 0, 0).rectangle(-20, -20, 40, 40).fill()
+            ctx.rgb(1, 0, 0).rectangle(-20, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
             super().think(ins, delta_ms) # Let BaseView do its thing
@@ -556,7 +556,7 @@ Here is our previous code changed to use `Application` for the base of its main 
             # Paint the background black
             ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
             # Green square
-            ctx.rgb(0, 255, 0).rectangle(-20, -20, 40, 40).fill()
+            ctx.rgb(0, 1, 0).rectangle(-20, -20, 40, 40).fill()
 
     class MyDemo(Application):
         def __init__(self, app_ctx: ApplicationContext) -> None:
@@ -567,7 +567,7 @@ Here is our previous code changed to use `Application` for the base of its main 
             # Paint the background black
             ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
             # Red square
-            ctx.rgb(255, 0, 0).rectangle(-20, -20, 40, 40).fill()
+            ctx.rgb(1, 0, 0).rectangle(-20, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
             super().think(ins, delta_ms) # Let Application do its thing
