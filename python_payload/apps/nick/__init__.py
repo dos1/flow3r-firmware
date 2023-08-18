@@ -1,11 +1,20 @@
 from st3m.application import Application, ApplicationContext
-from st3m.ui.colours import PUSH_RED, GO_GREEN, BLACK
-from st3m.goose import Dict, Any, Tuple
+from st3m.goose import Tuple, Any
 from st3m.input import InputState
 from ctx import Context
 import leds
 import json
 import math
+
+CONFIG_SCHEMA: dict[str, dict[str, Any]] = {
+    "name": {"types": [str]},
+    "size": {"types": [int, float], "cast_to": int},
+    "font": {"types": [int, float], "cast_to": int},
+    "pronouns": {"types": ["list_of_str"]},
+    "pronouns_size": {"types": [int, float], "cast_to": int},
+    "color": {"types": ["hex_color"]},
+    "mode": {"types": [int, float], "cast_to": int},
+}
 
 
 class Configuration:
@@ -17,7 +26,7 @@ class Configuration:
         self.pronouns_size: int = 25
         self.color = "0x40ff22"
         self.mode = 0
-        self._write = True
+        self.config_errors: list[str] = []
 
     @classmethod
     def load(cls, path: str) -> "Configuration":
@@ -28,42 +37,52 @@ class Configuration:
             data = json.loads(jsondata)
         except OSError:
             data = {}
-        except json.decoder.JSONDecodeError:
-            data = {"name": "json error"}
-            res._write = False
-        if "name" in data and type(data["name"]) == str:
-            res.name = data["name"]
-        if "size" in data:
-            if type(data["size"]) == float:
-                res.size = int(data["size"])
-            if type(data["size"]) == int:
-                res.size = data["size"]
-        if "font" in data and type(data["font"]) == int:
-            res.font = data["font"]
-        # type checks don't look inside collections
-        if (
-            "pronouns" in data
-            and type(data["pronouns"]) == list
-            and set([type(x) for x in data["pronouns"]]) == {str}
-        ):
-            res.pronouns = data["pronouns"]
-        if "pronouns_size" in data:
-            if type(data["pronouns_size"]) == float:
-                res.pronouns_size = int(data["pronouns_size"])
-            if type(data["pronouns_size"]) == int:
-                res.pronouns_size = data["pronouns_size"]
-        if (
-            "color" in data
-            and type(data["color"]) == str
-            and data["color"][0:2] == "0x"
-            and len(data["color"]) == 8
-        ):
-            res.color = data["color"]
-        if "mode" in data:
-            if type(data["mode"]) == float:
-                res.mode = int(data["mode"])
-            if type(data["mode"]) == int:
-                res.mode = data["mode"]
+        except ValueError:
+            res.config_errors = ["nick.json decode failed!"]
+            data = {}
+
+        # verify the config format and generate an error message
+        config_type_errors: list[str] = []
+        for config_key, type_data in CONFIG_SCHEMA.items():
+            if config_key not in data.keys():
+                continue
+            key_type_valid = False
+            for allowed_type in type_data["types"]:
+                if isinstance(allowed_type, type):
+                    if isinstance(data[config_key], allowed_type):
+                        key_type_valid = True
+                        break
+                elif allowed_type == "list_of_str":
+                    if isinstance(data[config_key], list) and (
+                        len(data[config_key]) == 0
+                        or set([type(x) for x in data[config_key]]) == {str}
+                    ):
+                        key_type_valid = True
+                        break
+                elif allowed_type == "hex_color":
+                    if (
+                        isinstance(data[config_key], str)
+                        and data[config_key][0:2] == "0x"
+                        and len(data[config_key]) == 8
+                    ):
+                        key_type_valid = True
+                        break
+
+            if not key_type_valid:
+                config_type_errors.append(config_key)
+            else:
+                # Cast to relevant type if needed
+                if type_data.get("cast_to"):
+                    data[config_key] = type_data["cast_to"](data[config_key])
+                setattr(res, config_key, data[config_key])
+
+        if config_type_errors:
+            res.config_errors += [
+                "data types wrong",
+                "in nick.json for:",
+                "",
+            ] + config_type_errors
+
         return res
 
     def save(self, path: str) -> None:
@@ -110,6 +129,19 @@ class NickApp(Application):
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
         ctx.rgb(*self._config.to_normalized_tuple())
 
+        if self._config.config_errors:
+            draw_y = (-20 * len(self._config.config_errors)) / 2
+            ctx.move_to(0, draw_y)
+            ctx.font_size = 20
+            # 0xff4500, red
+            ctx.rgb(1, 0.41, 0)
+            ctx.font = ctx.get_font_name(8)
+            for config_error in self._config.config_errors:
+                draw_y += 20
+                ctx.move_to(0, draw_y)
+                ctx.text(config_error)
+            return
+
         ctx.move_to(0, 0)
         ctx.save()
         if self._config.mode == 0:
@@ -136,7 +168,7 @@ class NickApp(Application):
         # ctx.fill()
 
     def on_exit(self) -> None:
-        if self._config._write:
+        if not self._config.config_errors:
             self._config.save(self._filename)
 
     def think(self, ins: InputState, delta_ms: int) -> None:
