@@ -8,6 +8,7 @@
 #include "py/obj.h"
 #include "py/runtime.h"
 #include "st3m_console.h"
+#include "st3m_io.h"
 #include "st3m_usb.h"
 #include "st3m_version.h"
 
@@ -372,6 +373,13 @@ STATIC mp_obj_t mp_i2c_scan(void) {
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_i2c_scan_obj, mp_i2c_scan);
 
+STATIC mp_obj_t mp_battery_charging(void) {
+    bool res = st3m_io_charger_state_get();
+    return mp_obj_new_bool(!res);
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_battery_charging_obj, mp_battery_charging);
+
 STATIC const mp_rom_map_elem_t globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_scheduler_snapshot),
       MP_ROM_PTR(&mp_scheduler_snapshot_obj) },
@@ -385,6 +393,8 @@ STATIC const mp_rom_map_elem_t globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_usb_console_active),
       MP_ROM_PTR(&mp_usb_console_active_obj) },
     { MP_ROM_QSTR(MP_QSTR_i2c_scan), MP_ROM_PTR(&mp_i2c_scan_obj) },
+    { MP_ROM_QSTR(MP_QSTR_battery_charging),
+      MP_ROM_PTR(&mp_battery_charging_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_RUNNING), MP_ROM_INT(eRunning) },
     { MP_ROM_QSTR(MP_QSTR_READY), MP_ROM_INT(eReady) },

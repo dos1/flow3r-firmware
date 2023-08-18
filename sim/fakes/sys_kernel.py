@@ -31,3 +31,7 @@ def freertos_sleep(ms):
 
 def i2c_scan():
     return [16, 44, 45, 85, 109, 110]
+
+
+def battery_charging():
+    return True

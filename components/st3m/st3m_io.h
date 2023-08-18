@@ -58,3 +58,7 @@ uint8_t st3m_io_badge_link_disable(uint8_t pin_mask);
  * a while. Warn user.
  */
 uint8_t st3m_io_badge_link_enable(uint8_t pin_mask);
+
+/* Returns true if the battery is currently being charged.
+ */
+bool st3m_io_charger_state_get();

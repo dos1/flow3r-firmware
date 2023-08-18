@@ -1,5 +1,6 @@
 import machine
 import time
+import sys_kernel
 
 
 class Power:
@@ -29,3 +30,42 @@ class Power:
     def battery_voltage(self) -> float:
         self._update()
         return self._battery_voltage
+
+    @property
+    def battery_charging(self) -> bool:
+        """
+        True if the battery is currently being charged.
+        """
+        return sys_kernel.battery_charging()
+
+
+def approximate_battery_percentage(voltage: float) -> float:
+    """
+    Returns approximate battery percentage ([0,100]) based on battery voltage
+    (in volts).
+    """
+    if voltage > 4.20:
+        return 100
+    piecewise = [
+        (100, 4.20),
+        (90, 4.06),
+        (80, 3.98),
+        (70, 3.92),
+        (60, 3.87),
+        (50, 3.82),
+        (40, 3.79),
+        (30, 3.77),
+        (20, 3.74),
+        (10, 3.68),
+        (5, 3.45),
+        (0, 3.00),
+    ]
+    for (p1, v1), (p2, v2) in zip(piecewise, piecewise[1:]):
+        if voltage > v1 or voltage < v2:
+            continue
+        vr = v1 - v2
+        pr = p1 - p2
+        vd = voltage - v2
+        p = vd / vr
+        return pr * p + p2
+    return 0
