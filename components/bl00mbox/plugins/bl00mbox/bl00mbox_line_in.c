@@ -1,7 +1,7 @@
 #include "bl00mbox_line_in.h"
 
 radspa_descriptor_t bl00mbox_line_in_desc = {
-    .name = "line_in",
+    .name = "bl00mbox_line_in",
     .id = 4001,
     .description = "connects to the line input of bl00mbox",
     .create_plugin_instance = bl00mbox_line_in_create,

@@ -16,13 +16,13 @@ class TinySampler(Application):
         self.blm = bl00mbox.Channel("tiny sampler")
 
         self.samplers: List[bl00mbox.patches._Patch | Any] = [None] * 5
-        self.line_in = self.blm.new(bl00mbox.plugins.line_in)
+        self.line_in = self.blm.new(bl00mbox.plugins.bl00mbox_line_in)
         self.blm.volume = (
             30000  # TODO: increase onboard mic line in gain and remove this
         )
         self.line_in.signals.gain = 30000
         for i in range(5):
-            self.samplers[i] = self.blm.new(bl00mbox.patches.sampler, 5000)
+            self.samplers[i] = self.blm.new(bl00mbox.patches.sampler, 1000)
             self.samplers[i].signals.output = self.blm.mixer
             self.samplers[i].signals.rec_in = self.line_in.signals.right
         self.is_recording = [False] * 5
