@@ -597,9 +597,22 @@ Together with the Python code this file forms a so called bundle
 
 
 Save this as `flow3r.toml` together with the Python code as `__init__.py` in a
-folder (name doesn't matter) and put that folder into the ``/flash/sys/apps``
-folder on your flow3r (visible as ``sys/apps`` in `Disk Mode`_). Restart the
-flow3r and it should pick up your new application.
+folder (name doesn't matter) and put that folder into one of the possible
+application directories (see below) using `Disk Mode`_. Restart the flow3r and
+it should pick up your new application.
+
++--------+----------------------+---------------------+---------------------------------------+
+| Medium | Path in Disk Mode    | Path on Badge       | Notes                                 |
++========+======================+=====================+=======================================+
+| Flash  | ``sys/apps``         | ``/flash/sys/apps`` | “Default” apps.                       |
++--------+----------------------+---------------------+---------------------------------------+
+| Flash  | ``apps``             | ``/flash/apps``     | Doesn't exist by default. Split       |
+|        |                      |                     | from ``sys`` to allow for cleaner     |
+|        |                      |                     | updates.                              |
++--------+----------------------+---------------------+---------------------------------------+
+| SD     | ``apps``             | ``/sd/apps``        | Doesn't exist by default. Will be     |
+|        |                      |                     | retained even across badge reflashes. |
++--------+----------------------+---------------------+---------------------------------------+
 
 Distributing applications
 -------------------------
