@@ -292,12 +292,12 @@ class Context(Protocol):
         This is a simple example rendering a rainbow gradient on the right side of the screen:
 
         >>> ctx.linear_gradient(0.18*120,0.5*120,0.95*120,0.5*120)
-        >>> ctx.add_stop(0.0, [255,0,0], 1.0)
-        >>> ctx.add_stop(0.2, [255,255,0], 1.0)
-        >>> ctx.add_stop(0.4, [0,255,0], 1.0)
-        >>> ctx.add_stop(0.6, [0,255,255], 1.0)
-        >>> ctx.add_stop(0.8, [0,0,255], 1.0)
-        >>> ctx.add_stop(1.0, [255,0,255], 1.0)
+        >>> ctx.add_stop(0.0, [1.0,0.0,0.0], 1.0)
+        >>> ctx.add_stop(0.2, [1.0,1.0,0.0], 1.0)
+        >>> ctx.add_stop(0.4, [0.0,1.0,0.0], 1.0)
+        >>> ctx.add_stop(0.6, [0.0,1.0,1.0], 1.0)
+        >>> ctx.add_stop(0.8, [0.0,0.0,1.0], 1.0)
+        >>> ctx.add_stop(1.0, [1.0,0.0,1.0], 1.0)
         >>> ctx.rectangle(-120, -120, 240, 240)
         >>> ctx.fill()
         """
