@@ -401,11 +401,11 @@ class WifiIcon(Icon):
 
         r = self._rssi
         ctx.gray(1.0 if r > -75 else 0.2)
-        ctx.arc(0, 60, 100, a, b, 0).stroke()
+        ctx.arc(0, 65, 100, a, b, 0).stroke()
         ctx.gray(1.0 if r > -85 else 0.2)
-        ctx.arc(0, 60, 70, a, b, 0).stroke()
+        ctx.arc(0, 65, 70, a, b, 0).stroke()
         ctx.gray(1.0 if r > -95 else 0.2)
-        ctx.arc(0, 60, 40, a, b, 0).stroke()
+        ctx.arc(0, 65, 40, a, b, 0).stroke()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self._rssi = st3m.wifi.rssi()
