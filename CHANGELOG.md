@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- [File descriptor leak on app load](python_payload/st3m/application.py)
+
+### Added
+- Added a WiFi status indicator icon
+- Added a battery status indicator icon
+- Added loading apps from /sd/apps and /flash/apps
+- Added an error screen on apps failing to start
+- Added Python/st3m API to access battery charge status
+
+
 ## [1.1.1] - 2023-08-17
 
 ### Fixed
