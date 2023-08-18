@@ -130,6 +130,7 @@ def sim_main():
         help="Run the simulator as full-screen OLED display.",
     )
     parser.add_argument("--oled-size", dest="oled_size", default=240)
+    parser.add_argument("--oled-aspect", dest="oled_aspect", default=1)
     parser.add_argument(
         "override_app",
         nargs="?",
@@ -140,6 +141,7 @@ def sim_main():
 
     os.environ["SIM_FULL_SCREEN"] = "1" if args.full_screen else "0"
     os.environ["SIM_OLED_SIZE"] = str(args.oled_size)
+    os.environ["SIM_OLED_ASPECT"] = str(args.oled_aspect)
     import _sim
 
     _sim.SCREENSHOT = args.screenshot

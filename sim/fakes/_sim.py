@@ -24,6 +24,7 @@ bgpath = os.path.join(simpath, "background.png")
 background = pygame.image.load(bgpath)
 
 OLED_SIZE = int(os.environ["SIM_OLED_SIZE"])
+OLED_ASPECT = float(os.environ["SIM_OLED_ASPECT"])
 
 
 class Input:
@@ -417,9 +418,11 @@ class Simulation:
         center_x = screen_w // 2
         center_y = screen_h // 2
         if FULL_SCREEN:
-            off_x = center_x - (screen_h // 2)
+            off_x = center_x - (screen_h * OLED_ASPECT // 2)
             off_y = center_y - (screen_h // 2)
-            new = pygame.transform.scale(self._oled_surface, (screen_h, screen_h))
+            new = pygame.transform.scale(
+                self._oled_surface, (screen_h * OLED_ASPECT, screen_h)
+            )
             full.blit(new, (off_x, off_y))
         else:
             off_x = center_x - (OLED_SIZE // 2)
