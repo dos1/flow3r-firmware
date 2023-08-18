@@ -6,20 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
-### Fixed
-- [File descriptor leak on app load](python_payload/st3m/application.py)
 
+## [1.2.0] - 2023-08-18
 ### Added
-- Added a WiFi status indicator icon
-- Added a battery status indicator icon
-- Added loading apps from /sd/apps and /flash/apps
-- Added an error screen on apps failing to start
-- Added Python/st3m API to access battery charge status
-- Added the ability to always hide icons
+- Added a WiFi status indicator icon.
+- Added a battery status indicator icon.
+- Added support for loading apps from `/sd/apps` and `/flash/apps`.
+- Added an error screen when apps fail to start.
+- Added Python/st3m API to access battery charge status.
+- Added the ability to always hide icons (*System* ➜ *Settings* ➜ *Show Icons*).
+
+### Fixed
+- File descriptor leak on app load.  This would lead to the OS crashing when
+  too many apps are installed.
 
 
 ## [1.1.1] - 2023-08-17
-
 ### Fixed
 - Crash on WiFi startup
 
@@ -59,7 +61,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 Initial Release
 
 
-[unreleased]: https://git.flow3r.garden/flow3r/flow3r-firmware/-/compare/v1.1.0...main
+[unreleased]: https://git.flow3r.garden/flow3r/flow3r-firmware/-/compare/v1.2.0...main
+[1.2.0]: https://git.flow3r.garden/flow3r/flow3r-firmware/-/compare/v1.1.1...v1.2.0
 [1.1.1]: https://git.flow3r.garden/flow3r/flow3r-firmware/-/compare/v1.1.0...v1.1.1
 [1.1.0]: https://git.flow3r.garden/flow3r/flow3r-firmware/-/compare/v1.0.0...v1.1.0
 [1.0.0]: https://git.flow3r.garden/flow3r/flow3r-firmware/-/tags/v1.0.0
