@@ -23,7 +23,7 @@ simpath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 bgpath = os.path.join(simpath, "background.png")
 background = pygame.image.load(bgpath)
 
-OLED_SIZE = screen_h // 2 if FULL_SCREEN else 240
+OLED_SIZE = int(os.environ["SIM_OLED_SIZE"])
 
 
 class Input:
