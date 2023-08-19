@@ -17,6 +17,11 @@ the "headphone" variant is chosen, else the "speaker" variant is chosen.
    Returns 1 if headphones with or without microphone were connected to the
    headphone jack at the last call of audio_update_jacksense.
 
+.. py:function:: line_in_is_connected() -> bool
+
+   Returns 1 if the line-in jack was connected at the last call
+   of audio_update_jacksense.
+
 .. py:function:: headphones_detection_override(enable : bool)
 
    If a sleeve contact mic doesn't pull the detection pin low enough the
