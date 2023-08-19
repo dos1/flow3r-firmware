@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: CC0-1.0
 import math
+import os
 import bl00mbox
 import cpython.wave as wave
 
@@ -100,60 +101,174 @@ class tinysynth_fm(tinysynth):
 
 class sampler(_Patch):
     """
-    requires a wave file. default path: /sys/samples/
+    requires a wave file (str) or max sample length in milliseconds (int). default path: /sys/samples/
     """
 
     def __init__(self, chan, init_var):
         # init can be filename to load into ram
         super().__init__(chan)
+        self.buffer_offset_i16 = 7
+        self._filename = ""
         if type(init_var) == str:
             filename = init_var
-            if filename.startswith("/flash/") or filename.startswith("/sd/"):
-                f = wave.open(filename, "r")
-            elif filename.startswith("/"):
-                f = wave.open("/flash/" + filename, "r")
-            else:
-                f = wave.open("/flash/sys/samples/" + filename, "r")
+            f = wave.open(self._convert_filename(filename), "r")
 
-            self.len_frames = f.getnframes()
+            self._len_frames = f.getnframes()
             self.plugins.sampler = chan.new(
-                bl00mbox.plugins._sampler_ram, self.len_frames
+                bl00mbox.plugins._sampler_ram, self.memory_len
             )
-
-            assert f.getsampwidth() == 2
-            assert f.getnchannels() in (1, 2)
-            assert f.getcomptype() == "NONE"
-
-            if f.getnchannels() == 1:
-                # fast path for mono
-                table = self.plugins.sampler.table_bytearray
-                for i in range(0, self.len_frames * 2, 100):
-                    table[i : i + 100] = f.readframes(50)
-            else:
-                # somewhat fast path for stereo
-                table = self.plugins.sampler.table_int16_array
-                for i in range(self.len_frames):
-                    frame = f.readframes(1)
-                    value = int.from_bytes(frame[0:2], "little")
-                    table[i] = value
 
             f.close()
-            self._filename = filename
+            self.load(filename)
         else:
-            self.len_frames = int(48 * init_var)
+            self._len_frames = int(48 * init_var)
             self.plugins.sampler = chan.new(
-                bl00mbox.plugins._sampler_ram, self.len_frames
+                bl00mbox.plugins._sampler_ram, self.memory_len
             )
-            self._filename = ""
 
         self.signals.trigger = self.plugins.sampler.signals.trigger
         self.signals.output = self.plugins.sampler.signals.output
         self.signals.rec_in = self.plugins.sampler.signals.rec_in
         self.signals.rec_trigger = self.plugins.sampler.signals.rec_trigger
 
+    def _convert_filename(self, filename):
+        # TODO: waht if filename doesn't exist?
+        if filename.startswith("/flash/") or filename.startswith("/sd/"):
+            return filename
+        elif filename.startswith("/"):
+            return "/flash/" + filename
+        else:
+            return "/flash/sys/samples/" + filename
+
+    def load(self, filename):
+        f = wave.open(self._convert_filename(filename), "r")
+
+        assert f.getsampwidth() == 2
+        assert f.getnchannels() in (1, 2)
+        assert f.getcomptype() == "NONE"
+
+        frames = f.getnframes()
+        if frames > self.memory_len:
+            frames = self.memory_len
+        self.sample_len = frames
+
+        if f.getnchannels() == 1:
+            # fast path for mono
+            table = self.plugins.sampler.table_bytearray
+            for i in range(
+                2 * self.buffer_offset_i16,
+                (self.sample_len + self.buffer_offset_i16) * 2,
+                100,
+            ):
+                table[i : i + 100] = f.readframes(50)
+        else:
+            # somewhat fast path for stereo
+            table = self.plugins.sampler.table_int16_array
+            for i in range(
+                self.buffer_offset_i16, self.sample_len + self.buffer_offset_i16
+            ):
+                frame = f.readframes(1)
+                value = int.from_bytes(frame[0:2], "little")
+                table[i] = value
+        f.close()
+
+    def save(self, filename, overwrite=True):
+        # remove when we actually write
+        return False
+        if os.path.exists(filename):
+            if overwrite:
+                os.remove(filename)
+            else:
+                return False
+        f = wave.open(self._convert_filename(filename), "w")
+        for i in range(self.sample_len):
+            data = self.plugins.sampler.table[self._offset_index(i)]
+            # TODO: figure out python bytes
+            # note: index wraps around, ringbuffer!
+            # f.writeframesraw???
+        f.close()
+        return True
+
+    def _offset_index(self, index):
+        index += self.sample_start
+        if index >= self.memory_len:
+            index -= self.memory_len
+        index += self.buffer_offset_i16
+        return index
+
+    @property
+    def memory_len(self):
+        return self._len_frames
+
+    def _decode_uint32(self, pos):
+        table = self.plugins.sampler.table_int16_array
+        lsb = table[pos]
+        msb = table[pos + 1]
+        if lsb < 0:
+            lsb += 65536
+        if msb < 0:
+            msb += 65536
+        return lsb + (msb * (1 << 16))
+
+    def _encode_uint32(self, pos, num):
+        if num >= (1 << 32):
+            num = (1 << 32) - 1
+        if num < 0:
+            num = 0
+        msb = (num // (1 << 16)) & 0xFFFF
+        lsb = num & 0xFFFF
+        if lsb > 32767:
+            lsb -= 65536
+        if msb > 32767:
+            msb -= 65536
+        table = self.plugins.sampler.table_int16_array
+        table[pos] = lsb
+        table[pos + 1] = msb
+
+    @property
+    def read_head_position(self):
+        return self._decode_uint32(0)
+
+    @read_head_position.setter
+    def read_head_position(self, val):
+        if val >= self.memory_len:
+            val = self.memory_len - 1
+        self._encode_uint32(0, val)
+
+    @property
+    def sample_start(self):
+        return self._decode_uint32(2)
+
+    @sample_start.setter
+    def sample_start(self, val):
+        if val >= self.memory_len:
+            val = self.memory_len - 1
+        self._encode_uint32(2, val)
+
+    @property
+    def sample_len(self):
+        return self._decode_uint32(4)
+
+    @sample_len.setter
+    def sample_len(self, val):
+        if val > self.memory_len:
+            val = self.memory_len
+        self._encode_uint32(4, val)
+
     @property
     def filename(self):
         return self._filename
+
+    @property
+    def rec_event_autoclear(self):
+        """
+        returns true once after a record cycle has been completed. useful for checking whether a save is necessary if nothing else has modified the table.
+        """
+
+        if self.plugins.sampler_table[6]:
+            self.plugins.sampler_table[6] = 0
+            return True
+        return False
 
 
 class sequencer(_Patch):
@@ -190,6 +305,7 @@ class sequencer(_Patch):
             + str(self.signals.step_len.value)
         )
         ret += "\n  [tracks]"
+        """
         for x, seq in enumerate(self.seqs):
             ret += (
                 "\n    "
@@ -198,6 +314,7 @@ class sequencer(_Patch):
                 + "".join(["X  " if x > 0 else ".  " for x in seq.table[1:]])
                 + "]"
             )
+        """
         ret += "\n" + "\n".join(super().__repr__().split("\n")[1:])
         return ret
 
