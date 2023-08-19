@@ -1,5 +1,9 @@
 set(SYS_C_PATH "${CMAKE_CURRENT_BINARY_DIR}/include/sys_data.c")
 
+if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/include/")
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/")
+endif()
+
 idf_component_register(
     SRCS
         main.c

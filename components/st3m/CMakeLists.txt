@@ -1,5 +1,9 @@
 set(ST3M_VERSION_PATH "${CMAKE_CURRENT_BINARY_DIR}/include/st3m_version.c")
 
+if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/include/")
+    file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/include/")
+endif()
+
 idf_component_register(
     SRCS
         st3m_audio.c
