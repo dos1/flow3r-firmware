@@ -32,7 +32,7 @@ radspa_t * oldschool_compressor_create(uint32_t init_var){
     radspa_signal_set(compressor, OLDSCHOOL_COMPRESSOR_RELEASE, "release", RADSPA_SIGNAL_HINT_INPUT, 0);
     radspa_signal_set(compressor, OLDSCHOOL_COMPRESSOR_RATIO, "ratio", RADSPA_SIGNAL_HINT_INPUT, 0);
     oldschool_compressor_data_t * data = compressor->plugin_data;
-    data->vca_gain = 1<<8; // unity gain
+    data->vca_gain = 1<<15; // unity gain
     data->div_prev = -1; // impossible, always triggers refresh
     return compressor;
 }
@@ -57,33 +57,33 @@ void oldschool_compressor_run(radspa_t * compressor, uint16_t num_samples, uint3
         int32_t release = release_sig->get_value(release_sig, i, num_samples, render_pass_id);
         int32_t ratio = ratio_sig->get_value(ratio_sig, i, num_samples, render_pass_id);
 
-        release = release > 0 ? release : -release;
-        attack = attack > 0 ? attack : -attack;
+        release = release > 0 ? release + 300 : -release + 300;
+        attack = attack > 0 ? attack + 300 : -attack + 300;
         ratio = ratio > 0 ? ratio : -ratio;
 
         int32_t ret = input;
-        ret = (ret * gain) >> 15;
-        ret = ret * data->vca_gain;
+        ret = (ret * data->vca_gain) >> 15;
+        ret = ret * gain >> 7;
         output_sig->set_value(output_sig, i, radspa_gain(ret, volume), num_samples, render_pass_id);
 
         int32_t abs_out = ret > 0 ? ret : -ret;
         abs_out -= OLDSCHOOL_COMPRESSOR_FIXED_THRES;
         
         if(abs_out > 0){
-            data->env += (abs_out * attack) >> 16;
+            data->env += (abs_out * attack) >> (15+5);
             if(data->env > OLDSCHOOL_COMPRESSOR_ENV_LIMIT) data->env = OLDSCHOOL_COMPRESSOR_ENV_LIMIT;
         } else {
             if(data->env > 0){
-                data->env -= release;
+                data->env -= release >> 9;
                 if(data->env < 0){
                     data->env = 0;
                 }
             }
         }
-        int32_t div = (ratio * data->env) >> 23;
+        int32_t div = (ratio * data->env) >> 15;
         if(div != data->div_prev){
-            if(div > 255) div = 255;
-            data->vca_gain = (1<<15) / (1 + div);
+            if(div > (1<<15)) div = (1<<15);
+            data->vca_gain = (1<<23) / (1<<8 + div);
             data->div_prev = div;
         }
         // TODO: append to gain log
