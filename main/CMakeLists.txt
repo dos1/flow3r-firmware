@@ -22,9 +22,9 @@ add_custom_command(
     COMMAND
         "${python}" "${CMAKE_CURRENT_SOURCE_DIR}/host-tools/pack-sys.py" "${PROJECT_DIR}/python_payload" "${SYS_C_PATH}"
     DEPENDS
-        "${CMAKE_CURRENT_SOURCE_DIR}/host-tools/pack-sys.py" 
+        "${CMAKE_CURRENT_SOURCE_DIR}/host-tools/pack-sys.py"
         "${payload_files}"
-        
+
 )
 add_custom_target(generate_sys_c ALL DEPENDS "${SYS_C_PATH}")
 
