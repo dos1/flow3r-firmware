@@ -111,7 +111,8 @@ class Context(Protocol):
         pass
     def rotate(self, x: float) -> "Context":
         """
-        Add rotation to the user to device space transform.
+        Add rotation to the user to device space transform by specified
+        radians (angle * math.pi / 180).
         """
         pass
     def scale(self, x: float, y: float) -> "Context":
