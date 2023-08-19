@@ -3,9 +3,9 @@
 #include "radspa_helpers.h"
 
 typedef struct {
-    uint32_t counter;
-    int16_t prev_pitch;
-    int32_t incr;
+    int32_t vca_gain;
+    int32_t div_prev;
+    int32_t env;
 } oldschool_compressor_data_t;
 
 extern radspa_descriptor_t oldschool_compressor_desc;

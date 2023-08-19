@@ -37,7 +37,7 @@ radspa_t * oldschool_compressor_create(uint32_t init_var){
     return compressor;
 }
 
-void oldschool_compressor_run(radspa_t * oldschool_compressor, uint16_t num_samples, uint32_t render_pass_id){
+void oldschool_compressor_run(radspa_t * compressor, uint16_t num_samples, uint32_t render_pass_id){
     oldschool_compressor_data_t * data = compressor->plugin_data;
     radspa_signal_t * output_sig = radspa_signal_get_by_index(compressor, OLDSCHOOL_COMPRESSOR_OUTPUT);
     if(output_sig->buffer == NULL) return;
@@ -67,7 +67,7 @@ void oldschool_compressor_run(radspa_t * oldschool_compressor, uint16_t num_samp
         output_sig->set_value(output_sig, i, radspa_gain(ret, volume), num_samples, render_pass_id);
 
         int32_t abs_out = ret > 0 ? ret : -ret;
-        abs_out -= OLDSCHOOL_COMPRESSOR_FIXED_THRES:
+        abs_out -= OLDSCHOOL_COMPRESSOR_FIXED_THRES;
         
         if(abs_out > 0){
             data->env += (abs_out * attack) >> 16;
