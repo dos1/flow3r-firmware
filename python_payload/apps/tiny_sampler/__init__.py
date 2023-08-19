@@ -88,3 +88,10 @@ class TinySampler(Application):
                     self.is_recording[i] = False
 
         self.ct_prev = ct
+
+    def on_exit(self) -> None:
+        for i in range(5):
+            if self.is_recording[i]:
+                self.samplers[i].signals.rec_trigger.stop()
+                self.is_recording[i] = False
+        audio.input_set_source(audio.INPUT_SOURCE_NONE)
