@@ -87,14 +87,9 @@ class Configuration:
 
     def save(self, path: str) -> None:
         d = {
-            "name": self.name,
-            "size": self.size,
-            "font": self.font,
-            "pronouns": self.pronouns,
-            "pronouns_size": self.pronouns_size,
-            "color": self.color,
-            "mode": self.mode,
+            config_key: getattr(self, config_key) for config_key in CONFIG_SCHEMA.keys()
         }
+
         jsondata = json.dumps(d)
         with open(path, "w") as f:
             f.write(jsondata)
