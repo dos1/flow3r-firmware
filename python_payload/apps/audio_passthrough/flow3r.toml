@@ -10,4 +10,4 @@ author = "ave"
 license = "LGPL-3.0-only"
 url = "https://git.flow3r.garden/flow3r/flow3r-firmware"
 description = "Allows toggling audio passthrough through line-in/mic to speaker or lineout."
-version = 6
+version = 7

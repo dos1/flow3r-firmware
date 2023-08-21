@@ -108,10 +108,12 @@ class AudioPassthrough(Application):
         headset_connected = audio.headset_is_connected()
         if self._force_mode == "FORCE_MIC":
             audio.input_set_source(audio.INPUT_SOURCE_ONBOARD_MIC)
+        elif (
+            audio.line_in_is_connected() and self._force_mode == "AUTO"
+        ) or self._force_mode == "FORCE_LINE_IN":
+            audio.input_set_source(audio.INPUT_SOURCE_LINE_IN)
         elif headset_connected or self._force_mode == "FORCE_LINE_OUT":
             audio.input_set_source(audio.INPUT_SOURCE_HEADSET_MIC)
-        elif audio.line_in_is_connected() or self._force_mode == "FORCE_LINE_IN":
-            audio.input_set_source(audio.INPUT_SOURCE_LINE_IN)
         else:
             audio.input_set_source(audio.INPUT_SOURCE_NONE)
 
