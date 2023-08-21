@@ -644,7 +644,8 @@ environment with the required packages:
     $ git clone https://git.flow3r.garden/flow3r/flow3r-firmware
     $ cd flow3r-firmware
     $ python3 -m venv venv
-    $ venv/bin/pip install pygame wasmer wasmer-compiler-cranelift
+    $ venv/bin/pip install pygame requests
+    $ venv/bin/pip install wasmer wasmer-compiler-cranelift
 
 .. warning::
 

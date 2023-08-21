@@ -53,8 +53,8 @@ For running the simulator, you'll need Python 3 with pygame and wasmer:
 ::
 
 	$ python3 -m venv venv
-	$ . venv/bin/activate
-	$ pip install pygame wasmer wasmer-compiler-cranelift
+	$ venv/bin/pip install pygame requests
+        $ venv/bin/pip install wasmer wasmer-compiler-cranelift
 
 .. warning::
 
