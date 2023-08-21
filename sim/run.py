@@ -102,7 +102,7 @@ orig_stat = os.stat
 def _stat(path):
     res = orig_stat(path)
     # lmao
-    return (res.st_mode, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    return os.stat_result((res.st_mode, 0, 0, 0, 0, 0, 0, 0, 0, 0))
 
 
 os.stat = _stat
