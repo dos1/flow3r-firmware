@@ -75,6 +75,9 @@ class Input:
                 self._mouse_held = self._mouse_hover
             if ev.type == pygame.KEYUP:
                 self._mouse_held = None
+        if ev.type == pygame.QUIT:
+            pygame.quit()
+            sys.exit()
 
         if prev_hover != self._mouse_hover:
             return True
