@@ -91,7 +91,7 @@
 #define CTX_TERMINAL_EVENTS        0 // gets rid of posix bits and bobs
 #define CTX_THREADS                0
 #define CTX_TILED                  0
-#define CTX_FORMATTER              0  // we want these eventually
+#define CTX_FORMATTER              1  // we want these eventually
 #define CTX_PARSER                 0  // enabled
 #define CTX_BRAILLE_TEXT           0
 
