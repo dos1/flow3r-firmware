@@ -18,6 +18,20 @@
 #include "st3m_counter.h"
 #include "st3m_version.h"
 
+#define NETWORKED_CTX 0
+
+#if NETWORKED_CTX
+#include "lwip/igmp.h"
+#include "lwip/ip4.h"
+#include "lwip/netdb.h"
+#include "lwip/sockets.h"
+
+#define NETWORKED_CTX_HOSTNAME "151.216.131.82"
+#define NETWORKED_CTX_PORT     1234
+#define NETWORKED_CTX_DELAY_FRAMES 400
+
+#endif
+
 static const char *TAG = "st3m-gfx";
 
 // Framebuffer descriptors, containing framebuffer and ctx for each of the
@@ -111,10 +125,63 @@ static void st3m_gfx_crtc_task(void *_arg) {
     }
 }
 
+#if NETWORKED_CTX
+static int sock = 0;
+static int net_wait = NETWORKED_CTX_DELAY_FRAMES;
+
+static void connect_net_gfx(void)
+{
+        if (!sock)
+        {
+        if (net_wait >0)
+        {
+          net_wait --;
+        }
+        else
+        {
+          sock = socket(PF_INET,SOCK_STREAM,0);
+          if (sock < 0)
+          {
+            sock = 0;
+          }
+          else
+          {
+            struct hostent *host;
+            struct sockaddr_in addr;
+            memset(&addr, 0, sizeof(addr));
+            addr.sin_family = AF_INET;
+            addr.sin_port = htons(NETWORKED_CTX_PORT);
+            host = gethostbyname(NETWORKED_CTX_HOSTNAME);
+            if (!host) {
+              sock = 0;
+            }
+            else
+            {
+              addr.sin_addr.s_addr = ((long unsigned int **)host->h_addr_list)[0][0];
+
+              if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
+  //write(sock, "we are connected\n", strlen("we are connected\n"));
+            }
+else
+{
+   printf ("not connected to network display\n");
+   sock=0;
+}
+          }
+            }
+      
+  
+        }
+        }
+}
+#endif
+
 static void st3m_gfx_rast_task(void *_arg) {
     (void)_arg;
 
     while (true) {
+
+
         int fb_descno, dctx_descno;
         int64_t start = esp_timer_get_time();
         xQueueReceiveNotifyStarved(framebuffer_freeq, &fb_descno,
@@ -133,6 +200,7 @@ static void st3m_gfx_rast_task(void *_arg) {
         ctx_set_textureclock(framebuffer_descs[0].ctx,
                              ctx_textureclock(framebuffer_descs[0].ctx) + 1);
 
+
         // Render drawctx into fbctx.
         start = esp_timer_get_time();
         int count = 0;
@@ -147,6 +215,10 @@ static void st3m_gfx_rast_task(void *_arg) {
         } else {
             fb->empty = 0;
             ctx_render_ctx(draw->ctx, fb->ctx);
+#if NETWORKED_CTX
+            if (sock)
+              ctx_render_fd (draw->ctx, sock, 0);
+#endif
         }
         ctx_drawlist_clear(draw->ctx);
         end = esp_timer_get_time();
@@ -180,6 +252,10 @@ static void st3m_gfx_rast_task(void *_arg) {
                      (double)rate, (double)read_fb, (double)read_dctx,
                      (double)work, (double)write);
         }
+
+#if NETWORKED_CTX
+        connect_net_gfx();
+#endif
     }
 }
 
