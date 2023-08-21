@@ -16,6 +16,11 @@ import cmath
 import wasmer
 import wasmer_compiler_cranelift
 
+try:
+    import requests
+except ImportError:
+    print("Warning: `requests` is missing so no `urequests` mock will exist")
+
 
 sys_path_orig = sys.path
 
