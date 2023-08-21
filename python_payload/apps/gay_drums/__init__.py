@@ -1,6 +1,6 @@
 import bl00mbox
-import captouch
 import leds
+import captouch
 
 from st3m.application import Application, ApplicationContext
 from st3m.input import InputState
@@ -36,7 +36,7 @@ class GayDrums(Application):
         self.seq.signals.bpm.value = 80
 
         self.track_names = ["kick", "hihat", "snare", "crash", "nya", "woof"]
-        self.ct_prev = captouch.read()
+        self.ct_prev: Optional[captouch.CaptouchState] = None
         self.track = 1
         self.blm.background_mute_override = True
         self.tap_tempo_press_counter = 0
@@ -59,7 +59,12 @@ class GayDrums(Application):
         self._redraw_background = 2
         self._group_gap = 5
         self.background_col: Color = (0, 0, 0)
-        self.highlight_col: Color = (0.15, 0.15, 0.15)
+        self.bar_col = (0.5, 0.5, 0.5)
+        self.highlight_col: Color = self.bar_col
+        self.highlight_outline: bool = True
+
+        self.draw_background_counter = 0
+        self.full_redraw_timer_ms = 0
 
     def set_bar_mode(self, mode: int) -> None:
         # TODO: figure out how to speed up re-render
@@ -128,23 +133,17 @@ class GayDrums(Application):
 
     def draw_background(self, ctx: Context, data: None) -> None:
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
-
-        # group bars
-        bar_len = 10 * (1 + self.num_samplers)
-        bar_pos = 4 * 12 + self._group_gap
-        self.ctx_draw_centered_rect(ctx, 0, 0, 1, bar_len, (0.5, 0.5, 0.5))
-        self.ctx_draw_centered_rect(ctx, bar_pos, 0, 1, bar_len, (0.5, 0.5, 0.5))
-        self.ctx_draw_centered_rect(ctx, -bar_pos, 0, 1, bar_len, (0.5, 0.5, 0.5))
+        self.draw_bars(ctx, None)
 
         ctx.font = ctx.get_font_name(1)
 
         ctx.font_size = 15
         ctx.rgb(0.6, 0.6, 0.6)
 
-        ctx.move_to(0, -85)
+        ctx.move_to(0, -80)
         ctx.text("(hold) stop")
 
-        ctx.move_to(0, -100)
+        ctx.move_to(0, -95)
         ctx.text("tap tempo")
 
         self.draw_track_name(ctx, None)
@@ -212,7 +211,6 @@ class GayDrums(Application):
 
     def draw_track_step_marker(self, ctx: Context, data: Tuple[int, int]) -> None:
         track, step = data
-        self._group_gap = 4
         rgb = self._track_col(track)
         rgbf = (rgb[0] / 256, rgb[1] / 256, rgb[2] / 256)
         y = -int(12 * (track - (self.num_samplers - 1) / 2))
@@ -223,7 +221,7 @@ class GayDrums(Application):
         x = int(-x)
         group = step // 4
         bg = self.background_col
-        if self._group_highlight_on[group]:
+        if self._group_highlight_on[group] and not self.highlight_outline:
             bg = self.highlight_col
         if trigger_state == 3:
             self.ctx_draw_centered_rect(ctx, x, y, 8, 8, rgbf)
@@ -245,48 +243,101 @@ class GayDrums(Application):
         nosy = int(posy - (sizey / 2))
         ctx.rectangle(nosx, nosy, int(sizex), int(sizey)).fill()
 
+    def draw_bars(self, ctx: Context, data: None) -> None:
+        ctx.move_to(0, 0)
+        bar_len = 10 * (1 + self.num_samplers)
+        bar_pos = 4 * 12 + self._group_gap
+        self.ctx_draw_centered_rect(ctx, 0, 0, 1, bar_len, self.bar_col)
+        self.ctx_draw_centered_rect(ctx, bar_pos, 0, 1, bar_len, self.bar_col)
+        self.ctx_draw_centered_rect(ctx, -bar_pos, 0, 1, bar_len, self.bar_col)
+
     def draw_group_highlight(self, ctx: Context, data: int) -> None:
         i = data
         col = self.background_col
         if self._group_highlight_on[i]:
             col = self.highlight_col
-        sizex = 48 + self._group_gap - 2
-        sizey = 10 * (1 + self.num_samplers)
-        posx = -int((12 * 4 + 1 + self._group_gap) * (1.5 - i))
-        posy = 0
-        self.ctx_draw_centered_rect(ctx, posx, posy, sizex, sizey, col)
 
-        for x in range(self.num_samplers):
-            for y in range(4):
-                self.draw_track_step_marker(ctx, (x, y + 4 * i))
+        bar_len = 10 * (1 + self.num_samplers)
+        bar_pos = 4 * 12 + self._group_gap
+
+        sizex = 4 * 12
+        sizey = bar_len
+        posx = int(bar_pos * (i - 1.5))
+        posy = 0
+
+        if self.highlight_outline:
+            self.ctx_draw_centered_rect(
+                ctx, posx, int(sizey / 2) + 2, sizex - 2, 1, col
+            )
+            self.ctx_draw_centered_rect(
+                ctx, posx, int(-sizey / 2) - 2, sizex - 2, 1, col
+            )
+            if i == 0:
+                self.ctx_draw_centered_rect(ctx, -2 * bar_pos, 0, 1, bar_len, col)
+            if i == 3:
+                self.ctx_draw_centered_rect(ctx, 2 * bar_pos, 0, 1, bar_len, col)
+        else:
+            self.ctx_draw_centered_rect(ctx, posx, posy, sizex, sizey, col)
+            for x in range(self.num_samplers):
+                for y in range(4):
+                    self.draw_track_step_marker(ctx, (x, y + 4 * i))
 
     def draw_bpm(self, ctx: Context, data: None) -> None:
-        self.ctx_draw_centered_rect(ctx, 0, -65, 200, 22, (0, 0, 0))
+        ctx.text_align = ctx.MIDDLE
+        ctx.move_to(0, 0)
+        self.ctx_draw_centered_rect(ctx, 0, -60, 200, 24, (0, 0, 0))
         bpm = self.seq.signals.bpm.value
         ctx.font = ctx.get_font_name(1)
         ctx.font_size = 20
 
-        ctx.move_to(0, -65)
+        ctx.move_to(0, -60)
         ctx.rgb(255, 255, 255)
         ctx.text(str(bpm) + " bpm")
 
+    def draw_volume_area(self, ctx: Context, data: None) -> None:
+        ctx.move_to(0, 0)
+        bar_len = 10 * (1 + self.num_samplers)
+        self.ctx_draw_centered_rect(ctx, 0, 0, 6 * 12, bar_len, (0, 0, 0))
+        self.ctx_draw_centered_rect(ctx, 0, 0, 1, bar_len, (0.5, 0.5, 0.5))
+
+        for track in range(self.num_samplers):
+            for step in range(5, 16 - 5):
+                self.draw_track_step_marker(ctx, (track, step))
+        for i in range(1, 3):
+            self._group_highlight_redraw[i] = True
+
     def draw(self, ctx: Context) -> None:
+        ctx.text_align = ctx.MIDDLE
         if not self.init_complete:
             ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
 
             ctx.font = ctx.get_font_name(0)
-            ctx.text_align = ctx.MIDDLE
             ctx.font_size = 24
-            ctx.move_to(0, -10)
+            ctx.move_to(0, -40)
             ctx.rgb(0.8, 0.8, 0.8)
             if self.samples_loaded == self.samples_total:
                 ctx.text("Loading complete")
+                self.loading_text = "(drawing screen will take a sec)"
             else:
                 ctx.text("Loading samples...")
 
             ctx.font_size = 16
-            ctx.move_to(0, 10)
+            ctx.move_to(0, -20)
             ctx.text(self.loading_text)
+
+            tutorial = (
+                "how to:\n"
+                "press one of the 4 left petals\n"
+                "and one of the 4 right petals\n"
+                "at the same time to toggle\n"
+                "an event in the grid"
+            )
+            ctx.font_size = 16
+            for x, line in enumerate(tutorial.split("\n")):
+                if not x:
+                    continue
+                ctx.move_to(0, 5 + 19 * x)
+                ctx.text(line)
 
             progress = self.samples_loaded / self.samples_total
             bar_len = 120 / self.samples_total
@@ -294,8 +345,13 @@ class GayDrums(Application):
                 rgb = self._track_col(x)
                 rgbf = (rgb[0] / 256, rgb[1] / 256, rgb[2] / 256)
                 ctx.rgb(*rgbf)
-                ctx.rectangle(x * bar_len - 60, 30, bar_len, 10).fill()
+                ctx.rectangle(x * bar_len - 60, -8, bar_len, 10).fill()
             return
+
+        if self.draw_background_counter > 0:
+            self._render_list_1 += [(self.draw_background, None)]
+            self._render_list_1 += [(self.draw_background, None)]
+            self.draw_background_counter -= 1
 
         for i in range(4):
             if self._group_highlight_redraw[i]:
@@ -327,7 +383,7 @@ class GayDrums(Application):
         self.ctx_draw_centered_rect(ctx, stepx, stepy, dotsize, dotsize, (1, 1, 1))
 
     def draw_track_name(self, ctx: Context, data: None) -> None:
-        self.ctx_draw_centered_rect(ctx, 0, 60, 200, 30, self.background_col)
+        self.ctx_draw_centered_rect(ctx, 0, 60, 200, 40, self.background_col)
         ctx.font = ctx.get_font_name(1)
         ctx.text_align = ctx.MIDDLE
 
@@ -370,6 +426,18 @@ class GayDrums(Application):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
 
+        if self.full_redraw_timer_ms > 0:
+            self.full_redraw_timer_ms -= delta_ms
+            if self.full_redraw_timer_ms < 0:
+                self._render_list_1 += [(self.draw_volume_area, None)]
+
+        if self.input.buttons.os.left.pressed or self.input.buttons.os.right.pressed:
+            self.full_redraw_timer_ms = 2000
+
+        if self.ct_prev is None:
+            self.ct_prev = ins.captouch
+            return
+
         if not self.init_complete:
             try:
                 self.samples_loaded, self.loading_text = next(self.load_iter)
@@ -389,7 +457,7 @@ class GayDrums(Application):
             self.bar = st // 16
             self._group_highlight_redraw = [True] * 4
 
-        ct = captouch.read()
+        ct = ins.captouch
         for i in range(4):
             if ct.petals[6 + i].pressed:
                 if not self._group_highlight_on[i]:
@@ -456,5 +524,5 @@ class GayDrums(Application):
         self.ct_prev = ct
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
-        self._render_list_1 += [(self.draw_background, None)]
-        self._render_list_1 += [(self.draw_background, None)]  # nice
+        self.ct_prev = None
+        self.draw_background_counter = 2
