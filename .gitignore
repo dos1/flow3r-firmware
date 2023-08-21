@@ -15,6 +15,7 @@ __pycache__
 
 # Python
 .venv
+/venv/
 
 # sphinx
 docs/_build/
