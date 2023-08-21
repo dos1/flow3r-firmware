@@ -29,9 +29,6 @@
 #define CTX_ENABLE_RGBA8              1
 #define CTX_ENABLE_RGB8               1
 #define CTX_ENABLE_RGB332             0
-#define CTX_ENABLE_GRAY1              0
-#define CTX_ENABLE_GRAY2              0
-#define CTX_ENABLE_GRAY4              0
 #define CTX_ENABLE_RGB565             1
 #define CTX_ENABLE_RGB565_BYTESWAPPED 1
 #define CTX_ENABLE_CBRLE              0
@@ -66,23 +63,35 @@
 #define CTX_CLIENTS                  0
 
 #if defined(CONFIG_FLOW3R_CTX_FLAVOUR_FULL)
+#define CTX_GSTATE_PROTECT              1
 #define CTX_ENABLE_CLIP                 1
 #define CTX_FRAGMENT_SPECIALIZE         1
 #define CTX_FAST_FILL_RECT              1
 #define CTX_BLENDING_AND_COMPOSITING    1
 #define CTX_ENABLE_YUV420               1
 #define CTX_ENABLE_GRAY8                1
+#define CTX_ENABLE_GRAYA8               1
+#define CTX_ENABLE_GRAY1                1
+#define CTX_ENABLE_GRAY2                1
+#define CTX_ENABLE_GRAY4                1
 #define CTX_STB_IMAGE                   1
 #define STBI_ONLY_PNG
 #define STBI_ONLY_JPEG
+#define CTX_FORMATTER                   1
+#define CTX_PARSER                      1
 
 #else
+#define CTX_ENABLE_GRAY1                0
+#define CTX_ENABLE_GRAY2                0
+#define CTX_ENABLE_GRAY4                0
 #define CTX_ENABLE_CLIP                 0
 #define CTX_FRAGMENT_SPECIALIZE         0
 #define CTX_FAST_FILL_RECT              0
 #define CTX_BLENDING_AND_COMPOSITING    0
 #define CTX_FORCE_INLINES               0
 #define CTX_INLINED_GRADIENTS           0
+#define CTX_FORMATTER                   0
+#define CTX_PARSER                      0
 #endif
 
 
@@ -91,8 +100,6 @@
 #define CTX_TERMINAL_EVENTS        0 // gets rid of posix bits and bobs
 #define CTX_THREADS                0
 #define CTX_TILED                  0
-#define CTX_FORMATTER              0  // we want these eventually
-#define CTX_PARSER                 0  // enabled
 #define CTX_BRAILLE_TEXT           0
 
 #define CTX_BAREMETAL              1

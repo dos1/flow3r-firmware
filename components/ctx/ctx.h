@@ -1,4 +1,4 @@
-/* ctx git commit: aeaa8b2b */
+/* ctx git commit: 0bceaea0 */
 /* 
  * ctx.h is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -868,7 +868,9 @@ Ctx * ctx_new_for_cairo (cairo_t *cr);
 
 char *ctx_render_string (Ctx *ctx, int longform, int *retlen);
 
-void ctx_render_stream  (Ctx *ctx, FILE *stream, int formatter);
+void ctx_render_stream  (Ctx *ctx, FILE *stream, int longform);
+
+void ctx_render_fd      (Ctx *ctx, int fd, int longform);
 
 void ctx_render_ctx     (Ctx *ctx, Ctx *d_ctx);
 void ctx_render_ctx_textures (Ctx *ctx, Ctx *d_ctx); /* cycles through all
@@ -2510,6 +2512,20 @@ int ctx_vt_has_data (Ctx *ctx);
 int ctx_vt_read (Ctx *ctx);
 
 
+
+#if CTX_GSTATE_PROTECT
+/* sets the current gstate stack (number of unpaired ctx_save calls) as a
+ * limit that can not be restored beyond. For now can not be used recursively.
+ */
+void ctx_gstate_protect   (Ctx *ctx);
+
+/* removes the limit set by ctx_gstate_protect, if insufficient ctx_restore
+ * calls have been made, 
+ */
+void ctx_gstate_unprotect (Ctx *ctx);
+#endif
+
+/* set the logical clock used for the texture eviction policy */
 void ctx_set_textureclock (Ctx *ctx, int frame);
 int  ctx_textureclock (Ctx *ctx);
 
@@ -5784,6 +5800,15 @@ static inline CtxList *ctx_list_find_custom (CtxList *list,
 
 #ifndef CTX_STROKE_1PX   
 #define CTX_STROKE_1PX    0
+#endif
+
+#ifndef CTX_PICO
+#define CTX_PICO 0
+#endif
+
+
+#ifndef CTX_GSTATE_PROTECT
+#define CTX_GSTATE_PROTECT  1
 #endif
 
  /* Copyright (C) 2020 Øyvind Kolås <pippin@gimp.org>
@@ -10466,8 +10491,10 @@ struct _CtxState
   int           ink_min_y;
   int           ink_max_x;
   int           ink_max_y;
+#if CTX_GSTATE_PROTECT
+  int           gstate_waterlevel;
+#endif
   CtxGState     gstate;
-  CtxGState     gstate_stack[CTX_MAX_STATES];//at end, so can be made dynamic
 #if CTX_GRADIENTS
   CtxGradient   gradient; /* we keep only one gradient,
                              this goes icky with multiple
@@ -10479,6 +10506,7 @@ struct _CtxState
 #endif
   CtxKeyDbEntry keydb[CTX_MAX_KEYDB];
   char          stringpool[CTX_STRINGPOOL_SIZE];
+  CtxGState     gstate_stack[CTX_MAX_STATES];//at end, so can be made dynamic
 };
 
 
@@ -11008,6 +11036,7 @@ int ctx_terminal_cols   (void);
 int ctx_terminal_rows   (void);
 extern int ctx_frame_ack;
 
+
 typedef struct _CtxCtx CtxCtx;
 struct _CtxCtx
 {
@@ -11018,7 +11047,6 @@ struct _CtxCtx
    int  rows;
    int  was_down;
 };
-
 
 extern int _ctx_max_threads;
 extern int _ctx_enable_hash_cache;
@@ -37243,7 +37271,7 @@ void _ctx_mouse (Ctx *term, int mode)
 
 #if !__COSMOPOLITAN__
 
-#if CTX_PTY==0
+#if CTX_PICO
 #include "pico/stdlib.h"
 #include "hardware/timer.h"
 static uint64_t pico_get_time(void) {
@@ -37263,7 +37291,7 @@ _ctx_init_ticks (void)
   if (done)
     return;
   done = 1;
-#if CTX_PTY==0
+#if CTX_PICO
   start_time = pico_get_time();
 #else
   gettimeofday (&start_time, NULL);
@@ -37273,7 +37301,7 @@ _ctx_init_ticks (void)
 static inline unsigned long
 _ctx_ticks (void)
 {
-#if CTX_PTY==0
+#if CTX_PICO
   uint64_t measure_time =  pico_get_time();
   return measure_time - start_time;
 #else
@@ -45461,7 +45489,6 @@ ctx_new_for_cairo (cairo_t *cr)
 
 #endif
 
-#if CTX_TERMINAL_EVENTS
 int ctx_frame_ack = -1;
 #if CTX_FORMATTER
 
@@ -45839,10 +45866,13 @@ static void ctx_ctx_end_frame (Ctx *ctx)
   fprintf (stdout, "\033[5n");
   fflush (stdout);
 
+#if CTX_EVENTS
   ctx_frame_ack = 0;
   do {
      ctx_consume_events (ctxctx->backend.ctx);
   } while (ctx_frame_ack != 1);
+#endif
+
 #else
   fflush (stdout);
 #endif
@@ -45850,7 +45880,9 @@ static void ctx_ctx_end_frame (Ctx *ctx)
 
 void ctx_ctx_destroy (CtxCtx *ctx)
 {
+#if CTX_TERMINAL_EVENTS
   nc_at_exit ();
+#endif
   ctx_free (ctx);
   /* we're not destoring the ctx member, this is function is called in ctx' teardown */
 }
@@ -45865,7 +45897,7 @@ void ctx_ctx_consume_events (Ctx *ctx)
 #endif
   assert (ctx_native_events);
 
-#if 1
+#if CTX_TERMINAL_EVENTS
     { /* XXX : this is a work-around for signals not working properly, we are polling the
          size with an ioctl per consume-events
          */
@@ -45990,7 +46022,6 @@ Ctx *ctx_new_ctx (int width, int height)
 void ctx_ctx_pcm (Ctx *ctx);
 
 
-#endif
 #endif
 
 #if CTX_TILED
@@ -50050,26 +50081,25 @@ ctx_cb_end_frame (Ctx *ctx)
 
   if (cb_backend->flags & CTX_FLAG_SHOW_FPS)
   {
-   
-  float em = ctx_height (ctx) * 0.08f;
-  float y = em;
-  ctx_font_size (ctx, em);
-  ctx_rectangle (ctx, ctx_width(ctx)-(em*4), 0, em *4, em * 1.1f);
-  ctx_rgba (ctx, 0, 0, 0, 0.7f);
-  ctx_fill (ctx);
-
-  ctx_rgba (ctx, 1, 1, 0, 1);
-
-  if (prev_time)
-  {
-    char buf[22];
-    float fps = 1.0f/((cur_time-prev_time)/1000.0f);
-    ctx_move_to (ctx, width - (em * 3.8f), y);
-    sprintf (buf, "%2.1f fps", (double)fps);
-    ctx_text (ctx, buf);
-    ctx_begin_path (ctx);
-  }
-  prev_time = cur_time;
+    float em = ctx_height (ctx) * 0.08f;
+    float y = em;
+    ctx_font_size (ctx, em);
+    ctx_rectangle (ctx, ctx_width(ctx)-(em*4), 0, em *4, em * 1.1f);
+    ctx_rgba (ctx, 0, 0, 0, 0.7f);
+    ctx_fill (ctx);
+  
+    ctx_rgba (ctx, 1, 1, 0, 1);
+  
+    if (prev_time)
+    {
+      char buf[22];
+      float fps = 1.0f/((cur_time-prev_time)/1000.0f);
+      ctx_move_to (ctx, width - (em * 3.8f), y);
+      sprintf (buf, "%2.1f fps", (double)fps);
+      ctx_text (ctx, buf);
+      ctx_begin_path (ctx);
+    }
+    prev_time = cur_time;
   }
 
 
@@ -52128,6 +52158,17 @@ static void _ctx_stream_addstr (CtxFormatter *formatter, const char *str, int le
   fwrite (str, len, 1, (FILE*)formatter->target);
 }
 
+static void _ctx_fd_addstr (CtxFormatter *formatter, const char *str, int len)
+{
+  if (!str || len == 0)
+  {
+    return;
+  }
+  if (len < 0) len = ctx_strlen (str);
+  write ((size_t)formatter->target, str, len);
+}
+
+
 void _ctx_string_addstr (CtxFormatter *formatter, const char *str, int len)
 {
   if (!str || len == 0)
@@ -52954,6 +52995,23 @@ ctx_render_stream (Ctx *ctx, FILE *stream, int longform)
   fwrite ("\n", 1, 1, stream);
 }
 
+void
+ctx_render_fd (Ctx *ctx, int fd, int longform)
+{
+  CtxIterator iterator;
+  CtxFormatter formatter;
+  formatter.target   = (void*)((size_t)fd);
+  formatter.longform = longform;
+  formatter.indent   = 0;
+  formatter.add_str  = _ctx_fd_addstr;
+  CtxCommand *command;
+  ctx_iterator_init (&iterator, &ctx->drawlist, 0,
+                     CTX_ITERATOR_EXPAND_BITPACK);
+  while ( (command = ctx_iterator_next (&iterator) ) )
+    { ctx_formatter_process (&formatter, command); }
+  write (fd, "\n", 1);
+}
+
 char *
 ctx_render_string (Ctx *ctx, int longform, int *retlen)
 {
@@ -53344,7 +53402,6 @@ void ctx_texture (Ctx *ctx, const char *eid, float x, float y)
 {
   int eid_len = ctx_strlen (eid);
   char ascii[41]="";
-  //fprintf (stderr, "tx %s\n", eid);
   if (eid_len > 50)
   {
     CtxSHA1 *sha1 = ctx_sha1_new ();
@@ -53362,17 +53419,8 @@ void ctx_texture (Ctx *ctx, const char *eid, float x, float y)
     eid=ascii;
   }
 
-    //FILE  *f = fopen ("/tmp/l", "a");
   if (ctx_eid_valid (ctx, eid, 0, 0))
-  {
     ctx_process_cmd_str_float (ctx, CTX_TEXTURE, eid, x, y);
-    //fprintf (stderr, "setting texture eid %s\n", eid);
-  }
-  else
-  {
-    //fprintf (stderr, "tried setting invalid texture eid %s\n", eid);
-  }
-    //fclose (f);
 }
 int
 ctx_textureclock (Ctx *ctx)
@@ -53824,10 +53872,12 @@ void ctx_save (Ctx *ctx)
 {
   CTX_PROCESS_VOID (CTX_SAVE);
 }
+
 void ctx_restore (Ctx *ctx)
 {
   CTX_PROCESS_VOID (CTX_RESTORE);
 }
+
 void ctx_new_page (Ctx *ctx)
 {
   CTX_PROCESS_VOID (CTX_NEW_PAGE);
@@ -54615,6 +54665,12 @@ ctx_interpret_transforms (CtxState *state, CtxEntry *entry, void *data)
         ctx_gstate_push (state);
         break;
       case CTX_RESTORE:
+#if CTX_GSTATE_PROTECT
+        if (state->gstate_no <= state->gstate_waterlevel)
+        {
+          fprintf (stderr, "ctx: restore without corresponding save\n");
+        }
+#endif
         ctx_gstate_pop (state);
         break;
       case CTX_IDENTITY:
@@ -55072,14 +55128,14 @@ ctx_new_drawlist (int width, int height)
 static Ctx *ctx_new_ui (int width, int height, const char *backend);
 #endif
 
-#if CTX_PTY==0
+#if CTX_PICO
 Ctx *ctx_pico_init (void);
 #endif
 
 CTX_EXPORT Ctx *
 ctx_new (int width, int height, const char *backend)
 {
-#if CTX_PTY==0
+#if CTX_PICO
   return ctx_pico_init ();
 #endif
 
@@ -56238,7 +56294,32 @@ uint32_t ctx_strhash(const char *str)
   return squoze32_utf8 (str, strlen (str));
 }
 
+#if CTX_GSTATE_PROTECT
+void ctx_gstate_protect   (Ctx *ctx)
+{
+    if (ctx->state.gstate_waterlevel)
+    {
+      fprintf (stderr, "ctx: save restore limit already set (%i)\n", ctx->state.gstate_waterlevel);
+      return;
+    }
+    ctx->state.gstate_waterlevel = ctx->state.gstate_no;
+}
 
+void ctx_gstate_unprotect (Ctx *ctx)
+{
+  if (ctx->state.gstate_waterlevel != ctx->state.gstate_no)
+  {
+    unsigned int count = ctx->state.gstate_waterlevel - ctx->state.gstate_no;
+    fprintf (stderr, "ctx: %i missing restores\n", count);
+    while (count)
+    {
+      ctx_restore (ctx);
+      count --;
+    }
+  }
+  ctx->state.gstate_waterlevel = 0;
+}
+#endif
 #ifndef MRG_UTF8_H
 #define MRG_UTF8_H
 
