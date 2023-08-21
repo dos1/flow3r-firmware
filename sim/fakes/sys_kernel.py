@@ -24,9 +24,9 @@ def usb_console_active():
 
 
 def freertos_sleep(ms):
-    import _time
+    import time
 
-    _time.sleep(ms / 1000.0)
+    time.sleep(ms / 1000.0)
 
 
 def i2c_scan():
