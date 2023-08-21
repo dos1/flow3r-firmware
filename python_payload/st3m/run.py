@@ -19,6 +19,7 @@ import captouch, audio, leds, gc
 import os
 
 import machine
+import network
 
 
 log = logging.Log(__name__, level=logging.INFO)
@@ -36,8 +37,8 @@ def _make_reactor() -> Reactor:
     settings.onoff_button_swap.subscribe(_onoff_button_swap_update)
     _onoff_button_swap_update()
 
-    settings.onoff_camp_wifi.subscribe(wifi._onoff_camp_wifi_update)
-    wifi._onoff_camp_wifi_update()
+    settings.onoff_wifi.subscribe(wifi._onoff_wifi_update)
+    wifi._onoff_wifi_update()
     return reactor
 
 
@@ -142,6 +143,14 @@ def run_main() -> None:
     bundles.update()
 
     settings.load_all()
+
+    try:
+        network.hostname(
+            settings.str_hostname.value if settings.str_hostname.value else "flow3r"
+        )
+    except Exception as e:
+        log.error(f"Failed to set hostname {e}")
+
     menu_settings = settings.build_menu()
     menu_system = SimpleMenu(
         [

@@ -242,6 +242,42 @@ class OnOffWidget(TunableWidget):
         self._tunable.set_value(not self._state)
 
 
+class StringTunable(UnaryTunable):
+    """
+    StringTunable is a UnaryTunable that has a string value
+    """
+
+    def __init__(self, name: str, key: str, default: Optional[str]) -> None:
+        super().__init__(name, key, default)
+
+    def get_widget(self) -> TunableWidget:
+        return StringWidget(self)
+
+    def press(self, vm: Optional[ViewManager]) -> None:
+        # Text input not supported at the moment
+        pass
+
+
+class StringWidget(TunableWidget):
+    """
+    StringWidget is a TunableWidget for StringTunables. It renders a string.
+    """
+
+    def __init__(self, tunable: StringTunable) -> None:
+        self._tunable = tunable
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        pass
+
+    def draw(self, ctx: Context) -> None:
+        ctx.text_align = ctx.LEFT
+        ctx.text(self._tunable.value if self._tunable.value else "")
+
+    def press(self, vm: Optional[ViewManager]) -> None:
+        # Text input not supported at the moment
+        pass
+
+
 class SettingsMenuItem(MenuItem):
     """
     A MenuItem which draws its label offset to the left, and a Tunable's widget
@@ -293,17 +329,23 @@ class SettingsMenu(SimpleMenu):
 
 
 # Actual tunables / settings.
-onoff_camp_wifi = OnOffTunable("Connect Camp WiFi", "system.camp_wifi_enabled", False)
 onoff_button_swap = OnOffTunable("Swap Buttons", "system.swap_buttons", False)
 onoff_debug = OnOffTunable("Debug Overlay", "system.debug", False)
 onoff_debug_touch = OnOffTunable("Touch Overlay", "system.debug_touch", False)
 onoff_show_tray = OnOffTunable("Show Icons", "system.show_icons", True)
+onoff_wifi = OnOffTunable("Enable WiFi", "system.wifi.enabled", False)
+str_wifi_ssid = StringTunable("WiFi SSID", "system.wifi.ssid", "Camp2023-open")
+str_wifi_psk = StringTunable("WiFi Password", "system.wifi.psk", None)
+str_hostname = StringTunable("Hostname", "system.hostname", "flow3r")
 all_settings: List[UnaryTunable] = [
-    onoff_camp_wifi,
     onoff_show_tray,
     onoff_button_swap,
     onoff_debug,
     onoff_debug_touch,
+    onoff_wifi,
+    str_wifi_ssid,
+    str_wifi_psk,
+    str_hostname,
 ]
 
 

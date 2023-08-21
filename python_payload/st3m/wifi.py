@@ -1,20 +1,29 @@
 import network
+from network import WLAN
 from st3m import settings
+from st3m.goose import Optional
 from st3m.logging import Log
 
 log = Log(__name__)
 
-iface = None
+iface: Optional[WLAN] = None
 
 
-def setup_camp_wifi() -> None:
+def setup_wifi() -> None:
+    global iface
+    enable()
+    assert iface
+    try:
+        if settings.str_wifi_ssid.value:
+            iface.connect(settings.str_wifi_ssid.value, settings.str_wifi_psk.value)
+    except OSError as e:
+        log.error(f"Could not connect to wifi: {e}")
+
+
+def enable() -> None:
     global iface
     iface = network.WLAN(network.STA_IF)
     iface.active(True)
-    try:
-        iface.connect(b"Camp2023-open")
-    except OSError as e:
-        log.error(f"Could not connect to camp wifi: {e}")
 
 
 def disable() -> None:
@@ -35,9 +44,9 @@ def is_connected() -> bool:
         return False
 
 
-def _onoff_camp_wifi_update() -> None:
-    if settings.onoff_camp_wifi.value:
-        setup_camp_wifi()
+def _onoff_wifi_update() -> None:
+    if settings.onoff_wifi.value:
+        setup_wifi()
     else:
         disable()
 
