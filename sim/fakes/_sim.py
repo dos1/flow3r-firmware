@@ -148,40 +148,40 @@ class PetalsInput(Input):
             ]
         )
     )
+    PETAL_MAP = {
+        (0, 1): 2,
+        (0, 2): 1,
+        (0, 3): 0,
+        (9, 0): 15,
+        (9, 3): 16,
+        (8, 1): 5,
+        (8, 2): 4,
+        (8, 3): 3,
+        (7, 0): 17,
+        (7, 3): 18,
+        (6, 1): 8,
+        (6, 2): 7,
+        (6, 3): 6,
+        (5, 0): 19,
+        (5, 3): 20,
+        (4, 1): 11,
+        (4, 2): 10,
+        (4, 3): 9,
+        (3, 0): 21,
+        (3, 3): 22,
+        (2, 1): 14,
+        (2, 2): 13,
+        (2, 3): 12,
+        (1, 0): 23,
+        (1, 3): 24,
+    }
     MARKER_SIZE = 40
 
     def _index_for_petal_pad(self, petal, pad):
         if petal >= 10:
             raise ValueError("petal cannot be > 10")
 
-        # convert from st3m/bsp index into input state index
-        top = False
-        if petal % 2 == 0:
-            top = True
-        res = petal // 2
-        if top:
-            res *= 3
-        else:
-            res *= 2
-            res += 3 * 5
-
-        if top:
-            if pad == 1:  # ccw
-                res += 2
-            elif pad == 2:  # cw
-                res += 1
-            elif pad == 3:  # base
-                res += 0
-            else:
-                raise ValueError("invalid pad number")
-        else:
-            if pad == 0:  # tip
-                res += 0
-            elif pad == 3:  # base
-                res += 1
-            else:
-                raise ValueError("invalid pad number")
-        return res
+        return self.PETAL_MAP[(petal, pad)]
 
     def state_for_petal_pad(self, petal, pad):
         ix = self._index_for_petal_pad(petal, pad)
