@@ -50,13 +50,25 @@ To compile, see `Working on C st3m code`_.
 
 For running the simulator, you'll need Python 3 with pygame and wasmer:
 
-A::
+::
 
 	$ python3 -m venv venv
 	$ . venv/bin/activate
 	$ pip install pygame wasmer wasmer-compiler-cranelift
 
-If using python 3.11, for some reason the wasmer developers haven't published working wheels. We have `unofficial builds here <https://flow3r.garden/tmp/wasmer-py311/>`_.
+.. warning::
+
+    The wasmer python module from PyPI `doesn't work with Python versions 3.10 or 3.11
+    <https://github.com/wasmerio/wasmer-python/issues/539>`_.  You will get
+    ``ImportError: Wasmer is not available on this system`` when trying to run
+    the simulator.
+
+    Instead, install our `rebuilt wasmer wheels <https://flow3r.garden/tmp/wasmer-py311/>`_ using
+
+    ::
+
+        venv/bin/pip install https://flow3r.garden/tmp/wasmer-py311/wasmer_compiler_cranelift-1.2.0-cp311-cp311-manylinux_2_34_x86_64.whl
+        venv/bin/pip install https://flow3r.garden/tmp/wasmer-py311/wasmer-1.2.0-cp311-cp311-manylinux_2_34_x86_64.whl
 
 For Python development, you're also encouraged to use mypy for typechecks. It should be available in your distribution repositories.
 

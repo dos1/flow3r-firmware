@@ -646,12 +646,19 @@ environment with the required packages:
     $ python3 -m venv venv
     $ venv/bin/pip install pygame wasmer wasmer-compiler-cranelift
 
-.. note::
-    The wasmer python module `doesn't work with Python versions 3.10 or 3.11
-    <https://github.com/wasmerio/wasmer-python/issues/539>`_, use Python 3.9
-    instead. You will get
+.. warning::
+
+    The wasmer python module from PyPI `doesn't work with Python versions 3.10 or 3.11
+    <https://github.com/wasmerio/wasmer-python/issues/539>`_.  You will get
     ``ImportError: Wasmer is not available on this system`` when trying to run
-    the Simulator.
+    the simulator.
+
+    Instead, install our `rebuilt wasmer wheels <https://flow3r.garden/tmp/wasmer-py311/>`_ using
+
+    ::
+
+        venv/bin/pip install https://flow3r.garden/tmp/wasmer-py311/wasmer_compiler_cranelift-1.2.0-cp311-cp311-manylinux_2_34_x86_64.whl
+        venv/bin/pip install https://flow3r.garden/tmp/wasmer-py311/wasmer-1.2.0-cp311-cp311-manylinux_2_34_x86_64.whl
 
 *TODO: set up a pyproject/poetry/... file?*
 
