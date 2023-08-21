@@ -496,6 +496,7 @@ class GayDrums(Application):
         if ct.petals[0].pressed and not (self.ct_prev.petals[0].pressed):
             if self.stopped:
                 self.seq.signals.bpm = self.bpm
+                self.seq.signals.sync_in = 0
                 self._render_list_1 += [(self.draw_bpm, None)]
                 self.blm.background_mute_override = True
                 self.stopped = False
@@ -539,6 +540,7 @@ class GayDrums(Application):
         if ct.petals[0].pressed:
             if self.tap_tempo_press_counter > 500:
                 self.seq.signals.bpm = 0
+                self.seq.signals.sync_in = 1
                 self._render_list_1 += [(self.draw_bpm, None)]
                 self.stopped = True
                 self.blm.background_mute_override = False
