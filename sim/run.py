@@ -116,8 +116,18 @@ os.stat = _stat
 
 def sim_main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--screenshot", action="store_true", default=False)
-    parser.add_argument("override_app", nargs="?")
+    parser.add_argument(
+        "--screenshot",
+        action="store_true",
+        default=False,
+        help="Generate a flow3r.png screenshot.",
+    )
+    parser.add_argument(
+        "override_app",
+        nargs="?",
+        help="Bundle to start instead of the main menu. "
+        + "This is the `app.name` from flow3r.toml.",
+    )
     args = parser.parse_args()
 
     import _sim
