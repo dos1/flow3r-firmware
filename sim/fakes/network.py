@@ -8,6 +8,9 @@ class WLAN:
     def active(self, active):
         return True
 
+    def scan(self):
+        return []
+
     def connect(self, ssid, key=None):
         pass
 
