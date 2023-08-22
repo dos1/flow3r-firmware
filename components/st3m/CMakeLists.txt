@@ -19,6 +19,7 @@ idf_component_register(
         st3m_usb_msc.c
         st3m_usb.c
         st3m_console.c
+        st3m_media.c
         st3m_mode.c
         st3m_captouch.c
         st3m_ringbuffer.c
@@ -40,6 +41,9 @@ idf_component_register(
         esp_timer
         esp_netif
         usb
+        audio_mod
+        audio_mp3
+        video_mpeg
 )
 
 idf_component_get_property(tusb_lib tinyusb COMPONENT_LIB)
