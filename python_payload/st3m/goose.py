@@ -17,7 +17,17 @@ if TYPE_CHECKING:
     class ABCBase(metaclass=ABCMeta):
         pass
 
-    from typing import List, Optional, Tuple, Dict, Any, Callable, Iterator, Generator, Union
+    from typing import (
+        List,
+        Optional,
+        Tuple,
+        Dict,
+        Any,
+        Callable,
+        Iterator,
+        Generator,
+        Union,
+    )
     from enum import Enum
 else:
     # We're in CPython or Micropython.

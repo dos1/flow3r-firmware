@@ -11,8 +11,19 @@ request.
 import json
 
 from st3m import InputState, Responder, logging
-from st3m.goose import ABCBase, abstractmethod, Any, Dict, List, Optional, Callable
-from st3m.ui.menu import MenuController, MenuItem, MenuItemBack
+from st3m.goose import (
+    ABCBase,
+    abstractmethod,
+    Any,
+    Dict,
+    List,
+    Tuple,
+    Optional,
+    Callable,
+    Union,
+    TYPE_CHECKING,
+)
+from st3m.ui.menu import MenuController, MenuItem, MenuItemBack, MenuItemForeground
 from st3m.ui.elements.menus import SimpleMenu
 from st3m.ui.view import ViewManager
 from st3m.utils import lerp, ease_out_cubic, reduce
@@ -337,7 +348,9 @@ onoff_wifi = OnOffTunable("Enable WiFi", "system.wifi.enabled", False)
 str_wifi_ssid = StringTunable("WiFi SSID", "system.wifi.ssid", "Camp2023-open")
 str_wifi_psk = StringTunable("WiFi Password", "system.wifi.psk", None)
 str_hostname = StringTunable("Hostname", "system.hostname", "flow3r")
-all_settings: List[UnaryTunable] = [
+
+# List of all settings to be loaded/saved
+load_save_settings: List[UnaryTunable] = [
     onoff_show_tray,
     onoff_button_swap,
     onoff_debug,
@@ -346,6 +359,27 @@ all_settings: List[UnaryTunable] = [
     str_wifi_ssid,
     str_wifi_psk,
     str_hostname,
+]
+
+if TYPE_CHECKING:
+    MenuStructureEntry = Union[UnaryTunable, Tuple[str, List["MenuStructureEntry"]]]
+    MenuStructure = List[MenuStructureEntry]
+
+# WiFi submenu
+wifi_settings: "MenuStructure" = [
+    onoff_wifi,
+    str_wifi_ssid,
+    str_wifi_psk,
+    str_hostname,
+]
+
+# Main settings menu
+settings_menu_structure: "MenuStructure" = [
+    onoff_show_tray,
+    onoff_button_swap,
+    onoff_debug,
+    onoff_debug_touch,
+    ("Wifi", wifi_settings),
 ]
 
 
@@ -362,7 +396,7 @@ def load_all() -> None:
         return
 
     log.info("Loaded settings from flash")
-    for setting in all_settings:
+    for setting in load_save_settings:
         setting.load(data)
 
 
@@ -383,7 +417,7 @@ def save_all() -> None:
     Save all settings to flash.
     """
     res: Dict[str, Any] = {}
-    for setting in all_settings:
+    for setting in load_save_settings:
         res = _update(res, setting.save())
     try:
         with open("/flash/settings.json", "w") as f:
@@ -395,12 +429,25 @@ def save_all() -> None:
     log.info("Saved settings to flash")
 
 
-def build_menu() -> SimpleMenu:
+def build_menu_recursive(items: "MenuStructure") -> SimpleMenu:
     """
-    Return a SimpleMenu for all settings.
+    Recursively build a menu for the given setting structure.
     """
     mib: MenuItem = SettingsMenuItemBack()
     positions: List[MenuItem] = [
         mib,
-    ] + [SettingsMenuItem(t) for t in all_settings]
+    ] + [
+        SettingsMenuItem(t)
+        if isinstance(t, UnaryTunable)
+        else MenuItemForeground(t[0], build_menu_recursive(t[1]))
+        for t in items
+    ]
+
     return SettingsMenu(positions)
+
+
+def build_menu() -> SimpleMenu:
+    """
+    Return a SettingsMenu for all settings.
+    """
+    return build_menu_recursive(settings_menu_structure)
