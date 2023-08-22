@@ -278,11 +278,51 @@ class StringWidget(TunableWidget):
         self._tunable = tunable
 
     def think(self, ins: InputState, delta_ms: int) -> None:
+        # Nothing to do here
         pass
 
     def draw(self, ctx: Context) -> None:
         ctx.text_align = ctx.LEFT
-        ctx.text(self._tunable.value if self._tunable.value else "")
+        ctx.text(str(self._tunable.value) if self._tunable.value else "")
+
+    def press(self, vm: Optional[ViewManager]) -> None:
+        # Text input not supported at the moment
+        pass
+
+
+# TODO: invert Tunable <-> Widget dependency to be able to define multiple different widget renderings for the same underlying tunable type
+class ObfuscatedStringTunable(UnaryTunable):
+    """
+    ObfuscatedStringTunable is a UnaryTunable that has a string value that should not be revealed openly.
+    """
+
+    def __init__(self, name: str, key: str, default: Optional[str]) -> None:
+        super().__init__(name, key, default)
+
+    def get_widget(self) -> TunableWidget:
+        return ObfuscatedValueWidget(self)
+
+    def press(self, vm: Optional[ViewManager]) -> None:
+        # Text input not supported at the moment
+        pass
+
+
+class ObfuscatedValueWidget(TunableWidget):
+    """
+    ObfuscatedValueWidget is a TunableWidget for UnaryTunables. It renders three asterisks when the tunable contains a truthy value, otherwise nothing.
+    """
+
+    def __init__(self, tunable: UnaryTunable) -> None:
+        self._tunable = tunable
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        # Nothing to do here
+        pass
+
+    def draw(self, ctx: Context) -> None:
+        ctx.text_align = ctx.LEFT
+        if self._tunable.value:
+            ctx.text("***")
 
     def press(self, vm: Optional[ViewManager]) -> None:
         # Text input not supported at the moment
@@ -346,7 +386,7 @@ onoff_debug_touch = OnOffTunable("Touch Overlay", "system.debug_touch", False)
 onoff_show_tray = OnOffTunable("Show Icons", "system.show_icons", True)
 onoff_wifi = OnOffTunable("Enable WiFi", "system.wifi.enabled", False)
 str_wifi_ssid = StringTunable("WiFi SSID", "system.wifi.ssid", "Camp2023-open")
-str_wifi_psk = StringTunable("WiFi Password", "system.wifi.psk", None)
+str_wifi_psk = ObfuscatedStringTunable("WiFi Password", "system.wifi.psk", None)
 str_hostname = StringTunable("Hostname", "system.hostname", "flow3r")
 
 # List of all settings to be loaded/saved
@@ -379,7 +419,7 @@ settings_menu_structure: "MenuStructure" = [
     onoff_button_swap,
     onoff_debug,
     onoff_debug_touch,
-    ("Wifi", wifi_settings),
+    ("WiFi", wifi_settings),
 ]
 
 
