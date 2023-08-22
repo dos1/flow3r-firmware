@@ -106,8 +106,9 @@ class AppList(BaseView):
                 else:
                     ctx.gray(1.0)
 
-                ctx.move_to(0, offset)
-                ctx.text(app["name"])
+                if abs(self._sc.current_position() - idx) <= 5:
+                    ctx.move_to(0, offset)
+                    ctx.text(app["name"])
                 offset += 30
 
             ctx.restore()
