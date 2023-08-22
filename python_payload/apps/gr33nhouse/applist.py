@@ -4,6 +4,7 @@ from st3m.ui import colours
 from st3m.ui.view import BaseView, ViewManager
 from st3m.ui.interactions import ScrollController
 from ctx import Context
+from math import sin
 import urequests
 import time
 from .background import Flow3rView
@@ -19,6 +20,7 @@ class ViewState(Enum):
 
 class AppList(BaseView):
     initial_ticks: int = 0
+    _scroll_pos: float = 0.0
     _state: ViewState = ViewState.INITIAL
 
     apps: list[Any] = []
@@ -101,13 +103,17 @@ class AppList(BaseView):
 
             ctx.move_to(0, 0)
             for idx, app in enumerate(self.apps):
-                if idx == self._sc.target_position():
+                target = idx == self._sc.target_position()
+                if target:
                     ctx.gray(0.0)
                 else:
                     ctx.gray(1.0)
 
                 if abs(self._sc.current_position() - idx) <= 5:
-                    ctx.move_to(0, offset)
+                    xpos = 0.0
+                    if target and (width := ctx.text_width(app["name"])) > 220:
+                        xpos = sin(self._scroll_pos) * (width - 220) / 2
+                    ctx.move_to(xpos, offset)
                     ctx.text(app["name"])
                 offset += 30
 
@@ -147,11 +153,14 @@ class AppList(BaseView):
             return
 
         self.background.think(ins, delta_ms)
+        self._scroll_pos += delta_ms / 1000
 
         if self.input.buttons.app.left.pressed:
             self._sc.scroll_left()
+            self._scroll_pos = 0.0
         elif self.input.buttons.app.right.pressed:
             self._sc.scroll_right()
+            self._scroll_pos = 0.0
         elif self.input.buttons.app.middle.pressed:
             if self.vm is None:
                 raise RuntimeError("vm is None")
