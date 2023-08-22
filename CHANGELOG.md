@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Added
+- Added the _Audio Passthrough_ app for toggling audio passthrough through
+  line-in/mic to speaker or lineout.
+- Added an error screen to the _Nick_ app when `nick.json` is invalid.
+- Added `urequests` support in the simulator.
+
+### Changed
+- Switched the REPL/fatal/disk restart button to right shoulder button.
+- Improved performance of the `gr33nhouse` app list by not rendering hidden entries.
+- Moved the _Clouds_ app to the _Badge_ menu and updated it to use IMU data.
+- Added a more sane commandline interface to the simulator.
+- More stub functions for the simulator.
+
+### Fixed
+- Fixed _tiny_sampler_ keeping the microphone active after app exit.
+- Fixed missing `include/` dir on builds on Darwin.
+- Fixed the `time` module in the simulator being broken for apps trying to use it.
+- Fixed wrong petal ordering in the simulator.
+- Fixed simulator not exiting when closed.
+- Fixed _Comic Mono_ missing in the simulator.
 
 
 ## [1.2.0] - 2023-08-18
