@@ -66,6 +66,7 @@
 #define CTX_CLIENTS                  0
 
 #if defined(CONFIG_FLOW3R_CTX_FLAVOUR_FULL)
+#define CTX_GSTATE_PROTECT              1
 #define CTX_ENABLE_CLIP                 1
 #define CTX_FRAGMENT_SPECIALIZE         1
 #define CTX_FAST_FILL_RECT              1
@@ -92,7 +93,7 @@
 #define CTX_THREADS                0
 #define CTX_TILED                  0
 #define CTX_FORMATTER              1  // we want these eventually
-#define CTX_PARSER                 0  // enabled
+#define CTX_PARSER                 1  // enabled
 #define CTX_BRAILLE_TEXT           0
 
 #define CTX_BAREMETAL              1

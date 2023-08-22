@@ -1,4 +1,4 @@
-/* ctx git commit: 2f95901e */
+/* ctx git commit: 8dad6365 */
 /* 
  * ctx.h is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2512,6 +2512,20 @@ int ctx_vt_has_data (Ctx *ctx);
 int ctx_vt_read (Ctx *ctx);
 
 
+
+#if CTX_GSTATE_PROTECT
+/* sets the current gstate stack (number of unpaired ctx_save calls) as a
+ * limit that can not be restored beyond. For now can not be used recursively.
+ */
+void ctx_gstate_protect   (Ctx *ctx);
+
+/* removes the limit set by ctx_gstate_protect, if insufficient ctx_restore
+ * calls have been made, 
+ */
+void ctx_gstate_unprotect (Ctx *ctx);
+#endif
+
+/* set the logical clock used for the texture eviction policy */
 void ctx_set_textureclock (Ctx *ctx, int frame);
 int  ctx_textureclock (Ctx *ctx);
 
@@ -5791,6 +5805,9 @@ static inline CtxList *ctx_list_find_custom (CtxList *list,
 #ifndef CTX_PICO
 #define CTX_PICO 0
 #endif
+
+#define CTX_GSTATE_PROTECT  1
+
  /* Copyright (C) 2020 Øyvind Kolås <pippin@gimp.org>
  */
 
@@ -10471,8 +10488,10 @@ struct _CtxState
   int           ink_min_y;
   int           ink_max_x;
   int           ink_max_y;
+#if CTX_GSTATE_PROTECT
+  int           gstate_waterlevel;
+#endif
   CtxGState     gstate;
-  CtxGState     gstate_stack[CTX_MAX_STATES];//at end, so can be made dynamic
 #if CTX_GRADIENTS
   CtxGradient   gradient; /* we keep only one gradient,
                              this goes icky with multiple
@@ -10484,6 +10503,7 @@ struct _CtxState
 #endif
   CtxKeyDbEntry keydb[CTX_MAX_KEYDB];
   char          stringpool[CTX_STRINGPOOL_SIZE];
+  CtxGState     gstate_stack[CTX_MAX_STATES];//at end, so can be made dynamic
 };
 
 
@@ -11013,6 +11033,7 @@ int ctx_terminal_cols   (void);
 int ctx_terminal_rows   (void);
 extern int ctx_frame_ack;
 
+
 typedef struct _CtxCtx CtxCtx;
 struct _CtxCtx
 {
@@ -11023,7 +11044,6 @@ struct _CtxCtx
    int  rows;
    int  was_down;
 };
-
 
 extern int _ctx_max_threads;
 extern int _ctx_enable_hash_cache;
@@ -53849,10 +53869,12 @@ void ctx_save (Ctx *ctx)
 {
   CTX_PROCESS_VOID (CTX_SAVE);
 }
+
 void ctx_restore (Ctx *ctx)
 {
   CTX_PROCESS_VOID (CTX_RESTORE);
 }
+
 void ctx_new_page (Ctx *ctx)
 {
   CTX_PROCESS_VOID (CTX_NEW_PAGE);
@@ -54640,6 +54662,12 @@ ctx_interpret_transforms (CtxState *state, CtxEntry *entry, void *data)
         ctx_gstate_push (state);
         break;
       case CTX_RESTORE:
+#if CTX_GSTATE_PROTECT
+        if (state->gstate_no <= state->gstate_waterlevel)
+        {
+          fprintf (stderr, "attempt to restore without corresponding save\n");
+        }
+#endif
         ctx_gstate_pop (state);
         break;
       case CTX_IDENTITY:
@@ -56263,7 +56291,32 @@ uint32_t ctx_strhash(const char *str)
   return squoze32_utf8 (str, strlen (str));
 }
 
+#if CTX_GSTATE_PROTECT
+void ctx_gstate_protect   (Ctx *ctx)
+{
+    if (ctx->state.gstate_waterlevel)
+    {
+      fprintf (stderr, "ctx: save restore limit already set (%i)\n", ctx->state.gstate_waterlevel);
+      return;
+    }
+    ctx->state.gstate_waterlevel = ctx->state.gstate_no;
+}
 
+void ctx_gstate_unprotect (Ctx *ctx)
+{
+  if (ctx->state.gstate_waterlevel != ctx->state.gstate_no)
+  {
+    unsigned int count = ctx->state.gstate_waterlevel - ctx->state.gstate_no;
+    fprintf (stderr, "ctx: %i missing restores\n", count);
+    while (count)
+    {
+      ctx_restore (ctx);
+      count --;
+    }
+  }
+  ctx->state.gstate_waterlevel = 0;
+}
+#endif
 #ifndef MRG_UTF8_H
 #define MRG_UTF8_H
 
