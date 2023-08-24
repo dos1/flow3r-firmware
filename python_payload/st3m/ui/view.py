@@ -87,13 +87,11 @@ class ViewTransitionBlend(ViewTransition):
     def draw(
         self, ctx: Context, transition: float, incoming: Responder, outgoing: Responder
     ) -> None:
-        ctx.start_group()
         outgoing.draw(ctx)
-        ctx.end_group()
 
         ctx.start_group()
-        ctx.global_alpha = transition
         incoming.draw(ctx)
+        ctx.global_alpha = transition
         ctx.end_group()
 
 
