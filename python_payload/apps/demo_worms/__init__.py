@@ -4,7 +4,7 @@ import time
 import math
 
 # flow3r imports
-from st3m import InputState
+from st3m import InputState, Texture
 from st3m.application import Application, ApplicationContext
 from st3m.ui.colours import BLUE, WHITE
 from st3m.goose import Optional
@@ -21,20 +21,15 @@ class AppWorms(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
 
-        # HACK: we work against double buffering by keeping note of how many
-        # times on_draw got called.
-        #
-        # We know there's two buffers, so if we render the same state twice in a
-        # row we'll be effectively able to keep a persistent framebuffer, like
-        # with the old API.
-        #
-        # When bufn is in [0, 1] we render the background image.
-        # When bufn is in [2, ...) we render the worms.
-        # When bufn is > 3, we enable updating the worm state.
-        #
-        # TODO(q3k): allow apps to request single-buffered graphics for
-        # persistent framebuffers.
-        self.bufn = 0
+        self._t = Texture()
+        ctx = self._t.ctx
+        ctx.rgb(*BLUE).rectangle(-120, -120, 240, 240).fill()
+        ctx.text_align = ctx.CENTER
+        ctx.text_baseline = ctx.MIDDLE
+        ctx.move_to(0, 0).rgb(*WHITE).text("touch me :)")
+
+        self._ts = 0
+        self._next_draw = 0
 
         self.worms = []
         for i in range(0):
@@ -48,28 +43,20 @@ class AppWorms(Application):
         self.just_shown = True
 
     def draw(self, ctx: Context) -> None:
-        if self.bufn <= 5:
-            ctx.rgb(*BLUE).rectangle(-120, -120, 240, 240).fill()
-
-            ctx.text_align = ctx.CENTER
-            ctx.text_baseline = ctx.MIDDLE
-            ctx.move_to(0, 0).rgb(*WHITE).text("touch me :)")
-            self.bufn += 1
-
-            return
-
-        for w in self.worms:
-            w.draw(ctx)
-        self.bufn += 1
+        self._t.draw(ctx)
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
 
-        # Simulation is currently locked to FPS.
-        if self.bufn > 7:
+        self._ts += delta_ms
+        ctx = self._t.ctx
+
+        if self._next_draw <= self._ts:
             for w in self.worms:
                 w.move()
-            self.bufn = 6
+                w.draw(ctx)
+            self._next_draw = self._ts + int(1000 / 20)
+
         for index, petal in enumerate(self.input.captouch.petals):
             if petal.whole.pressed or petal.whole.repeated:
                 self.worms.append(Worm(-tau * index / 10 + math.pi))

@@ -1,9 +1,9 @@
 try:
-    from typing import Protocol, Tuple
+    from typing import Tuple
 except ImportError:
-    from typing_extensions import Protocol, Tuple  # type: ignore
+    from typing_extensions import Tuple  # type: ignore
 
-class Context(Protocol):
+class Context:
     """
     Context is the rendering/rasterization API used by st3m.
 
@@ -44,7 +44,9 @@ class Context(Protocol):
     LEFT: str = "left"
     RIGHT: str = "right"
 
-    def __init__(self) -> None: ...
+    def __init__(
+        self, width: int, height: int, stride: int, format: int, buffer: bytearray
+    ) -> None: ...
     def text_width(self, text: str) -> float:
         """
         Calculates width of rendered text, without rendering it.
@@ -314,6 +316,12 @@ class Context(Protocol):
         radiuses are in use.
         """
         pass
+    def texture(
+        self, buf: bytearray, format: int, width: int, height: int, stride: int
+    ) -> str:
+        pass
+    def draw_texture(self, eid: str) -> "Context":
+        pass
     def image(self, path: str, x: float, y: float, w: float, h: float) -> "Context":
         """
         Draw the image at path a in a rectangle with upper left coordinates at
@@ -340,3 +348,6 @@ class Context(Protocol):
         Needs to be stroked/filled afterwards.
         """
         pass
+
+RGB8: int
+RGBA8: int

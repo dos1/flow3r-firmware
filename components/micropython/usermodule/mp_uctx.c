@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include "py/binary.h"
 #include "py/obj.h"
 #include "py/objarray.h"
@@ -373,7 +372,7 @@ MP_DEFINE_CONST_FUN_OBJ_3(mp_ctx_in_fill_obj, mp_ctx_in_fill);
 
 static mp_obj_t mp_ctx_texture(size_t n_args, const mp_obj_t *args) {
     mp_buffer_info_t buffer_info;
-    assert(n_args == 7);
+    assert(n_args == 6);
     mp_ctx_obj_t *self = MP_OBJ_TO_PTR(args[0]);
 
     if (!mp_get_buffer(args[1], &buffer_info, MP_BUFFER_READ)) {
@@ -390,11 +389,28 @@ static mp_obj_t mp_ctx_texture(size_t n_args, const mp_obj_t *args) {
     //  it also means we cannot properly use
     //  eid based APIs
     // sprintf (ieid, "%i", eid_no++);
+    char eid[65];
     ctx_define_texture(self->ctx, NULL, width, height, stride, format,
-                       buffer_info.buf, NULL);
-    return args[0];
+                       buffer_info.buf, eid);
+    return mp_obj_new_str(eid, strlen(eid));
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_ctx_texture_obj, 6, 6, mp_ctx_texture);
+
+static mp_obj_t mp_ctx_draw_texture(mp_obj_t self_in, mp_obj_t eid_in) {
+    mp_ctx_obj_t *self = MP_OBJ_TO_PTR(self_in);
+
+    const char *eid = mp_obj_str_get_str(eid_in);
+
+    // TODO(q3k): unhardcode this
+    float x = -120;
+    float y = -120;
+    int w = 240;
+    int h = 240;
+    ctx_image_smoothing(self->ctx, 0);
+    ctx_draw_texture(self->ctx, eid, x, y, w, h);
+    return self_in;
+}
+MP_DEFINE_CONST_FUN_OBJ_2(mp_ctx_draw_texture_obj, mp_ctx_draw_texture);
 
 static mp_obj_t mp_ctx_image(size_t n_args, const mp_obj_t *args) {
     mp_ctx_obj_t *self = MP_OBJ_TO_PTR(args[0]);
@@ -836,6 +852,7 @@ static const mp_rom_map_elem_t mp_ctx_locals_dict_table[] = {
     MP_CTX_METHOD(add_stop),
     MP_CTX_METHOD(line_dash),
     MP_CTX_METHOD(texture),
+    MP_CTX_METHOD(draw_texture),
     MP_CTX_METHOD(image),
     MP_CTX_METHOD(save),
     MP_CTX_METHOD(restore),
