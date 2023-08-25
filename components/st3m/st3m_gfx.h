@@ -9,10 +9,10 @@
 
 // Each buffer  takes ~116kB SPIRAM. While one framebuffer is being blitted, the
 // other one is being written to by the rasterizer.
-#define ST3M_GFX_NBUFFERS 2
+#define ST3M_GFX_NBUFFERS 1
 // More ctx drawlists than buffers so that micropython doesn't get starved when
 // pipeline runs in lockstep.
-#define ST3M_GFX_NCTX 2
+#define ST3M_GFX_NCTX 1
 
 // A framebuffer descriptor, pointing at a framebuffer.
 typedef struct {
