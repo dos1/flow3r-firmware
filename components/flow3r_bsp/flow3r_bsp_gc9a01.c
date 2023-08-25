@@ -517,7 +517,7 @@ esp_err_t flow3r_bsp_gc9a01_init(flow3r_bsp_gc9a01_t *gc9a01,
         ix++;
     }
 
-    ret = flow3r_bsp_gc9a01_mem_access_mode_set(gc9a01, 0, 0, 0, 1);
+    ret = flow3r_bsp_gc9a01_mem_access_mode_set(gc9a01, 3, 0, 0, 1);
     if (ret != ESP_OK) {
         goto cleanup_spi_device;
     }
