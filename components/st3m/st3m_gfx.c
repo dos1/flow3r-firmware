@@ -443,12 +443,11 @@ void st3m_gfx_init(void) {
             ctx_set_texture_cache(fb_desc->ctx, framebuffer_descs[0].ctx);
         }
         assert(fb_desc->ctx != NULL);
-        // Rotate by 180 deg and translate x and y by 120 px to have (0,0) at
-        // the center of the screen
+        // translate x and y by 120 px to have (0,0) at center of the screen
         int32_t offset_x = FLOW3R_BSP_DISPLAY_WIDTH / 2;
         int32_t offset_y = FLOW3R_BSP_DISPLAY_HEIGHT / 2;
-        ctx_apply_transform(fb_desc->ctx, -1, 0, offset_x, 0, -1, offset_y, 0,
-                            0, 1);
+        ctx_apply_transform(fb_desc->ctx, 1, 0, offset_x, 0, 1, offset_y, 0, 0,
+                            1);
 
         // Push descriptor to freeq.
         BaseType_t res = xQueueSend(framebuffer_freeq, &i, 0);
