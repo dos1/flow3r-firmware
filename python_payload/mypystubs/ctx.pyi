@@ -319,7 +319,7 @@ class Context(Protocol):
         Draw the image at path a in a rectangle with upper left coordinates at
         x,y which is w wide and h high. If w or h is -1 the other is set
         maintaining aspect ratio, if both are -1 the pixel dimensions of the
-        image is used.
+        image is used. Supports PNG and JPEG files.
         """
         pass
     def logo(self, x: float, y: float, dim: float) -> "Context":
