@@ -30,6 +30,4 @@ idf_component_register(
         plugins/bl00mbox
         radspa
         extern
-    REQUIRES
-        st3m
 )

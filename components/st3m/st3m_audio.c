@@ -1,4 +1,5 @@
 #include "st3m_audio.h"
+#include "st3m_scope.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -320,6 +321,9 @@ static void _audio_player_task(void *data) {
         UNLOCK;
 
         (*function)(buffer_rx, buffer_tx, FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2);
+        for (uint16_t i = 0; i < FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE; i++) {
+            st3m_scope_write(buffer_tx[2 * i] >> 2);
+        }
 
         if (!hwmute && software_mute) {
             // Software muting needed. Only used on P1.

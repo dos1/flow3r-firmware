@@ -131,6 +131,7 @@ void flow3r_startup(void) {
     st3m_scope_init();
     st3m_audio_init();
     bl00mbox_init();
+    st3m_audio_set_player_function(bl00mbox_audio_render);
     st3m_badgenet_init();
 
     st3m_mode_set(st3m_mode_kind_starting, "micropython");

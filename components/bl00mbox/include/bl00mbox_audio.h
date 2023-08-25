@@ -1,15 +1,11 @@
 //SPDX-License-Identifier: CC0-1.0
 #pragma once
 
-//TODO: move this to kconfig someday
-#define BL00MBOX_MAX_BUFFER_LEN 256
-#define BL00MBOX_DEFAULT_CHANNEL_VOLUME 3000
+//TODO: move this to kconfig someday?
+#define BL00MBOX_MAX_BUFFER_LEN 128
+#define BL00MBOX_DEFAULT_CHANNEL_VOLUME 8000
 #define BL00MBOX_CHANNELS 32
 #define BL00MBOX_BACKGROUND_MUTE_OVERRIDE_ENABLE
-
-//TODO: remove st3m scope dependency
-#include "st3m_audio.h"
-#include "st3m_scope.h"
 
 #include <stdio.h>
 #include <math.h>

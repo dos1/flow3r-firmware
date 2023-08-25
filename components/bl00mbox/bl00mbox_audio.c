@@ -246,14 +246,7 @@ void bl00mbox_audio_render(int16_t * rx, int16_t * tx, uint16_t len){
 #endif
 
     for(uint16_t i = 0; i < mono_len; i++){
-        st3m_scope_write((acc[i])>>4);
-
         tx[2*i] = acc[i];
         tx[2*i+1] = acc[i];
     }
-}
-
-// TEMP
-void bl00mbox_player_function(int16_t * rx, int16_t * tx, uint16_t len){
-    bl00mbox_audio_render(rx, tx, len);
 }
