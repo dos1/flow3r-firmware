@@ -21,55 +21,42 @@ class AppWorms(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
 
-        # HACK: we work against double buffering by keeping note of how many
-        # times on_draw got called.
-        #
-        # We know there's two buffers, so if we render the same state twice in a
-        # row we'll be effectively able to keep a persistent framebuffer, like
-        # with the old API.
-        #
-        # When bufn is in [0, 1] we render the background image.
-        # When bufn is in [2, ...) we render the worms.
-        # When bufn is > 3, we enable updating the worm state.
-        #
-        # TODO(q3k): allow apps to request single-buffered graphics for
-        # persistent framebuffers.
-        self.bufn = 0
-
         self.worms = []
         for i in range(0):
             self.worms.append(Worm())
 
-        self.just_shown = True
+        self.just_shown = False
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
-        # print("on foreground")
         super().on_enter(vm)
-        self.just_shown = True
+        self.just_shown = False
+        self._bg = 3 # animation requires multiple bg draws at the moment
+        self.worms = [] # reset worms
+
+    def draw_background(self, ctx):
+        ctx.rgb(*BLUE).rectangle(-120, -120, 240, 240).fill()
+
+        ctx.text_align = ctx.CENTER
+        ctx.text_baseline = ctx.MIDDLE
+        ctx.move_to(0, 0).rgb(*WHITE).text("touch me :)")
 
     def draw(self, ctx: Context) -> None:
-        if self.bufn <= 5:
-            ctx.rgb(*BLUE).rectangle(-120, -120, 240, 240).fill()
-
-            ctx.text_align = ctx.CENTER
-            ctx.text_baseline = ctx.MIDDLE
-            ctx.move_to(0, 0).rgb(*WHITE).text("touch me :)")
-            self.bufn += 1
-
-            return
-
-        for w in self.worms:
-            w.draw(ctx)
-        self.bufn += 1
+        if self._bg > 0:
+            self.draw_background(ctx)
+            self._bg -= 1
+        else:
+            for w in self.worms:
+                w.draw(ctx)
+            self.just_shown = True
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
 
-        # Simulation is currently locked to FPS.
-        if self.bufn > 7:
+        if self.just_shown:
             for w in self.worms:
                 w.move()
-            self.bufn = 6
+            self.just_shown = False
+
         for index, petal in enumerate(self.input.captouch.petals):
             if petal.whole.pressed or petal.whole.repeated:
                 self.worms.append(Worm(-tau * index / 10 + math.pi))
@@ -126,6 +113,7 @@ class Worm:
             self.size += 1
 
         self.speed = self.size / 5
+        self.speed /= 2 # temporary hack bc framerate doubling
 
         self.direction += (random.random() - 0.5) * math.pi / 4
 
