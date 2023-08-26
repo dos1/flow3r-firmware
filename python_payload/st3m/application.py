@@ -30,12 +30,17 @@ class ApplicationContext:
 
     _bundle_path: str
 
-    def __init__(self, bundle_path: str = "") -> None:
+    def __init__(self, bundle_path: str = "", bundle_metadata: dict = None) -> None:
         self._bundle_path = bundle_path
+        self._bundle_metadata = bundle_metadata
 
     @property
     def bundle_path(self) -> str:
         return self._bundle_path
+
+    @property
+    def bundle_metadata(self) -> str:
+        return self._bundle_metadata
 
 
 class Application(BaseView):
@@ -172,7 +177,7 @@ class BundleMetadata:
             log.info(f"Loaded {self.name} module: {m}")
             klass = getattr(m, class_entry)
             log.info(f"Loaded {self.name} class: {klass}")
-            inst = klass(ApplicationContext(self.path))
+            inst = klass(ApplicationContext(self.path, self._t))
             log.info(f"Instantiated {self.name} class: {inst}")
             return inst  # type: ignore
         except Exception as e:
