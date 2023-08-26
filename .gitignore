@@ -12,6 +12,7 @@ __pycache__
 # editor crud
 .vscode
 *swp
+*~
 
 # Python
 .venv
@@ -19,3 +20,5 @@ __pycache__
 
 # sphinx
 docs/_build/
+
+/tools/mypy.sh
