@@ -68,8 +68,8 @@ class HarmonicApp(Application):
             note_name = self.tone_to_note_name(self.chord[0][top_petal])
             note_name = "".join([x for x in note_name if not x.isdigit()])
             pos = 95 * cmath.exp(tai * (top_petal - 2.5) / 5)
-            end_pos = pos * (1 - 0.3j) * 1.2
-            start_pos = pos * (1 + 0.3j) * 1.2
+            end_pos = pos * (1 - 0.3j) * 1.27
+            start_pos = pos * (1 + 0.3j) * 1.27
             mid_pos = (start_pos + end_pos) / 8
             fade = self.fade[top_petal]
             if fade > 0:
