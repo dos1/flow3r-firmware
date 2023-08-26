@@ -29,6 +29,7 @@ class ApplicationContext:
     """
 
     _bundle_path: str
+    _bundle_metadata: dict
 
     def __init__(self, bundle_path: str = "", bundle_metadata: dict = None) -> None:
         self._bundle_path = bundle_path
