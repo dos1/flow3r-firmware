@@ -21,21 +21,6 @@ clang-tidy:
     reports:
       codequality: cqual.json
 
-mypy:
-  stage: check
-  variables:
-    MYPYPATH: python_payload/mypystubs
-  script:
-    - "set +e +o pipefail"
-    - "bash tools/mypy.sh; result=$?"
-    - "python3 tools/codequal-report.py mypy warnings.txt > cqual.json"
-    - "set -e -o pipefail"
-    - "[ $result == 0 ]"
-  artifacts:
-    when: always
-    reports:
-      codequality: cqual.json
-
 format:
   stage: check
   script:

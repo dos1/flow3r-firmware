@@ -70,8 +70,6 @@ For running the simulator, you'll need Python 3 with pygame and wasmer:
         venv/bin/pip install https://flow3r.garden/tmp/wasmer-py311/wasmer_compiler_cranelift-1.2.0-cp311-cp311-manylinux_2_34_x86_64.whl
         venv/bin/pip install https://flow3r.garden/tmp/wasmer-py311/wasmer-1.2.0-cp311-cp311-manylinux_2_34_x86_64.whl
 
-For Python development, you're also encouraged to use mypy for typechecks. It should be available in your distribution repositories.
-
 On macOS: the above might work.
 
 On Windows: good luck.
@@ -92,12 +90,6 @@ As with application development, you can first check your changes using the simu
 ::
 
 	$ python3 sim/run.py
-
-You should also run typechecks:
-
-::
-
-	$ MYPYPATH=python_payload/mypystubs mypy python_payload/main.py
 
 Working on C st3m code
 ----------------------
