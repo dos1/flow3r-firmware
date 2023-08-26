@@ -1,0 +1,13 @@
+[app]
+name = "WiFi"
+menu = "Hidden"
+
+[entry]
+class = "WifiApp"
+
+[metadata]
+author = "ave"
+license = "LGPL-3.0-only"
+url = "https://git.flow3r.garden/flow3r/flow3r-firmware"
+description = "Lets you use multiple wireless networks."
+version = 4

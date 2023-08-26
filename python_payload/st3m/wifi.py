@@ -15,6 +15,7 @@ def setup_wifi() -> None:
     assert iface
     try:
         if settings.str_wifi_ssid.value:
+            iface.disconnect()
             iface.connect(settings.str_wifi_ssid.value, settings.str_wifi_psk.value)
     except OSError as e:
         log.error(f"Could not connect to wifi: {e}")

@@ -24,6 +24,7 @@ from st3m.goose import (
     TYPE_CHECKING,
 )
 from st3m.ui.menu import MenuController, MenuItem, MenuItemBack, MenuItemForeground
+from st3m.application import BundleMetadata, MenuItemAppLaunch
 from st3m.ui.elements.menus import SimpleMenu
 from st3m.ui.view import ViewManager
 from st3m.utils import lerp, ease_out_cubic, reduce
@@ -106,7 +107,7 @@ class TunableWidget(Responder):
 
 class UnaryTunable(Tunable):
     """
-    Basic implementation of a Tunable for single values. Most settings will are
+    Basic implementation of a Tunable for single values. Most settings will be
     UnaryTunables, with notable exceptions being things like lists or optional
     settings.
 
@@ -382,7 +383,7 @@ onoff_button_swap = OnOffTunable("Swap Buttons", "system.swap_buttons", False)
 onoff_debug = OnOffTunable("Debug Overlay", "system.debug", False)
 onoff_debug_touch = OnOffTunable("Touch Overlay", "system.debug_touch", False)
 onoff_show_tray = OnOffTunable("Show Icons", "system.show_icons", True)
-onoff_wifi = OnOffTunable("Enable WiFi", "system.wifi.enabled", False)
+onoff_wifi = OnOffTunable("Enable WiFi on Boot", "system.wifi.enabled", False)
 str_wifi_ssid = StringTunable("WiFi SSID", "system.wifi.ssid", "Camp2023-open")
 str_wifi_psk = ObfuscatedStringTunable("WiFi Password", "system.wifi.psk", None)
 str_hostname = StringTunable("Hostname", "system.hostname", "flow3r")
@@ -403,21 +404,14 @@ if TYPE_CHECKING:
     MenuStructureEntry = Union[UnaryTunable, Tuple[str, List["MenuStructureEntry"]]]
     MenuStructure = List[MenuStructureEntry]
 
-# WiFi submenu
-wifi_settings: "MenuStructure" = [
-    onoff_wifi,
-    str_wifi_ssid,
-    str_wifi_psk,
-    str_hostname,
-]
-
 # Main settings menu
 settings_menu_structure: "MenuStructure" = [
     onoff_show_tray,
     onoff_button_swap,
     onoff_debug,
     onoff_debug_touch,
-    ("WiFi", wifi_settings),
+    onoff_wifi,
+    MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/w1f1")),
 ]
 
 
@@ -474,12 +468,7 @@ def build_menu_recursive(items: "MenuStructure") -> SimpleMenu:
     mib: MenuItem = MenuItemBack()
     positions: List[MenuItem] = [
         mib,
-    ] + [
-        SettingsMenuItem(t)
-        if isinstance(t, UnaryTunable)
-        else MenuItemForeground(t[0], build_menu_recursive(t[1]))
-        for t in items
-    ]
+    ] + [SettingsMenuItem(t) if isinstance(t, UnaryTunable) else t for t in items]
 
     return SettingsMenu(positions)
 
