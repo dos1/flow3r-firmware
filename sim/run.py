@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import importlib
 import importlib.abc
 import importlib.machinery

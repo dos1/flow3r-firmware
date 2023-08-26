@@ -1,0 +1,4 @@
+pygame
+requests
+wasmer
+wasmer-compiler-cranelift
