@@ -1,1 +1,1 @@
-Checks: '-*'
+Checks: '-clang-analyzer-core.UndefinedBinaryOperatorResult,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling, -clang-analyzer-optin.portability.UnixAPI'
