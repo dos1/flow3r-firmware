@@ -27,7 +27,6 @@ class HarmonicApp(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
 
-        self.color_intensity = 0.0
         self.chord_index = 0
         self.chord = None
         self.cp_prev = captouch.read()
@@ -81,7 +80,7 @@ class HarmonicApp(Application):
             ctx.move_to(start_pos.imag, start_pos.real)
             ctx.quad_to(mid_pos.imag, mid_pos.real, end_pos.imag, end_pos.real)
             ctx.stroke()
-            ctx.move_to(pos.imag, pos.real)
+            ctx.move_to(pos.imag * 1.07, pos.real * 1.07)
             ctx.rgb(1, 0.5, 0)
             ctx.text(note_name)
 
@@ -108,33 +107,26 @@ class HarmonicApp(Application):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
-        if self.color_intensity > 0:
-            self.color_intensity -= self.color_intensity / 20
-        cts = captouch.read()
-
-        for i in range(5):
-            if self.fade[i] > 0:
-                self.fade[i] -= self.fade[i] * float(delta_ms) / 1000
-                if self.fade[i] < 0.01:
-                    self.fade[i] = 0
+        cp = captouch.read()
 
         for i in range(10):
             j = (10 - i) % 10
-            if cts.petals[j].pressed and (not self.cp_prev.petals[j].pressed):
-                if i % 2:
-                    k = int((i - 1) / 2)
-                    self._set_chord(k)
-                else:
-                    k = int(i / 2)
-                    self.synths[k].signals.pitch.tone = self.chord[0][k]
-                    self.synths[k].signals.trigger.start()
-                    self.fade[k] = 1
-                    self.color_intensity = 1.0
-            elif (not cts.petals[j].pressed) and self.cp_prev.petals[j].pressed:
-                if (1 + i) % 2:
-                    k = int(i / 2)
-                    self.synths[k].signals.trigger.stop()
-        self.cp_prev = cts
+            if cp.petals[j].pressed:
+                if not self.cp_prev.petals[j].pressed:
+                    if i % 2:
+                        self._set_chord(i // 2)
+                    else:
+                        self.synths[i // 2].signals.pitch.tone = self.chord[0][i // 2]
+                        self.synths[i // 2].signals.trigger.start()
+                        self.fade[i // 2] = 1
+            elif not i % 2:
+                if self.fade[i // 2] > 0:
+                    self.fade[i // 2] -= self.fade[i // 2] * float(delta_ms) / 1000
+                    if self.fade[i // 2] < 0.05:
+                        self.fade[i // 2] = 0
+                if self.cp_prev.petals[j].pressed:
+                    self.synths[i // 2].signals.trigger.stop()
+        self.cp_prev = cp
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         # super().on_enter(vm) idk not using it in shoegaze, works fine?
