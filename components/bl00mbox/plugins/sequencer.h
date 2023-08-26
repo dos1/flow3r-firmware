@@ -16,8 +16,10 @@ typedef struct {
     uint8_t step;
     uint64_t counter;
     uint64_t counter_target;
-    int16_t sync_in_prev;
-    int16_t sync_out;
+    int16_t sync_in_hist;
+    int16_t sync_out_hist;
+    bool sync_out_start;
+    bool sync_out_stop;
     int16_t bpm_prev;
     int16_t beat_div_prev;
     sequencer_track_data_t tracks[];

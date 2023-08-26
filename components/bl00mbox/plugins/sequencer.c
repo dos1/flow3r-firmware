@@ -64,26 +64,31 @@ void sequencer_run(radspa_t * sequencer, uint16_t num_samples, uint32_t render_p
         data->bpm_prev = bpm;
         data->beat_div_prev = beat_div;
     }
-    if(data->counter_target){
-        for(uint16_t i = 0; i < num_samples; i++){
+
+    for(uint16_t i = 0; i < num_samples; i++){
+        int16_t sync_in = radspa_trigger_get(sync_in_sig->get_value(sync_in_sig, i, num_samples, render_pass_id),
+                &(data->sync_in_hist));
+        if(sync_in > 0){
+            data->counter = 0;
+            data->step = data->step_start;
+            data->sync_out_start = true;
+        } else if(sync_in < 0){
+            data->counter_target = 0; // stop signal
+            data->sync_out_stop = true;
+        }
+
+        if(data->counter_target){
             data->counter++;
+
             if(data->counter >= data->counter_target){
                 data->counter = 0;
                 data->step++;
                 if(data->step > data->step_end){
                     data->step = data->step_start;
-                    data->sync_out = -data->sync_out;
+                    data->sync_out_start = true;
                 }
             }
 
-            int16_t sync_in = sync_in_sig->get_value(sync_in_sig, i, num_samples, render_pass_id);
-            if(((sync_in > 0) && (data->sync_in_prev <= 0)) || ((sync_in > 0) && (data->sync_in_prev <= 0))){
-                data->counter = 0;
-                data->step = data->step_start;
-                data->sync_out = -data->sync_out;
-            }
-            data->sync_in_prev = sync_in;
-            
             if(!data->counter){ //event just happened
                 for(uint8_t j = 0; j < data->num_tracks; j++){
                     int16_t type = table[j * (data->track_step_len + 1)];
@@ -100,9 +105,16 @@ void sequencer_run(radspa_t * sequencer, uint16_t num_samples, uint32_t render_p
             for(uint8_t j = 0; j < data->num_tracks; j++){
                 track_sigs[j]->set_value(track_sigs[j], i, data->tracks[j].track_fill, num_samples, render_pass_id);
             }
-            sync_out_sig->set_value(sync_out_sig, i, data->sync_out, num_samples, render_pass_id);
-            step_sig->set_value(step_sig, i, data->step, num_samples, render_pass_id);
         }
+
+        int16_t sync_out = 0;
+        if(data->sync_out_start){
+            sync_out = radspa_trigger_start(sync_in, &(data->sync_out_hist));
+        } else if(data->sync_out_stop){
+            sync_out = radspa_trigger_stop(&(data->sync_out_hist));
+        }
+        sync_out_sig->set_value(sync_out_sig, i, sync_out, num_samples, render_pass_id);
+        step_sig->set_value(step_sig, i, data->step, num_samples, render_pass_id);
     }
 }
 
@@ -141,8 +153,10 @@ radspa_t * sequencer_create(uint32_t init_var){
             RADSPA_SIGNAL_HINT_OUTPUT | RADSPA_SIGNAL_HINT_TRIGGER, 0);
 
     data->counter = 0;
-    data->sync_in_prev = 0;
-    data->sync_out = 32767;
+    data->sync_in_hist = 0;
+    data->sync_out_hist = 0;
+    data->sync_out_start = false;
+    data->sync_out_stop = false;
 
     return sequencer;
 }

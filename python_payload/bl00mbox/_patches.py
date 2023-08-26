@@ -284,7 +284,7 @@ class sequencer(_Patch):
         self.signals.step = self.plugins.seq.signals.step
         self.signals.step_end = self.plugins.seq.signals.step_end
         self.signals.step_start = self.plugins.seq.signals.step_start
-        self.signals.step_start = self.plugins.seq.signals.step_start
+        self.signals.sync_in = self.plugins.seq.signals.sync_in
 
         tracktable = [-32767] + ([0] * self.num_steps)
         self.plugins.seq.table = tracktable * self.num_tracks
