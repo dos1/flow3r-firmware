@@ -30,8 +30,8 @@ class AppWorms(Application):
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
         self.just_shown = False
-        self._bg = 3 # animation requires multiple bg draws at the moment
-        self.worms = [] # reset worms
+        self._bg = 3  # animation requires multiple bg draws at the moment
+        self.worms = []  # reset worms
 
     def draw_background(self, ctx):
         ctx.rgb(*BLUE).rectangle(-120, -120, 240, 240).fill()
@@ -113,7 +113,7 @@ class Worm:
             self.size += 1
 
         self.speed = self.size / 5
-        self.speed /= 2 # temporary hack bc framerate doubling
+        self.speed /= 2  # temporary hack bc framerate doubling
 
         self.direction += (random.random() - 0.5) * math.pi / 4
 
