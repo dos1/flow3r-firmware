@@ -360,16 +360,6 @@ class SettingsMenuItem(MenuItem):
         self.widget.think(ins, delta_ms)
 
 
-class SettingsMenuItemBack(MenuItemBack):
-    """
-    Extends MenuItemBack to save settings on exit.
-    """
-
-    def press(self, vm: Optional[ViewManager]) -> None:
-        save_all()
-        super().press(vm)
-
-
 class SettingsMenu(SimpleMenu):
     """
     SimpleMenu but smol.
@@ -477,7 +467,7 @@ def build_menu_recursive(items: "MenuStructure") -> SimpleMenu:
     """
     Recursively build a menu for the given setting structure.
     """
-    mib: MenuItem = SettingsMenuItemBack()
+    mib: MenuItem = MenuItemBack()
     positions: List[MenuItem] = [
         mib,
     ] + [
