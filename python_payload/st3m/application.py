@@ -1,12 +1,12 @@
 from st3m.ui.view import (
     BaseView,
-    ViewTransitionSwipeRight,
     ViewTransitionSwipeLeft,
     ViewManager,
 )
 from st3m.ui.menu import MenuItem
 from st3m.input import InputState
-from st3m.goose import Optional, List, Enum, Dict
+import st3m.wifi
+from st3m.goose import Optional, List, Dict
 from st3m.logging import Log
 from ctx import Context
 
@@ -47,7 +47,23 @@ class ApplicationContext:
 class Application(BaseView):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         self._app_ctx = app_ctx
+        self._wifi_preference = app_ctx.bundle_metadata["app"].get("wifi_preference")
         super().__init__()
+
+    def on_enter(self, vm: Optional[ViewManager]) -> None:
+        # Try to connect/disconnect from wifi if requested by app
+        if self._wifi_preference is True and not st3m.wifi.is_connected():
+            st3m.wifi.setup_wifi()
+        elif self._wifi_preference is False:
+            st3m.wifi.disable()
+        super().on_enter(vm)
+
+    def on_exit(self) -> None:
+        # If the app requested to change wifi state
+        # fall back to system defaults on exit
+        if self._wifi_preference is not None:
+            st3m.wifi._onoff_wifi_update()
+        super().on_exit()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
