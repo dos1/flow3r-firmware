@@ -167,11 +167,11 @@ class GayDrums(Application):
         if track > 1:
             sequencer_track += 2
         if track == 1:
-            if self.seq.trigger_state(1, step):
+            if self.seq.trigger_state(1, step) > 0:
                 return 1
-            elif self.seq.trigger_state(2, step):
+            elif self.seq.trigger_state(2, step) > 0:
                 return 2
-            elif self.seq.trigger_state(3, step):
+            elif self.seq.trigger_state(3, step) > 0:
                 return 3
             else:
                 return 0
@@ -194,15 +194,15 @@ class GayDrums(Application):
             state = self.track_get_state(track, step)
             if state == 0:
                 self.seq.trigger_start(1, step)
-                self.seq.trigger_clear(2, step)
-                self.seq.trigger_clear(3, step)
+                self.seq.trigger_stop(2, step)
+                self.seq.trigger_stop(3, step)
             if state == 1:
-                self.seq.trigger_clear(1, step)
+                self.seq.trigger_stop(1, step)
                 self.seq.trigger_start(2, step)
-                self.seq.trigger_clear(3, step)
+                self.seq.trigger_stop(3, step)
             if state == 2:
-                self.seq.trigger_clear(1, step)
-                self.seq.trigger_clear(2, step)
+                self.seq.trigger_stop(1, step)
+                self.seq.trigger_stop(2, step)
                 self.seq.trigger_start(3, step)
             if state == 3:
                 self.seq.trigger_clear(1, step)
