@@ -1,9 +1,9 @@
 [app]
-name = "Melodic"
+name = "harmonic demo"
 menu = "Music"
 
 [entry]
-class = "MelodicApp"
+class = "HarmonicApp"
 
 [metadata]
 author = "Flow3r Badge Authors"
