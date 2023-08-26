@@ -365,6 +365,10 @@ class SettingsMenu(SimpleMenu):
     SimpleMenu but smol.
     """
 
+    def on_enter(self, vm: Optional[ViewManager]) -> None:
+        super().on_enter(vm)
+        load_all()
+
     def on_exit(self) -> None:
         save_all()
         super().on_exit()
