@@ -375,6 +375,10 @@ class SettingsMenu(SimpleMenu):
     SimpleMenu but smol.
     """
 
+    def on_exit(self) -> None:
+        save_all()
+        super().on_exit()
+
     SIZE_LARGE = 20
     SIZE_SMALL = 15
 
