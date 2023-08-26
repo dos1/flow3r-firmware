@@ -81,8 +81,13 @@ class Otamatone(Application):
         super().__init__(app_ctx)
         self._ts = 0
         self._blob = Blob()
+        self._blm = None
+        self._intensity = 0.0
+        self.input.captouch.petals[self.PETAL_NO].whole.repeat_disable()
 
-        self._blm = bl00mbox.Channel("Otamatone")
+    def _build_synth(self):
+        if self._blm is None:
+            self._blm = bl00mbox.Channel("Otamatone")
 
         # Sawtooth oscillator
         self._osc = self._blm.new(bl00mbox.patches.tinysynth)
@@ -105,20 +110,24 @@ class Otamatone(Application):
         # Built custom square wave (low duty cycle)
         table_len = 129
         self._dist.table = [
-            32767 if i > (0.1 * table_len) else -32768 for i in range(table_len)
+            32767 if i > (0.1 * table_len) else -32767 for i in range(table_len)
         ]
 
         self._lp.signals.freq = 4000
 
-        self._intensity = 0.0
-
-        self.input.captouch.petals[self.PETAL_NO].whole.repeat_disable()
+    def on_exit(self):
+        if self._blm is not None:
+            self._blm.free = True
+        self._blm = None
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
         for i in range(26, 30 + 1):
             leds.set_rgb(i, 62, 159, 229)
         leds.update()
+        if self._blm is None:
+            self._build_synth()
+        self._blm.foreground = True
 
     def draw(self, ctx: Context) -> None:
         ctx.save()
@@ -133,6 +142,8 @@ class Otamatone(Application):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
+        if self._blm is None:
+            return  # weird bug, for some reason think gets called after on_exit?
         self._ts += delta_ms
         self._blob.think(ins, delta_ms)
 
