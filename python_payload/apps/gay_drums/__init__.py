@@ -294,7 +294,7 @@ class GayDrums(Application):
     def draw_bpm(self, ctx: Context, data: None) -> None:
         ctx.text_align = ctx.MIDDLE
         ctx.move_to(0, 0)
-        self.ctx_draw_centered_rect(ctx, 0, -60, 200, 24, (0, 0, 0))
+        self.ctx_draw_centered_rect(ctx, 0, -60, 200, 26, (0, 0, 0))
         bpm = self.seq.signals.bpm.value
         ctx.font = ctx.get_font_name(1)
         ctx.font_size = 20
@@ -373,7 +373,7 @@ class GayDrums(Application):
         for rendee in self._render_list_2:
             fun, param = rendee
             fun(ctx, param)
-        self._render_list_2 = self._render_list_1.copy()
+        # self._render_list_2 = self._render_list_1.copy()
         self._render_list_1 = []
 
         size = 4
@@ -496,7 +496,6 @@ class GayDrums(Application):
         if ct.petals[0].pressed and not (self.ct_prev.petals[0].pressed):
             if self.stopped:
                 self.seq.signals.bpm = self.bpm
-                self.seq.signals.sync_in = 0
                 self._render_list_1 += [(self.draw_bpm, None)]
                 self.blm.background_mute_override = True
                 self.stopped = False
@@ -540,7 +539,7 @@ class GayDrums(Application):
         if ct.petals[0].pressed:
             if self.tap_tempo_press_counter > 500:
                 self.seq.signals.bpm = 0
-                self.seq.signals.sync_in = 1
+                self.seq.signals.sync_in.start()
                 self._render_list_1 += [(self.draw_bpm, None)]
                 self.stopped = True
                 self.blm.background_mute_override = False
