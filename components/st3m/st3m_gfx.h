@@ -7,21 +7,9 @@
 #include "ctx.h"
 // clang-format on
 
-// Each buffer  takes ~116kB SPIRAM. While one framebuffer is being blitted, the
-// other one is being written to by the rasterizer.
-#define ST3M_GFX_NBUFFERS 1
-// More ctx drawlists than buffers so that micropython doesn't get starved when
-// pipeline runs in lockstep.
-#define ST3M_GFX_NCTX 1
-
-// A framebuffer descriptor, pointing at a framebuffer.
-typedef struct {
-    // The numeric ID of this descriptor.
-    int num;
-    // SPIRAM buffer.
-    uint16_t buffer[240 * 240];
-    Ctx *ctx;
-} st3m_framebuffer_desc_t;
+Ctx *st3m_ctx(TickType_t ticks_to_wait);
+void st3m_ctx_end_frame(Ctx *ctx);  // temporary, signature compatible
+                                    // with ctx_end_frame()
 
 // Initialize the gfx subsystem of st3m, includng the rasterization and
 // crtx/blitter pipeline.
@@ -33,16 +21,6 @@ typedef struct {
     int num;
     Ctx *ctx;
 } st3m_ctx_desc_t;
-
-// Get a free drawlist ctx to draw into.
-//
-// ticks_to_wait can be used to limit the time to wait for a free ctx
-// descriptor, or portDELAY_MAX can be specified to wait forever. If the timeout
-// expires, NULL will be returned.
-st3m_ctx_desc_t *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait);
-
-// Submit a filled ctx descriptor to the rasterization pipeline.
-void st3m_gfx_drawctx_pipe_put(st3m_ctx_desc_t *desc);
 
 // Returns true if the rasterizaiton pipeline submission would block.
 uint8_t st3m_gfx_drawctx_pipe_full(void);

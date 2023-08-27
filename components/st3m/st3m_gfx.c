@@ -1,4 +1,5 @@
 #include "st3m_gfx.h"
+// Submit a filled ctx descriptor to the rasterization pipeline.
 
 #include <string.h>
 
@@ -17,6 +18,32 @@
 #include "flow3r_bsp.h"
 #include "st3m_counter.h"
 #include "st3m_version.h"
+
+// Each buffer  takes ~116kB SPIRAM. While one framebuffer is being blitted, the
+// other one is being written to by the rasterizer.
+#define ST3M_GFX_NBUFFERS 1
+// More ctx drawlists than buffers so that micropython doesn't get starved when
+// pipeline runs in lockstep.
+#define ST3M_GFX_NCTX 1
+
+// A framebuffer descriptor, pointing at a framebuffer.
+typedef struct {
+    // The numeric ID of this descriptor.
+    int num;
+    // SPIRAM buffer.
+    uint16_t buffer[240 * 240];
+    Ctx *ctx;
+} st3m_framebuffer_desc_t;
+
+// Get a free drawlist ctx to draw into.
+//
+// ticks_to_wait can be used to limit the time to wait for a free ctx
+// descriptor, or portDELAY_MAX can be specified to wait forever. If the timeout
+// expires, NULL will be returned.
+static st3m_ctx_desc_t *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait);
+
+// Submit a filled ctx descriptor to the rasterization pipeline.
+static void st3m_gfx_drawctx_pipe_put(st3m_ctx_desc_t *desc);
 
 static const char *TAG = "st3m-gfx";
 
@@ -479,7 +506,7 @@ void st3m_gfx_init(void) {
     assert(res == pdPASS);
 }
 
-st3m_ctx_desc_t *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
+static st3m_ctx_desc_t *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
     int descno;
     BaseType_t res = xQueueReceive(dctx_freeq, &descno, ticks_to_wait);
     if (res != pdTRUE) {
@@ -488,7 +515,7 @@ st3m_ctx_desc_t *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
     return &dctx_descs[descno];
 }
 
-void st3m_gfx_drawctx_pipe_put(st3m_ctx_desc_t *desc) {
+static void st3m_gfx_drawctx_pipe_put(st3m_ctx_desc_t *desc) {
     xQueueSend(dctx_rastq, &desc->num, portMAX_DELAY);
 }
 
@@ -522,4 +549,17 @@ void st3m_gfx_flush(void) {
         assert(res == pdTRUE);
     }
     ESP_LOGW(TAG, "Pipeline flush/reset done.");
+}
+
+static int st3m_dctx_no = 0;  // always 0 - but this keeps pipelined
+                              // rendering working as a compile time opt-in
+Ctx *st3m_ctx(TickType_t ticks_to_wait) {
+    st3m_ctx_desc_t *foo = st3m_gfx_drawctx_free_get(ticks_to_wait);
+    if (!foo) return NULL;
+    st3m_dctx_no = foo->num;
+    return foo->ctx;
+}
+
+void st3m_ctx_end_frame(Ctx *ctx) {
+    xQueueSend(dctx_rastq, &st3m_dctx_no, portMAX_DELAY);
 }

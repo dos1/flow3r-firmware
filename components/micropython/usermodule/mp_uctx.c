@@ -410,7 +410,8 @@ static mp_obj_t mp_ctx_image(size_t n_args, const mp_obj_t *args) {
     if (n_args > 7) clip_y = mp_obj_get_float(args[7]);
     if (n_args > 8) clip_width = mp_obj_get_float(args[8]);
     if (n_args > 9) clip_height = mp_obj_get_float(args[9]);
-    ctx_draw_image_clipped(self->ctx, path, x0, y0, width, height, clip_x, clip_y, clip_width, clip_height);
+    ctx_draw_image_clipped(self->ctx, path, x0, y0, width, height, clip_x,
+                           clip_y, clip_width, clip_height);
 
     return args[0];
 }

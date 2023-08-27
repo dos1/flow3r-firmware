@@ -18,8 +18,6 @@
 
 #include "mp_uctx.h"
 
-static st3m_ctx_desc_t *gfx_last_desc = NULL;
-
 STATIC mp_obj_t mp_set_backlight(mp_obj_t percent_in) {
     uint8_t percent = mp_obj_get_int(percent_in);
     flow3r_bsp_display_set_backlight(percent);
@@ -27,15 +25,11 @@ STATIC mp_obj_t mp_set_backlight(mp_obj_t percent_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_backlight_obj, mp_set_backlight);
 
+static Ctx *global_ctx = NULL;
 STATIC mp_obj_t mp_get_ctx(void) {
-    if (gfx_last_desc == NULL) {
-        gfx_last_desc = st3m_gfx_drawctx_free_get(0);
-        if (gfx_last_desc == NULL) {
-            return mp_const_none;
-        }
-    }
-    mp_obj_t mp_ctx = mp_ctx_from_ctx(gfx_last_desc->ctx);
-    return mp_ctx;
+    if (!global_ctx) global_ctx = st3m_ctx(0);
+    if (global_ctx == NULL) return mp_const_none;
+    return mp_ctx_from_ctx(global_ctx);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_ctx_obj, mp_get_ctx);
 
@@ -45,15 +39,9 @@ STATIC mp_obj_t mp_update(mp_obj_t ctx_in) {
         mp_raise_ValueError("not a ctx");
         return mp_const_none;
     }
-
-    if (gfx_last_desc != NULL) {
-        if (gfx_last_desc->ctx != self->ctx) {
-            mp_raise_ValueError(
-                "not the correct ctx (do not hold on to ctx objects!)");
-            return mp_const_none;
-        }
-        st3m_gfx_drawctx_pipe_put(gfx_last_desc);
-        gfx_last_desc = NULL;
+    if (global_ctx) {
+        st3m_ctx_end_frame(self->ctx);
+        global_ctx = NULL;
     }
     return mp_const_none;
 }

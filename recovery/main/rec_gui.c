@@ -9,71 +9,71 @@
 #include "ctx.h"
 // clang-format on
 
-static void _header_draw(st3m_ctx_desc_t *target) {
+static void _header_draw(Ctx *ctx) {
     // Draw background.
-    ctx_rgb(target->ctx, 0.29, 0.10, 0.35);
-    ctx_rectangle(target->ctx, -120, -120, 240, 240);
-    ctx_fill(target->ctx);
+    ctx_rgb(ctx, 0.29, 0.10, 0.35);
+    ctx_rectangle(ctx, -120, -120, 240, 240);
+    ctx_fill(ctx);
 
     // Draw header.
-    ctx_gray(target->ctx, 1.0);
-    ctx_text_align(target->ctx, CTX_TEXT_ALIGN_CENTER);
-    ctx_text_baseline(target->ctx, CTX_TEXT_BASELINE_MIDDLE);
+    ctx_gray(ctx, 1.0);
+    ctx_text_align(ctx, CTX_TEXT_ALIGN_CENTER);
+    ctx_text_baseline(ctx, CTX_TEXT_BASELINE_MIDDLE);
 
-    ctx_font_size(target->ctx, 15.0);
-    ctx_move_to(target->ctx, 0, -100);
-    ctx_text(target->ctx, "oh no it's");
+    ctx_font_size(ctx, 15.0);
+    ctx_move_to(ctx, 0, -100);
+    ctx_text(ctx, "oh no it's");
 
-    ctx_font_size(target->ctx, 30.0);
-    ctx_move_to(target->ctx, 0, -80);
-    ctx_text(target->ctx, "Recovery");
-    ctx_move_to(target->ctx, 0, -55);
-    ctx_text(target->ctx, "Mode");
+    ctx_font_size(ctx, 30.0);
+    ctx_move_to(ctx, 0, -80);
+    ctx_text(ctx, "Recovery");
+    ctx_move_to(ctx, 0, -55);
+    ctx_text(ctx, "Mode");
 
     // Draw version.
-    ctx_font_size(target->ctx, 15.0);
-    ctx_gray(target->ctx, 0.6);
-    ctx_move_to(target->ctx, 0, 100);
-    ctx_text(target->ctx, st3m_version);
+    ctx_font_size(ctx, 15.0);
+    ctx_gray(ctx, 0.6);
+    ctx_move_to(ctx, 0, 100);
+    ctx_text(ctx, st3m_version);
 }
 
 void rec_erasing_draw(void) {
-    st3m_ctx_desc_t *target = st3m_gfx_drawctx_free_get(portMAX_DELAY);
-    _header_draw(target);
+    Ctx *ctx = st3m_ctx(portMAX_DELAY);
+    _header_draw(ctx);
 
-    ctx_move_to(target->ctx, 0, 0);
-    ctx_font_size(target->ctx, 20.0);
-    ctx_gray(target->ctx, 0.8);
-    ctx_text(target->ctx, "Erasing...");
+    ctx_move_to(ctx, 0, 0);
+    ctx_font_size(ctx, 20.0);
+    ctx_gray(ctx, 0.8);
+    ctx_text(ctx, "Erasing...");
 
-    st3m_gfx_drawctx_pipe_put(target);
+    st3m_ctx_end_frame(ctx);
 }
 
 void rec_flashing_draw(int percent) {
-    st3m_ctx_desc_t *target = st3m_gfx_drawctx_free_get(portMAX_DELAY);
-    _header_draw(target);
+    Ctx *ctx = st3m_ctx(portMAX_DELAY);
+    _header_draw(ctx);
 
-    ctx_move_to(target->ctx, 0, 0);
-    ctx_font_size(target->ctx, 20.0);
-    ctx_gray(target->ctx, 0.8);
+    ctx_move_to(ctx, 0, 0);
+    ctx_font_size(ctx, 20.0);
+    ctx_gray(ctx, 0.8);
 
     char buf[128];
     snprintf(buf, sizeof(buf), "Flashing... %2d%%", percent);
-    ctx_text(target->ctx, buf);
+    ctx_text(ctx, buf);
 
-    ctx_rectangle(target->ctx, -120, 20, 240 * percent / 100, 20);
-    ctx_fill(target->ctx);
+    ctx_rectangle(ctx, -120, 20, 240 * percent / 100, 20);
+    ctx_fill(ctx);
 
-    st3m_gfx_drawctx_pipe_put(target);
+    st3m_ctx_end_frame(ctx);
 }
 
 void rec_menu_draw(menu_t *menu) {
-    st3m_ctx_desc_t *target = st3m_gfx_drawctx_free_get(portMAX_DELAY);
-    _header_draw(target);
+    Ctx *ctx = st3m_ctx(portMAX_DELAY);
+    _header_draw(ctx);
 
     int y = -20;
-    ctx_font_size(target->ctx, 15.0);
-    ctx_gray(target->ctx, 0.8);
+    ctx_font_size(ctx, 15.0);
+    ctx_gray(ctx, 0.8);
     if (menu->help != NULL) {
         const char *help = menu->help;
         const char *next = NULL;
@@ -83,36 +83,36 @@ void rec_menu_draw(menu_t *menu) {
             memcpy(line, help, len);
             line[len] = 0;
 
-            ctx_move_to(target->ctx, 0, y);
-            ctx_text(target->ctx, line);
+            ctx_move_to(ctx, 0, y);
+            ctx_text(ctx, line);
             free(line);
             y += 15;
             help = next + 1;
         }
-        ctx_move_to(target->ctx, 0, y);
-        ctx_text(target->ctx, help);
+        ctx_move_to(ctx, 0, y);
+        ctx_text(ctx, help);
         y += 25;
     }
 
-    ctx_font_size(target->ctx, 18.0);
+    ctx_font_size(ctx, 18.0);
     for (int i = 0; i < menu->entries_count; i++) {
         menu_entry_t *entry = &menu->entries[i];
         if (i == menu->selected) {
-            ctx_gray(target->ctx, 1.0);
-            ctx_rectangle(target->ctx, -120, y - 9, 240, 18);
-            ctx_fill(target->ctx);
-            ctx_rgb(target->ctx, 0.29, 0.10, 0.35);
+            ctx_gray(ctx, 1.0);
+            ctx_rectangle(ctx, -120, y - 9, 240, 18);
+            ctx_fill(ctx);
+            ctx_rgb(ctx, 0.29, 0.10, 0.35);
         } else if (entry->disabled) {
-            ctx_gray(target->ctx, 0.5);
+            ctx_gray(ctx, 0.5);
         } else {
-            ctx_gray(target->ctx, 1.0);
+            ctx_gray(ctx, 1.0);
         }
-        ctx_move_to(target->ctx, 0, y);
-        ctx_text(target->ctx, entry->label);
+        ctx_move_to(ctx, 0, y);
+        ctx_text(ctx, entry->label);
         y += 18;
     }
 
-    st3m_gfx_drawctx_pipe_put(target);
+    st3m_ctx_end_frame(ctx);
 }
 
 void rec_menu_process(menu_t *menu) {
