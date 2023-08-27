@@ -422,6 +422,7 @@ class WifiIcon(Icon):
 
 class BatteryIcon(Icon):
     WIDTH: int = 30
+
     def __init__(self) -> None:
         super().__init__()
         self._percent = 100.0
@@ -430,7 +431,6 @@ class BatteryIcon(Icon):
         return True
 
     def draw(self, ctx: Context) -> None:
-
         if self._percent > 30:
             ctx.rgb(0.17, 0.55, 0.04)
         else:
@@ -455,8 +455,10 @@ class BatteryIcon(Icon):
     def think(self, ins: InputState, delta_ms: int) -> None:
         self._percent = power.battery_percentage
 
+
 class ChargingIcon(Icon):
     WIDTH: int = 20
+
     def __init__(self) -> None:
         super().__init__()
         self._charging = power.battery_charging
@@ -465,21 +467,22 @@ class ChargingIcon(Icon):
         return self._charging
 
     def draw(self, ctx: Context) -> None:
-            ctx.rgb(255, 255, 255)
-            ctx.gray(1)
-            ctx.line_width = 20
-            ctx.move_to(10, -65)
-            ctx.line_to(-30, 20)
-            ctx.line_to(30, -20)
-            ctx.line_to(-10, 65)
-            ctx.line_to(-20, 35)
-            ctx.stroke()
-            ctx.move_to(-10, 65)
-            ctx.line_to(40, 35)
-            ctx.stroke()
+        ctx.rgb(255, 255, 255)
+        ctx.gray(1)
+        ctx.line_width = 20
+        ctx.move_to(10, -65)
+        ctx.line_to(-30, 20)
+        ctx.line_to(30, -20)
+        ctx.line_to(-10, 65)
+        ctx.line_to(-20, 35)
+        ctx.stroke()
+        ctx.move_to(-10, 65)
+        ctx.line_to(40, 35)
+        ctx.stroke()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self._charging = power.battery_charging
+
 
 class IconTray(Overlay):
     """
@@ -494,7 +497,6 @@ class IconTray(Overlay):
             BatteryIcon(),
             USBIcon(),
             WifiIcon(),
-            
         ]
         self.visible: List[Icon] = []
 
@@ -519,5 +521,3 @@ class IconTray(Overlay):
             v.draw(ctx)
             ctx.restore()
             x0 = x0 + v.WIDTH
-
-

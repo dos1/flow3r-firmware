@@ -14,7 +14,7 @@ class Power:
         self._adc_pin = machine.Pin(9, machine.Pin.IN)
         self._adc = machine.ADC(self._adc_pin, atten=machine.ADC.ATTN_11DB)
         self._battery_voltage = self._battery_voltage_sample()
-        self._prev_battery_percentages = [1,1,1]
+        self._prev_battery_percentages = [1, 1, 1]
         self._battery_percentage = 1
         # speeding up the process to get an intial settled value because recursion is hard
         for i in range(5):
@@ -48,7 +48,7 @@ class Power:
     def battery_percentage(self) -> int:
         self._update()
         return self._battery_percentage
-    
+
     def _approximate_battery_percentage(self) -> int:
         """
         Returns approximate battery percentage ([0,100]) based on battery voltage.
@@ -61,12 +61,12 @@ class Power:
 
         voltage_readings.sort()
         voltage = voltage_readings[int(num_samples / 2)]
-        
+
         # print(voltage)
 
         if voltage > 4.128:
-            percentage =  100
-        # LUT created from Joulescope measurement of "official" 2Ah Battery at 650mW discharge at 26°C and decimated from ~42k samples 
+            percentage = 100
+        # LUT created from Joulescope measurement of "official" 2Ah Battery at 650mW discharge at 26°C and decimated from ~42k samples
         batLUT = [
             (99, 4.119),
             (98, 4.109),
@@ -172,7 +172,6 @@ class Power:
             (0, 0),
         ]
 
-
         for i in range(len(batLUT)):
             if voltage >= batLUT[i][1]:
                 percentage = batLUT[i][0]
@@ -184,15 +183,11 @@ class Power:
         # print(self._prev_battery_percentages)
 
         for i in range(len(self._prev_battery_percentages)):
-            if sum(self._prev_battery_percentages)/self._prev_battery_percentages[0] == len(self._prev_battery_percentages):
-                #all values are the same, we settled on a value (might be the same as before but that's ok)
+            if sum(self._prev_battery_percentages) / self._prev_battery_percentages[
+                0
+            ] == len(self._prev_battery_percentages):
+                # all values are the same, we settled on a value (might be the same as before but that's ok)
                 return percentage
             else:
-                #we're still settling on a value, return previously settled value
+                # we're still settling on a value, return previously settled value
                 return self._battery_percentage
-                    
-        
-
-
-
-
