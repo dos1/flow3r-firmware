@@ -11,7 +11,12 @@ from st3m.ui.menu import (
 from st3m.ui.elements import overlays
 from st3m.ui.view import View, ViewManager, ViewTransitionBlend
 from st3m.ui.elements.menus import SimpleMenu, SunMenu
-from st3m.application import BundleManager, BundleMetadata, MenuItemAppLaunch
+from st3m.application import (
+    BundleManager,
+    BundleMetadata,
+    MenuItemAppLaunch,
+    ApplicationContext,
+)
 from st3m.about import About
 from st3m import settings, logging, processors, wifi
 
@@ -123,6 +128,10 @@ def run_view(v: View) -> None:
     top = processors.ProcessorMidldeware(compositor)
     reactor.set_top(top)
     reactor.run()
+
+
+def run_app(klass):
+    run_view(klass(ApplicationContext()))
 
 
 def _yeet_local_changes() -> None:
