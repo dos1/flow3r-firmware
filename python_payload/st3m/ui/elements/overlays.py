@@ -594,9 +594,10 @@ class BatteryIcon(Icon):
         self._percent = power.battery_percentage
 
 class ChargingIcon(Icon):
+    WIDTH: int = 20
     def __init__(self) -> None:
         super().__init__()
-        self._charging = False
+        self._charging = power.battery_charging
 
     def visible(self) -> bool:
         return self._charging
