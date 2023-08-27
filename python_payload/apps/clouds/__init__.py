@@ -1,8 +1,5 @@
-import st3m.run, random
-
-from st3m.application import Application, ApplicationContext
-from st3m.input import InputState
-from ctx import Context
+import st3m.run, random, ctx
+from st3m.application import Application
 
 
 class Cloud:
@@ -27,7 +24,7 @@ class Cloud:
 
 
 class Clouds(Application):
-    def __init__(self, app_ctx: ApplicationContext) -> None:
+    def __init__(self, app_ctx):
         super().__init__(app_ctx)
         self.clouds = []
         bundle_path = app_ctx.bundle_path
@@ -43,7 +40,7 @@ class Clouds(Application):
                 )
             )
 
-    def think(self, ins: InputState, delta_ms: int) -> None:
+    def think(self, ins: InputState, delta_ms: int):
         super().think(ins, delta_ms)
         for c in self.clouds:
             c.x -= (delta_ms / 1000.0) * ins.imu.acc[1] * 10
@@ -60,7 +57,7 @@ class Clouds(Application):
                 c.x = -200
         self.clouds = sorted(self.clouds, key=lambda c: -c.z)
 
-    def draw(self, ctx: Context) -> None:
+    def draw(self, ctx: Context):
         ctx.image_smoothing = False
         ctx.rectangle(-120, -120, 240, 120)
         ctx.rgb(0, 0.34, 0.72)
@@ -73,6 +70,5 @@ class Clouds(Application):
             c.draw(ctx)
 
 
-# For running with `mpremote run`:
 if __name__ == "__main__":
-    st3m.run.run_view(Clouds(ApplicationContext()))
+    st3m.run.run_app(Clouds)
