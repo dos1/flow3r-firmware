@@ -59,9 +59,12 @@ class Application(BaseView):
         super().on_enter(vm)
 
     def on_exit(self) -> None:
+        fully_exiting = not self.vm._history or not isinstance(
+            self.vm._history[-1], type(self)
+        )
         # If the app requested to change wifi state
         # fall back to system defaults on exit
-        if self._wifi_preference is not None:
+        if fully_exiting and self._wifi_preference is not None:
             st3m.wifi._onoff_wifi_update()
         super().on_exit()
 
