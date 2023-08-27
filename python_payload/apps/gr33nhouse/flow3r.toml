@@ -1,6 +1,7 @@
 [app]
 name = "Get Apps"
 menu = "Hidden"
+wifi_preference = true
 
 [entry]
 class = "Gr33nhouseApp"
