@@ -67,7 +67,7 @@ radspa_t * ampliverter_create(uint32_t init_var){
     // fill them
     radspa_signal_set(ampliverter, AMPLIVERTER_OUTPUT, "output", RADSPA_SIGNAL_HINT_OUTPUT, 0);
     radspa_signal_set(ampliverter, AMPLIVERTER_INPUT, "input", RADSPA_SIGNAL_HINT_INPUT, 0);
-    radspa_signal_set(ampliverter, AMPLIVERTER_GAIN, "gain", RADSPA_SIGNAL_HINT_INPUT, 32767);
+    radspa_signal_set(ampliverter, AMPLIVERTER_GAIN, "gain", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_GAIN, 32767);
     radspa_signal_set(ampliverter, AMPLIVERTER_BIAS, "bias", RADSPA_SIGNAL_HINT_INPUT, 0);
     return ampliverter;
 }

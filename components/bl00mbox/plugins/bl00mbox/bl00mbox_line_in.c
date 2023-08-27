@@ -43,6 +43,6 @@ radspa_t * bl00mbox_line_in_create(uint32_t init_var){
     radspa_signal_set(line_in, 0, "left", RADSPA_SIGNAL_HINT_OUTPUT, 0);
     radspa_signal_set(line_in, 1, "right", RADSPA_SIGNAL_HINT_OUTPUT, 0);
     radspa_signal_set(line_in, 2, "mid", RADSPA_SIGNAL_HINT_OUTPUT, 0);
-    radspa_signal_set(line_in, 3, "gain", RADSPA_SIGNAL_HINT_GAIN, RADSPA_SIGNAL_VAL_UNITY_GAIN);
+    radspa_signal_set(line_in, 3, "gain", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_GAIN, RADSPA_SIGNAL_VAL_UNITY_GAIN);
     return line_in;
 }
