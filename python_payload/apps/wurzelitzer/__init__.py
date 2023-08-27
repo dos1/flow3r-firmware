@@ -1,15 +1,9 @@
-from st3m.application import Application, ApplicationContext
-from st3m.ui.view import ViewManager
-from st3m.goose import Optional
-from st3m.input import InputState
-import st3m.run
-import media
-import os
-from ctx import Context
+import st3m.run, media, os, ctx
+from st3m.application import Application
 
 
 class JukeBox(Application):
-    def __init__(self, app_ctx: ApplicationContext) -> None:
+    def __init__(self, app_ctx):
         super().__init__(app_ctx)
         self._streams = [
             "http://radio-paralax.de:8000/",
@@ -27,16 +21,19 @@ class JukeBox(Application):
                     or entry[0].endswith(".mod")
                     or entry[0].endswith(".mpg")
                 ):
-                    self._streams.insert(0, "/sd/" + entry[0])
-        self._stream_no = 0
+                    self._streams.append("/sd/" + entry[0])
+        if len(self._streams) >= 5:
+            self._stream_no = 5  # skip radio stations, they are available by going back
+        else:
+            self._stream_no = 0
 
-    def load_stream(self) -> None:
+    def load_stream(self):
         media.stop()
         self._filename = self._streams[self._stream_no]
         print("loading " + self._filename)
         media.load(self._filename)
 
-    def think(self, ins: InputState, delta_ms: int) -> None:
+    def think(self, ins, delta_ms):
         super().think(ins, delta_ms)
         if self.input.buttons.app.right.pressed:  # or media.get_position() >= 1.0:
             self._stream_no += 1
@@ -50,16 +47,16 @@ class JukeBox(Application):
             self.load_stream()
         media.think(delta_ms)
 
-    def draw(self, ctx: Context) -> None:
+    def draw(self, ctx):
         media.draw(ctx)
 
-    def on_enter(self, vm: Optional[ViewManager]) -> None:
+    def on_enter(self, vm):
         super().on_enter(vm)
         self.load_stream()
 
-    def on_exit(self) -> None:
+    def on_exit(self):
         media.stop()
 
 
 if __name__ == "__main__":
-    st3m.run.run_view(JukeBox(ApplicationContext()))
+    st3m.run.run_app(JukeBox)
