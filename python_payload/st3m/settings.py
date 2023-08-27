@@ -384,6 +384,9 @@ onoff_debug = OnOffTunable("Debug Overlay", "system.debug", False)
 onoff_debug_touch = OnOffTunable("Touch Overlay", "system.debug_touch", False)
 onoff_show_tray = OnOffTunable("Show Icons", "system.show_icons", True)
 onoff_wifi = OnOffTunable("Enable WiFi on Boot", "system.wifi.enabled", False)
+onoff_wifi_preference = OnOffTunable(
+    "Let apps change WiFi", "system.wifi.allow_apps_to_change_wifi", True
+)
 str_wifi_ssid = StringTunable("WiFi SSID", "system.wifi.ssid", "Camp2023-open")
 str_wifi_psk = ObfuscatedStringTunable("WiFi Password", "system.wifi.psk", None)
 str_hostname = StringTunable("Hostname", "system.hostname", "flow3r")
@@ -395,6 +398,7 @@ load_save_settings: List[UnaryTunable] = [
     onoff_debug,
     onoff_debug_touch,
     onoff_wifi,
+    onoff_wifi_preference,
     str_wifi_ssid,
     str_wifi_psk,
     str_hostname,
@@ -411,6 +415,7 @@ settings_menu_structure: "MenuStructure" = [
     onoff_debug,
     onoff_debug_touch,
     onoff_wifi,
+    onoff_wifi_preference,
     MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/w1f1")),
 ]
 

@@ -8,6 +8,7 @@ from st3m.input import InputState
 import st3m.wifi
 from st3m.goose import Optional, List, Dict
 from st3m.logging import Log
+from st3m import settings
 from ctx import Context
 
 import toml
@@ -47,7 +48,7 @@ class ApplicationContext:
 class Application(BaseView):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         self._app_ctx = app_ctx
-        if app_ctx and app_ctx.bundle_metadata:
+        if app_ctx and app_ctx.bundle_metadata and settings.onoff_wifi_preference.value:
             self._wifi_preference = app_ctx.bundle_metadata["app"].get(
                 "wifi_preference"
             )
