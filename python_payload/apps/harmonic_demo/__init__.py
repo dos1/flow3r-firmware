@@ -5,6 +5,8 @@ import leds
 
 from st3m.goose import List
 from st3m.input import InputState
+from st3m.goose import Optional
+from st3m.ui.view import ViewManager
 from ctx import Context
 import cmath
 import math
@@ -129,7 +131,7 @@ class HarmonicApp(Application):
         self.cp_prev = cp
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
-        # super().on_enter(vm) idk not using it in shoegaze, works fine?
+        super().on_enter(vm)
         if self.blm is None:
             self._build_synth()
         self.blm.foreground = True

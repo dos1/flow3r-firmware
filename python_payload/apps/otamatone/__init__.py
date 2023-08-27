@@ -116,6 +116,7 @@ class Otamatone(Application):
         self._lp.signals.freq = 4000
 
     def on_exit(self):
+        super().on_exit()
         if self._blm is not None:
             self._blm.free = True
         self._blm = None

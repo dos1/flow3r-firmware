@@ -124,13 +124,14 @@ class MelodicApp(Application):
         leds.update()
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
-        # super().on_enter(vm) idk not using it in shoegaze, works fine?
+        super().on_enter(vm)
         if self.blm is None:
             self._build_synth()
         self.blm.foreground = True
         self.make_scale()
 
     def on_exit(self):
+        super().on_exit()
         if self.blm is not None:
             self.blm.free = True
         self.blm = None

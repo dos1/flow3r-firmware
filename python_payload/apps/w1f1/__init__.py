@@ -129,6 +129,7 @@ class WifiApp(Application):
         leds.set_rgb((direction * 4) + 1, r, g, b)
 
     def on_exit(self) -> None:
+        super().on_exit()
         leds.set_all_rgb(0, 0, 0)
         leds.update()
 

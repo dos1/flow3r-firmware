@@ -231,12 +231,14 @@ class ShoegazeApp(Application):
             self.bass_string.signals.trigger.start()
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
+        super().on_enter(vm)
         if self.blm is None:
             self._build_synth()
         if self.blm is not None:  # silly mypy
             self.blm.foreground = True
 
     def on_exit(self) -> None:
+        super().on_exit()
         if self.blm is not None:
             self.blm.free = True  # yeeting the channel in the backend
         self.blm = None

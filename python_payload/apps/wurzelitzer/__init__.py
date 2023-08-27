@@ -55,6 +55,7 @@ class JukeBox(Application):
         self.load_stream()
 
     def on_exit(self):
+        super().on_exit()
         media.stop()
 
 

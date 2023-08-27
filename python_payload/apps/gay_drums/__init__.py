@@ -562,5 +562,6 @@ class GayDrums(Application):
         self.ct_prev = ct
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
+        super().on_enter(vm)
         self.ct_prev = None
         self.draw_background_counter = 2

@@ -90,6 +90,7 @@ class TinySampler(Application):
         self.ct_prev = ct
 
     def on_exit(self) -> None:
+        super().on_exit()
         for i in range(5):
             if self.is_recording[i]:
                 self.samplers[i].signals.rec_trigger.stop()

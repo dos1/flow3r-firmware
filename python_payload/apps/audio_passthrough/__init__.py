@@ -27,6 +27,7 @@ class AudioPassthrough(Application):
         self._force_mode: str = "AUTO"
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
+        super().on_enter(vm)
         self._force_mode = "AUTO"
 
     def draw(self, ctx: Context) -> None:
@@ -96,6 +97,7 @@ class AudioPassthrough(Application):
         ctx.text("force line in/out")
 
     def on_exit(self) -> None:
+        super().on_exit()
         # Mic passthrough has a loopback risk
         if self._force_mode == "FORCE_MIC":
             self._force_mode = "FORCE_NONE"

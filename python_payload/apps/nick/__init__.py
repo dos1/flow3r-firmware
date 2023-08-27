@@ -163,6 +163,7 @@ class NickApp(Application):
         # ctx.fill()
 
     def on_exit(self) -> None:
+        super().on_exit()
         if not self._config.config_errors:
             self._config.save(self._filename)
 
