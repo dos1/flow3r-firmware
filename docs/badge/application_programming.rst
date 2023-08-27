@@ -1,9 +1,7 @@
 .. _programming:
 
-Programming
-===========
-
-*NOTE: this is about programming your own apps/instruments/toys while keeping the badge firmware stock. If you want to port Doom or work on the firmware, see the Firmware Development section.*
+Application Programmming
+========================
 
 The main programming interface and language for the flow3rbadge is Python. More
 exactly, it's `Micropython <https://micropython.org/>`_, which is a fairly
