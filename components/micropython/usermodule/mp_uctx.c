@@ -383,13 +383,6 @@ static mp_obj_t mp_ctx_texture(size_t n_args, const mp_obj_t *args) {
     int width = mp_obj_get_int(args[3]);
     int height = mp_obj_get_int(args[4]);
     int stride = mp_obj_get_int(args[5]);
-    // static int eid_no = 0;
-    // char ieid[10]; // this is a workaround for the rasterizer
-    //  not keeping the cache validity expected
-    //  as we drive it
-    //  it also means we cannot properly use
-    //  eid based APIs
-    // sprintf (ieid, "%i", eid_no++);
     ctx_define_texture(self->ctx, NULL, width, height, stride, format,
                        buffer_info.buf, NULL);
     return args[0];
@@ -404,16 +397,24 @@ static mp_obj_t mp_ctx_image(size_t n_args, const mp_obj_t *args) {
     float y0 = 0.0;
     float width = -1.0;
     float height = -1.0;
+    float clip_x = 0.0;
+    float clip_y = 0.0;
+    float clip_width = 0.0;
+    float clip_height = 0.0;
 
     if (n_args > 2) x0 = mp_obj_get_float(args[2]);
     if (n_args > 3) y0 = mp_obj_get_float(args[3]);
     if (n_args > 4) width = mp_obj_get_float(args[4]);
     if (n_args > 5) height = mp_obj_get_float(args[5]);
-    ctx_draw_image(self->ctx, path, x0, y0, width, height);
+    if (n_args > 6) clip_x = mp_obj_get_float(args[6]);
+    if (n_args > 7) clip_y = mp_obj_get_float(args[7]);
+    if (n_args > 8) clip_width = mp_obj_get_float(args[8]);
+    if (n_args > 9) clip_height = mp_obj_get_float(args[9]);
+    ctx_draw_image_clipped(self->ctx, path, x0, y0, width, height, clip_x, clip_y, clip_width, clip_height);
 
     return args[0];
 }
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_ctx_image_obj, 2, 6, mp_ctx_image);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_ctx_image_obj, 2, 10, mp_ctx_image);
 
 #if 0
 static mp_obj_t mp_ctx_font(mp_obj_t self_in, mp_obj_t font_in)
