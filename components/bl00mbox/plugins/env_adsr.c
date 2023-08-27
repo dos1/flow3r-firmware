@@ -133,7 +133,7 @@ void env_adsr_run(radspa_t * env_adsr, uint16_t num_samples, uint32_t render_pas
     for(uint16_t i = 0; i < num_samples; i++){
         int16_t ret = 0;
 
-        int16_t trigger = trigger_sig->get_value(trigger_sig, i, num_samples, render_pass_id);
+        int16_t trigger = radspa_signal_get_value(trigger_sig, i, render_pass_id);
         int16_t vel = radspa_trigger_get(trigger, &(plugin_data->trigger_prev));
 
         if(vel < 0){ // stop
@@ -156,7 +156,7 @@ void env_adsr_run(radspa_t * env_adsr, uint16_t num_samples, uint32_t render_pas
                     if(attack_sig == NULL){
                         attack_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_ATTACK);
                     }
-                    time_ms = attack_sig->get_value(attack_sig, i, num_samples, render_pass_id);
+                    time_ms = radspa_signal_get_value(attack_sig, i, render_pass_id);
                     if(time_ms != plugin_data->attack_prev_ms){
                         plugin_data->attack = uint32_sat_leftshift(env_adsr_time_ms_to_val_rise(time_ms, UINT32_MAX), ENV_ADSR_UNDERSAMPLING);
                         plugin_data->attack_prev_ms = time_ms;
@@ -166,19 +166,19 @@ void env_adsr_run(radspa_t * env_adsr, uint16_t num_samples, uint32_t render_pas
                     if(sustain_sig == NULL){
                         sustain_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_SUSTAIN);
                     }
-                    sus = sustain_sig->get_value(sustain_sig, i, num_samples, render_pass_id);
+                    sus = radspa_signal_get_value(sustain_sig, i, render_pass_id);
                     plugin_data->sustain = sus<<17;
 
                     if(gate_sig == NULL){
                         gate_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_GATE);
                     }
-                    sus = gate_sig->get_value(gate_sig, i, num_samples, render_pass_id);
+                    sus = radspa_signal_get_value(gate_sig, i, render_pass_id);
                     plugin_data->gate = sus<<17;
 
                     if(decay_sig == NULL){
                         decay_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_DECAY);
                     }
-                    time_ms = decay_sig->get_value(decay_sig, i, num_samples, render_pass_id);
+                    time_ms = radspa_signal_get_value(decay_sig, i, render_pass_id);
                     if(time_ms != plugin_data->decay_prev_ms){
                         plugin_data->decay = uint32_sat_leftshift(env_adsr_time_ms_to_val_rise(time_ms, UINT32_MAX-plugin_data->sustain), ENV_ADSR_UNDERSAMPLING);
                         plugin_data->decay_prev_ms = time_ms;
@@ -188,20 +188,20 @@ void env_adsr_run(radspa_t * env_adsr, uint16_t num_samples, uint32_t render_pas
                     if(sustain_sig == NULL){
                         sustain_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_SUSTAIN);
                     }
-                    sus = sustain_sig->get_value(sustain_sig, i, num_samples, render_pass_id);
+                    sus = radspa_signal_get_value(sustain_sig, i, render_pass_id);
                     plugin_data->sustain = sus<<17;
                     break;
                 case ENV_ADSR_PHASE_RELEASE:
                     if(gate_sig == NULL){
                         gate_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_GATE);
                     }
-                    sus = gate_sig->get_value(gate_sig, i, num_samples, render_pass_id);
+                    sus = radspa_signal_get_value(gate_sig, i, render_pass_id);
                     plugin_data->gate = sus<<17;
 
                     if(release_sig == NULL){
                         release_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_RELEASE);
                     }
-                    time_ms = release_sig->get_value(release_sig, i, num_samples, render_pass_id);
+                    time_ms = radspa_signal_get_value(release_sig, i, render_pass_id);
                     if(time_ms != plugin_data->release_prev_ms){
                         plugin_data->release = uint32_sat_leftshift(env_adsr_time_ms_to_val_rise(time_ms, plugin_data->release_init_val), ENV_ADSR_UNDERSAMPLING);
                         plugin_data->release_prev_ms = time_ms;
@@ -211,10 +211,10 @@ void env_adsr_run(radspa_t * env_adsr, uint16_t num_samples, uint32_t render_pas
             env = env_adsr_run_single(plugin_data);
         }
         if(env){
-            int16_t input = input_sig->get_value(input_sig, i, num_samples, render_pass_id);
+            int16_t input = radspa_signal_get_value(input_sig, i, render_pass_id);
             ret = radspa_mult_shift(env, input);
         }
-        phase_sig->set_value(phase_sig, i, plugin_data->env_phase, num_samples, render_pass_id);
-        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
+        radspa_signal_set_value(phase_sig, i, plugin_data->env_phase);
+        radspa_signal_set_value(output_sig, i, ret);
     }
 }

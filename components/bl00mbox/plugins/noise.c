@@ -18,7 +18,7 @@ void noise_run(radspa_t * noise, uint16_t num_samples, uint32_t render_pass_id){
 
     for(uint16_t i = 0; i < num_samples; i++){
         int16_t ret = radspa_random();
-        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
+        radspa_signal_set_value(output_sig, i, ret);
     }
 }
 

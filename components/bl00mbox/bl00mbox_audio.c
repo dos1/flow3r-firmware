@@ -5,6 +5,7 @@ static bool is_initialized = false;
 static bool bl00mbox_audio_run = true;
 void bl00mbox_audio_enable(){ bl00mbox_audio_run = true; }
 void bl00mbox_audio_disable(){ bl00mbox_audio_run = false; }
+static uint16_t full_buffer_len;
 
 static uint32_t render_pass_id;
 
@@ -160,13 +161,13 @@ int16_t bl00mbox_channel_get_volume(uint8_t chan){
     return ch->volume;
 }
 
-void bl00mbox_audio_bud_render(bl00mbox_bud_t * bud, uint16_t num_samples){
+void bl00mbox_audio_bud_render(bl00mbox_bud_t * bud){
     if(bud->render_pass_id == render_pass_id) return;
-    bud->plugin->render(bud->plugin, num_samples, render_pass_id);
+    bud->plugin->render(bud->plugin, full_buffer_len, render_pass_id);
     bud->render_pass_id = render_pass_id;
 }
 
-static void bl00mbox_audio_channel_render(bl00mbox_channel_t * chan, int16_t * out, uint16_t len, bool adding){
+static void bl00mbox_audio_channel_render(bl00mbox_channel_t * chan, int16_t * out, bool adding){
     if(adding){
         // ^ to make clang-tidy happy
         // only to pass flow3r ci, omit before compliling
@@ -180,7 +181,7 @@ static void bl00mbox_audio_channel_render(bl00mbox_channel_t * chan, int16_t * o
     // early exit when no sources:
     if((root == NULL) || (!chan->is_active)){
         if(adding) return; // nothing to do
-        memset(out, 0, len*sizeof(int16_t)); // mute
+        memset(out, 0, full_buffer_len*sizeof(int16_t)); // mute
         return;
     }
     if(root == NULL) return; // more clang garbage, undo before compliling
@@ -189,13 +190,13 @@ static void bl00mbox_audio_channel_render(bl00mbox_channel_t * chan, int16_t * o
     bool first = true;
 
     while(root != NULL){
-        bl00mbox_audio_bud_render(root->con->source_bud, len);
+        bl00mbox_audio_bud_render(root->con->source_bud);
         if(first){
-            for(uint16_t i = 0; i < len; i++){
+            for(uint16_t i = 0; i < full_buffer_len; i++){
                 acc[i] = root->con->buffer[i];
             }
         } else {
-            for(uint16_t i = 0; i < len; i++){ // replace this with proper ladspa-style adding function someday
+            for(uint16_t i = 0; i < full_buffer_len; i++){ // replace this with proper ladspa-style adding function someday
                 acc[i] += root->con->buffer[i];
             }
         }
@@ -203,7 +204,7 @@ static void bl00mbox_audio_channel_render(bl00mbox_channel_t * chan, int16_t * o
         root = root->next;
     }
 
-    for(uint16_t i = 0; i < len; i++){
+    for(uint16_t i = 0; i < full_buffer_len; i++){
         if(adding){
             out[i] = radspa_add_sat(radspa_mult_shift(acc[i], chan->volume), out[i]);
         } else {
@@ -227,25 +228,25 @@ void bl00mbox_audio_render(int16_t * rx, int16_t * tx, uint16_t len){
     }
 
     render_pass_id++; // fresh pass, all relevant sources must be recomputed
-    uint16_t mono_len = len/2;
+    full_buffer_len = len/2;
     bl00mbox_line_in_interlaced = rx;
-    int16_t acc[mono_len];
+    int16_t acc[full_buffer_len];
     // system channel always runs non-adding
-    bl00mbox_audio_channel_render(&(channels[0]), acc, mono_len, 0);
+    bl00mbox_audio_channel_render(&(channels[0]), acc, 0);
 
     // re-rendering channels is ok, if render_pass_id didn't change it will just exit
-    bl00mbox_audio_channel_render(&(channels[bl00mbox_channel_foreground]), acc, mono_len, 1);
+    bl00mbox_audio_channel_render(&(channels[bl00mbox_channel_foreground]), acc, 1);
 
     // TODO: scales poorly if there's many channels
 #ifdef BL00MBOX_BACKGROUND_MUTE_OVERRIDE_ENABLE
     for(uint8_t i = 1; i < (BL00MBOX_CHANNELS); i++){
         if(bl00mbox_channel_background_mute_override[i]){
-            bl00mbox_audio_channel_render(&(channels[i]), acc, mono_len, 1);
+            bl00mbox_audio_channel_render(&(channels[i]), acc, 1);
         }
     }
 #endif
 
-    for(uint16_t i = 0; i < mono_len; i++){
+    for(uint16_t i = 0; i < full_buffer_len; i++){
         tx[2*i] = acc[i];
         tx[2*i+1] = acc[i];
     }

@@ -34,8 +34,8 @@ void slew_rate_limiter_run(radspa_t * slew_rate_limiter, uint16_t num_samples, u
 
     int32_t ret = 0;
     for(uint16_t i = 0; i < num_samples; i++){
-        int32_t input = input_sig->get_value(input_sig, i, num_samples, render_pass_id);
-        int32_t slew_rate = (uint16_t) slew_rate_sig->get_value(slew_rate_sig, i, num_samples, render_pass_id);
+        int32_t input = radspa_signal_get_value(input_sig, i, render_pass_id);
+        int32_t slew_rate = (uint16_t) radspa_signal_get_value(slew_rate_sig, i, render_pass_id);
         ret = data->prev;
         if(input - ret > slew_rate){
             ret += slew_rate;
@@ -44,7 +44,7 @@ void slew_rate_limiter_run(radspa_t * slew_rate_limiter, uint16_t num_samples, u
         } else {
             ret = input;
         }
-        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
+        radspa_signal_set_value(output_sig, i, ret);
     }
 }
 

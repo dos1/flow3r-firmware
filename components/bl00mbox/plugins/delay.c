@@ -4,7 +4,8 @@ radspa_t * delay_create(uint32_t init_var);
 radspa_descriptor_t delay_desc = {
     .name = "delay",
     .id = 42069,
-    .description = "simple delay with ms input and feedback",
+    .description = "simple delay with ms input and feedback\n"
+                    "init_var: delay buffer length in ms, default 500",
     .create_plugin_instance = delay_create,
     .destroy_plugin_instance = radspa_standard_plugin_destroy
 };
@@ -35,7 +36,7 @@ void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
     uint32_t buffer_size = delay->plugin_table_len;
     
     for(uint16_t i = 0; i < num_samples; i++){
-        uint32_t time = time_sig->get_value(time_sig, i, num_samples, render_pass_id);
+        uint32_t time = radspa_signal_get_value(time_sig, i, render_pass_id);
         if(time > data->max_delay) time = data->max_delay;
 
         data->write_head_position++;
@@ -52,14 +53,14 @@ void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
 
         //int16_t * buf = &(data->buffer);
     
-        int16_t dry = input_sig->get_value(input_sig, i, num_samples, render_pass_id);
+        int16_t dry = radspa_signal_get_value(input_sig, i, render_pass_id);
         int16_t wet = buf[data->read_head_position];
 
-        int16_t fb = feedback_sig->get_value(feedback_sig, i, num_samples, render_pass_id);
-        int16_t level = level_sig->get_value(level_sig, i, num_samples, render_pass_id);
+        int16_t fb = radspa_signal_get_value(feedback_sig, i, render_pass_id);
+        int16_t level = radspa_signal_get_value(level_sig, i, render_pass_id);
 
-        int16_t dry_vol = dry_vol_sig->get_value(dry_vol_sig, i, num_samples, render_pass_id);
-        int16_t rec_vol = rec_vol_sig->get_value(rec_vol_sig, i, num_samples, render_pass_id);
+        int16_t dry_vol = radspa_signal_get_value(dry_vol_sig, i, render_pass_id);
+        int16_t rec_vol = radspa_signal_get_value(rec_vol_sig, i, render_pass_id);
 
         if(rec_vol){
             buf[data->write_head_position] = radspa_add_sat(radspa_mult_shift(rec_vol, dry), radspa_mult_shift(wet,fb));
@@ -67,7 +68,7 @@ void delay_run(radspa_t * delay, uint16_t num_samples, uint32_t render_pass_id){
         
         ret = radspa_add_sat(radspa_mult_shift(dry_vol,dry), radspa_mult_shift(wet,level));
 
-        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
+        radspa_signal_set_value(output_sig, i, ret);
     }
 }
 

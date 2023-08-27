@@ -36,9 +36,9 @@ void osc_fm_run(radspa_t * osc_fm, uint16_t num_samples, uint32_t render_pass_id
 
     int16_t ret = 0;
     for(uint16_t i = 0; i < num_samples; i++){
-        int16_t pitch = pitch_sig->get_value(pitch_sig, i, num_samples, render_pass_id);
-        int16_t wave = waveform_sig->get_value(waveform_sig, i, num_samples, render_pass_id);
-        int32_t lin_fm = lin_fm_sig->get_value(lin_fm_sig, i, num_samples, render_pass_id);
+        int16_t pitch = radspa_signal_get_value(pitch_sig, i, render_pass_id);
+        int16_t wave = radspa_signal_get_value(waveform_sig, i, render_pass_id);
+        int32_t lin_fm = radspa_signal_get_value(lin_fm_sig, i, render_pass_id);
 
         if(pitch != plugin_data->prev_pitch){
             plugin_data->incr = radspa_sct_to_rel_freq(pitch, 0);
@@ -52,7 +52,7 @@ void osc_fm_run(radspa_t * osc_fm, uint16_t num_samples, uint32_t render_pass_id
         int32_t tmp = (plugin_data->counter) >> 17;
         tmp = (tmp*2) - 32767;
         ret = waveshaper(tmp, wave);
-        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
+        radspa_signal_set_value(output_sig, i, ret);
     }
 }
 

@@ -49,7 +49,7 @@ void flanger_run(radspa_t * flanger, uint16_t num_samples, uint32_t render_pass_
     static int16_t ret = 0;
 
     for(uint16_t i = 0; i < num_samples; i++){
-        int32_t manual = manual_sig->get_value(manual_sig, i, num_samples, render_pass_id);
+        int32_t manual = radspa_signal_get_value(manual_sig, i, render_pass_id);
         if(manual != data->manual_prev){
             // index propto 1/radspa_sct_to_rel_freq(manual) -> signflip faster
             int32_t invert = ((2400*(FIXED_POINT_DIGITS)) - 7572) - manual;
@@ -65,10 +65,10 @@ void flanger_run(radspa_t * flanger, uint16_t num_samples, uint32_t render_pass_
         data->read_head_position -= data->read_head_offset;
         while(data->read_head_position < 0) data->read_head_position += VARIABLE_NAME; //underflow
 
-        int32_t dry = input_sig->get_value(input_sig, i, num_samples, render_pass_id);
-        int16_t reso = reso_sig->get_value(reso_sig, i, num_samples, render_pass_id);
-        int16_t level = level_sig->get_value(level_sig, i, num_samples, render_pass_id);
-        int16_t mix = mix_sig->get_value(mix_sig, i, num_samples, render_pass_id);
+        int32_t dry = radspa_signal_get_value(input_sig, i, render_pass_id);
+        int16_t reso = radspa_signal_get_value(reso_sig, i, render_pass_id);
+        int16_t level = radspa_signal_get_value(level_sig, i, render_pass_id);
+        int16_t mix = radspa_signal_get_value(mix_sig, i, render_pass_id);
 
         buf[data->write_head_position] = dry;
         int32_t wet = fixed_point_list_access(buf, data->read_head_position, FLANGER_BUFFER_SIZE);
@@ -78,7 +78,7 @@ void flanger_run(radspa_t * flanger, uint16_t num_samples, uint32_t render_pass_
 
         ret = radspa_add_sat(radspa_mult_shift(dry, dry_vol), radspa_mult_shift(radspa_clip(wet), mix));
         ret = radspa_clip(radspa_gain(ret, level));
-        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
+        radspa_signal_set_value(output_sig, i, ret);
     }
 }
 

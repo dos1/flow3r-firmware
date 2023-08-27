@@ -52,32 +52,37 @@ void sequencer_run(radspa_t * sequencer, uint16_t num_samples, uint32_t render_p
 
     int16_t * table = sequencer->plugin_table;
 
-    int16_t s1 = radspa_signal_get_value(end_step_sig, 0, num_samples, render_pass_id);
+    int16_t s1 = radspa_signal_get_value(end_step_sig, 0, render_pass_id);
     int16_t s2 = data->track_step_len - 1;
     data->step_end = s1 > 0 ? (s1 > s2 ? s2 : s1) : 1;
-    data->step_start = radspa_signal_get_value(start_step_sig, 0, num_samples, render_pass_id);
+    data->step_start = radspa_signal_get_value(start_step_sig, 0, render_pass_id);
 
-    int16_t bpm = bpm_sig->get_value(bpm_sig, 0, num_samples, render_pass_id);
-    int16_t beat_div = beat_div_sig->get_value(beat_div_sig, 0, num_samples, render_pass_id);
+    int16_t bpm = radspa_signal_get_value(bpm_sig, 0, render_pass_id);
+    int16_t beat_div = radspa_signal_get_value(beat_div_sig, 0, render_pass_id);
     if((bpm != data->bpm_prev) || (beat_div != data->beat_div_prev)){
         data->counter_target = target(data->track_step_len, bpm, beat_div);
+        if(!data->counter_target){
+            data->is_stopped = false;
+        }
+            data->is_stopped = true;
         data->bpm_prev = bpm;
         data->beat_div_prev = beat_div;
     }
 
     for(uint16_t i = 0; i < num_samples; i++){
-        int16_t sync_in = radspa_trigger_get(sync_in_sig->get_value(sync_in_sig, i, num_samples, render_pass_id),
+        int16_t sync_in = radspa_trigger_get(radspa_signal_get_value(sync_in_sig, i, render_pass_id),
                 &(data->sync_in_hist));
         if(sync_in > 0){
             data->counter = 0;
             data->step = data->step_start;
             data->sync_out_start = true;
+            data->is_stopped = false;
         } else if(sync_in < 0){
-            data->counter_target = 0; // stop signal
+            data->is_stopped = true; // stop signal
             data->sync_out_stop = true;
         }
 
-        if(data->counter_target){
+        if(data->is_stopped){
             data->counter++;
 
             if(data->counter >= data->counter_target){
@@ -103,7 +108,7 @@ void sequencer_run(radspa_t * sequencer, uint16_t num_samples, uint32_t render_p
             }
           
             for(uint8_t j = 0; j < data->num_tracks; j++){
-                track_sigs[j]->set_value(track_sigs[j], i, data->tracks[j].track_fill, num_samples, render_pass_id);
+                radspa_signal_set_value(track_sigs[j], i, data->tracks[j].track_fill);
             }
         }
 
@@ -113,8 +118,8 @@ void sequencer_run(radspa_t * sequencer, uint16_t num_samples, uint32_t render_p
         } else if(data->sync_out_stop){
             sync_out = radspa_trigger_stop(&(data->sync_out_hist));
         }
-        sync_out_sig->set_value(sync_out_sig, i, sync_out, num_samples, render_pass_id);
-        step_sig->set_value(step_sig, i, data->step, num_samples, render_pass_id);
+        radspa_signal_set_value(sync_out_sig, i, sync_out);
+        radspa_signal_set_value(step_sig, i, data->step);
     }
 }
 
@@ -157,6 +162,7 @@ radspa_t * sequencer_create(uint32_t init_var){
     data->sync_out_hist = 0;
     data->sync_out_start = false;
     data->sync_out_stop = false;
+    data->is_stopped = false;
 
     return sequencer;
 }

@@ -23,13 +23,13 @@ void distortion_run(radspa_t * distortion, uint16_t num_samples, uint32_t render
     
     for(uint16_t i = 0; i < num_samples; i++){
 
-        int32_t input = input_sig->get_value(input_sig, i, num_samples, render_pass_id);
+        int32_t input = radspa_signal_get_value(input_sig, i, render_pass_id);
         input += 32768;
         uint8_t index = input>>9;
         int32_t blend = input & ((1<<7)-1);
         ret = dist[index]*((1<<7)-blend) + dist[index+1]*blend;
         ret = ret >> 7;
-        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
+        radspa_signal_set_value(output_sig, i, ret);
     }
 }
 

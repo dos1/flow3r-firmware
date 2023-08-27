@@ -30,7 +30,6 @@ radspa_t * noise_burst_create(uint32_t init_var){
 
 #define SAMPLE_RATE_SORRY 48000
 
-
 void noise_burst_run(radspa_t * noise_burst, uint16_t num_samples, uint32_t render_pass_id){
     noise_burst_data_t * plugin_data = noise_burst->plugin_data;
     radspa_signal_t * output_sig = radspa_signal_get_by_index(noise_burst, NOISE_BURST_OUTPUT);
@@ -41,20 +40,20 @@ void noise_burst_run(radspa_t * noise_burst, uint16_t num_samples, uint32_t rend
     for(uint16_t i = 0; i < num_samples; i++){
         int16_t ret = 0;
 
-        int16_t trigger = trigger_sig->get_value(trigger_sig, i, num_samples, render_pass_id);
+        int16_t trigger = radspa_signal_get_value(trigger_sig, i, render_pass_id);
         int16_t vel = radspa_trigger_get(trigger, &(plugin_data->trigger_prev));
 
         if(vel < 0){ // stop
             plugin_data->counter = plugin_data->limit;
         } else if(vel > 0 ){ // start
             plugin_data->counter = 0;
-            int32_t length_ms = trigger_sig->get_value(length_ms_sig, i, num_samples, render_pass_id);
+            int32_t length_ms = radspa_signal_get_value(length_ms_sig, i, render_pass_id);
             plugin_data->limit = length_ms * 48;
         }
         if(plugin_data->counter < plugin_data->limit){
             ret = radspa_random();
             plugin_data->counter++;
         }
-        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
+        radspa_signal_set_value(output_sig, i, ret);
     }
 }

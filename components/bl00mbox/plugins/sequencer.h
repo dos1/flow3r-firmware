@@ -20,6 +20,7 @@ typedef struct {
     int16_t sync_out_hist;
     bool sync_out_start;
     bool sync_out_stop;
+    bool is_stopped;
     int16_t bpm_prev;
     int16_t beat_div_prev;
     sequencer_track_data_t tracks[];

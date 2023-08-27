@@ -3,7 +3,8 @@
 radspa_descriptor_t multipitch_desc = {
     .name = "multipitch",
     .id = 37,
-    .description = "takes a pitch input and provides a number of shifted outputs.\ninit_var: number of outputs, default 0",
+    .description = "takes a pitch input and provides a number of shifted outputs."
+                    "\ninit_var: number of outputs, default 0, max 127",
     .create_plugin_instance = multipitch_create,
     .destroy_plugin_instance = radspa_standard_plugin_destroy
 };
@@ -26,17 +27,17 @@ void multipitch_run(radspa_t * multipitch, uint16_t num_samples, uint32_t render
 
     for(uint16_t i = 0; i < num_samples; i++){
         int32_t ret = 0;
-        int32_t input = input_sig->get_value(input_sig, i, num_samples, render_pass_id);
+        int32_t input = radspa_signal_get_value(input_sig, i, render_pass_id);
         ret = input;
 
         if(thru_sig->buffer != NULL) (thru_sig->buffer)[i] = ret;
-        thru_sig->set_value(thru_sig, i, ret, num_samples, render_pass_id);
+        radspa_signal_set_value(thru_sig, i, ret);
 
         int32_t pitch;
         for(uint8_t j = 0; j < num_outputs; j++){
-            pitch = pitch_sigs[j]->get_value(pitch_sigs[j], i, num_samples, render_pass_id);
+            pitch = radspa_signal_get_value(pitch_sigs[j], i, render_pass_id);
             ret = pitch + input - RADSPA_SIGNAL_VAL_SCT_A440;
-            output_sigs[j]->set_value(output_sigs[j], i, ret, num_samples, render_pass_id);
+            radspa_signal_set_value(output_sigs[j], i, ret);
         }
     }
 }

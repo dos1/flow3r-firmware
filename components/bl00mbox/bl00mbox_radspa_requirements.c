@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: CC0-1.0
 #include "bl00mbox_radspa_requirements.h"
 
-bool radspa_host_request_buffer_render(int16_t * buf, uint16_t num_samples){
+bool radspa_host_request_buffer_render(int16_t * buf){
     bl00mbox_bud_t * bud = ((bl00mbox_connection_t *) buf)->source_bud;
-    bl00mbox_audio_bud_render(bud, num_samples);
+    bl00mbox_audio_bud_render(bud);
     return 1;
 }
 

@@ -4,7 +4,7 @@
 // this file, kindly append "-modified" to the version string below so it is not mistaken
 // for an official release.
 
-// Version 0.2.0
+// Version 0.2.1
 
 /* Realtime Audio Developer's Simple Plugin Api
  *
@@ -77,15 +77,11 @@ typedef struct _radspa_signal_t{
     char * unit;
     // -1 to disable signal multiplexing
     int8_t name_multiplex;
-    // buffer full of samples, may be NULL
+    // buffer full of samples, may be NULL.
     int16_t * buffer;
     // static value to be used when buffer is NULL for input signals only
     int16_t value;
     uint32_t render_pass_id;
-    // function for input signals to retrieve their value at a buffer index. radspa_helpers provides an example. this function should be set by the host.
-    int16_t (* get_value)(struct _radspa_signal_t * sig, int16_t index, uint16_t num_samples, uint32_t render_pass_id);
-    // function for output signals to set a value at a buffer index. radspa_helpers provides an example. this function should be set by the host.
-    void (* set_value)(struct _radspa_signal_t * sig, int16_t index, int16_t value, uint16_t num_samples, uint32_t render_pass_id);
     // linked list pointer
     struct _radspa_signal_t * next;
 } radspa_signal_t;
@@ -121,7 +117,7 @@ typedef struct _radspa_t{
 extern uint32_t radspa_sct_to_rel_freq(int16_t sct, int16_t undersample_pow);
 
 // Return 1 if the buffer wasn't rendered already, 0 otherwise.
-extern bool radspa_host_request_buffer_render(int16_t * buf, uint16_t num_samples);
+extern bool radspa_host_request_buffer_render(int16_t * buf);
 
 // limit a to -32767..32767
 extern int16_t radspa_clip(int32_t a);

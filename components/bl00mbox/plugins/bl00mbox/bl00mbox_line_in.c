@@ -16,22 +16,22 @@ void bl00mbox_line_in_run(radspa_t * line_in, uint16_t num_samples, uint32_t ren
     radspa_signal_t * gain_sig = radspa_signal_get_by_index(line_in, 3);
 
     for(uint16_t i = 0; i < num_samples; i++){
-        int32_t gain = gain_sig->get_value(gain_sig, i, num_samples, render_pass_id);
+        int32_t gain = radspa_signal_get_value(gain_sig, i, render_pass_id);
         if(left_sig->buffer != NULL){
             int16_t left = radspa_gain(bl00mbox_line_in_interlaced[2*i], gain);
-            left_sig->set_value(left_sig, i, left, num_samples, render_pass_id);
+            radspa_signal_set_value(left_sig, i, left);
         }
 
         if(right_sig->buffer != NULL){
-                int16_t right = radspa_gain(bl00mbox_line_in_interlaced[2*i], gain);
-                right_sig->set_value(right_sig, i, right, num_samples, render_pass_id);
+            int16_t right = radspa_gain(bl00mbox_line_in_interlaced[2*i+1], gain);
+            radspa_signal_set_value(right_sig, i, right);
         }
 
         if(mid_sig->buffer != NULL){
             int16_t mid = bl00mbox_line_in_interlaced[2*i]>>1;
-            mid += bl00mbox_line_in_interlaced[2*i]>>1;
+            mid += bl00mbox_line_in_interlaced[2*i+1]>>1;
             mid = radspa_gain(mid, gain);
-            mid_sig->set_value(mid_sig, i, mid, num_samples, render_pass_id);
+            radspa_signal_set_value(mid_sig, i, mid);
         }
     }
 }

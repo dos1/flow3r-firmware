@@ -83,4 +83,4 @@ char * bl00mbox_channel_get_name(uint8_t channel_index);
 void bl00mbox_channel_set_name(uint8_t channel_index, char * new_name);
 
 bool bl00mbox_audio_waitfor_pointer_change(void ** ptr, void * new_val);
-void bl00mbox_audio_bud_render(bl00mbox_bud_t * bud, uint16_t num_samples);
+void bl00mbox_audio_bud_render(bl00mbox_bud_t * bud);

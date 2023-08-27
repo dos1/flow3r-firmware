@@ -23,16 +23,16 @@ void mixer_run(radspa_t * mixer, uint16_t num_samples, uint32_t render_pass_id){
 
     static int32_t ret = 0;
     for(uint16_t i = 0; i < num_samples; i++){
-        int16_t gain = gain_sig->get_value(gain_sig, i, num_samples, render_pass_id);
+        int16_t gain = radspa_signal_get_value(gain_sig, i, render_pass_id);
         ret = 0;
         for(uint8_t j = 0; j < num_inputs; j++){
-            ret += input_sigs[j]->get_value(input_sigs[j], i, num_samples, render_pass_id);
+            ret += radspa_signal_get_value(input_sigs[j], i, render_pass_id);
         }
         // remove dc
         (* dc_acc) = (ret + (* dc_acc)*1023) >> 10;
         ret -= (* dc_acc);
         ret = radspa_clip(radspa_gain(ret, gain));
-        output_sig->set_value(output_sig, i, ret, num_samples, render_pass_id);
+        radspa_signal_set_value(output_sig, i, ret);
     }
 }
 
