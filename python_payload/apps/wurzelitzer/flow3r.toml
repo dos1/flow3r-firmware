@@ -3,9 +3,6 @@ name = "Wurzelitzer"
 menu = "Music"
 wifi_preference = true
 
-[entry]
-class = "JukeBox"
-
 [metadata]
 author = "Flow3r Badge Authors"
 license = "LGPL-3.0-only"

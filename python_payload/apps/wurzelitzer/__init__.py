@@ -12,7 +12,7 @@ RADIOSTATIONS = [
 ]
 
 
-class JukeBox(Application):
+class App(Application):
     def __init__(self, app_ctx):
         super().__init__(app_ctx)
         self._streams = RADIOSTATIONS.copy()
@@ -63,4 +63,4 @@ class JukeBox(Application):
 
 
 if __name__ == "__main__":
-    st3m.run.run_app(JukeBox)
+    st3m.run.run_app(App)

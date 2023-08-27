@@ -2,9 +2,6 @@
 name = "Mandelbrot"
 menu = "Apps"
 
-[entry]
-class = "App"
-
 [metadata]
 author = "Flow3r Badge Authors"
 license = "LGPL-3.0-only"
