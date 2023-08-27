@@ -222,7 +222,7 @@ class BundleMetadata:
         """
         entry = self._t.get("entry", None)
         if entry is None:
-            raise BundleMetadataBroken("missing entry section")
+            return self._load_class("App")
         if "class" in entry and type(entry["class"]) == str:
             class_entry = entry["class"]
             return self._load_class(class_entry)
