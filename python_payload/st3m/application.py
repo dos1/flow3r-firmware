@@ -47,7 +47,9 @@ class ApplicationContext:
 class Application(BaseView):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         self._app_ctx = app_ctx
-        self._wifi_preference = app_ctx.bundle_metadata["app"].get("wifi_preference")
+        self._wifi_preference = (
+            app_ctx.bundle_metadata["app"].get("wifi_preference") if app_ctx else None
+        )
         super().__init__()
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
