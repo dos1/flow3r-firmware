@@ -11,7 +11,7 @@ from st3m.goose import Dict, Enum, List, ABCBase, abstractmethod, Optional
 from st3m.utils import tau
 from st3m.ui.view import ViewManager
 from st3m.input import power
-from st3m.power import approximate_battery_percentage
+import st3m.power
 from ctx import Context
 import st3m.wifi
 
@@ -562,11 +562,13 @@ class BatteryIcon(Icon):
         super().__init__()
         self._percent = 100.0
         self._charging = False
+        self._changed = False
 
     def visible(self) -> bool:
         return True
 
     def draw(self, ctx: Context) -> None:
+
         if self._percent > 30:
             ctx.rgb(0.17, 0.55, 0.04)
         else:
@@ -583,17 +585,34 @@ class BatteryIcon(Icon):
         ctx.rectangle(100, -30, -20, 60)
         ctx.fill()
 
-        if self._charging:
+        ctx.font = ctx.get_font_name(1)
+        ctx.move_to(-72, 32)
+        ctx.font_size = 100
+        ctx.rgb(255, 255, 255).text(str(self._percent))
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        self._percent = power.battery_percentage
+
+class ChargingIcon(Icon):
+    def __init__(self) -> None:
+        super().__init__()
+        self._charging = False
+
+    def visible(self) -> bool:
+        return self._charging
+
+    def draw(self, ctx: Context) -> None:
+            ctx.rgb(255, 255, 255)
             ctx.gray(1)
             ctx.line_width = 20
-            ctx.move_to(10, -65 - 10)
-            ctx.line_to(-30, 20 - 10)
-            ctx.line_to(30, -20 - 10)
-            ctx.line_to(-10, 65 - 10)
-            ctx.line_to(-20, 35 - 10)
+            ctx.move_to(10, -65)
+            ctx.line_to(-30, 20)
+            ctx.line_to(30, -20)
+            ctx.line_to(-10, 65)
+            ctx.line_to(-20, 35)
             ctx.stroke()
-            ctx.move_to(-10, 65 - 10)
-            ctx.line_to(40, 35 - 10)
+            ctx.move_to(-10, 65)
+            ctx.line_to(40, 35)
             ctx.stroke()
 
         self._changed = False
@@ -608,7 +627,6 @@ class BatteryIcon(Icon):
             self._charging = charging
             self._changed = True
 
-
 class IconTray(Overlay):
     """
     An overlay which renders Icons.
@@ -618,9 +636,11 @@ class IconTray(Overlay):
 
     def __init__(self) -> None:
         self.icons = [
+            ChargingIcon(),
             BatteryIcon(),
             USBIcon(),
             WifiIcon(),
+            
         ]
         self.visible: List[Icon] = []
         self.last_visible: List[Icon] = []
