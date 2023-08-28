@@ -183,9 +183,9 @@ class Power:
         # print(self._prev_battery_percentages)
 
         for i in range(len(self._prev_battery_percentages)):
-            if sum(self._prev_battery_percentages) / self._prev_battery_percentages[
-                0
-            ] == len(self._prev_battery_percentages):
+            if sum(self._prev_battery_percentages) / (
+                0.001 + self._prev_battery_percentages[0]
+            ) == len(self._prev_battery_percentages):
                 # all values are the same, we settled on a value (might be the same as before but that's ok)
                 return percentage
             else:
