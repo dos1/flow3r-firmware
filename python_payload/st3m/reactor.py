@@ -6,6 +6,7 @@ from ctx import Context
 import time
 import sys_display
 import sys_kernel
+import gc
 
 
 class Responder(ABCBase):
@@ -83,19 +84,19 @@ class Reactor:
         "_tickrate_ms",
         "_last_tick",
         "_ctx",
-        "_ts",
         "_last_ctx_get",
         "stats",
+        "_input_state",
     )
 
     def __init__(self) -> None:
         self._top: Optional[Responder] = None
         self._tickrate_ms: int = 20
-        self._ts: int = 0
         self._last_tick: Optional[int] = None
         self._last_ctx_get: Optional[int] = None
         self._ctx: Optional[Context] = None
         self.stats = ReactorStats()
+        self._input_state = InputState()
 
     def set_top(self, top: Responder) -> None:
         """
@@ -137,12 +138,10 @@ class Reactor:
             delta = start - self._last_tick
         self._last_tick = start
 
-        self._ts += delta
-
-        hr = InputState.gather()
+        self._input_state.update(delta)
 
         # Think!
-        self._top.think(hr, delta)
+        self._top.think(self._input_state, delta)
 
         # Draw!
         if self._ctx is None:

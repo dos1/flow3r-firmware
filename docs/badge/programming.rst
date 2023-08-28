@@ -228,10 +228,7 @@ Example 1b: React to input
 
 If we want to react to the user, we can use the :py:class:`InputState` which got
 handed to us. In this example we look at the state of the app (by default left)
-shoulder button. The values for buttons contained in the input state are one of
-``InputButtonState.PRESSED_LEFT``, ``PRESSED_RIGHT``, ``PRESSED_DOWN``,
-``NOT_PRESSED`` - same values as in the low-level
-:py:mod:`sys_buttons`.
+shoulder button.
 
 .. code-block:: python
 
@@ -250,11 +247,10 @@ shoulder button. The values for buttons contained in the input state are one of
             ctx.rgb(255, 0, 0).rectangle(self._x, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
-            direction = ins.buttons.app
 
-            if direction == ins.buttons.PRESSED_LEFT:
+            if ins.buttons.app.left.is_pressed:
                 self._x -= 1
-            elif direction == ins.buttons.PRESSED_RIGHT:
+            elif ins.buttons.app.right.is_pressed:
                 self._x += 1
 
 
@@ -291,11 +287,9 @@ represents the time which has passed since the last call to `think()`.
             ctx.rgb(255, 0, 0).rectangle(self._x, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
-            direction = ins.buttons.app # -1 (left), 1 (right), or 2 (pressed)
-
-            if direction == ins.buttons.PRESSED_LEFT:
+            if ins.buttons.app.left.is_pressed:
                 self._x -= 20 * delta_ms / 1000
-            elif direction == ins.buttons.PRESSED_RIGHT:
+            elif ins.buttons.app.right.is_pressed:
                 self._x += 40 * delta_ms / 1000
 
 
@@ -310,49 +304,15 @@ takes a bit longer to process something, this number can change from one call to
 Example 1d: Automatic input processing
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Working on the bare state of the buttons and the captouch petals can be cumbersome and error prone.
-the flow3r application framework gives you a bit of help in the form of the :py:class:`InputController`
-which processes an input state and gives you higher level information about what is happening.
-
-The `InputController` contains multiple :py:class:`Pressable` sub-objects, for
-example the app/OS buttons are available as following attributes on the
-`InputController`:
-
-+-----------------------------------+--------------------------+
-| Attribute on ``InputControlller`` | Meaning                  |
-+===================================+==========================+
-| ``.buttons.app.left``             | App button, pushed left  |
-+-----------------------------------+--------------------------+
-| ``.buttons.app.middle``           | App button, pushed down  |
-+-----------------------------------+--------------------------+
-| ``.buttons.app.right``            | App button, pushed right |
-+-----------------------------------+--------------------------+
-| ``.buttons.os.left``              | OS button, pushed left   |
-+-----------------------------------+--------------------------+
-| ``.buttons.os.middle``            | OS button, pushed down   |
-+-----------------------------------+--------------------------+
-| ``.buttons.os.right``             | OS button, pushed right  |
-+-----------------------------------+--------------------------+
-
-And each `Pressable` in turn contains the following attributes, all of which are
-valid within the context of a single `think()` call:
-
-+----------------------------+--------------------------------------------------------------------+
-| Attribute on ``Pressable`` | Meaning                                                            |
-+============================+====================================================================+
-| ``.pressed``               | Button has just started being pressed, ie. it's a Half Press down. |
-+----------------------------+--------------------------------------------------------------------+
-| ``.down``                  | Button is being held down.                                         |
-+----------------------------+--------------------------------------------------------------------+
-| ``.released``              | Button has just stopped being pressed, ie. it's a Half Press up.   |
-+----------------------------+--------------------------------------------------------------------+
-| ``.up``                    | Button is not being held down.                                     |
-+----------------------------+--------------------------------------------------------------------+
+Often you'd want edge transistions instead of the bare state of the button. It's not necessary
+to do that yourself, the flow3r application framework gives you a bit of help, all switch-like elements
+(i.e., shoulder buttons and captouch) are instances of  :py:class:`MomentarySwitch` which takes a few
+common tasks off your hands.
 
 The following example shows how to properly react to single button presses without having to
-think about what happens if the user presses the button for a long time. It uses the `InputController`
-to detect single button presses and switches between showing a circle (by drawing a 360 deg arc) and
-a square.
+think about what happens if the user presses the button for a long time. It uses the `press_event`
+attribute to detect single button presses and switches between showing a circle (by drawing a 360 deg
+arc) and a square.
 
 
 .. code-block:: python
@@ -365,7 +325,6 @@ a square.
 
     class Example(Responder):
         def __init__(self) -> None:
-            self.input = InputController()
             self._x = -20.
             self._draw_rectangle = True
 
@@ -380,14 +339,11 @@ a square.
                 ctx.rgb(255, 0, 0).arc(self._x, -20, 40, 0, tau, 0).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
-            self.input.think(ins, delta_ms) # let the input controller to its magic
-
-            if self.input.buttons.app.middle.pressed:
+            if ins.buttons.app.middle.press_event:
                 self._draw_rectangle = not self._draw_rectangle
-
-            if self.input.buttons.app.left.pressed:
+            if ins.buttons.app.left.press_event:
                 self._x -= 20 * delta_ms / 1000
-            elif self.input.buttons.app.right.pressed:
+            elif ins.buttons.app.right.press_event:
                 self._x += 40 * delta_ms / 1000
 
 
@@ -423,14 +379,10 @@ into the two different views. We make use of an `InputController` again to handl
 
     class SecondScreen(View):
         def __init__(self) -> None:
-            self.input = InputController()
             self._vm = None
 
         def on_enter(self, vm: Optional[ViewManager]) -> None:
             self._vm = vm
-
-            # Ignore the button which brought us here until it is released
-            self.input._ignore_pressed()
 
         def draw(self, ctx: Context) -> None:
             # Paint the background black
@@ -439,15 +391,10 @@ into the two different views. We make use of an `InputController` again to handl
             ctx.rgb(0, 255, 0).rectangle(-20, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
-            self.input.think(ins, delta_ms) # let the input controller to its magic
-
-            # No need to handle returning back to Example on button press - the
-            # flow3r's ViewManager takes care of that automatically.
-
+            pass
 
     class Example(View):
         def __init__(self) -> None:
-            self.input = InputController()
             self._vm = None
 
         def draw(self, ctx: Context) -> None:
@@ -459,12 +406,9 @@ into the two different views. We make use of an `InputController` again to handl
 
         def on_enter(self, vm: Optional[ViewManager]) -> None:
             self._vm = vm
-            self.input._ignore_pressed()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
-            self.input.think(ins, delta_ms) # let the input controller to its magic
-
-            if self.input.buttons.app.middle.pressed:
+            if ins.buttons.app.middle.is_pressed:
                 self._vm.push(SecondScreen())
 
     st3m.run.run_view(Example())
@@ -485,9 +429,8 @@ Example 2b: Easier view management
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The above code is so universal that we provide a special view which takes care
-of this boilerplate: :py:class:`BaseView`. It integrated a local
-`InputController` on ``self.input`` and a copy of the :py:class:`ViewManager`
-which caused the View to enter on ``self.vm``.
+of this boilerplate: :py:class:`BaseView`. It integrated a copy of the
+:py:class:`ViewManager` which caused the View to enter on ``self.vm``.
 
 Here is our previous example rewritten to make use of `BaseView`:
 
@@ -521,9 +464,7 @@ Here is our previous example rewritten to make use of `BaseView`:
             ctx.rgb(255, 0, 0).rectangle(-20, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
-            super().think(ins, delta_ms) # Let BaseView do its thing
-
-            if self.input.buttons.app.middle.pressed:
+            if ins.buttons.app.middle.is_pressed:
                 self.vm.push(SecondScreen())
 
     st3m.run.run_view(Example())
@@ -537,9 +478,9 @@ All fine and good, you were able to write an application that you can run with `
 but certainly you also want to run it from flow3r's menu system.
 
 Let's introduce the final class you should actually be using for application development:
-:py:class:`Application`. It builds upon `BaseView` (so you still have access to
-`self.input` and `self.vm`) but additionally is made aware of an
-:py:class:`ApplicationContext` on startup and can be registered into a menu.
+:py:class:`Application`. It builds upon `BaseView` (so you still have access to `self.vm`)
+but additionally is made aware of an :py:class:`ApplicationContext` on startup and can be
+registered into a menu.
 
 Here is our previous code changed to use `Application` for the base of its main view:
 
@@ -570,9 +511,7 @@ Here is our previous code changed to use `Application` for the base of its main 
             ctx.rgb(255, 0, 0).rectangle(-20, -20, 40, 40).fill()
 
         def think(self, ins: InputState, delta_ms: int) -> None:
-            super().think(ins, delta_ms) # Let Application do its thing
-
-            if self.input.buttons.app.middle.pressed:
+            if ins.buttons.app.middle.is_pressed:
                 self.vm.push(SecondScreen())
 
     if __name__ == '__main__':

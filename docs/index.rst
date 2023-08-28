@@ -28,11 +28,10 @@ Welcome to flow3r's documentation!
    api/audio.rst
    api/badgelink.rst
    api/badgenet.rst
-   api/captouch.rst
+   api/inputstate.rst
    api/ctx.rst
    api/leds.rst
    api/uos.rst
-   api/sys_buttons.rst
    api/sys_display.rst
    api/sys_kernel.rst
 

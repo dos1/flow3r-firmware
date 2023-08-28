@@ -26,8 +26,10 @@ class Dot:
         col = (1.0, 0.0, 1.0)
         if i % 2:
             col = (0.0, 1.0, 1.0)
+        if i == 10:
+            col = (1.0, 1.0, 1.0)
         ctx.rgb(*col).rectangle(
-            -int(imag - (size / 2)), -int(real - (size / 2)), size, size
+            -int(imag + (size / 2)), -int(real + (size / 2)), size, size
         ).fill()
 
 
@@ -36,6 +38,7 @@ class CapTouchDemo(Application):
         super().__init__(app_ctx)
         self.dots: List[Dot] = []
         self.last_calib = None
+        self._show_rotary_dial = True
         # self.ui_autocalib = ui.IconLabel("Autocalib done", size=30)
 
         # self.add_event(
@@ -65,6 +68,20 @@ class CapTouchDemo(Application):
             x = x * rot
 
             self.dots.append(Dot(size, x.imag, x.real))
+
+        if self._show_rotary_dial:
+            angle = ins.captouch.rotary_dial.touch_angle_cw
+            if angle is not None:
+                x = 110 * cmath.exp(-1j * angle)
+                self.dots.append(Dot(8, x.imag, x.real))
+            else:
+                self.dots.append(Dot(4, 0, 0))
+
+        if ins.buttons.app.inward.press_event:
+            self._show_rotary_dial = not self._show_rotary_dial
+
+        if ins.buttons.app.middle.press_event:
+            pass
 
     def draw(self, ctx: Context) -> None:
         # print(self.last_calib)

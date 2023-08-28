@@ -200,16 +200,14 @@ class ShoegazeApp(Application):
         detune = (tilt - self._tilt_bias) * 0.5 + self._detune_prev * 0.5
         self._detune_prev = detune
 
-        buttons = self.input.buttons
-        petals = self.input.captouch.petals
-        if buttons.app.right.pressed:
+        if ins.buttons.app.inward.press_event:
             self.delay_toggle()
-        if buttons.app.left.pressed:
+        if ins.buttons.app.outward.press_event:
             pass
             # self.fuzz_toggle()
 
         for i in range(1, 10, 2):
-            if petals[i].whole.pressed:
+            if ins.captouch.petals[i].press_event:
                 k = int(((10 - i) - 1) / 2)
                 self._set_chord(k)
 
@@ -217,7 +215,7 @@ class ShoegazeApp(Application):
             return
         for i in range(2, 10, 2):
             k = int((10 - i) / 2) - 1
-            if petals[i].whole.pressed:
+            if ins.captouch.petals[i].press_event:
                 self._git_string_tuning[k] = self.chord[k] - 12
                 self.git_strings[k].signals.pitch.tone = self._git_string_tuning[k]
                 self.git_strings[k].decay = 3000
@@ -225,7 +223,7 @@ class ShoegazeApp(Application):
 
             self.git_strings[k].signals.pitch.tone = self._git_string_tuning[k] + detune
 
-        if petals[0].whole.pressed:
+        if ins.captouch.petals[0].press_event:
             self.bass_string.signals.pitch.tone = self.chord[0] - 24
             self.bass_string.decay = 1000
             self.bass_string.signals.trigger.start()

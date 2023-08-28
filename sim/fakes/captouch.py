@@ -7,6 +7,10 @@ class CaptouchPetalPadsState:
         self._base = base
         self._cw = cw
         self._ccw = ccw
+        self._cw_raw = 0
+        self._ccw_raw = 0
+        self._tip_raw = 0
+        self._base_raw = 0
 
     @property
     def tip(self) -> bool:

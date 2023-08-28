@@ -17,6 +17,7 @@ class Processor(ABCBase):
     def think(self, ins: InputState, delta_ms: int) -> None:
         """
         Called every tick.
+        Or maybe less? ;D
         """
         pass
 
@@ -29,14 +30,24 @@ class AudioProcessor(Processor):
 
     def __init__(self) -> None:
         super().__init__()
-        self.input = InputController()
+        self.repeat_after_ms = 800
+        self.repeat_rate_ms = 300
+        self.repeat_step_mult = 1.5
+
+    def vol_steps(self, steps):
+        audio.adjust_volume_dB(steps * settings.num_volume_step_db.value)
+
+    def vol_steps_repeat(self, switch, step_mult):
+        if switch.press_event:
+            self.vol_steps(step_mult)
+        elif switch.is_pressed:
+            if switch.pressed_since_ms > self.repeat_after_ms:
+                self.vol_steps(self.repeat_step_mult * step_mult)
+                switch.pressed_since_ms -= self.repeat_rate_ms
 
     def think(self, ins: InputState, delta_ms: int) -> None:
-        self.input.think(ins, delta_ms)
-        if self.input.buttons.os.left.pressed:
-            audio.adjust_volume_dB(-settings.num_volume_step_db.value)
-        if self.input.buttons.os.right.pressed:
-            audio.adjust_volume_dB(settings.num_volume_step_db.value)
+        self.vol_steps_repeat(ins.buttons.os.left, -1)
+        self.vol_steps_repeat(ins.buttons.os.right, 1)
 
 
 class ProcessorMidldeware(Responder):
@@ -51,11 +62,18 @@ class ProcessorMidldeware(Responder):
 
     def __init__(self, top: Responder) -> None:
         self.top = top
+        self._os2 = None
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         for p in self.PROCESSORS:
             p.think(ins, delta_ms)
-        self.top.think(ins, delta_ms)
+        # TODO: Deprecate copying, this is just for backwards compatibility
+        input_copy = ins.copy()
+        # TODO: Give the OS and Apps their own set of timers in the backend
+        if self._os2 is None:
+            self._os2 = ins.buttons.os.copy()
+        input_copy.buttons.os = self._os2
+        self.top.think(input_copy, delta_ms)
 
     def draw(self, ctx: Context) -> None:
         self.top.draw(ctx)

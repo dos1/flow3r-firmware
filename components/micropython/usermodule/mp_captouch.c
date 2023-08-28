@@ -65,6 +65,15 @@ STATIC void mp_captouch_petal_pads_state_attr(mp_obj_t self_in, qstr attr,
             case MP_QSTR_ccw:
                 dest[0] = mp_obj_new_bool(state->ccw.pressed);
                 break;
+            case MP_QSTR__base_raw:
+                dest[0] = mp_obj_new_int(state->base.pressure);
+                break;
+            case MP_QSTR__cw_raw:
+                dest[0] = mp_obj_new_int(state->cw.pressure);
+                break;
+            case MP_QSTR__ccw_raw:
+                dest[0] = mp_obj_new_int(state->ccw.pressure);
+                break;
         }
     } else {
         switch (attr) {
@@ -73,6 +82,12 @@ STATIC void mp_captouch_petal_pads_state_attr(mp_obj_t self_in, qstr attr,
                 break;
             case MP_QSTR_base:
                 dest[0] = mp_obj_new_bool(state->base.pressed);
+                break;
+            case MP_QSTR__base_raw:
+                dest[0] = mp_obj_new_int(state->base.pressure);
+                break;
+            case MP_QSTR__tip_raw:
+                dest[0] = mp_obj_new_int(state->tip.pressure);
                 break;
         }
     }
@@ -179,6 +194,9 @@ STATIC const mp_rom_map_elem_t globals_table[] = {
       MP_ROM_PTR(&mp_captouch_calibration_active_obj) },
     { MP_ROM_QSTR(MP_QSTR_calibration_request),
       MP_ROM_PTR(&mp_captouch_calibration_request_obj) },
+    { MP_ROM_QSTR(MP_QSTR_CaptouchState), MP_ROM_PTR(&captouch_state_type) },
+    { MP_ROM_QSTR(MP_QSTR_CaptouchPetalState),
+      MP_ROM_PTR(&captouch_petal_state_type) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(globals, globals_table);
