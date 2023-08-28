@@ -7,6 +7,8 @@
 #include "ctx.h"
 // clang-format on
 
+Ctx *st3m_overlay_ctx(void);
+
 Ctx *st3m_ctx(TickType_t ticks_to_wait);
 void st3m_ctx_end_frame(Ctx *ctx);  // temporary, signature compatible
                                     // with ctx_end_frame()
@@ -53,3 +55,7 @@ void st3m_gfx_splash(const char *text);
 // Draw the flow3r multi-coloured logo at coordinates x,y and with given
 // dimension (approx. bounding box size).
 void st3m_gfx_flow3r_logo(Ctx *ctx, float x, float y, float dim);
+
+// Set the number of pixels to draw of the overlay screen, more pixels
+// adds overhead to every frame, when set to 0 - no composite overhead
+void st3m_gfx_set_overlay_height(int height);

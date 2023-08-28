@@ -18,6 +18,7 @@ import st3m.wifi
 import math
 import audio
 import sys_kernel
+import sys_display
 import network
 
 
@@ -36,6 +37,8 @@ _all_kinds = [
     OverlayKind.Touch,
     OverlayKind.Toast,
 ]
+
+_max_y = 0
 
 
 class Overlay(Responder):
@@ -60,6 +63,7 @@ class Compositor(Responder):
             OverlayKind.Debug: True,
             OverlayKind.Toast: True,
         }
+        self._frame_skip = 0
 
     def _enabled_overlays(self) -> List[Responder]:
         res: List[Responder] = []
@@ -74,13 +78,25 @@ class Compositor(Responder):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.main.think(ins, delta_ms)
-        for overlay in self._enabled_overlays():
-            overlay.think(ins, delta_ms)
+        if self._frame_skip <= 0:
+            for overlay in self._enabled_overlays():
+                overlay.think(ins, delta_ms)
 
     def draw(self, ctx: Context) -> None:
+        global _max_y
         self.main.draw(ctx)
-        for overlay in self._enabled_overlays():
-            overlay.draw(ctx)
+        if self._frame_skip <= 0:
+            _max_y = 0
+            octx = sys_display.get_overlay_ctx()
+            octx.save()
+            octx.compositing_mode = octx.CLEAR
+            octx.rectangle(-120, -120, 240, 240).fill()
+            octx.restore()
+            for overlay in self._enabled_overlays():
+                overlay.draw(octx)
+            self._frame_skip = 8
+            sys_display.set_overlay_height(_max_y)
+        self._frame_skip -= 1
 
     def add_overlay(self, ov: Overlay) -> None:
         """
@@ -196,7 +212,6 @@ class OverlayCaptouch(Overlay):
             offs_x = self.phi / 1000
             offs_y = -self.rad / 1000
             ctx.rectangle(-5 + offs_x, -5 + offs_y, 10, 10)
-            ctx.rgb(1, 0, 1)
             ctx.fill()
 
     def __init__(self) -> None:
@@ -207,6 +222,7 @@ class OverlayCaptouch(Overlay):
             dot.think(ins, delta_ms)
 
     def draw(self, ctx: Context) -> None:
+        ctx.rgb(1, 0, 1)
         for dot in self.dots:
             ctx.save()
             dot.draw(ctx)
@@ -272,13 +288,15 @@ class OverlayVolume(Overlay):
 
         if self._showing is None:
             return
-        self._showing -= delta_ms
+        self._showing -= delta_ms * 8
         if self._showing < 0:
             self._showing = None
 
     def draw(self, ctx: Context) -> None:
+        global _max_y
         if self._showing is None:
             return
+        _max_y = max(_max_y, 160)
 
         opacity = self._showing / 200
         opacity = min(opacity, 0.8)
@@ -467,8 +485,10 @@ class IconTray(Overlay):
             v.think(ins, delta_ms)
 
     def draw(self, ctx: Context) -> None:
+        global _max_y
         if len(self.visible) < 1:
             return
+        _max_y = max(_max_y, 32)
         width = 0
         for icon in self.visible:
             width += icon.WIDTH

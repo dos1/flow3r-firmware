@@ -54,6 +54,17 @@ static const char *TAG = "st3m-gfx";
 EXT_RAM_BSS_ATTR static st3m_framebuffer_desc_t
     framebuffer_descs[ST3M_GFX_NBUFFERS];
 
+#define OVERLAY_WIDTH 120
+#define OVERLAY_HEIGHT 160
+#define OVERLAY_X 60
+#define OVERLAY_Y 0
+
+static int _st3m_overlay_height = 0;
+EXT_RAM_BSS_ATTR static uint8_t
+    st3m_overlay_fb[OVERLAY_WIDTH * OVERLAY_HEIGHT * 4];
+EXT_RAM_BSS_ATTR uint16_t st3m_overlay_backup[OVERLAY_WIDTH * OVERLAY_HEIGHT];
+static Ctx *_st3m_overlay_ctx = NULL;
+
 static st3m_ctx_desc_t dctx_descs[ST3M_GFX_NCTX];
 
 // Queue of free framebuffer descriptors, written into by crtc once rendered,
@@ -95,6 +106,12 @@ static void xQueueReceiveNotifyStarved(QueueHandle_t q, void *dst,
     }
 }
 
+void st3m_ctx_merge_overlay(uint16_t *fb, uint8_t *overlay,
+                            uint16_t *overlay_backup, int x0, int y0, int w,
+                            int h);
+void st3m_ctx_unmerge_overlay(uint16_t *fb, uint16_t *overlay_backup, int x0,
+                              int y0, int w, int h);
+
 static void st3m_gfx_crtc_task(void *_arg) {
     (void)_arg;
 
@@ -108,7 +125,14 @@ static void st3m_gfx_crtc_task(void *_arg) {
         st3m_counter_timer_sample(&blit_read_time, end - start);
 
         start = esp_timer_get_time();
+        st3m_overlay_ctx();
+        if (_st3m_overlay_height)
+            st3m_ctx_merge_overlay(framebuffer_descs[descno].buffer,
+                                   st3m_overlay_fb, st3m_overlay_backup,
+                                   OVERLAY_X, OVERLAY_Y, OVERLAY_WIDTH,
+                                   _st3m_overlay_height);
         flow3r_bsp_display_send_fb(framebuffer_descs[descno].buffer);
+
         end = esp_timer_get_time();
         st3m_counter_timer_sample(&blit_work_time, end - start);
 
@@ -116,6 +140,10 @@ static void st3m_gfx_crtc_task(void *_arg) {
         xQueueSend(framebuffer_freeq, &descno, portMAX_DELAY);
         end = esp_timer_get_time();
         st3m_counter_timer_sample(&blit_write_time, end - start);
+        if (_st3m_overlay_height)
+            st3m_ctx_unmerge_overlay(framebuffer_descs[descno].buffer,
+                                     st3m_overlay_backup, OVERLAY_X, OVERLAY_Y,
+                                     OVERLAY_WIDTH, _st3m_overlay_height);
 
         st3m_counter_rate_sample(&blit_rate);
 
@@ -560,6 +588,49 @@ Ctx *st3m_ctx(TickType_t ticks_to_wait) {
     return foo->ctx;
 }
 
+void st3m_overlay_clear(void) {
+    Ctx *ctx = st3m_overlay_ctx();
+    ctx_save(ctx);
+    ctx_compositing_mode(ctx, CTX_COMPOSITE_CLEAR);
+    ctx_gray(ctx, 0);  // BUG(ctx) - alpha=0 should be allowed here
+    ctx_rectangle(ctx, -120, -120, 240, 240);
+    ctx_fill(ctx);
+    ctx_restore(ctx);
+}
+
+Ctx *st3m_overlay_ctx(void) {
+    if (!_st3m_overlay_ctx) {
+        Ctx *ctx = _st3m_overlay_ctx = ctx_new_for_framebuffer(
+            st3m_overlay_fb, OVERLAY_WIDTH, OVERLAY_HEIGHT, OVERLAY_WIDTH * 4,
+            CTX_FORMAT_RGBA8);
+
+        ctx_translate(ctx, 60, 120);
+        memset(st3m_overlay_fb, 0, sizeof(st3m_overlay_fb));
+#if 0
+        ctx_rectangle (ctx, -120, -120, 240, 240);
+        ctx_rgba (ctx, 0,0,1,1.0);
+        ctx_fill (ctx);
+        ctx_rectangle (ctx, -30, -30, 60, 60);
+        ctx_rgba (ctx, 0,1.0,0,1.0);
+        ctx_fill(ctx);
+
+        ctx_save (ctx);
+        ctx_compositing_mode(ctx,CTX_COMPOSITE_CLEAR);
+        ctx_gray (ctx, 0); // XXX bug - if alpha is 0 clear doesnt happeddn
+        ctx_rectangle (ctx, -120, -120, 240, 240);
+        ctx_fill (ctx);
+        ctx_restore (ctx);
+#endif
+    }
+    return _st3m_overlay_ctx;
+}
+
 void st3m_ctx_end_frame(Ctx *ctx) {
     xQueueSend(dctx_rastq, &st3m_dctx_no, portMAX_DELAY);
+}
+
+void st3m_gfx_set_overlay_height(int height) {
+    if (height < 0) height = 0;
+    if (height > OVERLAY_HEIGHT) height = OVERLAY_HEIGHT;
+    _st3m_overlay_height = height;
 }
