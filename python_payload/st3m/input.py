@@ -58,17 +58,10 @@ class InputButtonState:
     PRESSED_DOWN = sys_buttons.PRESSED_DOWN
     NOT_PRESSED = sys_buttons.NOT_PRESSED
 
-    def __init__(self, left: int, right: int, swapped: bool):
-        app = left
-        os = right
-        if swapped:
-            app, os = os, app
-
+    def __init__(self, app: int, os: int, app_is_left: bool):
         self.app = app
         self.os = os
-        self._left = left
-        self._right = right
-        self.app_is_left = not swapped
+        self.app_is_left = app_is_left
 
 
 class InputState:
@@ -95,15 +88,16 @@ class InputState:
         self.battery_voltage = battery_voltage
 
     @classmethod
-    def gather(cls, swapped_buttons: bool = False) -> "InputState":
+    def gather(cls) -> "InputState":
         """
         Build InputState from current hardware state. Should only be used by the
         Reactor.
         """
         cts = captouch.read()
-        left = sys_buttons.get_left()
-        right = sys_buttons.get_right()
-        buttons = InputButtonState(left, right, swapped_buttons)
+        app = sys_buttons.get_app()
+        os = sys_buttons.get_os()
+        app_is_left = sys_buttons.app_is_left()
+        buttons = InputButtonState(app, os, app_is_left)
 
         acc = imu.acc_read()
         gyro = imu.gyro_read()

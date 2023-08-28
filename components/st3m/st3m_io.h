@@ -19,11 +19,20 @@ typedef enum {
     st3m_tripos_right = 1,
 } st3m_tripos;
 
-/* Read the state of the left/right button.
- * This ignores user preference and should be used only with good reason.
+/* Configure whether the app button is on the left (default) or on the right.
  */
-st3m_tripos st3m_io_left_button_get();
-st3m_tripos st3m_io_right_button_get();
+void st3m_io_app_button_configure(bool left);
+
+/* Returns true if the app button is on the left (default), false otherwise.
+ */
+bool st3m_io_app_button_is_left(void);
+
+/* Read the state of the application and OS buttons. By default, the application
+ * button is on the left and the OS button is on the right. However, the user
+ * can change that preference - see st3m_io_app_button_configure.
+ */
+st3m_tripos st3m_io_app_button_get();
+st3m_tripos st3m_io_os_button_get();
 
 #define BADGE_LINK_PIN_MASK_LINE_IN_TIP 0b0001
 #define BADGE_LINK_PIN_MASK_LINE_IN_RING 0b0010

@@ -186,7 +186,7 @@ static void _task(void *arg) {
         st3m_mode_update_display(&restartable);
 
         if (restartable) {
-            st3m_tripos tp = st3m_io_right_button_get();
+            st3m_tripos tp = st3m_io_os_button_get();
             if (tp == st3m_tripos_mid) {
                 st3m_gfx_textview_t tv = {
                     .title = "Restarting...",

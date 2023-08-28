@@ -20,7 +20,7 @@ from st3m.application import (
 from st3m.about import About
 from st3m import settings, logging, processors, wifi
 
-import captouch, audio, leds, gc
+import captouch, audio, leds, gc, sys_buttons
 import os
 
 import machine
@@ -37,7 +37,8 @@ def _make_reactor() -> Reactor:
     reactor = Reactor()
 
     def _onoff_button_swap_update() -> None:
-        reactor.set_buttons_swapped(settings.onoff_button_swap.value)
+        left = not settings.onoff_button_swap.value
+        sys_buttons.configure(left)
 
     settings.onoff_button_swap.subscribe(_onoff_button_swap_update)
     _onoff_button_swap_update()
