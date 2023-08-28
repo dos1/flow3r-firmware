@@ -37,6 +37,12 @@ build:
     paths: ['build/flow3r.elf']
     expire_in: 5 hours
 
+build_recovery:
+  stage: build
+  script:
+    - cd recovery
+    - idf.py build
+
 simulate:
   stage: build
   script:

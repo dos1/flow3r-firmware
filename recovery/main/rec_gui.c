@@ -119,7 +119,7 @@ void rec_menu_process(menu_t *menu) {
     static int debounce = 0;
     menu_entry_t *entry = &menu->entries[menu->selected];
 
-    st3m_tripos left = st3m_io_left_button_get();
+    st3m_tripos left = st3m_io_app_button_get();
 
     if (debounce > 0) {
         if (left == st3m_tripos_none) debounce--;
