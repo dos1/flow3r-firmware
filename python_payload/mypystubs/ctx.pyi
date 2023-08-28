@@ -1,7 +1,7 @@
 try:
-    from typing import Protocol, Tuple
+    from typing import Protocol, Tuple, Optional
 except ImportError:
-    from typing_extensions import Protocol, Tuple  # type: ignore
+    from typing_extensions import Protocol, Tuple, Optional  # type: ignore
 
 class Context(Protocol):
     """
@@ -301,7 +301,18 @@ class Context(Protocol):
         radiuses are in use.
         """
         pass
-    def image(self, path: str, x: float, y: float, w: float, h: float) -> "Context":
+    def image(
+        self,
+        path: str,
+        x: float,
+        y: float,
+        w: float,
+        h: float,
+        clip_x: Optional[float] = None,
+        clip_y: Optional[float] = None,
+        clip_width: Optional[float] = None,
+        clip_height: Optional[float] = None,
+    ) -> "Context":
         """
         Draw the image at path a in a rectangle with upper left coordinates at
         x,y which is w wide and h high. If w or h is -1 the other is set
