@@ -283,27 +283,20 @@ class OverlayVolume(Overlay):
         opacity = self._showing / 200
         opacity = min(opacity, 0.8)
 
-        ctx.start_group()
-        ctx.global_alpha = opacity
-
         # Background
-        ctx.gray(0)
+        ctx.rgba(0, 0, 0, opacity)
         ctx.round_rectangle(-40, -40, 80, 80, 5)
         ctx.fill()
-
-        ctx.end_group()
 
         # Foreground
         opacity = self._showing / 200
         opacity = min(opacity, 1)
-        ctx.start_group()
-        ctx.global_alpha = opacity
 
         muted = self._muted
         if muted:
-            ctx.gray(0.5)
+            ctx.rgba(0.5, 0.5, 0.5, opacity)
         else:
-            ctx.gray(1)
+            ctx.rgba(1.0, 1.0, 1.0, opacity)
 
         # Icon
         if self._headphones:
@@ -323,7 +316,7 @@ class OverlayVolume(Overlay):
             ctx.line_to(-10, 0)
             ctx.fill()
 
-        ctx.gray(1)
+        ctx.rgba(1.0, 1.0, 1.0, opacity)
 
         # Volume slider
         ctx.round_rectangle(-30, 20, 60, 10, 3)
@@ -336,8 +329,6 @@ class OverlayVolume(Overlay):
         width = 60 * v
         ctx.round_rectangle(-30, 20, width, 10, 3)
         ctx.fill()
-
-        ctx.end_group()
 
 
 class Icon(Responder):
