@@ -33,8 +33,8 @@ build:
   script:
     - idf.py -g c23 build
   artifacts:
-    expose_as: 'C23 ELF'
-    paths: ['build/flow3r.elf']
+    expose_as: 'C23 Build'
+    paths: ['build/flow3r.elf', 'build/flow3r.bin']
     expire_in: 5 hours
 
 build_recovery:
@@ -42,6 +42,10 @@ build_recovery:
   script:
     - cd recovery
     - idf.py build
+  artifacts:
+    expose_as: 'Recovery'
+    paths: ['recovery/build/flow3r-recovery.bin', 'recovery/build/partition_table/partition-table.bin', 'recovery/build/bootloader/bootloader.bin']
+    expire_in: 5 hours
 
 simulate:
   stage: build
