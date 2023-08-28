@@ -100,6 +100,7 @@ class Context:
     LEFT = "left"
     RIGHT = "right"
     CENTER = "center"
+    CLEAR = "clear"
     END = "end"
     MIDDLE = "middle"
     BEVEL = "bevel"

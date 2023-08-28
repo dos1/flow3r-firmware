@@ -474,6 +474,11 @@ def get_ctx():
     return ctx.Context(dctx)
 
 
+def get_overlay_ctx():
+    dctx = ctx._wasm.ctx_new_drawlist(240, 240)
+    return ctx.Context(dctx)
+
+
 def display_update(subctx):
     _sim.process_events()
     fbp, c = fbm.get()
