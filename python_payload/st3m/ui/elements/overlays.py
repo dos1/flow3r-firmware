@@ -516,7 +516,7 @@ class IconTray(Overlay):
         x0 = width / -2 + self.visible[0].WIDTH / 2
         for i, v in enumerate(self.visible):
             ctx.save()
-            ctx.translate(x0, -90)
+            ctx.translate(x0, -98)
             ctx.scale(0.13, 0.13)
             v.draw(ctx)
             ctx.restore()
