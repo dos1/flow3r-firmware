@@ -48,7 +48,7 @@ def is_connected() -> bool:
 def _onoff_wifi_update() -> None:
     if settings.onoff_wifi.value and not is_connected():
         setup_wifi()
-    else:
+    elif not settings.onoff_wifi.value:
         disable()
 
 
