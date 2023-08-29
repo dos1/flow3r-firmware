@@ -18,13 +18,16 @@
 
 #include "mp_uctx.h"
 
-STATIC mp_obj_t mp_set_overlay_height(mp_obj_t height_in) {
-    int height = mp_obj_get_int(height_in);
-    st3m_gfx_set_overlay_height(height);
+STATIC mp_obj_t mp_fps(void) { return mp_obj_new_float(st3m_gfx_fps()); }
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_fps_obj, mp_fps);
+
+STATIC mp_obj_t mp_overlay_clip(size_t n_arge, const mp_obj_t *args) {
+    st3m_gfx_overlay_clip(mp_obj_get_int(args[0]), mp_obj_get_int(args[1]),
+                          mp_obj_get_int(args[2]), mp_obj_get_int(args[3]));
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_overlay_height_obj,
-                                 mp_set_overlay_height);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_overlay_clip_obj, 4, 4,
+                                           mp_overlay_clip);
 
 STATIC mp_obj_t mp_set_backlight(mp_obj_t percent_in) {
     uint8_t percent = mp_obj_get_int(percent_in);
@@ -79,12 +82,12 @@ STATIC const mp_rom_map_elem_t mp_module_sys_display_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_pipe_full), MP_ROM_PTR(&mp_pipe_full_obj) },
     { MP_ROM_QSTR(MP_QSTR_pipe_flush), MP_ROM_PTR(&mp_pipe_flush_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_backlight), MP_ROM_PTR(&mp_set_backlight_obj) },
-    { MP_ROM_QSTR(MP_QSTR_set_overlay_height),
-      MP_ROM_PTR(&mp_set_overlay_height_obj) },
+    { MP_ROM_QSTR(MP_QSTR_overlay_clip), MP_ROM_PTR(&mp_overlay_clip_obj) },
     { MP_ROM_QSTR(MP_QSTR_update), MP_ROM_PTR(&mp_update_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_ctx), MP_ROM_PTR(&mp_get_ctx_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_overlay_ctx),
       MP_ROM_PTR(&mp_get_overlay_ctx_obj) },
+    { MP_ROM_QSTR(MP_QSTR_fps), MP_ROM_PTR(&mp_fps_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_sys_display_globals,

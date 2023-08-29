@@ -27,14 +27,14 @@ ctx_565_unpack (const uint16_t pixel,
                 const int byteswap);
 
 void st3m_ctx_merge_overlay(uint16_t *fb,
-                            uint8_t *overlay,
+                            uint8_t *overlay, int ostride,
                             uint16_t *overlay_backup, int x0, int y0, int w, int h)
 {
   uint8_t rgba[4]={0,0,0,255};
   for (int scanline = y0; scanline < y0 + h; scanline++)
   {
      uint16_t *fb_p = &fb[scanline * 240 + x0];
-     uint32_t *overlay_p = (uint32_t*)&overlay[((scanline-y0) * w)*4];
+     uint32_t *overlay_p = (uint32_t*)&overlay[(scanline-y0) * ostride];
      uint16_t *backup_p = &overlay_backup[(scanline-y0) * w];
      uint32_t *ddst = (uint32_t*)&rgba[0];
      

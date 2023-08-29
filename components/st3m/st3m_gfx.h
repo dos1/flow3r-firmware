@@ -56,6 +56,9 @@ void st3m_gfx_splash(const char *text);
 // dimension (approx. bounding box size).
 void st3m_gfx_flow3r_logo(Ctx *ctx, float x, float y, float dim);
 
-// Set the number of pixels to draw of the overlay screen, more pixels
-// adds overhead to every frame, when set to 0 - no composite overhead
-void st3m_gfx_set_overlay_height(int height);
+// specifies the corners of the clipping rectangle
+// for compositing overlay
+void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1);
+
+// returns a running average of fps
+float st3m_gfx_fps(void);

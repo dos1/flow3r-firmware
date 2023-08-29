@@ -50,12 +50,16 @@ static const char *TAG = "st3m-gfx";
 EXT_RAM_BSS_ATTR static st3m_framebuffer_desc_t
     framebuffer_descs[ST3M_GFX_NBUFFERS];
 
-#define OVERLAY_WIDTH 120
-#define OVERLAY_HEIGHT 160
-#define OVERLAY_X 60
+#define OVERLAY_WIDTH 240
+#define OVERLAY_HEIGHT 240
+#define OVERLAY_X 0
 #define OVERLAY_Y 0
 
-static int _st3m_overlay_height = 0;
+static int _st3m_overlay_y1 = 0;
+static int _st3m_overlay_x1 = 0;
+static int _st3m_overlay_y0 = 0;
+static int _st3m_overlay_x0 = 0;
+
 EXT_RAM_BSS_ATTR static uint8_t
     st3m_overlay_fb[OVERLAY_WIDTH * OVERLAY_HEIGHT * 4];
 EXT_RAM_BSS_ATTR uint16_t st3m_overlay_backup[OVERLAY_WIDTH * OVERLAY_HEIGHT];
@@ -101,11 +105,15 @@ static void xQueueReceiveNotifyStarved(QueueHandle_t q, void *dst,
     }
 }
 
-void st3m_ctx_merge_overlay(uint16_t *fb, uint8_t *overlay,
+void st3m_ctx_merge_overlay(uint16_t *fb, uint8_t *overlay, int ostride,
                             uint16_t *overlay_backup, int x0, int y0, int w,
                             int h);
 void st3m_ctx_unmerge_overlay(uint16_t *fb, uint16_t *overlay_backup, int x0,
                               int y0, int w, int h);
+
+static float smoothed_fps = 0.0f;
+
+float st3m_gfx_fps(void) { return smoothed_fps; }
 
 static void st3m_gfx_rast_task(void *_arg) {
     (void)_arg;
@@ -125,19 +133,27 @@ static void st3m_gfx_rast_task(void *_arg) {
         ctx_drawlist_clear(draw->ctx);
 
         st3m_overlay_ctx();
-        if (_st3m_overlay_height)
-            st3m_ctx_merge_overlay(framebuffer_descs[descno].buffer,
-                                   st3m_overlay_fb, st3m_overlay_backup,
-                                   OVERLAY_X, OVERLAY_Y, OVERLAY_WIDTH,
-                                   _st3m_overlay_height);
+        if (_st3m_overlay_y1 != _st3m_overlay_y0)
+            st3m_ctx_merge_overlay(
+                framebuffer_descs[descno].buffer,
+                st3m_overlay_fb +
+                    4 * ((_st3m_overlay_y0 - OVERLAY_Y) * OVERLAY_WIDTH +
+                         (_st3m_overlay_x0 - OVERLAY_X)),
+                OVERLAY_WIDTH * 4, st3m_overlay_backup, _st3m_overlay_x0,
+                _st3m_overlay_y0, _st3m_overlay_x1 - _st3m_overlay_x0 + 1,
+                _st3m_overlay_y1 - _st3m_overlay_y0 + 1);
         flow3r_bsp_display_send_fb(framebuffer_descs[descno].buffer);
-        if (_st3m_overlay_height)
+        if (_st3m_overlay_y1 != _st3m_overlay_y0)
             st3m_ctx_unmerge_overlay(framebuffer_descs[descno].buffer,
-                                     st3m_overlay_backup, OVERLAY_X, OVERLAY_Y,
-                                     OVERLAY_WIDTH, _st3m_overlay_height);
+                                     st3m_overlay_backup, _st3m_overlay_x0,
+                                     _st3m_overlay_y0,
+                                     _st3m_overlay_x1 - _st3m_overlay_x0 + 1,
+                                     _st3m_overlay_y1 - _st3m_overlay_y0 + 1);
 
         xQueueSend(dctx_freeq, &descno, portMAX_DELAY);
         st3m_counter_rate_sample(&rast_rate);
+        float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
+        smoothed_fps = smoothed_fps * 0.9 + 0.1 * rate;
     }
 }
 
@@ -515,7 +531,7 @@ Ctx *st3m_overlay_ctx(void) {
             st3m_overlay_fb, OVERLAY_WIDTH, OVERLAY_HEIGHT, OVERLAY_WIDTH * 4,
             CTX_FORMAT_RGBA8);
 
-        ctx_translate(ctx, 60, 120);
+        ctx_translate(ctx, 120 - OVERLAY_X, 120 - OVERLAY_Y);
         memset(st3m_overlay_fb, 0, sizeof(st3m_overlay_fb));
     }
     return _st3m_overlay_ctx;
@@ -525,8 +541,23 @@ void st3m_ctx_end_frame(Ctx *ctx) {
     xQueueSend(dctx_rastq, &st3m_dctx_no, portMAX_DELAY);
 }
 
-void st3m_gfx_set_overlay_height(int height) {
-    if (height < 0) height = 0;
-    if (height > OVERLAY_HEIGHT) height = OVERLAY_HEIGHT;
-    _st3m_overlay_height = height;
+void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1) {
+    if (y1 < OVERLAY_Y) y1 = OVERLAY_Y;
+    if (y1 > OVERLAY_Y + OVERLAY_HEIGHT) y1 = OVERLAY_Y + OVERLAY_HEIGHT;
+    if (y0 < OVERLAY_Y) y0 = OVERLAY_Y;
+    if (y0 > OVERLAY_Y + OVERLAY_HEIGHT) y0 = OVERLAY_Y + OVERLAY_HEIGHT;
+
+    if (x1 < OVERLAY_X) x1 = OVERLAY_X;
+    if (x1 > OVERLAY_X + OVERLAY_WIDTH) x1 = OVERLAY_X + OVERLAY_WIDTH;
+    if (x0 < OVERLAY_X) x0 = OVERLAY_X;
+    if (x0 > OVERLAY_X + OVERLAY_WIDTH) x0 = OVERLAY_X + OVERLAY_WIDTH;
+    if ((x1 < x0) || (y1 < y0)) {
+        _st3m_overlay_y1 = _st3m_overlay_y0 = _st3m_overlay_x1 =
+            _st3m_overlay_x0 = 0;
+    } else {
+        _st3m_overlay_y1 = y1;
+        _st3m_overlay_y0 = y0;
+        _st3m_overlay_x1 = x1;
+        _st3m_overlay_x0 = x0;
+    }
 }
