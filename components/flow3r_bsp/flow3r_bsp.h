@@ -23,7 +23,7 @@ void flow3r_bsp_display_init(void);
 // This must not be called if another transfer is alraedy being performed. The
 // user code should sequence access and make sure not more than one transfer is
 // performed simultaneously.
-void flow3r_bsp_display_send_fb(uint16_t *fb_data);
+void flow3r_bsp_display_send_fb(void *fb_data, int bits);
 
 // Set display backlight, as integer percent value (from 0 to 100, clamped).
 // No-op if display hasn't been succesfully initialized.

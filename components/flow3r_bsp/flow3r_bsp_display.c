@@ -36,13 +36,13 @@ void flow3r_bsp_display_init(void) {
     }
 }
 
-void flow3r_bsp_display_send_fb(uint16_t *fb_data) {
+void flow3r_bsp_display_send_fb(void *fb_data, int bits) {
     if (!gc9a01_initialized) {
         return;
     }
     static bool had_error = false;
 
-    esp_err_t ret = flow3r_bsp_gc9a01_blit_full(&gc9a01, fb_data);
+    esp_err_t ret = flow3r_bsp_gc9a01_blit_full(&gc9a01, fb_data, bits);
     if (ret != ESP_OK) {
         if (!had_error) {
             ESP_LOGE(TAG, "display blit failed: %s", esp_err_to_name(ret));

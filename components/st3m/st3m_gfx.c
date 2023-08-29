@@ -142,7 +142,7 @@ static void st3m_gfx_rast_task(void *_arg) {
                 OVERLAY_WIDTH * 4, st3m_overlay_backup, _st3m_overlay_x0,
                 _st3m_overlay_y0, _st3m_overlay_x1 - _st3m_overlay_x0 + 1,
                 _st3m_overlay_y1 - _st3m_overlay_y0 + 1);
-        flow3r_bsp_display_send_fb(framebuffer_descs[descno].buffer);
+        flow3r_bsp_display_send_fb(framebuffer_descs[descno].buffer, 16);
         if (_st3m_overlay_y1 != _st3m_overlay_y0)
             st3m_ctx_unmerge_overlay(framebuffer_descs[descno].buffer,
                                      st3m_overlay_backup, _st3m_overlay_x0,

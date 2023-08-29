@@ -65,7 +65,7 @@ esp_err_t flow3r_bsp_gc9a01_init(flow3r_bsp_gc9a01_t *gc9a01,
 // should sequence access and make sure not more than one blit is performed
 // simultaneously.
 esp_err_t flow3r_bsp_gc9a01_blit_full(flow3r_bsp_gc9a01_t *gc9a01,
-                                      const uint16_t *fb);
+                                      const void *fb, int bits);
 
 // Set backlight for display, using integer percent value (0-100, clamped).
 esp_err_t flow3r_bsp_gc9a01_backlight_set(flow3r_bsp_gc9a01_t *gc9a01,

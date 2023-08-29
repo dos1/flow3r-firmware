@@ -26,9 +26,9 @@ ctx_565_unpack (const uint16_t pixel,
                 uint8_t *blue,
                 const int byteswap);
 
-void st3m_ctx_merge_overlay(uint16_t *fb,
-                            uint8_t *overlay, int ostride,
-                            uint16_t *overlay_backup, int x0, int y0, int w, int h)
+void st3m_ctx_merge_overlay(uint16_t *restrict fb,
+                            const uint8_t *overlay, int ostride,
+                            uint16_t *restrict overlay_backup, int x0, int y0, int w, int h)
 {
   uint8_t rgba[4]={0,0,0,255};
   for (int scanline = y0; scanline < y0 + h; scanline++)
@@ -58,7 +58,7 @@ void st3m_ctx_merge_overlay(uint16_t *fb,
   }
 }
 
-void st3m_ctx_unmerge_overlay(uint16_t *fb, uint16_t *overlay_backup, int x0, int y0, int w, int h)
+void st3m_ctx_unmerge_overlay(uint16_t *restrict fb, const uint16_t *overlay_backup, int x0, int y0, int w, int h)
 {
   for (int scanline = y0; scanline < y0 + h; scanline++)
   {
