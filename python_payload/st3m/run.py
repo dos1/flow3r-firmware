@@ -151,8 +151,6 @@ def run_main() -> None:
     bundles = BundleManager()
     bundles.update()
 
-    settings.load_all()
-
     try:
         network.hostname(
             settings.str_hostname.value if settings.str_hostname.value else "flow3r"

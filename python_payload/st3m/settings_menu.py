@@ -14,21 +14,7 @@ from st3m.ui.menu import MenuItem, MenuItemBack
 from st3m.application import BundleMetadata, MenuItemAppLaunch
 from st3m.ui.elements.menus import SimpleMenu
 from st3m.ui.view import ViewManager
-from st3m.settings import (
-    UnaryTunable,
-    load_all,
-    save_all,
-    onoff_show_tray,
-    onoff_button_swap,
-    onoff_debug,
-    onoff_debug_touch,
-    onoff_wifi,
-    onoff_wifi_preference,
-    onoff_show_fps,
-    str_wifi_ssid,
-    str_wifi_psk,
-    str_hostname,
-)
+from st3m.settings import *
 from ctx import Context
 
 log = logging.Log(__name__, level=logging.INFO)

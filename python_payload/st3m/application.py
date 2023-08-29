@@ -48,9 +48,6 @@ class ApplicationContext:
 class Application(BaseView):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         self._app_ctx = app_ctx
-        if not settings.settings_loaded:
-            settings.load_all()
-
         if app_ctx and app_ctx.bundle_metadata and settings.onoff_wifi_preference.value:
             self._wifi_preference = app_ctx.bundle_metadata["app"].get(
                 "wifi_preference"
