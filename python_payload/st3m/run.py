@@ -122,9 +122,9 @@ def run_view(v: View) -> None:
 
     This is useful for debugging simple applications from the REPL.
     """
+    reactor = _make_reactor()
     vm = ViewManager(ViewTransitionBlend())
     vm.push(v)
-    reactor = _make_reactor()
     compositor = _make_compositor(reactor, vm)
     top = processors.ProcessorMidldeware(compositor)
     reactor.set_top(top)
