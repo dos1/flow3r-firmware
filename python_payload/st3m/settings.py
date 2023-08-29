@@ -376,6 +376,7 @@ class SettingsMenu(SimpleMenu):
 
 # Actual tunables / settings.
 onoff_button_swap = OnOffTunable("Swap Buttons", "system.swap_buttons", False)
+onoff_show_fps = OnOffTunable("Show FPS", "system.show_fps", False)
 onoff_debug = OnOffTunable("Debug Overlay", "system.debug", False)
 onoff_debug_touch = OnOffTunable("Touch Overlay", "system.debug_touch", False)
 onoff_show_tray = OnOffTunable("Show Icons", "system.show_icons", True)
@@ -395,6 +396,7 @@ load_save_settings: List[UnaryTunable] = [
     onoff_debug_touch,
     onoff_wifi,
     onoff_wifi_preference,
+    onoff_show_fps,
     str_wifi_ssid,
     str_wifi_psk,
     str_hostname,
@@ -408,8 +410,9 @@ if TYPE_CHECKING:
 settings_menu_structure: "MenuStructure" = [
     onoff_show_tray,
     onoff_button_swap,
-    onoff_debug,
-    onoff_debug_touch,
+    onoff_show_fps,
+    # onoff_debug,
+    # onoff_debug_touch,
     onoff_wifi,
     onoff_wifi_preference,
     MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/w1f1")),

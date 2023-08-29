@@ -6,7 +6,7 @@ for persistent, anchored symbols like charging symbols, toasts, debug overlays,
 etc.
 """
 
-from st3m import Responder, InputState, Reactor
+from st3m import Responder, InputState, Reactor, settings
 from st3m.goose import Dict, Enum, List, ABCBase, abstractmethod, Optional
 from st3m.utils import tau
 from st3m.ui.view import ViewManager
@@ -38,7 +38,10 @@ _all_kinds = [
     OverlayKind.Toast,
 ]
 
-_max_y = 0
+_clip_x0 = 120
+_clip_x1 = 120
+_clip_y0 = 0
+_clip_y1 = 0
 
 
 class Overlay(Responder):
@@ -79,23 +82,52 @@ class Compositor(Responder):
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.main.think(ins, delta_ms)
         if self._frame_skip <= 0:
-            for overlay in self._enabled_overlays():
-                overlay.think(ins, delta_ms)
+            if not settings.onoff_show_fps.value:
+                for overlay in self._enabled_overlays():
+                    overlay.think(ins, delta_ms)
 
     def draw(self, ctx: Context) -> None:
-        global _max_y
+        global _clip_x0
+        global _clip_y0
+        global _clip_x1
+        global _clip_y1
+
         self.main.draw(ctx)
         if self._frame_skip <= 0:
-            _max_y = 0
             octx = sys_display.get_overlay_ctx()
-            octx.save()
-            octx.compositing_mode = octx.CLEAR
-            octx.rectangle(-120, -120, 240, 240).fill()
-            octx.restore()
-            for overlay in self._enabled_overlays():
-                overlay.draw(octx)
+            if settings.onoff_show_fps.value:
+                _clip_x0 = 110
+                _clip_y1 = 0
+                _clip_x1 = 130
+                _clip_y1 = 7
+                octx.save()
+                octx.compositing_mode = octx.CLEAR
+                octx.rectangle(
+                    _clip_x0 - 120,
+                    _clip_y0 - 120,
+                    _clip_x1 - _clip_x0 + 1,
+                    _clip_y1 - _clip_y0 + 1,
+                ).fill()
+                octx.restore()
+                octx.gray(1)
+                octx.font_size = 11
+                octx.font = "Bold"
+                octx.move_to(0, -113)
+                octx.text_align = octx.CENTER
+                octx.text("{0:.1f}".format(sys_display.fps()))
+            else:
+                _clip_x0 = 80
+                _clip_y0 = 0
+                _clip_x1 = 160
+                _clip_y1 = 0
+                octx.save()
+                octx.compositing_mode = octx.CLEAR
+                octx.rectangle(-120, -120, 240, 240).fill()
+                octx.restore()
+                for overlay in self._enabled_overlays():
+                    overlay.draw(octx)
             self._frame_skip = 8
-            sys_display.set_overlay_height(_max_y)
+            sys_display.overlay_clip(_clip_x0, _clip_y0, _clip_x1, _clip_y1)
         self._frame_skip -= 1
 
     def add_overlay(self, ov: Overlay) -> None:
@@ -293,10 +325,10 @@ class OverlayVolume(Overlay):
             self._showing = None
 
     def draw(self, ctx: Context) -> None:
-        global _max_y
+        global _clip_y1
         if self._showing is None:
             return
-        _max_y = max(_max_y, 160)
+        _clip_y1 = max(_clip_y1, 161)
 
         opacity = self._showing / 200
         opacity = min(opacity, 0.8)
@@ -485,10 +517,10 @@ class IconTray(Overlay):
             v.think(ins, delta_ms)
 
     def draw(self, ctx: Context) -> None:
-        global _max_y
+        global _clip_y1
         if len(self.visible) < 1:
             return
-        _max_y = max(_max_y, 32)
+        _clip_y1 = max(_clip_y1, 32)
         width = 0
         for icon in self.visible:
             width += icon.WIDTH
