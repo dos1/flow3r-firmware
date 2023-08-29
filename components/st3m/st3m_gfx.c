@@ -19,11 +19,7 @@
 #include "st3m_counter.h"
 #include "st3m_version.h"
 
-// Each buffer  takes ~116kB SPIRAM. While one framebuffer is being blitted, the
-// other one is being written to by the rasterizer.
 #define ST3M_GFX_NBUFFERS 1
-// More ctx drawlists than buffers so that micropython doesn't get starved when
-// pipeline runs in lockstep.
 #define ST3M_GFX_NCTX 1
 
 // A framebuffer descriptor, pointing at a framebuffer.
@@ -87,7 +83,6 @@ static st3m_counter_timer_t rast_read_dctx_time;
 static st3m_counter_timer_t rast_work_time;
 static st3m_counter_timer_t rast_write_time;
 
-static TaskHandle_t crtc_task;
 static TaskHandle_t rast_task;
 
 // Attempt to receive from a queue forever, but log an error if it takes longer
@@ -112,19 +107,23 @@ void st3m_ctx_merge_overlay(uint16_t *fb, uint8_t *overlay,
 void st3m_ctx_unmerge_overlay(uint16_t *fb, uint16_t *overlay_backup, int x0,
                               int y0, int w, int h);
 
-static void st3m_gfx_crtc_task(void *_arg) {
+static void st3m_gfx_rast_task(void *_arg) {
     (void)_arg;
 
     while (true) {
-        int descno;
+        int descno = 0;
+        st3m_framebuffer_desc_t *fb = &framebuffer_descs[descno];
 
-        int64_t start = esp_timer_get_time();
-        xQueueReceiveNotifyStarved(framebuffer_blitq, &descno,
-                                   "crtc task starved!");
-        int64_t end = esp_timer_get_time();
-        st3m_counter_timer_sample(&blit_read_time, end - start);
+        xQueueReceiveNotifyStarved(dctx_rastq, &descno,
+                                   "rast task starved (dctx)!");
+        st3m_ctx_desc_t *draw = &dctx_descs[descno];
 
-        start = esp_timer_get_time();
+        ctx_set_textureclock(framebuffer_descs[0].ctx,
+                             ctx_textureclock(framebuffer_descs[0].ctx) + 1);
+
+        ctx_render_ctx(draw->ctx, fb->ctx);
+        ctx_drawlist_clear(draw->ctx);
+
         st3m_overlay_ctx();
         if (_st3m_overlay_height)
             st3m_ctx_merge_overlay(framebuffer_descs[descno].buffer,
@@ -132,96 +131,13 @@ static void st3m_gfx_crtc_task(void *_arg) {
                                    OVERLAY_X, OVERLAY_Y, OVERLAY_WIDTH,
                                    _st3m_overlay_height);
         flow3r_bsp_display_send_fb(framebuffer_descs[descno].buffer);
-
-        end = esp_timer_get_time();
-        st3m_counter_timer_sample(&blit_work_time, end - start);
-
-        start = esp_timer_get_time();
-        xQueueSend(framebuffer_freeq, &descno, portMAX_DELAY);
-        end = esp_timer_get_time();
-        st3m_counter_timer_sample(&blit_write_time, end - start);
         if (_st3m_overlay_height)
             st3m_ctx_unmerge_overlay(framebuffer_descs[descno].buffer,
                                      st3m_overlay_backup, OVERLAY_X, OVERLAY_Y,
                                      OVERLAY_WIDTH, _st3m_overlay_height);
 
-        st3m_counter_rate_sample(&blit_rate);
-
-        if (st3m_counter_rate_report(&blit_rate, 1)) {
-            float rate = 1000000.0 / st3m_counter_rate_average(&blit_rate);
-            float read = st3m_counter_timer_average(&blit_read_time) / 1000.0;
-            float work = st3m_counter_timer_average(&blit_work_time) / 1000.0;
-            float write = st3m_counter_timer_average(&blit_write_time) / 1000.0;
-            // Mark variables as used even if debug is disabled.
-            (void)rate;
-            (void)read;
-            (void)work;
-            (void)write;
-            ESP_LOGD(
-                TAG,
-                "blitting: %.3f/sec, read %.3fms, work %.3fms, write %.3fms",
-                (double)rate, (double)read, (double)work, (double)write);
-        }
-    }
-}
-
-static void st3m_gfx_rast_task(void *_arg) {
-    (void)_arg;
-
-    while (true) {
-        int fb_descno, dctx_descno;
-        int64_t start = esp_timer_get_time();
-        xQueueReceiveNotifyStarved(framebuffer_freeq, &fb_descno,
-                                   "rast task starved (freeq)!");
-        st3m_framebuffer_desc_t *fb = &framebuffer_descs[fb_descno];
-        int64_t end = esp_timer_get_time();
-        st3m_counter_timer_sample(&rast_read_fb_time, end - start);
-
-        start = esp_timer_get_time();
-        xQueueReceiveNotifyStarved(dctx_rastq, &dctx_descno,
-                                   "rast task starved (dctx)!");
-        st3m_ctx_desc_t *draw = &dctx_descs[dctx_descno];
-        end = esp_timer_get_time();
-        st3m_counter_timer_sample(&rast_read_dctx_time, end - start);
-
-        ctx_set_textureclock(framebuffer_descs[0].ctx,
-                             ctx_textureclock(framebuffer_descs[0].ctx) + 1);
-
-        // Render drawctx into fbctx.
-        start = esp_timer_get_time();
-        ctx_render_ctx(draw->ctx, fb->ctx);
-        ctx_drawlist_clear(draw->ctx);
-        end = esp_timer_get_time();
-        st3m_counter_timer_sample(&rast_work_time, end - start);
-
-        start = esp_timer_get_time();
-        xQueueSend(dctx_freeq, &dctx_descno, portMAX_DELAY);
-        xQueueSend(framebuffer_blitq, &fb_descno, portMAX_DELAY);
-        end = esp_timer_get_time();
-        st3m_counter_timer_sample(&rast_write_time, end - start);
-
+        xQueueSend(dctx_freeq, &descno, portMAX_DELAY);
         st3m_counter_rate_sample(&rast_rate);
-
-        if (st3m_counter_rate_report(&rast_rate, 1)) {
-            float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
-            float read_fb =
-                st3m_counter_timer_average(&rast_read_fb_time) / 1000.0;
-            float read_dctx =
-                st3m_counter_timer_average(&rast_read_dctx_time) / 1000.0;
-            float work = st3m_counter_timer_average(&rast_work_time) / 1000.0;
-            float write = st3m_counter_timer_average(&rast_write_time) / 1000.0;
-            // Mark variables as used even if debug is disabled.
-            (void)rate;
-            (void)read_fb;
-            (void)read_dctx;
-            (void)work;
-            (void)write;
-            ESP_LOGD(TAG,
-                     "rasterization: %.3f/sec, read fb %.3fms, read dctx "
-                     "%.3fms, work %.3fms, write %.3fms",
-                     (double)rate, (double)read_fb, (double)read_dctx,
-                     (double)work, (double)write);
-        }
     }
 }
 
@@ -523,14 +439,9 @@ void st3m_gfx_init(void) {
         assert(res == pdTRUE);
     }
 
-    // Start crtc.
-    BaseType_t res = xTaskCreate(st3m_gfx_crtc_task, "crtc", 4096, NULL,
-                                 ESP_TASK_PRIO_MIN + 3, &crtc_task);
-    assert(res == pdPASS);
-
     // Start rast.
-    res = xTaskCreate(st3m_gfx_rast_task, "rast", 8192, NULL,
-                      ESP_TASK_PRIO_MIN + 1, &rast_task);
+    BaseType_t res = xTaskCreate(st3m_gfx_rast_task, "rast", 8192, NULL,
+                                 ESP_TASK_PRIO_MIN + 1, &rast_task);
     assert(res == pdPASS);
 }
 
@@ -606,21 +517,6 @@ Ctx *st3m_overlay_ctx(void) {
 
         ctx_translate(ctx, 60, 120);
         memset(st3m_overlay_fb, 0, sizeof(st3m_overlay_fb));
-#if 0
-        ctx_rectangle (ctx, -120, -120, 240, 240);
-        ctx_rgba (ctx, 0,0,1,1.0);
-        ctx_fill (ctx);
-        ctx_rectangle (ctx, -30, -30, 60, 60);
-        ctx_rgba (ctx, 0,1.0,0,1.0);
-        ctx_fill(ctx);
-
-        ctx_save (ctx);
-        ctx_compositing_mode(ctx,CTX_COMPOSITE_CLEAR);
-        ctx_gray (ctx, 0); // XXX bug - if alpha is 0 clear doesnt happeddn
-        ctx_rectangle (ctx, -120, -120, 240, 240);
-        ctx_fill (ctx);
-        ctx_restore (ctx);
-#endif
     }
     return _st3m_overlay_ctx;
 }
