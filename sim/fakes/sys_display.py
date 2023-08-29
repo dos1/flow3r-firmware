@@ -5,7 +5,7 @@ def pipe_full():
     return False
 
 
-def set_overlay_height(foo):
+def overlay_clip(x0, y0, x1, y1):
     pass
 
 
