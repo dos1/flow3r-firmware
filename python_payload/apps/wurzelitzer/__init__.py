@@ -22,7 +22,7 @@ class JukeBox(Application):
                     or entry[0].endswith(".mpg")
                 ):
                     self._streams.append("/sd/" + entry[0])
-        if len(self._streams) >= 5:
+        if len(self._streams) > 5:
             self._stream_no = 5  # skip radio stations, they are available by going back
         else:
             self._stream_no = 0
