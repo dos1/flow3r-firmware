@@ -320,6 +320,8 @@ class ObfuscatedValueWidget(TunableWidget):
         pass
 
 
+settings_loaded: bool = False
+
 # Actual tunables / settings.
 onoff_button_swap = OnOffTunable("Swap Buttons", "system.swap_buttons", False)
 onoff_show_fps = OnOffTunable("Show FPS", "system.show_fps", False)
@@ -353,10 +355,12 @@ def load_all() -> None:
     """
     Load all settings from flash.
     """
+    global settings_loaded
     data = {}
     try:
         with open("/flash/settings.json", "r") as f:
             data = json.load(f)
+        settings_loaded = True
     except Exception as e:
         log.warning("Could not load settings: " + str(e))
         return
