@@ -36,18 +36,76 @@ STATIC mp_obj_t mp_set_backlight(mp_obj_t percent_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_backlight_obj, mp_set_backlight);
 
-static Ctx *global_ctx = NULL;
-STATIC mp_obj_t mp_get_ctx(void) {
-    if (!global_ctx) global_ctx = st3m_ctx(0);
-    if (global_ctx == NULL) return mp_const_none;
-    return mp_ctx_from_ctx(global_ctx);
+STATIC mp_obj_t mp_set_gfx_mode(mp_obj_t mode) {
+    st3m_set_gfx_mode(mp_obj_get_int(mode));
+    return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_ctx_obj, mp_get_ctx);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_gfx_mode_obj, mp_set_gfx_mode);
 
-STATIC mp_obj_t mp_get_overlay_ctx(void) {
-    return mp_ctx_from_ctx(st3m_overlay_ctx());
+STATIC mp_obj_t mp_get_gfx_mode(void) {
+    return mp_obj_new_int(st3m_get_gfx_mode());
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_overlay_ctx_obj, mp_get_overlay_ctx);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_gfx_mode_obj, mp_get_gfx_mode);
+
+STATIC mp_obj_t mp_set_palette(mp_obj_t pal_in) {
+    size_t count = mp_obj_get_int(mp_obj_len(pal_in));
+    uint8_t *pal = m_malloc(count);
+    for (size_t i = 0; i < count; i++) {
+        pal[i] = mp_obj_get_int(
+            mp_obj_subscr(pal_in, mp_obj_new_int(i), MP_OBJ_SENTINEL));
+    }
+    st3m_gfx_set_palette(pal, count / 3);
+#if MICROPY_MALLOC_USES_ALLOCATED_SIZE
+    m_free(pal, count);
+#else
+    m_free(pal);
+#endif
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_palette_obj, mp_set_palette);
+
+STATIC mp_obj_t mp_ctx(mp_obj_t mode_in) {
+    int mode = mp_obj_get_int(mode_in);
+    Ctx *ctx = NULL;
+    switch (mode) {
+        case 0:
+        case 16:
+            ctx = st3m_ctx(0);
+            if (ctx == NULL) return mp_const_none;
+            break;
+        case st3m_gfx_overlay:
+        case 8:
+        case 24:
+        case 32:
+            ctx = st3m_overlay_ctx();
+            break;
+    }
+    return mp_ctx_from_ctx(ctx);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_ctx_obj, mp_ctx);
+
+STATIC mp_obj_t mp_fb(mp_obj_t mode_in) {
+    int mode = mp_obj_get_int(mode_in);
+    int size = 240 * 240;
+    switch (mode) {
+        case 0:
+            size *= 2;
+            mode = 16;
+            break;
+        case 16:
+            size *= 2;
+            break;
+        case 24:
+            size *= 3;
+            break;
+        case st3m_gfx_overlay:
+        case 32:
+            size *= 4;
+            break;
+    }
+    return mp_obj_new_bytearray_by_ref(size, st3m_gfx_fb(mode));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_fb_obj, mp_fb);
 
 STATIC mp_obj_t mp_update(mp_obj_t ctx_in) {
     mp_ctx_obj_t *self = MP_OBJ_TO_PTR(ctx_in);
@@ -55,10 +113,7 @@ STATIC mp_obj_t mp_update(mp_obj_t ctx_in) {
         mp_raise_ValueError("not a ctx");
         return mp_const_none;
     }
-    if (global_ctx) {
-        st3m_ctx_end_frame(self->ctx);
-        global_ctx = NULL;
-    }
+    st3m_ctx_end_frame(self->ctx);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_update_obj, mp_update);
@@ -84,9 +139,11 @@ STATIC const mp_rom_map_elem_t mp_module_sys_display_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_set_backlight), MP_ROM_PTR(&mp_set_backlight_obj) },
     { MP_ROM_QSTR(MP_QSTR_overlay_clip), MP_ROM_PTR(&mp_overlay_clip_obj) },
     { MP_ROM_QSTR(MP_QSTR_update), MP_ROM_PTR(&mp_update_obj) },
-    { MP_ROM_QSTR(MP_QSTR_get_ctx), MP_ROM_PTR(&mp_get_ctx_obj) },
-    { MP_ROM_QSTR(MP_QSTR_get_overlay_ctx),
-      MP_ROM_PTR(&mp_get_overlay_ctx_obj) },
+    { MP_ROM_QSTR(MP_QSTR_fb), MP_ROM_PTR(&mp_fb_obj) },
+    { MP_ROM_QSTR(MP_QSTR_ctx), MP_ROM_PTR(&mp_ctx_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_gfx_mode), MP_ROM_PTR(&mp_set_gfx_mode_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_palette), MP_ROM_PTR(&mp_set_palette_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_gfx_mode), MP_ROM_PTR(&mp_get_gfx_mode_obj) },
     { MP_ROM_QSTR(MP_QSTR_fps), MP_ROM_PTR(&mp_fps_obj) },
 };
 

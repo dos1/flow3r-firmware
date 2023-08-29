@@ -157,7 +157,7 @@ class Reactor:
 
         # Draw!
         if self._ctx is None:
-            self._ctx = sys_display.get_ctx()
+            self._ctx = sys_display.ctx(0)
             if self._ctx is not None:
                 if self._last_ctx_get is not None:
                     diff = start - self._last_ctx_get

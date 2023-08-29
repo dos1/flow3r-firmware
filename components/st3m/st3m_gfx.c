@@ -19,75 +19,55 @@
 #include "st3m_counter.h"
 #include "st3m_version.h"
 
-#define ST3M_GFX_NBUFFERS 1
-#define ST3M_GFX_NCTX 1
-
-// A framebuffer descriptor, pointing at a framebuffer.
-typedef struct {
-    // The numeric ID of this descriptor.
-    int num;
-    // SPIRAM buffer.
-    uint16_t buffer[240 * 240];
-    Ctx *ctx;
-} st3m_framebuffer_desc_t;
+static EXT_RAM_BSS_ATTR uint16_t fb[240 * 240];
 
 // Get a free drawlist ctx to draw into.
 //
 // ticks_to_wait can be used to limit the time to wait for a free ctx
 // descriptor, or portDELAY_MAX can be specified to wait forever. If the timeout
 // expires, NULL will be returned.
-static st3m_ctx_desc_t *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait);
+static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait);
 
 // Submit a filled ctx descriptor to the rasterization pipeline.
-static void st3m_gfx_drawctx_pipe_put(st3m_ctx_desc_t *desc);
+static void st3m_gfx_drawctx_pipe_put(void);
 
 static const char *TAG = "st3m-gfx";
-
-// Framebuffer descriptors, containing framebuffer and ctx for each of the
-// framebuffers.
-//
-// These live in SPIRAM, as we don't have enough space in SRAM/IRAM.
-EXT_RAM_BSS_ATTR static st3m_framebuffer_desc_t
-    framebuffer_descs[ST3M_GFX_NBUFFERS];
 
 #define OVERLAY_WIDTH 240
 #define OVERLAY_HEIGHT 240
 #define OVERLAY_X 0
 #define OVERLAY_Y 0
 
+static st3m_gfx_mode _st3m_gfx_mode = st3m_gfx_default;
+
+EXT_RAM_BSS_ATTR static uint8_t
+    st3m_overlay_fb[OVERLAY_WIDTH * OVERLAY_HEIGHT * 4];
+EXT_RAM_BSS_ATTR uint16_t st3m_overlay_backup[OVERLAY_WIDTH * OVERLAY_HEIGHT];
+
+// drawlist ctx
+static Ctx *user_ctx = NULL;
+
+// RGB565_byteswapped framebuffer ctx - our global ctx
+//   user_ctx gets replayed on this
+static Ctx *fb_ctx = NULL;
+
+// RGBA8 overlay ctx
+static Ctx *overlay_ctx = NULL;
+
+// corner pixel coordinates for overlay clip
 static int _st3m_overlay_y1 = 0;
 static int _st3m_overlay_x1 = 0;
 static int _st3m_overlay_y0 = 0;
 static int _st3m_overlay_x0 = 0;
 
-EXT_RAM_BSS_ATTR static uint8_t
-    st3m_overlay_fb[OVERLAY_WIDTH * OVERLAY_HEIGHT * 4];
-EXT_RAM_BSS_ATTR uint16_t st3m_overlay_backup[OVERLAY_WIDTH * OVERLAY_HEIGHT];
-static Ctx *_st3m_overlay_ctx = NULL;
-
-static st3m_ctx_desc_t dctx_descs[ST3M_GFX_NCTX];
-
-// Queue of free framebuffer descriptors, written into by crtc once rendered,
-// read from by rasterizer when new frame starts.
-static QueueHandle_t framebuffer_freeq = NULL;
-// Queue of framebuffer descriptors to blit out.
-static QueueHandle_t framebuffer_blitq = NULL;
-
-static st3m_counter_rate_t blit_rate;
-static st3m_counter_timer_t blit_read_time;
-static st3m_counter_timer_t blit_work_time;
-static st3m_counter_timer_t blit_write_time;
-
-static QueueHandle_t dctx_freeq = NULL;
-static QueueHandle_t dctx_rastq = NULL;
+static float smoothed_fps = 0.0f;
+static QueueHandle_t user_ctx_freeq = NULL;
+static QueueHandle_t user_ctx_rastq = NULL;
 
 static st3m_counter_rate_t rast_rate;
-static st3m_counter_timer_t rast_read_fb_time;
-static st3m_counter_timer_t rast_read_dctx_time;
-static st3m_counter_timer_t rast_work_time;
-static st3m_counter_timer_t rast_write_time;
+static TaskHandle_t graphics_task;
 
-static TaskHandle_t rast_task;
+//////////////////////////
 
 // Attempt to receive from a queue forever, but log an error if it takes longer
 // than two seconds to get something.
@@ -111,46 +91,129 @@ void st3m_ctx_merge_overlay(uint16_t *fb, uint8_t *overlay, int ostride,
 void st3m_ctx_unmerge_overlay(uint16_t *fb, uint16_t *overlay_backup, int x0,
                               int y0, int w, int h);
 
-static float smoothed_fps = 0.0f;
-
 float st3m_gfx_fps(void) { return smoothed_fps; }
 
-static void st3m_gfx_rast_task(void *_arg) {
+void st3m_gfx_set_palette(uint8_t *pal_in, int count) {
+    if (count > 256) count = 256;
+    if (count < 0) count = 0;
+    uint8_t *pal =
+        ((uint8_t *)st3m_overlay_fb) + sizeof(st3m_overlay_fb) - 256 * 3;
+    for (int i = 0; i < count * 3; i++) pal[i] = pal_in[i];
+}
+
+static void grayscale_palette(void) {
+    uint8_t pal[256 * 3];
+    for (int i = 0; i < 256; i++) {
+        pal[i * 3 + 0] = i;
+        pal[i * 3 + 1] = i;
+        pal[i * 3 + 2] = i;
+    }
+    st3m_gfx_set_palette(pal, 256);
+}
+
+static void fire_palette(void) {
+    uint8_t pal[256 * 3];
+    for (int i = 0; i < 256; i++) {
+        pal[i * 3 + 0] = i;
+        pal[i * 3 + 1] = (i / 255.0) * (i / 255.0) * 255;
+        pal[i * 3 + 2] = (i / 255.0) * (i / 255.0) * (i / 255.0) * 255;
+    }
+    st3m_gfx_set_palette(pal, 256);
+}
+
+static void ice_palette(void) {
+    uint8_t pal[256 * 3];
+    for (int i = 0; i < 256; i++) {
+        pal[i * 3 + 0] = (i / 255.0) * (i / 255.0) * (i / 255.0) * 255;
+        pal[i * 3 + 1] = (i / 255.0) * (i / 255.0) * 255;
+        pal[i * 3 + 2] = i;
+    }
+    st3m_gfx_set_palette(pal, 256);
+}
+
+void st3m_set_gfx_mode(st3m_gfx_mode mode) {
+    memset(fb, 0, sizeof(fb));
+    memset(st3m_overlay_fb, 0, sizeof(st3m_overlay_fb));
+
+    switch ((int)mode) {
+        case 8:
+            fire_palette();
+            break;
+        case 9:
+            ice_palette();
+            mode = 8;
+            break;
+        case 10:
+            grayscale_palette();
+            mode = 8;
+            break;
+    }
+    _st3m_gfx_mode = mode;
+}
+st3m_gfx_mode st3m_get_gfx_mode(void) { return _st3m_gfx_mode; }
+uint8_t *st3m_gfx_fb(st3m_gfx_mode mode) {
+    switch (_st3m_gfx_mode) {
+        case st3m_gfx_default:
+        case st3m_gfx_16bpp:
+            return (uint8_t *)fb;
+        case st3m_gfx_32bpp:
+        case st3m_gfx_24bpp:
+        case st3m_gfx_8bpp:
+        case st3m_gfx_overlay:
+            return st3m_overlay_fb;
+    }
+    return st3m_overlay_fb;
+}
+
+static void st3m_gfx_task(void *_arg) {
     (void)_arg;
 
     while (true) {
         int descno = 0;
-        st3m_framebuffer_desc_t *fb = &framebuffer_descs[descno];
 
-        xQueueReceiveNotifyStarved(dctx_rastq, &descno,
-                                   "rast task starved (dctx)!");
-        st3m_ctx_desc_t *draw = &dctx_descs[descno];
+        xQueueReceiveNotifyStarved(user_ctx_rastq, &descno,
+                                   "rast task starved (user_ctx)!");
 
-        ctx_set_textureclock(framebuffer_descs[0].ctx,
-                             ctx_textureclock(framebuffer_descs[0].ctx) + 1);
-
-        ctx_render_ctx(draw->ctx, fb->ctx);
-        ctx_drawlist_clear(draw->ctx);
+        ctx_set_textureclock(fb_ctx, ctx_textureclock(fb_ctx) + 1);
 
         st3m_overlay_ctx();
-        if (_st3m_overlay_y1 != _st3m_overlay_y0)
-            st3m_ctx_merge_overlay(
-                framebuffer_descs[descno].buffer,
-                st3m_overlay_fb +
-                    4 * ((_st3m_overlay_y0 - OVERLAY_Y) * OVERLAY_WIDTH +
-                         (_st3m_overlay_x0 - OVERLAY_X)),
-                OVERLAY_WIDTH * 4, st3m_overlay_backup, _st3m_overlay_x0,
-                _st3m_overlay_y0, _st3m_overlay_x1 - _st3m_overlay_x0 + 1,
-                _st3m_overlay_y1 - _st3m_overlay_y0 + 1);
-        flow3r_bsp_display_send_fb(framebuffer_descs[descno].buffer, 16);
-        if (_st3m_overlay_y1 != _st3m_overlay_y0)
-            st3m_ctx_unmerge_overlay(framebuffer_descs[descno].buffer,
-                                     st3m_overlay_backup, _st3m_overlay_x0,
-                                     _st3m_overlay_y0,
-                                     _st3m_overlay_x1 - _st3m_overlay_x0 + 1,
-                                     _st3m_overlay_y1 - _st3m_overlay_y0 + 1);
 
-        xQueueSend(dctx_freeq, &descno, portMAX_DELAY);
+        switch (_st3m_gfx_mode) {
+            case st3m_gfx_8bpp:
+            case st3m_gfx_24bpp:
+            case st3m_gfx_32bpp:
+                flow3r_bsp_display_send_fb(st3m_overlay_fb, _st3m_gfx_mode);
+                break;
+            case st3m_gfx_overlay:
+                flow3r_bsp_display_send_fb(st3m_overlay_fb, 32);
+                break;
+            case st3m_gfx_default:
+                ctx_render_ctx(user_ctx, fb_ctx);
+                if (_st3m_overlay_y1 != _st3m_overlay_y0)
+                    st3m_ctx_merge_overlay(
+                        fb,
+                        st3m_overlay_fb + 4 * ((_st3m_overlay_y0 - OVERLAY_Y) *
+                                                   OVERLAY_WIDTH +
+                                               (_st3m_overlay_x0 - OVERLAY_X)),
+                        OVERLAY_WIDTH * 4, st3m_overlay_backup,
+                        _st3m_overlay_x0, _st3m_overlay_y0,
+                        _st3m_overlay_x1 - _st3m_overlay_x0 + 1,
+                        _st3m_overlay_y1 - _st3m_overlay_y0 + 1);
+                flow3r_bsp_display_send_fb(fb, 16);
+                if (_st3m_overlay_y1 != _st3m_overlay_y0)
+                    st3m_ctx_unmerge_overlay(
+                        fb, st3m_overlay_backup, _st3m_overlay_x0,
+                        _st3m_overlay_y0,
+                        _st3m_overlay_x1 - _st3m_overlay_x0 + 1,
+                        _st3m_overlay_y1 - _st3m_overlay_y0 + 1);
+                break;
+            case st3m_gfx_16bpp:
+                flow3r_bsp_display_send_fb(fb, 16);
+                break;
+        }
+        ctx_drawlist_clear(user_ctx);
+
+        xQueueSend(user_ctx_freeq, &descno, portMAX_DELAY);
         st3m_counter_rate_sample(&rast_rate);
         float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
         smoothed_fps = smoothed_fps * 0.9 + 0.1 * rate;
@@ -338,181 +401,139 @@ void st3m_gfx_show_textview(st3m_gfx_textview_t *tv) {
         return;
     }
 
-    st3m_ctx_desc_t *target = st3m_gfx_drawctx_free_get(portMAX_DELAY);
+    st3m_gfx_drawctx_free_get(portMAX_DELAY);
 
-    ctx_save(target->ctx);
+    ctx_save(user_ctx);
 
     // Draw background.
-    ctx_rgb(target->ctx, 0, 0, 0);
-    ctx_rectangle(target->ctx, -120, -120, 240, 240);
-    ctx_fill(target->ctx);
+    ctx_rgb(user_ctx, 0, 0, 0);
+    ctx_rectangle(user_ctx, -120, -120, 240, 240);
+    ctx_fill(user_ctx);
 
-    st3m_gfx_flow3r_logo(target->ctx, 0, -30, 150);
+    st3m_gfx_flow3r_logo(user_ctx, 0, -30, 150);
 
     int y = 20;
 
-    ctx_gray(target->ctx, 1.0);
-    ctx_text_align(target->ctx, CTX_TEXT_ALIGN_CENTER);
-    ctx_text_baseline(target->ctx, CTX_TEXT_BASELINE_MIDDLE);
-    ctx_font_size(target->ctx, 20.0);
+    ctx_gray(user_ctx, 1.0);
+    ctx_text_align(user_ctx, CTX_TEXT_ALIGN_CENTER);
+    ctx_text_baseline(user_ctx, CTX_TEXT_BASELINE_MIDDLE);
+    ctx_font_size(user_ctx, 20.0);
 
     // Draw title, if any.
     if (tv->title != NULL) {
-        ctx_move_to(target->ctx, 0, y);
-        ctx_text(target->ctx, tv->title);
+        ctx_move_to(user_ctx, 0, y);
+        ctx_text(user_ctx, tv->title);
         y += 20;
     }
 
-    ctx_font_size(target->ctx, 15.0);
-    ctx_gray(target->ctx, 0.8);
+    ctx_font_size(user_ctx, 15.0);
+    ctx_gray(user_ctx, 0.8);
 
     // Draw messages.
     const char **lines = tv->lines;
     if (lines != NULL) {
         while (*lines != NULL) {
             const char *text = *lines++;
-            ctx_move_to(target->ctx, 0, y);
-            ctx_text(target->ctx, text);
+            ctx_move_to(user_ctx, 0, y);
+            ctx_text(user_ctx, text);
             y += 15;
         }
     }
 
     // Draw version.
-    ctx_font_size(target->ctx, 15.0);
-    ctx_gray(target->ctx, 0.6);
-    ctx_move_to(target->ctx, 0, 100);
-    ctx_text(target->ctx, st3m_version);
+    ctx_font_size(user_ctx, 15.0);
+    ctx_gray(user_ctx, 0.6);
+    ctx_move_to(user_ctx, 0, 100);
+    ctx_text(user_ctx, st3m_version);
 
-    ctx_restore(target->ctx);
+    ctx_restore(user_ctx);
 
-    st3m_gfx_drawctx_pipe_put(target);
+    st3m_gfx_drawctx_pipe_put();
 }
 
 void st3m_gfx_init(void) {
     // Make sure we're not being re-initialized.
-    assert(framebuffer_freeq == NULL);
-
-    st3m_counter_rate_init(&blit_rate);
-    st3m_counter_timer_init(&blit_read_time);
-    st3m_counter_timer_init(&blit_work_time);
-    st3m_counter_timer_init(&blit_write_time);
 
     st3m_counter_rate_init(&rast_rate);
-    st3m_counter_timer_init(&rast_read_fb_time);
-    st3m_counter_timer_init(&rast_read_dctx_time);
-    st3m_counter_timer_init(&rast_work_time);
-    st3m_counter_timer_init(&rast_write_time);
 
     flow3r_bsp_display_init();
 
-    // Create framebuffer queues.
-    framebuffer_freeq = xQueueCreate(ST3M_GFX_NBUFFERS + 1, sizeof(int));
-    assert(framebuffer_freeq != NULL);
-    framebuffer_blitq = xQueueCreate(ST3M_GFX_NBUFFERS + 1, sizeof(int));
-    assert(framebuffer_blitq != NULL);
-
     // Create drawlist ctx queues.
-    dctx_freeq = xQueueCreate(ST3M_GFX_NCTX + 1, sizeof(int));
-    assert(dctx_freeq != NULL);
-    dctx_rastq = xQueueCreate(ST3M_GFX_NCTX + 1, sizeof(int));
-    assert(dctx_rastq != NULL);
+    user_ctx_freeq = xQueueCreate(1 + 1, sizeof(int));
+    assert(user_ctx_freeq != NULL);
+    user_ctx_rastq = xQueueCreate(1 + 1, sizeof(int));
+    assert(user_ctx_rastq != NULL);
 
-    for (int i = 0; i < ST3M_GFX_NBUFFERS; i++) {
-        // Setup framebuffer descriptor.
-        st3m_framebuffer_desc_t *fb_desc = &framebuffer_descs[i];
-        fb_desc->num = i;
-        fb_desc->ctx = ctx_new_for_framebuffer(
-            fb_desc->buffer, FLOW3R_BSP_DISPLAY_WIDTH,
-            FLOW3R_BSP_DISPLAY_HEIGHT, FLOW3R_BSP_DISPLAY_WIDTH * 2,
-            CTX_FORMAT_RGB565_BYTESWAPPED);
-        if (i) {
-            ctx_set_texture_source(fb_desc->ctx, framebuffer_descs[0].ctx);
-            ctx_set_texture_cache(fb_desc->ctx, framebuffer_descs[0].ctx);
-        }
-        assert(fb_desc->ctx != NULL);
-        // translate x and y by 120 px to have (0,0) at center of the screen
-        int32_t offset_x = FLOW3R_BSP_DISPLAY_WIDTH / 2;
-        int32_t offset_y = FLOW3R_BSP_DISPLAY_HEIGHT / 2;
-        ctx_apply_transform(fb_desc->ctx, 1, 0, offset_x, 0, 1, offset_y, 0, 0,
-                            1);
+    // Setup framebuffer descriptor.
+    fb_ctx = ctx_new_for_framebuffer(
+        fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
+        FLOW3R_BSP_DISPLAY_WIDTH * 2, CTX_FORMAT_RGB565_BYTESWAPPED);
+    assert(fb_ctx != NULL);
+    // translate x and y by 120 px to have (0,0) at center of the screen
+    int32_t offset_x = FLOW3R_BSP_DISPLAY_WIDTH / 2;
+    int32_t offset_y = FLOW3R_BSP_DISPLAY_HEIGHT / 2;
+    ctx_apply_transform(fb_ctx, 1, 0, offset_x, 0, 1, offset_y, 0, 0, 1);
 
-        // Push descriptor to freeq.
-        BaseType_t res = xQueueSend(framebuffer_freeq, &i, 0);
-        assert(res == pdTRUE);
-    }
+    // Setup user_ctx descriptor.
+    user_ctx =
+        ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT);
+    assert(user_ctx != NULL);
+    ctx_set_texture_cache(user_ctx, fb_ctx);
 
-    for (int i = 0; i < ST3M_GFX_NCTX; i++) {
-        // Setup dctx descriptor.
-        st3m_ctx_desc_t *dctx_desc = &dctx_descs[i];
-        dctx_desc->num = i;
-        dctx_desc->ctx = ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH,
-                                          FLOW3R_BSP_DISPLAY_HEIGHT);
-        ctx_set_texture_cache(dctx_desc->ctx, framebuffer_descs[0].ctx);
-        assert(dctx_desc->ctx != NULL);
+    // Push descriptor to freeq.
+    int i = 0;
+    BaseType_t res = xQueueSend(user_ctx_freeq, &i, 0);
+    assert(res == pdTRUE);
 
-        // Push descriptor to freeq.
-        BaseType_t res = xQueueSend(dctx_freeq, &i, 0);
-        assert(res == pdTRUE);
-    }
-
-    // Start rast.
-    BaseType_t res = xTaskCreate(st3m_gfx_rast_task, "rast", 8192, NULL,
-                                 ESP_TASK_PRIO_MIN + 1, &rast_task);
+    // Start rasterization, compositing and scan-out
+    res = xTaskCreate(st3m_gfx_task, "graphics", 8192, NULL,
+                      ESP_TASK_PRIO_MIN + 1, &graphics_task);
     assert(res == pdPASS);
 }
 
-static st3m_ctx_desc_t *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
+static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
     int descno;
-    BaseType_t res = xQueueReceive(dctx_freeq, &descno, ticks_to_wait);
+    BaseType_t res = xQueueReceive(user_ctx_freeq, &descno, ticks_to_wait);
     if (res != pdTRUE) {
         return NULL;
     }
-    return &dctx_descs[descno];
+    return user_ctx;
 }
 
-static void st3m_gfx_drawctx_pipe_put(st3m_ctx_desc_t *desc) {
-    xQueueSend(dctx_rastq, &desc->num, portMAX_DELAY);
+static void st3m_gfx_drawctx_pipe_put(void) {
+    int i = 0;
+    xQueueSend(user_ctx_rastq, &i, portMAX_DELAY);
 }
 
 uint8_t st3m_gfx_drawctx_pipe_full(void) {
-    return uxQueueSpacesAvailable(dctx_rastq) == 0;
+    return uxQueueSpacesAvailable(user_ctx_rastq) == 0;
 }
 
 void st3m_gfx_flush(void) {
     ESP_LOGW(TAG, "Pipeline flush/reset requested...");
     // Drain all workqs and freeqs.
-    xQueueReset(dctx_freeq);
-    xQueueReset(dctx_rastq);
-    xQueueReset(framebuffer_freeq);
-    xQueueReset(framebuffer_blitq);
+    xQueueReset(user_ctx_freeq);
+    xQueueReset(user_ctx_rastq);
 
     // Delay, making sure pipeline tasks have returned all used descriptors. One
     // second is enough to make sure we've processed everything.
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     // And drain again.
-    xQueueReset(framebuffer_freeq);
-    xQueueReset(dctx_freeq);
+    xQueueReset(user_ctx_freeq);
 
-    // Now, re-submit all descriptors to freeqs.
-    for (int i = 0; i < ST3M_GFX_NBUFFERS; i++) {
-        BaseType_t res = xQueueSend(framebuffer_freeq, &i, 0);
-        assert(res == pdTRUE);
-    }
-    for (int i = 0; i < ST3M_GFX_NCTX; i++) {
-        BaseType_t res = xQueueSend(dctx_freeq, &i, 0);
-        assert(res == pdTRUE);
-    }
+    int i = 0;
+    BaseType_t res = xQueueSend(user_ctx_freeq, &i, 0);
+    assert(res == pdTRUE);
     ESP_LOGW(TAG, "Pipeline flush/reset done.");
 }
 
-static int st3m_dctx_no = 0;  // always 0 - but this keeps pipelined
-                              // rendering working as a compile time opt-in
+static int st3m_user_ctx_no = 0;  // always 0 - but this keeps pipelined
+                                  // rendering working as a compile time opt-in
 Ctx *st3m_ctx(TickType_t ticks_to_wait) {
-    st3m_ctx_desc_t *foo = st3m_gfx_drawctx_free_get(ticks_to_wait);
-    if (!foo) return NULL;
-    st3m_dctx_no = foo->num;
-    return foo->ctx;
+    Ctx *ctx = st3m_gfx_drawctx_free_get(ticks_to_wait);
+    if (!ctx) return NULL;
+    return ctx;
 }
 
 void st3m_overlay_clear(void) {
@@ -526,19 +547,19 @@ void st3m_overlay_clear(void) {
 }
 
 Ctx *st3m_overlay_ctx(void) {
-    if (!_st3m_overlay_ctx) {
-        Ctx *ctx = _st3m_overlay_ctx = ctx_new_for_framebuffer(
+    if (!overlay_ctx) {
+        Ctx *ctx = overlay_ctx = ctx_new_for_framebuffer(
             st3m_overlay_fb, OVERLAY_WIDTH, OVERLAY_HEIGHT, OVERLAY_WIDTH * 4,
             CTX_FORMAT_RGBA8);
 
         ctx_translate(ctx, 120 - OVERLAY_X, 120 - OVERLAY_Y);
         memset(st3m_overlay_fb, 0, sizeof(st3m_overlay_fb));
     }
-    return _st3m_overlay_ctx;
+    return overlay_ctx;
 }
 
 void st3m_ctx_end_frame(Ctx *ctx) {
-    xQueueSend(dctx_rastq, &st3m_dctx_no, portMAX_DELAY);
+    xQueueSend(user_ctx_rastq, &st3m_user_ctx_no, portMAX_DELAY);
 }
 
 void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1) {

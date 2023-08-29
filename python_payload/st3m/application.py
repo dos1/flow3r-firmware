@@ -16,6 +16,7 @@ import os
 import os.path
 import stat
 import sys
+import sys_display
 import random
 
 log = Log(__name__)
@@ -73,6 +74,9 @@ class Application(BaseView):
         if fully_exiting and self._wifi_preference is not None:
             st3m.wifi._onoff_wifi_update()
         super().on_exit()
+        # set the default graphics mode, this is a no-op if
+        # it is already set
+        sys_display.set_gfx_mode(0)
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
