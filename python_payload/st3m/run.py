@@ -18,7 +18,7 @@ from st3m.application import (
     ApplicationContext,
 )
 from st3m.about import About
-from st3m import settings, logging, processors, wifi
+from st3m import settings_menu as settings, logging, processors, wifi
 
 import captouch, audio, leds, gc, sys_buttons
 import os
