@@ -15,6 +15,8 @@ class WifiApp(Application):
     WIFI_CONFIG_FILE = "/flash/w1f1_config.json"
     SETTINGS_JSON_FILE = "/flash/settings.json"
 
+    _scroll_pos: float = 0.0
+
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
         self._petal_pressed = {}
@@ -98,23 +100,33 @@ class WifiApp(Application):
             if math.fabs(wlan_draw_offset) > 90:
                 wlan_draw_offset += 20
                 continue
-            if self._nearby_wlans[self._wlan_offset] == wlan:
-                ctx.font_size = 25
-            else:
-                ctx.font_size = 15
-            ctx.move_to(0, wlan_draw_offset)
+
+            selected = self._nearby_wlans[self._wlan_offset] == wlan
+            open_network = wlan[4] == 0
+
+            ctx.font_size = 25 if selected else 15
+            ssid_width = ctx.text_width(ssid)
+
+            xpos = 0
+            if selected:
+                max_width = 220 if open_network else 200
+                if ssid_width > max_width:
+                    xpos = math.sin(self._scroll_pos) * (ssid_width - max_width) / 2
+                    if not open_network:
+                        xpos -= 10
+
+            ctx.move_to(xpos, wlan_draw_offset)
             ctx.text(ssid)
 
             # TODO: maybe add signal indicator?
             # https://fonts.google.com/icons?selected=Material+Icons+Outlined:network_wifi_1_bar:&icon.query=network+wifi&icon.set=Material+Icons
 
             # draw a key next to wifi if it isn't open
-            if wlan[4] != 0:
+            if not open_network:
                 ctx.save()
-                ssid_width = ctx.text_width(ssid)
                 ctx.font = "Material Icons"
                 ctx.text_align = ctx.LEFT
-                ctx.move_to((ssid_width / 2) + 5, wlan_draw_offset + 2)
+                ctx.move_to(xpos + (ssid_width / 2) + 5, wlan_draw_offset + 2)
                 ctx.text("\ue897")
                 ctx.restore()
 
@@ -192,14 +204,17 @@ class WifiApp(Application):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
         leds.set_all_rgb(0, 0, 0)
+        self._scroll_pos += delta_ms / 1000
 
         if self.input.buttons.app.left.pressed and self._wlan_offset > 0:
             self._wlan_offset -= 1
+            self._scroll_pos = 0.0
         elif (
             self.input.buttons.app.right.pressed
             and self._wlan_offset < len(self._nearby_wlans) - 1
         ):
             self._wlan_offset += 1
+            self._scroll_pos = 0.0
 
         if not self._nearby_wlans and self._iface.active() and self._scan_timer <= 0:
             self._status_text = "scanning"
