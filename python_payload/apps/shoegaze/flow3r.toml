@@ -1,6 +1,7 @@
 [app]
 name = "shoegaze"
 menu = "Music"
+wifi_preference = false
 
 [entry]
 class = "ShoegazeApp"
