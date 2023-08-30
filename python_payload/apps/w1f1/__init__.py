@@ -154,11 +154,29 @@ class WifiApp(Application):
         leds.update()
 
     def scan_wifi(self):
+        """
+        scans for nearby wifi networks, hides private ones and sorts appropriately
+        helpful: https://docs.micropython.org/en/latest/library/network.WLAN.html#network.WLAN.scan
+        """
         # skip hidden WLANs
-        self._nearby_wlans = [
-            wlan for wlan in self._iface.scan() if not wlan[5] and wlan[0]
-        ]
-        # TODO: sort by known, then signal strength
+        detected_wlans = self._iface.scan()
+
+        known_wlans = []
+        unknown_wlans = []
+        for wlan in detected_wlans:
+            # skip hidden or invisible WLANs
+            if wlan[5] or not wlan[0].strip():
+                continue
+
+            if wlan[0].decode() in self._wifi_config["networks"]:
+                known_wlans.append(wlan)
+            else:
+                unknown_wlans.append(wlan)
+
+        # sort by signal strength
+        known_wlans.sort(key=lambda wlan: wlan[3], reverse=True)
+        unknown_wlans.sort(key=lambda wlan: wlan[3], reverse=True)
+        self._nearby_wlans = known_wlans + unknown_wlans
         print(self._nearby_wlans)
 
     def update_settings_json(self, ssid: str, psk: str) -> None:
