@@ -45,6 +45,7 @@ typedef struct {
     int socket;
 
     int in_buffering;
+    float scroll_pos;
 } mp3_state;
 
 static int has_data(mp3_state *mp3) {
@@ -100,13 +101,30 @@ static void mp3_draw(st3m_media *media, Ctx *ctx) {
     ctx_fill(ctx);
     ctx_font_size(ctx, 24);
     ctx_text_align(ctx, CTX_TEXT_ALIGN_CENTER);
-    ctx_move_to(ctx, 0, -40);
+
+    int xpos = 0;
+    int str_width = ctx_text_width(ctx, self->artist);
+    if (str_width > 200) {
+        xpos = ctx_sinf(self->scroll_pos) * (str_width - 200) / 2;
+    }
+    ctx_move_to(ctx, xpos, -40);
     ctx_text(ctx, self->artist);
-    ctx_move_to(ctx, 0, 64);
+
+    str_width = ctx_text_width(ctx, self->title);
+    xpos = 0;
+    if (str_width > 200) {
+        xpos = ctx_sinf(self->scroll_pos) * (str_width - 200) / 2;
+    }
+    ctx_move_to(ctx, xpos, 64);
     ctx_text(ctx, self->title);
 
     ctx_font_size(ctx, 14);
-    ctx_move_to(ctx, 0, 14);
+    str_width = ctx_text_width(ctx, self->path);
+    xpos = 0;
+    if (str_width > 220) {
+        xpos = ctx_sinf(self->scroll_pos) * (str_width - 220) / 2;
+    }
+    ctx_move_to(ctx, xpos, 14);
     ctx_gray(ctx, 0.6);
     ctx_text(ctx, self->path);
 
@@ -124,6 +142,8 @@ static void mp3_think(st3m_media *media, float ms_elapsed) {
     mp3_state *self = (void *)media;
 
     mp3_fetch_data(self);
+
+    self->scroll_pos += ms_elapsed / 1000.0;
 
     if (self->in_buffering) {
         if (self->size - self->count > 0) return;
@@ -255,6 +275,7 @@ st3m_media *st3m_media_load_mp3(const char *path) {
     self->control.destroy = mp3_destroy;
     self->samplerate = 44100;
     self->buffer_size = 32 * 1024;
+    self->scroll_pos = 0;
 
     if (!strncmp(path, "http://", 7)) {
         int port = 80;
