@@ -27,6 +27,7 @@ class Configuration:
         self.color = "0x40ff22"
         self.mode = 0
         self.config_errors: list[str] = []
+        self.config_loaded: bool = False
 
     @classmethod
     def load(cls, path: str) -> "Configuration":
@@ -35,6 +36,7 @@ class Configuration:
             with open(path) as f:
                 jsondata = f.read()
             data = json.loads(jsondata)
+            res.config_loaded = True
         except OSError:
             data = {}
         except ValueError:
@@ -114,6 +116,8 @@ class NickApp(Application):
         self._config = Configuration.load(self._filename)
         self._pronouns_serialized = " ".join(self._config.pronouns)
         self._angle = 0.0
+        if not self._config.config_loaded and not self._config.config_errors:
+            self._config.save(self._filename)
 
     def draw(self, ctx: Context) -> None:
         ctx.text_align = ctx.CENTER
@@ -161,11 +165,6 @@ class NickApp(Application):
 
         leds.update()
         # ctx.fill()
-
-    def on_exit(self) -> None:
-        super().on_exit()
-        if not self._config.config_errors:
-            self._config.save(self._filename)
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
