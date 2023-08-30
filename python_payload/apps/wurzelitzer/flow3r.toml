@@ -1,6 +1,7 @@
 [app]
 name = "Wurzelitzer"
 menu = "Music"
+wifi_preference = true
 
 [entry]
 class = "JukeBox"
