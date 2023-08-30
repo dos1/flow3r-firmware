@@ -9,10 +9,12 @@ import os
 import json
 import math
 from .k3yboard import TextInputModel, KeyboardView
+from .helpers import sd_card_plugged, set_direction_leds, copy_across_devices
 
 
 class WifiApp(Application):
     WIFI_CONFIG_FILE = "/flash/w1f1_config.json"
+    WIFI_CONFIG_FILE_SD = "/sd/w1f1_config.json"
     SETTINGS_JSON_FILE = "/flash/settings.json"
 
     _scroll_pos: float = 0.0
@@ -27,6 +29,19 @@ class WifiApp(Application):
         self._is_connecting = False
         self._waiting_for_password = False
         self._password_model = TextInputModel("")
+
+        # Use config on SD card whenever possible
+        if sd_card_plugged():
+            # Move config to SD card from flash if we don't have one on SD card
+            if not os.path.exists(self.WIFI_CONFIG_FILE_SD) and os.path.exists(
+                self.WIFI_CONFIG_FILE
+            ):
+                copy_across_devices(self.WIFI_CONFIG_FILE, self.WIFI_CONFIG_FILE_SD)
+
+            if os.path.exists(self.WIFI_CONFIG_FILE_SD):
+                os.remove(self.WIFI_CONFIG_FILE)
+
+            self.WIFI_CONFIG_FILE = self.WIFI_CONFIG_FILE_SD
 
         if os.path.exists(self.WIFI_CONFIG_FILE):
             with open(self.WIFI_CONFIG_FILE) as f:
@@ -49,8 +64,6 @@ class WifiApp(Application):
         self._iface = network.WLAN(network.STA_IF)
         self._current_ssid = None
         self._current_psk = None
-
-        self.input._ignore_pressed()
         # TODO: big error display
 
     def draw(self, ctx: Context) -> None:
@@ -131,14 +144,6 @@ class WifiApp(Application):
                 ctx.restore()
 
             wlan_draw_offset += 20
-
-    def set_direction_leds(self, direction, r, g, b):
-        if direction == 0:
-            leds.set_rgb(39, r, g, b)
-        else:
-            leds.set_rgb((direction * 4) - 1, r, g, b)
-        leds.set_rgb(direction * 4, r, g, b)
-        leds.set_rgb((direction * 4) + 1, r, g, b)
 
     def on_exit(self) -> None:
         super().on_exit()
@@ -241,9 +246,9 @@ class WifiApp(Application):
             self._petal_pressed[0] = False
 
         if self._iface.active():
-            self.set_direction_leds(0, 0, 1, 0)
+            set_direction_leds(0, 0, 1, 0)
         else:
-            self.set_direction_leds(0, 1, 0, 0)
+            set_direction_leds(0, 1, 0, 0)
             self._status_text = "wlan off"
 
         if (
