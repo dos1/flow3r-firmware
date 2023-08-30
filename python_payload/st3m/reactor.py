@@ -193,7 +193,9 @@ def print_task_cpu_loads():  # TODO: move the body somewhere more fitting
             hashtags = 0
         ret += "#" * hashtags
         ret += "." * (20 - hashtags)
-        ret += "]"
+        ret += "]  prio: "
+        prio = str(task.current_priority)
+        ret += "0" * (2 - len(prio)) + prio
         print(ret)
     # do another run to remove self from cpu load measurement
     _ = sys_kernel.scheduler_snapshot()

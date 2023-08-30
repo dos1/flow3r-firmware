@@ -40,6 +40,7 @@ typedef struct _task_obj_t {
     uint16_t stack_left;
     uint32_t run_time;
     uint32_t cpu_percent;
+    uint32_t current_priority;
     eTaskState state;
     uint32_t core_affinity;
 } task_obj_t;
@@ -106,6 +107,9 @@ STATIC void task_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
             break;
         case MP_QSTR_cpu_percent:
             dest[0] = mp_obj_new_int_from_uint(self->cpu_percent);
+            break;
+        case MP_QSTR_current_priority:
+            dest[0] = mp_obj_new_int_from_uint(self->current_priority);
             break;
         case MP_QSTR_core_affinity:
             dest[0] = mp_obj_new_int_from_uint(self->core_affinity);
@@ -188,6 +192,7 @@ STATIC mp_obj_t mp_scheduler_snapshot(void) {
         task->number = tasks[i].xTaskNumber;
         task->stack_left = tasks[i].usStackHighWaterMark;
         task->run_time = tasks[i].ulRunTimeCounter;
+        task->current_priority = tasks[i].uxCurrentPriority;
         if (total_runtime_delta_percent && (task->number < 50)) {
             task->cpu_percent = (task->run_time - run_time_prev[task->number]) /
                                 total_runtime_delta_percent;
