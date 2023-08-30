@@ -38,7 +38,10 @@ class WifiApp(Application):
             ):
                 copy_across_devices(self.WIFI_CONFIG_FILE, self.WIFI_CONFIG_FILE_SD)
 
-            if os.path.exists(self.WIFI_CONFIG_FILE_SD):
+            # if we have both sd and flash config, remove flash config
+            if os.path.exists(self.WIFI_CONFIG_FILE_SD) and os.path.exists(
+                self.WIFI_CONFIG_FILE
+            ):
                 os.remove(self.WIFI_CONFIG_FILE)
 
             self.WIFI_CONFIG_FILE = self.WIFI_CONFIG_FILE_SD
