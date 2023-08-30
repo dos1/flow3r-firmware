@@ -27,6 +27,9 @@ class SimpleMenu(MenuController):
         ctx.gray(1)
         for ix, item in enumerate(self._items):
             offs = (ix - current) * self.SIZE_LARGE
+            if offs < -120 - self.SIZE_LARGE or offs > 120:
+                continue
+
             ctx.save()
             ctx.move_to(0, 0)
             ctx.font_size = self.SIZE_LARGE
