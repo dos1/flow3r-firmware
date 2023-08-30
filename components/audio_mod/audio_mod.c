@@ -20,6 +20,7 @@ typedef struct {
     uint8_t *data;
     size_t size;
     char *path;
+    float scroll_pos;
 } mod_state;
 
 static void mod_draw(st3m_media *media, Ctx *ctx) {
@@ -41,7 +42,12 @@ static void mod_draw(st3m_media *media, Ctx *ctx) {
     ctx_fill(ctx);
 
     ctx_font_size(ctx, 14);
-    ctx_move_to(ctx, 0, 14);
+    int xpos = 0;
+    int str_width = ctx_text_width(ctx, self->path);
+    if (str_width > 220) {
+        xpos = ctx_sinf(self->scroll_pos) * (str_width - 220) / 2;
+    }
+    ctx_move_to(ctx, xpos, 14);
     ctx_gray(ctx, 0.6);
     ctx_text(ctx, self->path);
 }
@@ -58,6 +64,8 @@ static void mod_think(st3m_media *media, float ms_elapsed) {
             rendered[i] * 20000;
         if (self->control.audio_w >= AUDIO_BUF_SIZE) self->control.audio_w = 0;
     }
+
+    self->scroll_pos += ms_elapsed / 1000.0;
 }
 
 static void mod_destroy(st3m_media *media) {
@@ -116,5 +124,6 @@ st3m_media *st3m_media_load_mod(const char *path) {
         return NULL;
     }
     self->path = strdup(path);
+    self->scroll_pos = 0;
     return (st3m_media *)self;
 }
