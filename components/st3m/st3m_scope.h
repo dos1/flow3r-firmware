@@ -1,6 +1,6 @@
 #pragma once
 
-// st3m_scope implements an oscilloscope-style music visualizer.
+// st3m_scope implements a basic scope.
 //
 // The audio subsystem will continuously send the global mixing output result
 // into the oscilloscope. User code can decide when to draw said scope.
@@ -24,9 +24,8 @@ typedef struct {
 
     // Offset where the write handler should write the next sample.
     uint32_t write_head_position;
-    // Previous sample that was attempted to be written. Used for
-    // zero-detection.
-    int16_t prev_write_attempt;
+    int16_t prev_value;
+    bool zero_crossing_occurred;
 } st3m_scope_t;
 
 // Initialize global scope. Must be performed before any other access to scope
@@ -41,10 +40,5 @@ void st3m_scope_write(int16_t value);
 
 // Draw the scope at bounding box -120/-120 +120/+120.
 //
-// The scope will be drawn as a closable line segment starting at x:-120
-// y:sample[0], through x:120 y:sample[239], then going through x:130 y:130,
-// x:-130 y:130.
-//
-// The user is responsible for setting a color and running a fill/stroke
-// afterwards.
+// The user is responsible for clearing background and setting a color.
 void st3m_scope_draw(Ctx *ctx);

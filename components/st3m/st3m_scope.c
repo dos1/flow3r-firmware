@@ -49,7 +49,8 @@ void st3m_scope_init(void) {
     memset(scope.read_buffer, 0, sizeof(int16_t) * scope.buffer_size);
 
     scope.write_head_position = 0;
-    scope.prev_write_attempt = 0;
+    scope.prev_value = 0;
+    scope.zero_crossing_occurred = false;
     ESP_LOGI(TAG, "initialized");
 }
 
@@ -58,29 +59,23 @@ void st3m_scope_write(int16_t value) {
         return;
     }
 
-    int16_t prev_write_attempt = scope.prev_write_attempt;
-    scope.prev_write_attempt = value;
-
-    // If we're about to write the first sample, make sure we do so at a
-    // positive zero crossing.
-    if (scope.write_head_position == 0) {
-        // Calculate 'positivity' sign of this value and previous value.
-        int16_t this = value > 0;
-        int16_t prev = prev_write_attempt > 0;
-
-        if (this != 1 || prev != 0) {
-            return;
-        }
+    if ((!scope.zero_crossing_occurred) && (value > 0) &&
+        (scope.prev_value <= 0)) {
+        scope.write_head_position = 0;
+        scope.zero_crossing_occurred = true;
     }
 
     if (scope.write_head_position >= scope.buffer_size) {
         scope.write_buffer = Atomic_SwapPointers_p32(
             (void *volatile *)&scope.exchange_buffer, scope.write_buffer);
         scope.write_head_position = 0;
+        scope.zero_crossing_occurred = false;
     } else {
         scope.write_buffer[scope.write_head_position] = value;
         scope.write_head_position++;
     }
+
+    scope.prev_value = value;
 }
 
 void st3m_scope_draw(Ctx *ctx) {
@@ -116,8 +111,5 @@ void st3m_scope_draw(Ctx *ctx) {
         ctx_line_to(ctx, x, y);
     }
 
-    ctx_line_to(ctx, 130, 0);
-    ctx_line_to(ctx, 130, -130);
-    ctx_line_to(ctx, -130, -130);
-    ctx_line_to(ctx, -130, 0);
+    ctx_stroke(ctx);
 }
