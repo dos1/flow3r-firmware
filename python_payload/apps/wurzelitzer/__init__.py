@@ -1,19 +1,21 @@
 import st3m.run, media, os, ctx
 from st3m.application import Application
 
+RADIOSTATIONS = [
+    "http://radio-paralax.de:8000/",
+    "http://stream6.jungletrain.net:8000/",
+    "http://air.doscast.com:8054/livehitradio",
+    "http://lyd.nrk.no/nrk_radio_jazz_mp3_l",
+    "http://lyd.nrk.no/nrk_radio_mp3_mp3_l",
+    # "http://lyd.nrk.no/nrk_radio_alltid_nyheter_mp3_l",
+    # "http://pippin.gimp.org/tmp/b71207f10d522d354a001768e21a78fe"
+]
+
 
 class JukeBox(Application):
     def __init__(self, app_ctx):
         super().__init__(app_ctx)
-        self._streams = [
-            "http://radio-paralax.de:8000/",
-            "http://stream6.jungletrain.net:8000/",
-            "http://air.doscast.com:8054/livehitradio",
-            "http://lyd.nrk.no/nrk_radio_jazz_mp3_l",
-            "http://lyd.nrk.no/nrk_radio_mp3_mp3_l",
-            # "http://lyd.nrk.no/nrk_radio_alltid_nyheter_mp3_l",
-            # "http://pippin.gimp.org/tmp/b71207f10d522d354a001768e21a78fe"
-        ]
+        self._streams = RADIOSTATIONS.copy()
         for entry in os.ilistdir("/sd/"):
             if entry[1] == 0x8000:
                 if (
@@ -22,8 +24,9 @@ class JukeBox(Application):
                     or entry[0].endswith(".mpg")
                 ):
                     self._streams.append("/sd/" + entry[0])
-        if len(self._streams) > 5:
-            self._stream_no = 5  # skip radio stations, they are available by going back
+        if len(self._streams) > len(RADIOSTATIONS):
+            # skip radio stations, they are available by going back
+            self._stream_no = len(RADIOSTATIONS)
         else:
             self._stream_no = 0
 
