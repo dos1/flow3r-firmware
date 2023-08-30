@@ -98,7 +98,7 @@ class Reactor:
         self._last_ctx_get: Optional[int] = None
         self._ctx: Optional[Context] = None
         self._time_until_profile_print_ms = 0
-        self.print_task_cpu_loads = True
+        self.print_task_cpu_loads = False
         self.print_task_cpu_loads_delta_ms = 5000
         self.stats = ReactorStats()
 
@@ -178,6 +178,7 @@ def print_task_cpu_loads():  # TODO: move the body somewhere more fitting
     print("\ntask cpu loads:")
     for task in snap.tasks:
         max_name_len = max(len(task.name), max_name_len)
+    snap.tasks.sort(key=lambda x: getattr(x, "name"))
     for task in snap.tasks:
         ret = task.name + ":"
         whitespace = max_name_len + 2 - len(ret)
