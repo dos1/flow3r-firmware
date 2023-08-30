@@ -30,6 +30,8 @@
 ///  - core_affinity: bitmask of where this task is allowed to be scheduled. Bit
 ///                   0 is core 0, bit 1 is core 1. The value 0b11 (3) means the
 ///                   task is allowed to run on any core.
+///  - percent: cpu load in percent since last update
+
 typedef struct _task_obj_t {
     mp_obj_base_t base;
 
@@ -37,6 +39,8 @@ typedef struct _task_obj_t {
     uint32_t number;
     uint16_t stack_left;
     uint32_t run_time;
+    uint32_t run_time_prev;
+    uint32_t cpu_percent;
     eTaskState state;
     uint32_t core_affinity;
 } task_obj_t;
@@ -73,8 +77,10 @@ STATIC void task_print(const mp_print_t *print, mp_obj_t self_in,
             mp_print_str(print, "???");
             break;
     }
-    mp_printf(print, ",number=%d,stack_left=%d,run_time=%d,core_affinity=%d)",
-              self->number, self->stack_left, self->run_time,
+    mp_printf(print,
+              ",number=%d,stack_left=%d,run_time=%d,,cpu_percent=%d,core_"
+              "affinity=%d)",
+              self->number, self->stack_left, self->run_time, self->cpu_percent,
               self->core_affinity);
 }
 
@@ -99,6 +105,9 @@ STATIC void task_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
         case MP_QSTR_run_time:
             dest[0] = mp_obj_new_int_from_uint(self->run_time);
             break;
+        case MP_QSTR_cpu_percent:
+            dest[0] = mp_obj_new_int_from_uint(self->cpu_percent);
+            break;
         case MP_QSTR_core_affinity:
             dest[0] = mp_obj_new_int_from_uint(self->core_affinity);
             break;
@@ -120,6 +129,7 @@ typedef struct _scheduler_snapshot_obj_t {
 
     mp_obj_t tasks;
     uint32_t total_runtime;
+    uint32_t total_runtime_prev;
 } scheduler_snapshot_obj_t;
 
 const mp_obj_type_t scheduler_snapshot_type;
@@ -164,13 +174,28 @@ STATIC mp_obj_t mp_scheduler_snapshot(void) {
     uint32_t total_runtime;
     UBaseType_t ntasks_returned =
         uxTaskGetSystemState(tasks, ntasks, &total_runtime);
+
+    scheduler_snapshot_obj_t *snap = m_new_obj(scheduler_snapshot_obj_t);
+    snap->base.type = &scheduler_snapshot_type;
+    snap->total_runtime_prev = snap->total_runtime;
+    snap->total_runtime = total_runtime;
+    uint32_t total_runtime_delta_percent =
+        (snap->total_runtime - snap->total_runtime_prev) / 100;
+
     for (UBaseType_t i = 0; i < ntasks_returned; i++) {
         task_obj_t *task = m_new_obj(task_obj_t);
         task->base.type = &task_type;
         strncpy(task->name, tasks[i].pcTaskName, configMAX_TASK_NAME_LEN - 1);
         task->number = tasks[i].xTaskNumber;
         task->stack_left = tasks[i].usStackHighWaterMark;
+        task->run_time_prev = task->run_time;
         task->run_time = tasks[i].ulRunTimeCounter;
+        uint32_t run_time_delta = task->run_time - task->run_time_prev;
+        task->cpu_percent = total_runtime_delta_percent
+                                ? (task->run_time - task->run_time_prev) /
+                                      total_runtime_delta_percent
+                                : 0;
+
         task->state = tasks[i].eCurrentState;
         task->core_affinity = 0b11;
         switch (tasks[i].xCoreID) {
@@ -183,11 +208,7 @@ STATIC mp_obj_t mp_scheduler_snapshot(void) {
         }
         mp_obj_list_append(tasks_out, MP_OBJ_FROM_PTR(task));
     }
-
-    scheduler_snapshot_obj_t *snap = m_new_obj(scheduler_snapshot_obj_t);
-    snap->base.type = &scheduler_snapshot_type;
     snap->tasks = tasks_out;
-    snap->total_runtime = total_runtime;
     return snap;
 }
 

@@ -82,8 +82,11 @@ class Reactor:
         "_tickrate_ms",
         "_last_tick",
         "_ctx",
+        "_time_until_profile_print_ms",
         "_ts",
         "_last_ctx_get",
+        "print_task_cpu_loads",
+        "print_task_cpu_loads_delta_ms",
         "stats",
     )
 
@@ -94,6 +97,9 @@ class Reactor:
         self._last_tick: Optional[int] = None
         self._last_ctx_get: Optional[int] = None
         self._ctx: Optional[Context] = None
+        self._time_until_profile_print_ms = 0
+        self.print_task_cpu_loads = False
+        self.print_task_cpu_loads_delta_ms = 5000
         self.stats = ReactorStats()
 
     def set_top(self, top: Responder) -> None:
@@ -138,6 +144,12 @@ class Reactor:
 
         self._ts += delta
 
+        if self.print_task_cpu_loads:
+            self._time_until_profile_print_ms -= delta
+            if self._time_until_profile_print_ms <= 0:
+                self._time_until_profile_print_ms = self.print_task_cpu_loads_delta_ms
+                print_task_cpu_loads()
+
         hr = InputState.gather()
 
         # Think!
@@ -158,3 +170,29 @@ class Reactor:
         if self._ctx is not None and not sys_display.pipe_full():
             sys_display.update(self._ctx)
             self._ctx = None
+
+
+def print_task_cpu_loads():  # TODO: move the body somewhere more fitting
+    snap = sys_kernel.scheduler_snapshot()
+    max_name_len = 0
+    print("\ntask cpu loads:")
+    for task in snap.tasks:
+        max_name_len = max(len(task.name), max_name_len)
+    for task in snap.tasks:
+        ret = task.name + ":"
+        whitespace = max_name_len + 2 - len(ret)
+        cpu = str(task.cpu_percent)
+        ret += " " * (whitespace + 3 - len(cpu))
+        ret += cpu
+        ret += "%  ["
+        hashtags = task.cpu_percent // 5
+        if hashtags > 20:
+            hashtags = 20
+        if hashtags < 0:
+            hashtags = 0
+        ret += "#" * hashtags
+        ret += "." * (20 - hashtags)
+        ret += "]"
+        print(ret)
+    # do another run to remove self from cpu load measurement
+    _ = sys_kernel.scheduler_snapshot()
