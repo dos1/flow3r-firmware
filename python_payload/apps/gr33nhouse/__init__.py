@@ -33,6 +33,7 @@ class Gr33nhouseApp(Application):
         self._sc.set_item_count(3)
 
         self.state = ViewState.CONTENT
+        self.wifi_status = None
 
     def on_enter(self, vm: ViewManager | None) -> None:
         super().on_enter(vm)
@@ -62,7 +63,11 @@ class Gr33nhouseApp(Application):
             ctx.text("No internet")
 
             ctx.move_to(0, 15)
-            ctx.text("Check settings")
+            ctx.text(
+                "Connecting..."
+                if self.wifi_status == network.STAT_CONNECTING
+                else "Check settings"
+            )
 
             ctx.restore()
             return
@@ -108,6 +113,7 @@ class Gr33nhouseApp(Application):
 
         if not network.WLAN(network.STA_IF).isconnected():
             self.state = ViewState.NO_INTERNET
+            self.wifi_status = network.WLAN(network.STA_IF).status()
             return
         else:
             self.state = ViewState.CONTENT
