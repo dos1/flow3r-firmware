@@ -98,7 +98,7 @@ class Reactor:
         self._last_ctx_get: Optional[int] = None
         self._ctx: Optional[Context] = None
         self._time_until_profile_print_ms = 0
-        self.print_task_cpu_loads = False
+        self.print_task_cpu_loads = True
         self.print_task_cpu_loads_delta_ms = 5000
         self.stats = ReactorStats()
 

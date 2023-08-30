@@ -39,7 +39,6 @@ typedef struct _task_obj_t {
     uint32_t number;
     uint16_t stack_left;
     uint32_t run_time;
-    uint32_t run_time_prev;
     uint32_t cpu_percent;
     eTaskState state;
     uint32_t core_affinity;
@@ -129,7 +128,6 @@ typedef struct _scheduler_snapshot_obj_t {
 
     mp_obj_t tasks;
     uint32_t total_runtime;
-    uint32_t total_runtime_prev;
 } scheduler_snapshot_obj_t;
 
 const mp_obj_type_t scheduler_snapshot_type;
@@ -163,6 +161,8 @@ MP_DEFINE_CONST_OBJ_TYPE(scheduler_snapshot_type, MP_QSTR_scheduler_snapshot,
                          attr, scheduler_snapshot_attr);
 
 STATIC mp_obj_t mp_scheduler_snapshot(void) {
+    static uint32_t run_time_prev[50];
+    static uint32_t total_runtime_prev;
     mp_obj_t tasks_out = mp_obj_new_list(0, NULL);
 
     UBaseType_t ntasks = uxTaskGetNumberOfTasks();
@@ -177,10 +177,9 @@ STATIC mp_obj_t mp_scheduler_snapshot(void) {
 
     scheduler_snapshot_obj_t *snap = m_new_obj(scheduler_snapshot_obj_t);
     snap->base.type = &scheduler_snapshot_type;
-    snap->total_runtime_prev = snap->total_runtime;
     snap->total_runtime = total_runtime;
     uint32_t total_runtime_delta_percent =
-        (snap->total_runtime - snap->total_runtime_prev) / 100;
+        (snap->total_runtime - total_runtime_prev) / 100;
 
     for (UBaseType_t i = 0; i < ntasks_returned; i++) {
         task_obj_t *task = m_new_obj(task_obj_t);
@@ -188,13 +187,14 @@ STATIC mp_obj_t mp_scheduler_snapshot(void) {
         strncpy(task->name, tasks[i].pcTaskName, configMAX_TASK_NAME_LEN - 1);
         task->number = tasks[i].xTaskNumber;
         task->stack_left = tasks[i].usStackHighWaterMark;
-        task->run_time_prev = task->run_time;
         task->run_time = tasks[i].ulRunTimeCounter;
-        uint32_t run_time_delta = task->run_time - task->run_time_prev;
-        task->cpu_percent = total_runtime_delta_percent
-                                ? (task->run_time - task->run_time_prev) /
-                                      total_runtime_delta_percent
-                                : 0;
+        if (total_runtime_delta_percent && (task->number < 50)) {
+            task->cpu_percent = (task->run_time - run_time_prev[task->number]) /
+                                total_runtime_delta_percent;
+            run_time_prev[task->number] = task->run_time;
+        } else {
+            task->cpu_percent = 300;  // indicates smth's wrong
+        }
 
         task->state = tasks[i].eCurrentState;
         task->core_affinity = 0b11;
@@ -208,6 +208,7 @@ STATIC mp_obj_t mp_scheduler_snapshot(void) {
         }
         mp_obj_list_append(tasks_out, MP_OBJ_FROM_PTR(task));
     }
+    total_runtime_prev = snap->total_runtime;
     snap->tasks = tasks_out;
     return snap;
 }
