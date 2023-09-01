@@ -37,6 +37,7 @@
 #define CTX_COMPOSITING_GROUPS        0
 #define CTX_RENDERSTREAM_STATIC       0
 #define CTX_GRADIENT_CACHE            1
+#define CTX_GRADIENT_CACHE_ELEMENTS   128
 #define CTX_MIN_JOURNAL_SIZE        512  // grows dynamically
 #define CTX_MIN_EDGE_LIST_SIZE      512  // is also max and limits complexity
                                          // of paths that can be filled
