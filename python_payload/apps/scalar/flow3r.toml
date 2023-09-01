@@ -1,0 +1,13 @@
+[app]
+name = "Scalar"
+menu = "Music"
+
+[entry]
+class = "ScalarApp"
+
+[metadata]
+author = "yrlf"
+description = "A better melodic instrument application for the flow3r that supports many different musical scales."
+license = "LGPL-3.0-only"
+url = "https://github.com/Ferdi265/flow3r-scalar"
+version = 3
