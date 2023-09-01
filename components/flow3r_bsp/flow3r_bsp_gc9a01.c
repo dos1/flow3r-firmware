@@ -99,7 +99,10 @@ typedef struct {
 typedef struct {
     flow3r_bsp_gc9a01_t *gc9a01;
     const uint8_t *fb;
+    uint16_t *pal_16;
+    int bits;
     size_t left;
+    size_t off;  // current pixel offset in blit
 
     flow3r_bsp_gc9a01_tx_t gc9a01_tx;
     spi_transaction_t spi_tx;
@@ -560,11 +563,82 @@ cleanup_spi_bus:
     return ret;
 }
 
+/* branchless 8bit add that maxes out at 255 */
+static inline uint8_t ctx_sadd8(uint8_t a, uint8_t b) {
+    uint16_t s = (uint16_t)a + b;
+    return -(s >> 8) | (uint8_t)s;
+}
+
+static EXT_RAM_BSS_ATTR uint16_t temp_blit[SPI_MAX_DMA_LEN / 2];
+static inline uint16_t ctx_565_pack(uint8_t red, uint8_t green, uint8_t blue,
+                                    const int byteswap) {
+#if 0
+    // is this extra precision warranted?
+    // for 332 it gives more pure white..
+    // it might be the case also for generic 565
+    red = ctx_sadd8(red, 4);
+    green = ctx_sadd8(green, 3);
+    blue = ctx_sadd8(blue, 4);
+#endif
+
+    uint32_t c = (red >> 3) << 11;
+    c |= (green >> 2) << 5;
+    c |= blue >> 3;
+    if (byteswap) {
+        return (c >> 8) | (c << 8);
+    } /* swap bytes */
+    return c;
+}
+
+static void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
+                                 int pix_count) {
+    const uint8_t *fb = blit->fb;
+    unsigned int start_off = blit->off;
+    unsigned int end_off = start_off + pix_count;
+    unsigned int o = 0;
+    switch (blit->bits) {
+        case 16:
+            break;
+        case 1:
+            for (unsigned int i = 0; i < pix_count; i++)
+                temp_blit[o++] = blit->pal_16[(fb[i / 8] >> ((i & 7))) & 0x1];
+            break;
+        case 2:
+            for (unsigned int i = 0; i < pix_count; i++)
+                temp_blit[o++] =
+                    blit->pal_16[(fb[i / 4] >> ((i & 3) * 2)) & 0x3];
+            break;
+        case 4:
+            for (unsigned int i = start_off; i < end_off; i++) {
+                temp_blit[o++] =
+                    blit->pal_16[(fb[i / 2] >> ((i & 1) * 4)) & 0xf];
+            }
+            break;
+        case 8:
+            for (unsigned int i = start_off; i < end_off; i++)
+                temp_blit[o++] = blit->pal_16[fb[i]];
+            break;
+        case 24:
+            for (unsigned int i = start_off; i < end_off; i++)
+                temp_blit[o++] = ctx_565_pack(fb[i * 3 + 0], fb[i * 3 + 1],
+                                              fb[i * 3 + 2], 1);
+            break;
+        case 32:
+            for (unsigned int i = start_off; i < end_off; i++)
+                temp_blit[o++] = ctx_565_pack(fb[i * 4 + 0], fb[i * 4 + 1],
+                                              fb[i * 4 + 2], 1);
+            break;
+    }
+    blit->off += pix_count;
+}
+
 static esp_err_t flow3r_bsp_gc9a01_blit_next(flow3r_bsp_gc9a01_blit_t *blit) {
     size_t size = blit->left;
     if (size > SPI_MAX_DMA_LEN) {
         size = SPI_MAX_DMA_LEN;
     }
+    unsigned int pix_count = size / 2;
+    size_t osize = pix_count * blit->bits / 8;
 
     blit->gc9a01_tx.gc9a01 = blit->gc9a01;
     blit->gc9a01_tx.dc = 1;
@@ -572,12 +646,19 @@ static esp_err_t flow3r_bsp_gc9a01_blit_next(flow3r_bsp_gc9a01_blit_t *blit) {
     // Memzero spi_tx as it gets written by the SPI driver after each
     // transaction.
     memset(&blit->spi_tx, 0, sizeof(spi_transaction_t));
-    blit->spi_tx.length = size * 8;
-    blit->spi_tx.tx_buffer = blit->fb;
+    blit->spi_tx.length = pix_count * 16;
+
+    if (blit->bits == 16) {
+        blit->spi_tx.tx_buffer = blit->fb;
+        blit->fb += osize;
+    } else {
+        blit->spi_tx.tx_buffer = temp_blit;
+        flow3r_bsp_prep_blit(blit, pix_count);
+    }
+
     blit->spi_tx.user = &blit->gc9a01_tx;
 
     blit->left -= size;
-    blit->fb += size;
 
     esp_err_t res =
         spi_device_queue_trans(blit->gc9a01->spi, &blit->spi_tx, portMAX_DELAY);
@@ -594,12 +675,20 @@ static esp_err_t flow3r_bsp_gc9a01_blit_next(flow3r_bsp_gc9a01_blit_t *blit) {
 
 static esp_err_t flow3r_bsp_gc9a01_blit_start(flow3r_bsp_gc9a01_t *gc9a01,
                                               flow3r_bsp_gc9a01_blit_t *blit,
-                                              const uint16_t *fb) {
+                                              const uint16_t *fb, int bits) {
     memset(blit, 0, sizeof(flow3r_bsp_gc9a01_blit_t));
 
     blit->gc9a01 = gc9a01;
     blit->fb = (const uint8_t *)fb;
-    blit->left = 2 * 240 * 240;
+    blit->bits = bits;
+    blit->left = 2 * 240 * 240;  // left in native bytes (16bpp)
+    if (bits < 16) {
+        uint8_t *pal_24 = ((uint8_t *)fb) + 240 * 240 * 4 - 3 * 256;
+        blit->pal_16 = (uint16_t *)(pal_24 - 256 * 2);
+        for (int i = 0; i < 256; i++)
+            blit->pal_16[i] = ctx_565_pack(pal_24[i * 3 + 0], pal_24[i * 3 + 1],
+                                           pal_24[i * 3 + 2], 1);
+    }
 
     return flow3r_bsp_gc9a01_cmd_sync(gc9a01, Cmd_RAMWR);
 }
@@ -619,9 +708,9 @@ static esp_err_t flow3r_bsp_gc9a01_blit_wait_done(
 }
 
 esp_err_t flow3r_bsp_gc9a01_blit_full(flow3r_bsp_gc9a01_t *gc9a01,
-                                      const uint16_t *fb) {
+                                      const void *fb, int bits) {
     flow3r_bsp_gc9a01_blit_t blit;
-    esp_err_t res = flow3r_bsp_gc9a01_blit_start(gc9a01, &blit, fb);
+    esp_err_t res = flow3r_bsp_gc9a01_blit_start(gc9a01, &blit, fb, bits);
     if (res != ESP_OK) {
         return res;
     }

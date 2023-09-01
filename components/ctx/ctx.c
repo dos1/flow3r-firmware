@@ -26,11 +26,12 @@ ctx_565_unpack (const uint16_t pixel,
                 uint8_t *blue,
                 const int byteswap);
 
-void st3m_ctx_merge_overlay(uint16_t *fb,
-                            uint8_t *overlay, int ostride,
-                            uint16_t *overlay_backup, int x0, int y0, int w, int h)
+void st3m_ctx_merge_overlay(uint16_t *restrict fb,
+                            const uint8_t *overlay, int ostride,
+                            uint16_t *restrict overlay_backup, int x0, int y0, int w, int h)
 {
   uint8_t rgba[4]={0,0,0,255};
+  uint32_t *rgba_32 = (uint32_t*)&rgba[0];
   for (int scanline = y0; scanline < y0 + h; scanline++)
   {
      uint16_t *fb_p = &fb[scanline * 240 + x0];
@@ -41,7 +42,7 @@ void st3m_ctx_merge_overlay(uint16_t *fb,
      for (int x = 0; x < w; x++)
      {
        *backup_p = *fb_p;
-       ctx_565_unpack(*fb_p, &rgba[0], &rgba[1], &rgba[2], 1);
+       *rgba_32 = ctx_565_unpack_32 (*fb_p, 1);
        uint32_t si_ga = ((*overlay_p) & 0xff00ff00) >> 8;
        uint32_t si_rb = (*overlay_p) & 0x00ff00ff;
        uint32_t si_a  = si_ga >> 16;
@@ -50,7 +51,6 @@ void st3m_ctx_merge_overlay(uint16_t *fb,
      (((si_rb*255+0xff00ff+(((*ddst)&0x00ff00ff)*racov))>>8)&0x00ff00ff)|
      ((si_ga*255+0xff00ff+((((*ddst)&0xff00ff00)>>8)*racov))&0xff00ff00);
        *fb_p = ctx_565_pack(rgba[0], rgba[1], rgba[2], 1);
-       //*fb_p = ctx_565_pack(overlay_p[0], overlay_p[1], overlay_p[2], 1);
        fb_p++;
        overlay_p++;
        backup_p++;
@@ -58,12 +58,12 @@ void st3m_ctx_merge_overlay(uint16_t *fb,
   }
 }
 
-void st3m_ctx_unmerge_overlay(uint16_t *fb, uint16_t *overlay_backup, int x0, int y0, int w, int h)
+void st3m_ctx_unmerge_overlay(uint16_t *restrict fb, const uint16_t *overlay_backup, int x0, int y0, int w, int h)
 {
   for (int scanline = y0; scanline < y0 + h; scanline++)
   {
      uint16_t *fb_p = &fb[scanline * 240 + x0];
-     uint16_t *backup_p = &overlay_backup[(scanline-y0) * w];
+     const uint16_t *backup_p = &overlay_backup[(scanline-y0) * w];
      for (int x = 0; x < w; x++)
      {
        *fb_p = *backup_p;

@@ -3,13 +3,13 @@ from st3m.application import Application
 
 
 class Cloud:
-    def __init__(self, path: str, x: float, y: float, z: float) -> None:
+    def __init__(self, path, x, y, z):
         self.path = path
         self.x = x
         self.y = y
         self.z = z
 
-    def draw(self, ctx: Context) -> None:
+    def draw(self, ctx) -> None:
         x = self.x / self.z * 120
         y = self.y / self.z * 120
         width = 200.0 / self.z * 160
@@ -23,7 +23,7 @@ class Cloud:
         )
 
 
-class Clouds(Application):
+class App(Application):
     def __init__(self, app_ctx):
         super().__init__(app_ctx)
         self.clouds = []
@@ -57,7 +57,7 @@ class Clouds(Application):
                 c.x = -200
         self.clouds = sorted(self.clouds, key=lambda c: -c.z)
 
-    def draw(self, ctx: Context):
+    def draw(self, ctx):
         ctx.image_smoothing = False
         ctx.rectangle(-120, -120, 240, 120)
         ctx.rgb(0, 0.34, 0.72)
@@ -71,4 +71,4 @@ class Clouds(Application):
 
 
 if __name__ == "__main__":
-    st3m.run.run_app(Clouds)
+    st3m.run.run_app(App)

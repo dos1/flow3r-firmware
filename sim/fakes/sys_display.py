@@ -9,6 +9,18 @@ def overlay_clip(x0, y0, x1, y1):
     pass
 
 
+def get_gfx_mode():
+    return 0
+
+
+def set_gfx_mode(no):
+    pass
+
+
 update = _sim.display_update
 get_ctx = _sim.get_ctx
 get_overlay_ctx = _sim.get_overlay_ctx
+
+
+def ctx(foo):
+    return _sim.get_ctx()

@@ -1,7 +1,6 @@
 [app]
-name = "Wurzelitzer"
-menu = "Music"
-wifi_preference = true
+name = "Mandelbrot"
+menu = "Apps"
 
 [metadata]
 author = "Flow3r Badge Authors"

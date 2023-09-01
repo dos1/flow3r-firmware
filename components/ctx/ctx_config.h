@@ -16,7 +16,7 @@
 #endif
 #endif
 
-#define CTX_TINYVG    1
+#define CTX_TINYVG    0
 #define CTX_TVG_STDIO 0
 #define CTX_DITHER    1
 
@@ -42,7 +42,7 @@
                                          // of paths that can be filled
 #define CTX_STATIC_OPAQUE       1
 #define CTX_MAX_SCANLINE_LENGTH 256
-#define CTX_1BIT_CLIP           1
+#define CTX_1BIT_CLIP           0
 
 #define CTX_MAX_DASHES          10
 #define CTX_MAX_GRADIENT_STOPS  10
@@ -79,6 +79,7 @@
 #define STBI_ONLY_JPEG
 #define CTX_FORMATTER                   1
 #define CTX_PARSER                      1
+#define CTX_FORCE_INLINES               0
 
 #else
 #define CTX_ENABLE_GRAY1                0
