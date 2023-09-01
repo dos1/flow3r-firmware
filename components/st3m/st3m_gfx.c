@@ -111,6 +111,20 @@ static void grayscale_palette(void) {
     st3m_gfx_set_palette(pal, 256);
 }
 
+static void ega_palette(void) {
+    uint8_t pal[16 * 3];
+    int idx = 0;
+    for (int i = 0; i < 2; i++)
+        for (int r = 0; r < 2; r++)
+            for (int g = 0; g < 2; g++)
+                for (int b = 0; b < 2; b++) {
+                    pal[idx++] = (r * 127) * (i * 2);
+                    pal[idx++] = (g * 127) * (i * 2);
+                    pal[idx++] = (b * 127) * (i * 2);
+                }
+    st3m_gfx_set_palette(pal, 16);
+}
+
 static void fire_palette(void) {
     uint8_t pal[256 * 3];
     for (int i = 0; i < 256; i++) {
@@ -136,6 +150,11 @@ void st3m_set_gfx_mode(st3m_gfx_mode mode) {
     memset(st3m_overlay_fb, 0, sizeof(st3m_overlay_fb));
 
     switch ((int)mode) {
+        case 1:
+        case 2:
+        case 4:
+            ega_palette();
+            break;
         case 8:
             fire_palette();
             break;
@@ -150,7 +169,9 @@ void st3m_set_gfx_mode(st3m_gfx_mode mode) {
     }
     _st3m_gfx_mode = mode;
 }
+
 st3m_gfx_mode st3m_get_gfx_mode(void) { return _st3m_gfx_mode; }
+
 uint8_t *st3m_gfx_fb(st3m_gfx_mode mode) {
     switch (_st3m_gfx_mode) {
         case st3m_gfx_default:
@@ -179,6 +200,7 @@ static void st3m_gfx_task(void *_arg) {
         st3m_overlay_ctx();
 
         switch (_st3m_gfx_mode) {
+            default:
             case st3m_gfx_8bpp:
             case st3m_gfx_24bpp:
             case st3m_gfx_32bpp:
