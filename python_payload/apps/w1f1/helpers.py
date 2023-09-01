@@ -28,3 +28,11 @@ def set_direction_leds(direction, r, g, b):
         leds.set_rgb((direction * 4) - 1, r, g, b)
     leds.set_rgb(direction * 4, r, g, b)
     leds.set_rgb((direction * 4) + 1, r, g, b)
+
+
+def mark_unknown_characters(text: str) -> str:
+    glyph_index = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~ ¡¢£¤¥¦§¨©ª«¬­®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿŁπ“”•…€™←↑→↓−≈▼♠♣♥♦ﬁﬂﬃﬄ"
+    result_text = ""
+    for char in text:
+        result_text += char if char in glyph_index else "?"
+    return result_text

@@ -9,7 +9,12 @@ import os
 import json
 import math
 from .k3yboard import TextInputModel, KeyboardView
-from .helpers import sd_card_plugged, set_direction_leds, copy_across_devices
+from .helpers import (
+    sd_card_plugged,
+    set_direction_leds,
+    copy_across_devices,
+    mark_unknown_characters,
+)
 
 
 class WifiApp(Application):
@@ -30,21 +35,13 @@ class WifiApp(Application):
         self._waiting_for_password = False
         self._password_model = TextInputModel("")
 
-        # Use config on SD card whenever possible
-        if sd_card_plugged():
-            # Move config to SD card from flash if we don't have one on SD card
-            if not os.path.exists(self.WIFI_CONFIG_FILE_SD) and os.path.exists(
-                self.WIFI_CONFIG_FILE
-            ):
-                copy_across_devices(self.WIFI_CONFIG_FILE, self.WIFI_CONFIG_FILE_SD)
-
-            # if we have both sd and flash config, remove flash config
-            if os.path.exists(self.WIFI_CONFIG_FILE_SD) and os.path.exists(
-                self.WIFI_CONFIG_FILE
-            ):
-                os.remove(self.WIFI_CONFIG_FILE)
-
-            self.WIFI_CONFIG_FILE = self.WIFI_CONFIG_FILE_SD
+        # Copy config to flash from SD card if we don't have one on flash
+        if (
+            sd_card_plugged()
+            and os.path.exists(self.WIFI_CONFIG_FILE_SD)
+            and not os.path.exists(self.WIFI_CONFIG_FILE)
+        ):
+            copy_across_devices(self.WIFI_CONFIG_FILE_SD, self.WIFI_CONFIG_FILE)
 
         if os.path.exists(self.WIFI_CONFIG_FILE):
             with open(self.WIFI_CONFIG_FILE) as f:
@@ -57,8 +54,7 @@ class WifiApp(Application):
                     "Camp2023-open": {"psk": None},
                 },
             }
-            with open(self.WIFI_CONFIG_FILE, "w") as f:
-                json.dump(self._wifi_config, f)
+            self.save_config_json()
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
@@ -72,7 +68,6 @@ class WifiApp(Application):
     def draw(self, ctx: Context) -> None:
         ctx.text_align = ctx.CENTER
         ctx.text_baseline = ctx.MIDDLE
-        ctx.font = ctx.get_font_name(8)
 
         ctx.rgb(0, 0, 0).rectangle(-120, -90, 240, 180).fill()
         ctx.rgb(0.2, 0.2, 0.2).rectangle(-120, -120, 240, 30).fill()
@@ -83,11 +78,12 @@ class WifiApp(Application):
 
         ctx.save()
         ctx.rgb(1, 1, 1)
+        ctx.font = "Arimo Bold"
         if self._iface.active():
             ctx.rgb(0, 1, 0)
         else:
             ctx.rgb(1, 0, 0)
-        ctx.move_to(0, -105)
+        ctx.move_to(0, -110)
         ctx.text("^")
         ctx.move_to(0, -100)
         ctx.text("toggle wlan")
@@ -100,16 +96,17 @@ class WifiApp(Application):
         wlan_draw_offset = self._wlan_offset * -20
 
         for wlan in self._nearby_wlans:
-            ssid = wlan[0].decode()
+            base_ssid = wlan[0].decode()
+            ssid = wlan[-1]
             if (
-                ssid == current_ssid
+                base_ssid == current_ssid
                 and self._iface.active()
                 and self._iface.isconnected()
             ):
                 ctx.rgb(0, 1, 0)
-            elif ssid == self._is_connecting:
+            elif base_ssid == self._is_connecting:
                 ctx.rgb(0, 0, 1)
-            elif ssid in self._wifi_config["networks"]:
+            elif base_ssid in self._wifi_config["networks"]:
                 ctx.rgb(1, 1, 0)
             else:
                 ctx.rgb(1, 1, 1)
@@ -120,6 +117,7 @@ class WifiApp(Application):
             selected = self._nearby_wlans[self._wlan_offset] == wlan
             open_network = wlan[4] == 0
 
+            ctx.font = "Arimo Bold" if selected else "Arimo Regular"
             ctx.font_size = 25 if selected else 15
             ssid_width = ctx.text_width(ssid)
 
@@ -129,7 +127,7 @@ class WifiApp(Application):
                 if ssid_width > max_width:
                     xpos = math.sin(self._scroll_pos) * (ssid_width - max_width) / 2
                     if not open_network:
-                        xpos -= 10
+                        xpos -= 7
 
             ctx.move_to(xpos, wlan_draw_offset)
             ctx.text(ssid)
@@ -142,7 +140,7 @@ class WifiApp(Application):
                 ctx.save()
                 ctx.font = "Material Icons"
                 ctx.text_align = ctx.LEFT
-                ctx.move_to(xpos + (ssid_width / 2) + 5, wlan_draw_offset + 2)
+                ctx.move_to(xpos + (ssid_width / 2) + 2, wlan_draw_offset + 2)
                 ctx.text("\ue897")
                 ctx.restore()
 
@@ -168,10 +166,15 @@ class WifiApp(Application):
             if wlan[5] or not wlan[0].strip():
                 continue
 
-            if wlan[0].decode() in self._wifi_config["networks"]:
-                known_wlans.append(wlan)
+            wlan_list = list(wlan)
+            base_ssid = wlan[0].decode()
+            clean_ssid = mark_unknown_characters(base_ssid).strip()
+            wlan_list.append(clean_ssid)
+
+            if base_ssid in self._wifi_config["networks"]:
+                known_wlans.append(wlan_list)
             else:
-                unknown_wlans.append(wlan)
+                unknown_wlans.append(wlan_list)
 
         # sort by signal strength
         known_wlans.sort(key=lambda wlan: wlan[3], reverse=True)
@@ -203,11 +206,22 @@ class WifiApp(Application):
         with open(self.SETTINGS_JSON_FILE, "w") as f:
             json.dump(settings_json, f)
 
-    def add_to_config_json(self, ssid: str, psk: str) -> None:
+    def add_wlan_to_config_json(self, ssid: str, psk: str) -> None:
         self._wifi_config["networks"][ssid] = {"psk": psk}
+        self.save_config_json()
 
+    def save_config_json(self) -> None:
         with open(self.WIFI_CONFIG_FILE, "w") as f:
             json.dump(self._wifi_config, f)
+
+        if sd_card_plugged():
+            try:
+                if os.path.exists(self.WIFI_CONFIG_FILE_SD):
+                    os.remove(self.WIFI_CONFIG_FILE_SD)
+
+                copy_across_devices(self.WIFI_CONFIG_FILE, self.WIFI_CONFIG_FILE_SD)
+            except OSError as e:
+                print("SD issue:", str(e), ":(")
 
     def connect_wifi(self, ssid: str, psk: str = None) -> None:
         if ssid in self._wifi_config["networks"]:
@@ -307,7 +321,9 @@ class WifiApp(Application):
                 if self._current_ssid:
                     self.update_settings_json(self._current_ssid, self._current_psk)
                     if self._current_ssid not in self._wifi_config["networks"]:
-                        self.add_to_config_json(self._current_ssid, self._current_psk)
+                        self.add_wlan_to_config_json(
+                            self._current_ssid, self._current_psk
+                        )
             elif self._connection_timer <= 0:
                 self._iface.disconnect()
                 self._status_text = "conn timed out"
