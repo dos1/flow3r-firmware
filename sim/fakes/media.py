@@ -4,17 +4,20 @@ def stop():
     """
     pass
 
+
 def load(path):
     """
     Load path
     """
     pass
 
+
 def draw(ctx):
     """
     Draws current state of media object to provided ctx context.
     """
     pass
+
 
 def think(delta_ms):
     """
