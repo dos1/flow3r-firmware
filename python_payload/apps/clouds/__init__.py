@@ -1,5 +1,6 @@
-import st3m.run, random, ctx
+import random
 from st3m.application import Application
+import sys_display
 
 
 class Cloud:
@@ -40,7 +41,7 @@ class App(Application):
                 )
             )
 
-    def think(self, ins: InputState, delta_ms: int):
+    def think(self, ins, delta_ms):
         super().think(ins, delta_ms)
         for c in self.clouds:
             c.x -= (delta_ms / 1000.0) * ins.imu.acc[1] * 10
@@ -57,7 +58,14 @@ class App(Application):
                 c.x = -200
         self.clouds = sorted(self.clouds, key=lambda c: -c.z)
 
+    def on_enter(self, vm):
+        # we are compositing heavy and going back and forth to 16bit is
+        # too much overhead
+        sys_display.set_gfx_mode(32)
+        super().on_enter(vm)
+
     def draw(self, ctx):
+        # faster, and with smoothing is incorrect
         ctx.image_smoothing = False
         ctx.rectangle(-120, -120, 240, 120)
         ctx.rgb(0, 0.34, 0.72)
@@ -68,7 +76,3 @@ class App(Application):
 
         for c in self.clouds:
             c.draw(ctx)
-
-
-if __name__ == "__main__":
-    st3m.run.run_app(App)
