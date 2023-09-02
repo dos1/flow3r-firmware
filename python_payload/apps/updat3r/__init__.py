@@ -7,7 +7,6 @@ import sys_kernel
 import urequests
 from st3m.ui.view import ViewManager
 import st3m.wifi
-import sys_buttons
 
 # from urllib.urequest import urlopen
 # from .helpers import sd_card_plugged
@@ -205,8 +204,7 @@ class UpdaterApp(Application):
             req = urequests.get("https://flow3r.garden/api/releases.json")
             self.latest_version = req.json()[0]
             req.close()
-            shoulder_name = "left" if sys_buttons.app_is_left() else "right"
-            self._state_text = f"latest version: {self.latest_version['name']}\n\npress {shoulder_name} shoulder button\nto start downloading"
+            self._state_text = f"latest version: {self.latest_version['name']}\n\npress app shoulder button\nto start downloading"
 
         if self.download_instance is not None:
             try:
