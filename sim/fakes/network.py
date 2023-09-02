@@ -5,7 +5,7 @@ class WLAN:
     def __init__(self, mode):
         pass
 
-    def active(self, active):
+    def active(self, active=None):
         return True
 
     def scan(self):
