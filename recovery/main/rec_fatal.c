@@ -6,7 +6,7 @@
 
 void rec_fatal(const char *msg) {
     for (;;) {
-        Ctx *ctx = st3m_ctx(portMAX_DELAY);
+        Ctx *ctx = st3m_ctx(st3m_gfx_default);
 
         // Draw background.
         ctx_rgb(ctx, 0.29, 0.0, 0.0);

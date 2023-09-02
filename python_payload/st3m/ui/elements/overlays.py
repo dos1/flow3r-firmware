@@ -134,6 +134,7 @@ class Compositor(Responder):
                     overlay.draw(octx)
             self._frame_skip = 8
             sys_display.overlay_clip(_clip_x0, _clip_y0, _clip_x1, _clip_y1)
+            sys_display.update(octx)
         self._frame_skip -= 1
 
     def add_overlay(self, ov: Overlay) -> None:

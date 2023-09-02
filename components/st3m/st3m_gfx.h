@@ -36,8 +36,8 @@ void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1);
 // returns a running average of fps
 float st3m_gfx_fps(void);
 
-Ctx *st3m_overlay_ctx(void);              // XXX to be removed
-Ctx *st3m_ctx(TickType_t ticks_to_wait);  // XXX: will get mode as arg
+// returns a ctx for drawing at the specified mode/target
+Ctx *st3m_ctx(st3m_gfx_mode mode);
 
 void st3m_ctx_end_frame(Ctx *ctx);  // temporary, signature compatible
                                     // with ctx_end_frame()

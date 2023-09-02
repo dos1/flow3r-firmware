@@ -65,22 +65,7 @@ STATIC mp_obj_t mp_set_palette(mp_obj_t pal_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_palette_obj, mp_set_palette);
 
 STATIC mp_obj_t mp_ctx(mp_obj_t mode_in) {
-    int mode = mp_obj_get_int(mode_in);
-    Ctx *ctx = NULL;
-    switch (mode) {
-        case 0:
-        case 16:
-            ctx = st3m_ctx(0);
-            if (ctx == NULL) return mp_const_none;
-            break;
-        case st3m_gfx_overlay:
-        case 8:
-        case 24:
-        case 32:
-            ctx = st3m_overlay_ctx();
-            break;
-    }
-    return mp_ctx_from_ctx(ctx);
+    return mp_ctx_from_ctx(st3m_ctx(mp_obj_get_int(mode_in)));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_ctx_obj, mp_ctx);
 

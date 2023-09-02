@@ -38,7 +38,7 @@ static void _header_draw(Ctx *ctx) {
 }
 
 void rec_erasing_draw(void) {
-    Ctx *ctx = st3m_ctx(portMAX_DELAY);
+    Ctx *ctx = st3m_ctx(st3m_gfx_default);
     _header_draw(ctx);
 
     ctx_move_to(ctx, 0, 0);
@@ -50,7 +50,7 @@ void rec_erasing_draw(void) {
 }
 
 void rec_flashing_draw(int percent) {
-    Ctx *ctx = st3m_ctx(portMAX_DELAY);
+    Ctx *ctx = st3m_ctx(st3m_gfx_default);
     _header_draw(ctx);
 
     ctx_move_to(ctx, 0, 0);
@@ -68,7 +68,7 @@ void rec_flashing_draw(int percent) {
 }
 
 void rec_menu_draw(menu_t *menu) {
-    Ctx *ctx = st3m_ctx(portMAX_DELAY);
+    Ctx *ctx = st3m_ctx(st3m_gfx_default);
     _header_draw(ctx);
 
     int y = -20;

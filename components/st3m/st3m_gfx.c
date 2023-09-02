@@ -1,6 +1,7 @@
 #include "st3m_gfx.h"
 // Submit a filled ctx descriptor to the rasterization pipeline.
 
+#include <pthread.h>
 #include <string.h>
 
 #include "esp_log.h"
@@ -54,6 +55,7 @@ static Ctx *fb_ctx = NULL;
 
 // RGBA8 overlay ctx
 static Ctx *overlay_ctx = NULL;
+static pthread_mutex_t overlay_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 // corner pixel coordinates for overlay clip
 static int _st3m_overlay_y1 = 0;
@@ -187,6 +189,18 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode) {
     return st3m_overlay_fb;
 }
 
+Ctx *st3m_overlay_ctx(void) {
+    if (!overlay_ctx) {
+        Ctx *ctx = overlay_ctx = ctx_new_for_framebuffer(
+            st3m_overlay_fb, OVERLAY_WIDTH, OVERLAY_HEIGHT, OVERLAY_WIDTH * 4,
+            CTX_FORMAT_RGBA8);
+
+        ctx_translate(ctx, 120 - OVERLAY_X, 120 - OVERLAY_Y);
+        memset(st3m_overlay_fb, 0, sizeof(st3m_overlay_fb));
+    }
+    return overlay_ctx;
+}
+
 static void st3m_gfx_task(void *_arg) {
     (void)_arg;
 
@@ -212,7 +226,8 @@ static void st3m_gfx_task(void *_arg) {
                 break;
             case st3m_gfx_default:
                 ctx_render_ctx(user_copy_ctx, fb_ctx);
-                if (_st3m_overlay_y1 != _st3m_overlay_y0)
+                if (_st3m_overlay_y1 != _st3m_overlay_y0) {
+                    pthread_mutex_lock(&overlay_mutex);
                     st3m_ctx_merge_overlay(
                         fb,
                         st3m_overlay_fb + 4 * ((_st3m_overlay_y0 - OVERLAY_Y) *
@@ -222,13 +237,15 @@ static void st3m_gfx_task(void *_arg) {
                         _st3m_overlay_x0, _st3m_overlay_y0,
                         _st3m_overlay_x1 - _st3m_overlay_x0 + 1,
                         _st3m_overlay_y1 - _st3m_overlay_y0 + 1);
-                flow3r_bsp_display_send_fb(fb, 16);
-                if (_st3m_overlay_y1 != _st3m_overlay_y0)
+                    flow3r_bsp_display_send_fb(fb, 16);
                     st3m_ctx_unmerge_overlay(
                         fb, st3m_overlay_backup, _st3m_overlay_x0,
                         _st3m_overlay_y0,
                         _st3m_overlay_x1 - _st3m_overlay_x0 + 1,
                         _st3m_overlay_y1 - _st3m_overlay_y0 + 1);
+                    pthread_mutex_unlock(&overlay_mutex);
+                } else
+                    flow3r_bsp_display_send_fb(fb, 16);
                 break;
             case st3m_gfx_16bpp:
                 flow3r_bsp_display_send_fb(fb, 16);
@@ -532,7 +549,12 @@ static void st3m_gfx_drawctx_pipe_put(void) {
     xQueueSend(user_ctx_rastq, &descno, portMAX_DELAY);
 }
 
-void st3m_ctx_end_frame(Ctx *ctx) { st3m_gfx_drawctx_pipe_put(); }
+void st3m_ctx_end_frame(Ctx *ctx) {
+    if (ctx == overlay_ctx)
+        pthread_mutex_unlock(&overlay_mutex);
+    else
+        st3m_gfx_drawctx_pipe_put();
+}
 
 uint8_t st3m_gfx_drawctx_pipe_full(void) {
     return uxQueueMessagesWaiting(user_ctx_freeq) == 0;
@@ -558,12 +580,6 @@ void st3m_gfx_flush(void) {
     ESP_LOGW(TAG, "Pipeline flush/reset done.");
 }
 
-Ctx *st3m_ctx(TickType_t ticks_to_wait) {
-    Ctx *ctx = st3m_gfx_drawctx_free_get(ticks_to_wait);
-    if (!ctx) return NULL;
-    return ctx;
-}
-
 void st3m_overlay_clear(void) {
     Ctx *ctx = st3m_overlay_ctx();
     ctx_save(ctx);
@@ -574,16 +590,14 @@ void st3m_overlay_clear(void) {
     ctx_restore(ctx);
 }
 
-Ctx *st3m_overlay_ctx(void) {
-    if (!overlay_ctx) {
-        Ctx *ctx = overlay_ctx = ctx_new_for_framebuffer(
-            st3m_overlay_fb, OVERLAY_WIDTH, OVERLAY_HEIGHT, OVERLAY_WIDTH * 4,
-            CTX_FORMAT_RGBA8);
-
-        ctx_translate(ctx, 120 - OVERLAY_X, 120 - OVERLAY_Y);
-        memset(st3m_overlay_fb, 0, sizeof(st3m_overlay_fb));
+Ctx *st3m_ctx(st3m_gfx_mode mode) {
+    if (mode == st3m_gfx_overlay) {
+        pthread_mutex_lock(&overlay_mutex);
+        return st3m_overlay_ctx();
     }
-    return overlay_ctx;
+    Ctx *ctx = st3m_gfx_drawctx_free_get(2000);
+    if (!ctx) return NULL;
+    return ctx;
 }
 
 void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1) {
