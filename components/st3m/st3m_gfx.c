@@ -72,6 +72,13 @@ static TaskHandle_t graphics_task;
 
 //////////////////////////
 
+void st3m_ctx_viewport_transform(Ctx *ctx) {
+    int32_t offset_x = FLOW3R_BSP_DISPLAY_WIDTH / 2;
+    int32_t offset_y = FLOW3R_BSP_DISPLAY_HEIGHT / 2;
+    ctx_identity(ctx);  // this might break/need revisiting with tiled rendering
+    ctx_apply_transform(ctx, 1, 0, offset_x, 0, 1, offset_y, 0, 0, 1);
+}
+
 // Attempt to receive from a queue forever, but log an error if it takes longer
 // than two seconds to get something.
 static void xQueueReceiveNotifyStarved(QueueHandle_t q, void *dst,
@@ -242,6 +249,8 @@ static void st3m_gfx_task(void *_arg) {
         }
         ctx_drawlist_clear(user_copy_ctx);
         ctx_drawlist_clear(overlay_copy_ctx);
+        st3m_ctx_viewport_transform(user_copy_ctx);
+        st3m_ctx_viewport_transform(overlay_copy_ctx);
 
         xQueueSend(user_ctx_freeq, &descno, portMAX_DELAY);
         st3m_counter_rate_sample(&rast_rate);
@@ -513,10 +522,6 @@ void st3m_gfx_init(void) {
         FLOW3R_BSP_DISPLAY_WIDTH * 4, CTX_FORMAT_RGBA8);
     assert(fb32_ctx != NULL);
     // translate x and y by 120 px to have (0,0) at center of the screen
-    int32_t offset_x = FLOW3R_BSP_DISPLAY_WIDTH / 2;
-    int32_t offset_y = FLOW3R_BSP_DISPLAY_HEIGHT / 2;
-    ctx_apply_transform(fb16_ctx, 1, 0, offset_x, 0, 1, offset_y, 0, 0, 1);
-    ctx_apply_transform(fb32_ctx, 1, 0, offset_x, 0, 1, offset_y, 0, 0, 1);
 
     // Setup user_ctx descriptor.
     user_ctx =
@@ -534,6 +539,11 @@ void st3m_gfx_init(void) {
     ctx_set_texture_cache(user_copy_ctx, fb16_ctx);
     ctx_set_texture_cache(overlay_ctx, fb16_ctx);
     ctx_set_texture_cache(overlay_copy_ctx, fb16_ctx);
+
+    st3m_ctx_viewport_transform(user_ctx);
+    st3m_ctx_viewport_transform(user_copy_ctx);
+    st3m_ctx_viewport_transform(overlay_ctx);
+    st3m_ctx_viewport_transform(overlay_copy_ctx);
 
     // Push descriptor to freeq.
     for (int i = 0; i < 2; i++) {
