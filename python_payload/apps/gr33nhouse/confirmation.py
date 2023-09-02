@@ -66,7 +66,7 @@ class ConfirmationView(BaseView):
 
         ctx.font_size = 16
         ctx.move_to(0, 60)
-        ctx.text("(Right shoulder to abort)")
+        ctx.text("(OS shoulder to abort)")
 
         ctx.restore()
 
