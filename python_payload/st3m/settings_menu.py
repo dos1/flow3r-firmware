@@ -68,34 +68,20 @@ class SettingsMenu(SimpleMenu):
     SIZE_SMALL = 15
 
 
-# List of all settings to be loaded/saved
-load_save_settings: List[UnaryTunable] = [
-    onoff_show_tray,
-    onoff_button_swap,
-    onoff_debug,
-    onoff_debug_touch,
-    onoff_wifi,
-    onoff_wifi_preference,
-    onoff_show_fps,
-    str_wifi_ssid,
-    str_wifi_psk,
-    str_hostname,
-]
-
 if TYPE_CHECKING:
     MenuStructureEntry = Union[UnaryTunable, Tuple[str, List["MenuStructureEntry"]]]
     MenuStructure = List[MenuStructureEntry]
 
 # Main settings menu
 settings_menu_structure: "MenuStructure" = [
+    MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/w1f1")),
+    onoff_wifi,
+    onoff_wifi_preference,
     onoff_show_tray,
     onoff_button_swap,
     onoff_show_fps,
     # onoff_debug,
     # onoff_debug_touch,
-    onoff_wifi,
-    onoff_wifi_preference,
-    MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/w1f1")),
 ]
 
 
