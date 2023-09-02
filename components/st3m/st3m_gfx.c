@@ -33,6 +33,7 @@ static void st3m_gfx_drawctx_pipe_put(void);
 
 static const char *TAG = "st3m-gfx";
 
+#define N_DRAWLISTS 2
 #define OVERLAY_WIDTH 240
 #define OVERLAY_HEIGHT 240
 #define OVERLAY_X 0
@@ -45,8 +46,7 @@ EXT_RAM_BSS_ATTR static uint8_t
 EXT_RAM_BSS_ATTR uint16_t st3m_overlay_backup[OVERLAY_WIDTH * OVERLAY_HEIGHT];
 
 // drawlist ctx
-static Ctx *user_ctx = NULL;
-static Ctx *user_copy_ctx = NULL;
+static Ctx *user_ctx[N_DRAWLISTS];
 
 // RGB565_byteswapped framebuffer ctx - our global ctx
 //   user_ctx gets replayed on this
@@ -54,8 +54,7 @@ static Ctx *fb16_ctx = NULL;
 static Ctx *fb32_ctx = NULL;
 
 // RGBA8 overlay ctx
-static Ctx *overlay_ctx = NULL;
-static Ctx *overlay_copy_ctx = NULL;
+static Ctx *overlay_ctx[N_DRAWLISTS];
 
 // corner pixel coordinates for overlay clip
 static int _st3m_overlay_y1 = 0;
@@ -200,9 +199,9 @@ static void st3m_gfx_task(void *_arg) {
     (void)_arg;
 
     while (true) {
-        int descno = 0;
+        int desc_no = 0;
 
-        xQueueReceiveNotifyStarved(user_ctx_rastq, &descno,
+        xQueueReceiveNotifyStarved(user_ctx_rastq, &desc_no,
                                    "rast task starved (user_ctx)!");
 
         ctx_set_textureclock(fb16_ctx, ctx_textureclock(fb16_ctx) + 1);
@@ -214,16 +213,16 @@ static void st3m_gfx_task(void *_arg) {
                 flow3r_bsp_display_send_fb(st3m_overlay_fb, _st3m_gfx_mode);
                 break;
             case st3m_gfx_32bpp:
-                ctx_render_ctx(user_copy_ctx, fb32_ctx);
-                ctx_render_ctx(overlay_copy_ctx, fb32_ctx);
+                ctx_render_ctx(user_ctx[desc_no], fb32_ctx);
+                ctx_render_ctx(overlay_ctx[desc_no], fb32_ctx);
                 flow3r_bsp_display_send_fb(st3m_overlay_fb, _st3m_gfx_mode);
                 break;
             case st3m_gfx_overlay:
                 flow3r_bsp_display_send_fb(st3m_overlay_fb, 32);
                 break;
             case st3m_gfx_default:
-                ctx_render_ctx(overlay_copy_ctx, fb32_ctx);
-                ctx_render_ctx(user_copy_ctx, fb16_ctx);
+                ctx_render_ctx(overlay_ctx[desc_no], fb32_ctx);
+                ctx_render_ctx(user_ctx[desc_no], fb16_ctx);
                 if (_st3m_overlay_y1 != _st3m_overlay_y0) {
                     st3m_ctx_merge_overlay(
                         fb,
@@ -247,12 +246,12 @@ static void st3m_gfx_task(void *_arg) {
                 flow3r_bsp_display_send_fb(fb, 16);
                 break;
         }
-        ctx_drawlist_clear(user_copy_ctx);
-        ctx_drawlist_clear(overlay_copy_ctx);
-        st3m_ctx_viewport_transform(user_copy_ctx);
-        st3m_ctx_viewport_transform(overlay_copy_ctx);
+        ctx_drawlist_clear(user_ctx[desc_no]);
+        ctx_drawlist_clear(overlay_ctx[desc_no]);
+        st3m_ctx_viewport_transform(user_ctx[desc_no]);
+        st3m_ctx_viewport_transform(overlay_ctx[desc_no]);
 
-        xQueueSend(user_ctx_freeq, &descno, portMAX_DELAY);
+        xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
         st3m_counter_rate_sample(&rast_rate);
         float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
         smoothed_fps = smoothed_fps * 0.9 + 0.1 * rate;
@@ -449,52 +448,52 @@ void st3m_gfx_show_textview(st3m_gfx_textview_t *tv) {
         return;
     }
 
-    st3m_gfx_drawctx_free_get(portMAX_DELAY);
+    Ctx *ctx = st3m_gfx_drawctx_free_get(1000);  // portMAX_DELAY);
 
-    ctx_save(user_ctx);
+    ctx_save(ctx);
 
     // Draw background.
-    ctx_rgb(user_ctx, 0, 0, 0);
-    ctx_rectangle(user_ctx, -120, -120, 240, 240);
-    ctx_fill(user_ctx);
+    ctx_rgb(ctx, 0, 0, 0);
+    ctx_rectangle(ctx, -120, -120, 240, 240);
+    ctx_fill(ctx);
 
-    st3m_gfx_flow3r_logo(user_ctx, 0, -30, 150);
+    st3m_gfx_flow3r_logo(ctx, 0, -30, 150);
 
     int y = 20;
 
-    ctx_gray(user_ctx, 1.0);
-    ctx_text_align(user_ctx, CTX_TEXT_ALIGN_CENTER);
-    ctx_text_baseline(user_ctx, CTX_TEXT_BASELINE_MIDDLE);
-    ctx_font_size(user_ctx, 20.0);
+    ctx_gray(ctx, 1.0);
+    ctx_text_align(ctx, CTX_TEXT_ALIGN_CENTER);
+    ctx_text_baseline(ctx, CTX_TEXT_BASELINE_MIDDLE);
+    ctx_font_size(ctx, 20.0);
 
     // Draw title, if any.
     if (tv->title != NULL) {
-        ctx_move_to(user_ctx, 0, y);
-        ctx_text(user_ctx, tv->title);
+        ctx_move_to(ctx, 0, y);
+        ctx_text(ctx, tv->title);
         y += 20;
     }
 
-    ctx_font_size(user_ctx, 15.0);
-    ctx_gray(user_ctx, 0.8);
+    ctx_font_size(ctx, 15.0);
+    ctx_gray(ctx, 0.8);
 
     // Draw messages.
     const char **lines = tv->lines;
     if (lines != NULL) {
         while (*lines != NULL) {
             const char *text = *lines++;
-            ctx_move_to(user_ctx, 0, y);
-            ctx_text(user_ctx, text);
+            ctx_move_to(ctx, 0, y);
+            ctx_text(ctx, text);
             y += 15;
         }
     }
 
     // Draw version.
-    ctx_font_size(user_ctx, 15.0);
-    ctx_gray(user_ctx, 0.6);
-    ctx_move_to(user_ctx, 0, 100);
-    ctx_text(user_ctx, st3m_version);
+    ctx_font_size(ctx, 15.0);
+    ctx_gray(ctx, 0.6);
+    ctx_move_to(ctx, 0, 100);
+    ctx_text(ctx, st3m_version);
 
-    ctx_restore(user_ctx);
+    ctx_restore(ctx);
 
     st3m_gfx_drawctx_pipe_put();
 }
@@ -507,9 +506,9 @@ void st3m_gfx_init(void) {
     flow3r_bsp_display_init();
 
     // Create drawlist ctx queues.
-    user_ctx_freeq = xQueueCreate(2 + 1, sizeof(int));
+    user_ctx_freeq = xQueueCreate(N_DRAWLISTS, sizeof(int));
     assert(user_ctx_freeq != NULL);
-    user_ctx_rastq = xQueueCreate(2 + 1, sizeof(int));
+    user_ctx_rastq = xQueueCreate(1, sizeof(int));
     assert(user_ctx_rastq != NULL);
 
     // Setup framebuffer descriptor.
@@ -521,32 +520,23 @@ void st3m_gfx_init(void) {
         st3m_overlay_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
         FLOW3R_BSP_DISPLAY_WIDTH * 4, CTX_FORMAT_RGBA8);
     assert(fb32_ctx != NULL);
-    // translate x and y by 120 px to have (0,0) at center of the screen
+    ctx_set_texture_source(fb32_ctx, fb16_ctx);
+    ctx_set_texture_cache(fb32_ctx, fb16_ctx);
 
     // Setup user_ctx descriptor.
-    user_ctx =
-        ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT);
-    user_copy_ctx =
-        ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT);
-    overlay_ctx =
-        ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT);
-    overlay_copy_ctx =
-        ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT);
-    assert(user_ctx != NULL);
-    ctx_set_texture_cache(fb32_ctx, fb16_ctx);
-    ctx_set_texture_source(fb32_ctx, fb16_ctx);
-    ctx_set_texture_cache(user_ctx, fb16_ctx);
-    ctx_set_texture_cache(user_copy_ctx, fb16_ctx);
-    ctx_set_texture_cache(overlay_ctx, fb16_ctx);
-    ctx_set_texture_cache(overlay_copy_ctx, fb16_ctx);
+    for (int i = 0; i < N_DRAWLISTS; i++) {
+        user_ctx[i] = ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH,
+                                       FLOW3R_BSP_DISPLAY_HEIGHT);
+        assert(user_ctx[i] != NULL);
+        overlay_ctx[i] = ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH,
+                                          FLOW3R_BSP_DISPLAY_HEIGHT);
+        assert(overlay_ctx[i] != NULL);
+        ctx_set_texture_cache(user_ctx[i], fb16_ctx);
+        ctx_set_texture_cache(overlay_ctx[i], fb16_ctx);
 
-    st3m_ctx_viewport_transform(user_ctx);
-    st3m_ctx_viewport_transform(user_copy_ctx);
-    st3m_ctx_viewport_transform(overlay_ctx);
-    st3m_ctx_viewport_transform(overlay_copy_ctx);
+        st3m_ctx_viewport_transform(user_ctx[i]);
+        st3m_ctx_viewport_transform(overlay_ctx[i]);
 
-    // Push descriptor to freeq.
-    for (int i = 0; i < 2; i++) {
         BaseType_t res = xQueueSend(user_ctx_freeq, &i, 0);
         assert(res == pdTRUE);
     }
@@ -557,26 +547,19 @@ void st3m_gfx_init(void) {
     assert(res == pdPASS);
 }
 
-static int descno = 0;
+static int last_descno = 0;
 static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
-    BaseType_t res = xQueueReceive(user_ctx_freeq, &descno, portMAX_DELAY);
+    BaseType_t res = xQueueReceive(user_ctx_freeq, &last_descno, ticks_to_wait);
     if (res != pdTRUE) return NULL;
-    return user_ctx;
+    return user_ctx[last_descno];
 }
 
 static void st3m_gfx_drawctx_pipe_put(void) {
-    Ctx *tmp = user_ctx;
-    user_ctx = user_copy_ctx;
-    user_copy_ctx = tmp;
-    tmp = overlay_ctx;
-    overlay_ctx = overlay_copy_ctx;
-    overlay_copy_ctx = tmp;
-
-    xQueueSend(user_ctx_rastq, &descno, portMAX_DELAY);
+    xQueueSend(user_ctx_rastq, &last_descno, portMAX_DELAY);
 }
 
 void st3m_ctx_end_frame(Ctx *ctx) {
-    if (ctx == overlay_ctx) {
+    if ((ctx == overlay_ctx[0]) || (ctx == overlay_ctx[1])) {
     } else {
         st3m_gfx_drawctx_pipe_put();
     }
@@ -586,20 +569,25 @@ uint8_t st3m_gfx_drawctx_pipe_full(void) {
     return uxQueueMessagesWaiting(user_ctx_freeq) == 0;
 }
 
-void st3m_gfx_flush(void) {
+void st3m_gfx_flush(int timeout_ms) {
     ESP_LOGW(TAG, "Pipeline flush/reset requested...");
+
     // Drain all workqs and freeqs.
     xQueueReset(user_ctx_freeq);
     xQueueReset(user_ctx_rastq);
 
     // Delay, making sure pipeline tasks have returned all used descriptors. One
     // second is enough to make sure we've processed everything.
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    vTaskDelay(timeout_ms / portTICK_PERIOD_MS);
 
     // And drain again.
     xQueueReset(user_ctx_freeq);
 
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < N_DRAWLISTS; i++) {
+        ctx_drawlist_clear(user_ctx[i]);
+        ctx_drawlist_clear(overlay_ctx[i]);
+        st3m_ctx_viewport_transform(user_ctx[i]);
+        st3m_ctx_viewport_transform(overlay_ctx[i]);
         BaseType_t res = xQueueSend(user_ctx_freeq, &i, 0);
         assert(res == pdTRUE);
     }
@@ -608,10 +596,13 @@ void st3m_gfx_flush(void) {
 
 Ctx *st3m_ctx(st3m_gfx_mode mode) {
     if (mode == st3m_gfx_overlay) {
-        return overlay_ctx;
+        return overlay_ctx[last_descno];
     }
-    Ctx *ctx = st3m_gfx_drawctx_free_get(2000);
-    if (!ctx) return NULL;
+    Ctx *ctx = st3m_gfx_drawctx_free_get(1000);
+
+    if (!ctx) {
+        return NULL;
+    }
     return ctx;
 }
 

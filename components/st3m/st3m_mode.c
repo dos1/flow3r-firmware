@@ -137,6 +137,7 @@ void st3m_mode_update_display(bool *restartable) {
         case st3m_mode_kind_repl:
             if (!_mode.shown) {
                 _mode.shown = true;
+                st3m_gfx_flush(200);
                 const char *lines[] = {
                     "Send Ctrl-D over USB",
                     "or press right shoulder button",

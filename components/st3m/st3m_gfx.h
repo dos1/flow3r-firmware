@@ -55,8 +55,8 @@ uint8_t st3m_gfx_drawctx_pipe_full(void);
 // wasn't, for exaple if Micropython restarted).
 //
 // This causes a graphical disturbance and shouldn't be called during normal
-// operation.
-void st3m_gfx_flush(void);
+// operation. wait_ms is waited for drawlits to clear.
+void st3m_gfx_flush(int wait_ms);
 
 typedef struct {
     const char *title;

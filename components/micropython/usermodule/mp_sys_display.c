@@ -112,7 +112,7 @@ STATIC mp_obj_t mp_pipe_full(void) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_pipe_full_obj, mp_pipe_full);
 
 STATIC mp_obj_t mp_pipe_flush(void) {
-    st3m_gfx_flush();
+    st3m_gfx_flush(1000);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_pipe_flush_obj, mp_pipe_flush);
