@@ -16,3 +16,7 @@ class WLAN:
 
     def isconnected(self):
         return True
+
+    def status(self, status_type):
+        if status_type == "rssi":
+            return -60
