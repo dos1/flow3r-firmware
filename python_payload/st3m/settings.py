@@ -10,7 +10,7 @@ request.
 
 import json
 
-from st3m import InputState, Responder, logging
+from st3m import logging
 from st3m.goose import (
     ABCBase,
     abstractmethod,
@@ -20,9 +20,7 @@ from st3m.goose import (
     Optional,
     Callable,
 )
-from st3m.ui.view import ViewManager
-from st3m.utils import lerp, ease_out_cubic, reduce
-from ctx import Context
+from st3m.utils import reduce
 
 log = logging.Log(__name__, level=logging.INFO)
 
@@ -62,13 +60,6 @@ class Tunable(ABCBase):
         ...
 
     @abstractmethod
-    def get_widget(self) -> "TunableWidget":
-        """
-        Widget that will be used to render this setting in menus.
-        """
-        ...
-
-    @abstractmethod
     def save(self) -> Dict[str, Any]:
         """
         Return dictionary that contains this setting's persistance data. Will be
@@ -80,21 +71,6 @@ class Tunable(ABCBase):
     def load(self, d: Dict[str, Any]) -> None:
         """
         Load in-memory state from persisted data.
-        """
-        ...
-
-
-class TunableWidget(Responder):
-    """
-    A tunable's widget as rendered in menus.
-    """
-
-    @abstractmethod
-    def press(self, vm: Optional[ViewManager]) -> None:
-        """
-        Called when the menu item is 'pressed', ie. selected/activated. A widget
-        should react to this as the primary way to let the users manipulate the
-        value of the tunable from a menu.
         """
         ...
 
@@ -165,83 +141,11 @@ class OnOffTunable(UnaryTunable):
     def __init__(self, name: str, key: str, default: bool) -> None:
         super().__init__(name, key, default)
 
-    def get_widget(self) -> TunableWidget:
-        return OnOffWidget(self)
-
-    def press(self, vm: Optional[ViewManager]) -> None:
-        if self.value == True:
+    def press(self, vm: Optional["ViewManager"]) -> None:
+        if self.value is True:
             self.set_value(False)
         else:
             self.set_value(True)
-
-
-class OnOffWidget(TunableWidget):
-    """
-    OnOffWidget is a TunableWidget for OnOffTunables. It renders a slider
-    switch.
-    """
-
-    def __init__(self, tunable: "OnOffTunable") -> None:
-        self._tunable = tunable
-
-        # Value from 0 to animation_duration indicating animation progress
-        # (starts at animation_duration, ends at 0).
-        self._animating: float = 0
-
-        # Last and previous read value from tunable.
-        self._state = tunable.value == True
-        self._prev_state = self._state
-
-        # Value from 0 to 1, representing desired animation position. Linear
-        # between both. 1 represents rendering _state, 0 represents render the
-        # opposite of _state.
-        self._progress = 1.0
-
-    def think(self, ins: InputState, delta_ms: int) -> None:
-        animation_duration = 0.2
-
-        self._state = self._tunable.value == True
-
-        if self._prev_state != self._state:
-            # State switched.
-
-            # Start new animation, making sure to take into consideration
-            # whatever animation is already taking place.
-            self._animating = animation_duration - self._animating
-        else:
-            # Continue animation.
-            self._animating -= delta_ms / 1000
-            if self._animating < 0:
-                self._animating = 0
-
-        # Calculate progress value.
-        self._progress = 1.0 - (self._animating / animation_duration)
-        self._prev_state = self._state
-
-    def draw(self, ctx: Context) -> None:
-        value = self._state
-        v = self._progress
-        v = ease_out_cubic(v)
-        if not value:
-            v = 1.0 - v
-
-        ctx.rgb(lerp(0, 0.4, v), lerp(0, 0.6, v), lerp(0, 0.4, v))
-
-        ctx.round_rectangle(0, -10, 40, 20, 5)
-        ctx.line_width = 2
-        ctx.fill()
-
-        ctx.round_rectangle(0, -10, 40, 20, 5)
-        ctx.line_width = 2
-        ctx.gray(lerp(0.3, 1, v))
-        ctx.stroke()
-
-        ctx.gray(1)
-        ctx.round_rectangle(lerp(2, 22, v), -8, 16, 16, 5)
-        ctx.fill()
-
-    def press(self, vm: Optional[ViewManager]) -> None:
-        self._tunable.set_value(not self._state)
 
 
 class StringTunable(UnaryTunable):
@@ -252,31 +156,7 @@ class StringTunable(UnaryTunable):
     def __init__(self, name: str, key: str, default: Optional[str]) -> None:
         super().__init__(name, key, default)
 
-    def get_widget(self) -> TunableWidget:
-        return StringWidget(self)
-
-    def press(self, vm: Optional[ViewManager]) -> None:
-        # Text input not supported at the moment
-        pass
-
-
-class StringWidget(TunableWidget):
-    """
-    StringWidget is a TunableWidget for StringTunables. It renders a string.
-    """
-
-    def __init__(self, tunable: StringTunable) -> None:
-        self._tunable = tunable
-
-    def think(self, ins: InputState, delta_ms: int) -> None:
-        # Nothing to do here
-        pass
-
-    def draw(self, ctx: Context) -> None:
-        ctx.text_align = ctx.LEFT
-        ctx.text(str(self._tunable.value) if self._tunable.value else "")
-
-    def press(self, vm: Optional[ViewManager]) -> None:
+    def press(self, vm: Optional["ViewManager"]) -> None:
         # Text input not supported at the moment
         pass
 
@@ -290,32 +170,7 @@ class ObfuscatedStringTunable(UnaryTunable):
     def __init__(self, name: str, key: str, default: Optional[str]) -> None:
         super().__init__(name, key, default)
 
-    def get_widget(self) -> TunableWidget:
-        return ObfuscatedValueWidget(self)
-
-    def press(self, vm: Optional[ViewManager]) -> None:
-        # Text input not supported at the moment
-        pass
-
-
-class ObfuscatedValueWidget(TunableWidget):
-    """
-    ObfuscatedValueWidget is a TunableWidget for UnaryTunables. It renders three asterisks when the tunable contains a truthy value, otherwise nothing.
-    """
-
-    def __init__(self, tunable: UnaryTunable) -> None:
-        self._tunable = tunable
-
-    def think(self, ins: InputState, delta_ms: int) -> None:
-        # Nothing to do here
-        pass
-
-    def draw(self, ctx: Context) -> None:
-        ctx.text_align = ctx.LEFT
-        if self._tunable.value:
-            ctx.text("***")
-
-    def press(self, vm: Optional[ViewManager]) -> None:
+    def press(self, vm: Optional["ViewManager"]) -> None:
         # Text input not supported at the moment
         pass
 
@@ -353,7 +208,6 @@ def load_all() -> None:
     """
     Load all settings from flash.
     """
-    global settings_loaded
     data = {}
     try:
         with open("/flash/settings.json", "r") as f:
@@ -372,7 +226,7 @@ def _update(d: Dict[str, Any], u: Dict[str, Any]) -> Dict[str, Any]:
     Recursive update dictionary.
     """
     for k, v in u.items():
-        if type(v) == type({}):
+        if isinstance(v, dict):
             d[k] = _update(d.get(k, {}), v)
         else:
             d[k] = v
