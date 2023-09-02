@@ -469,9 +469,17 @@ into the two different views. We make use of an `InputController` again to handl
 
     st3m.run.run_view(Example())
 
-Try it using `mpremote`. The right shoulder button switches between the two views. To avoid that
-the still pressed button immediately closes `SecondScreen` we make us of a special method of the
-`InputController` which hides the pressed button from the view until it is released again.
+Try it using `mpremote`. The OS shoulder button (right shoulder unless swapped in settings) switches
+between the two views. To avoid that the still pressed button immediately closes `SecondScreen`
+we make us of a special method of the `InputController` which hides the pressed button from the
+view until it is released again.
+
+.. note::
+
+   Pressing the OS shoulder button in REPL mode will currently reset the badge.
+
+   Until this is fixed, you can test view switching by copying the app to your badge and
+   running from the menu.
 
 Example 2b: Easier view management
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

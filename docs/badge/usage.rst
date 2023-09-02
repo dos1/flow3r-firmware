@@ -23,19 +23,19 @@ You should then see the badge spring to life and display 'Starting...' on the sc
 Navigating the Menu
 -------------------
 
-The left shoulder button is used to navigate the menus of the badge. Moving it
-left and right selects an option in the menu. Pressing it down selects a menu
-option.
+The app shoulder button (left shoulder unless swapped in settings) is used to
+navigate the menus of the badge. Moving it left and right selects an option
+in the menu. Pressing it down selects a menu option.
 
-The right shoulder button can be pressed down to quickly return 'back', either
-in a menu or an app.
+The OS shoulder button (right shoulder unless swapped in settings) can be
+pressed down to quickly return 'back', either in a menu or an app.
 
 Dealing with Audio
 ------------------
 
 The badge has two built-in speakers. Their loudness can always be adjusted by
-using the right shoulder button, left for lowering the volume and right for
-making it louder.
+using the OS shoulder button (right shoulder unless swapped in settings), left
+for lowering the volume and right for making it louder.
 
 You can plug in a pair of headphones to the 3.5mm jack on the bottom-left petal.
 The built-in speakers will then turn off and audio will go out through the
@@ -64,8 +64,8 @@ Use ``"color": "0xffffff",`` to color your name and pronouns.
 Use ``"mode": "1",`` to use a different animation mode rotating your nick based on badge orientation.
 
 When you're done editing, unmount/eject the badge from your computer
-(``umount`` on Linux is enough) and press the right shoulder button to exit Disk
-Mode. Then, go to Badge |rarr| Nick to see your changes!
+(``umount`` on Linux is enough) and press the OS shoulder button (right shoulder unless swapped in
+settings) to exit Disk Mode. Then, go to Badge |rarr| Nick to see your changes!
 
 If the ``nick.json`` file is unparseable or otherwise gets corrupted, it will be
 overwritten with the default contents on next nick app startup.
