@@ -123,7 +123,8 @@ void st3m_mode_update_display(bool *restartable) {
         case st3m_mode_kind_disk_sd:
         case st3m_mode_kind_disk_flash: {
             const char *lines[] = {
-                (st3m_io_app_button_is_left()) ? "Press right shoulder button" : "Press left shoulder button",
+                (st3m_io_app_button_is_left()) ? "Press right shoulder button"
+                                               : "Press left shoulder button",
                 "to restart.",
                 NULL,
             };
@@ -141,7 +142,9 @@ void st3m_mode_update_display(bool *restartable) {
                 st3m_gfx_flush(200);
                 const char *lines[] = {
                     "Send Ctrl-D over USB",
-                    (st3m_io_app_button_is_left()) ? "or press right shoulder button" : "or press left shoulder button",
+                    (st3m_io_app_button_is_left())
+                        ? "or press right shoulder button"
+                        : "or press left shoulder button",
                     "to restart.",
                     NULL,
                 };
@@ -160,7 +163,8 @@ void st3m_mode_update_display(bool *restartable) {
             }
             const char *lines[] = {
                 msg,
-                (st3m_io_app_button_is_left()) ? "Press right shoulder button" : "Press left shoulder button",
+                (st3m_io_app_button_is_left()) ? "Press right shoulder button"
+                                               : "Press left shoulder button",
                 "to restart.",
                 NULL,
             };
