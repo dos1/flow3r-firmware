@@ -308,7 +308,8 @@ class WifiApp(Application):
             ssid = self._nearby_wlans[self._wlan_offset][0].decode()
             psk = self._password_model.text
             print(ssid, psk)
-            self.connect_wifi(ssid, psk)
+            if psk:
+                self.connect_wifi(ssid, psk)
             self._password_model = TextInputModel("")
             self._waiting_for_password = False
 
