@@ -6,55 +6,63 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 ### Added
-- Added the _Audio Passthrough_ app for toggling audio passthrough through
+- Added the `Audio Passthrough` app for toggling audio passthrough through
   line-in/mic to speaker or lineout.
-- Added the _w1f1 app_ for managing wifi access, incorporates an in-progress
-  cap-touch multi-tap keyboard.
-- Added the _Scalar__ app in __Music__ category for playing scales.
-- Added configuration of wifi credentials + hostname via _settings.json_
-- Added a settings.settings\_loaded flag
-- Added wifi preference for apps
-- Added task profiler
-- Added an error screen to the _Nick_ app when `nick.json` is invalid.
+- Added the `w1f1` app for managing wifi access to Settings, incorporates
+  an in-progress cap-touch multi-tap keyboard (`k3yboard`).
+- Added the `Scalar` app in `Music` category for playing scales.
+- Added configuration of wifi credentials + hostname via `settings.json`
+- Added support for apps to set wifi state automatically (configurable in
+  settings: `Let apps change WiFi`)
+- Added task profiler which prints over serial (configurable in
+  settings: `Debug: ftop`)
+- Added an error screen to the `Nick` app when `nick.json` is invalid.
 - Added `urequests` support in the simulator.
-- Added audio/video media framework, and _Wurzelitzer_ app as a small jukebox
+- Added audio/video media framework, and `Wurzelitzer` app as a small jukebox
   frontend - currently supporting mp3, mpeg1 and protracker modules.
 - Added exporting of built firmwares as part of CI
-- graphics: sprite sheet support for ctx.image()
-- graphics: ctx.parse() for parsing SVG path data/ctx protocol.
+- graphics: sprite sheet support for `ctx.image()`
+- graphics: `ctx.parse()` for parsing SVG path data/ctx protocol.
 - graphics: raw frame-buffer access in 4,8,16,24 and 32bit graphics modes.
 - graphics: clipped overlay buffer
-- graphics: allow a graphics state depth of up to 10 (ctx.save() ctx.restore())
+- graphics: allow a graphics state depth of up to 10 (`ctx.save()` `ctx.restore()`)
 
 ### Changed
-- Switched the REPL/fatal/disk restart button to right shoulder button.
+- Switched the REPL/fatal/disk restart button to the OS shoulder button (right
+  shoulder button, unless swapped in settings).
 - Improved performance of the `gr33nhouse` app list by not rendering hidden
   entries and scrolling ones too long to fit on screen.
-- Moved the _Clouds_ app to the _Badge_ menu and updated it to use IMU data and
+- Settings are now automatically loaded and saved when entering and leaving
+  the settings page.
+- Moved the `Clouds` app to the `Badge` menu and updated it to use IMU data and
   render in 32bpp graphics mode.
 - Added a more sane commandline interface to the simulator.
 - More stub functions for the simulator.
 - Improved performance of system menus by not rendering hidden entries.
-- Added visualization of state, instead of an audio scope in UI of __harmonic
-  demo__ and __melodic demo__.
+- Added visualization of state, instead of an audio scope in UI of `harmonic
+  demo` and `melodic demo`.
 - The system provided scope is now rendered stroked rather than filled.
-- Improved BPM tap accuracy in __gay drums__
-- Some shell code rewritten to avoid the expensive calls ctx.save\_group and
-  ctx.restore\_group().
-- overlay graphics is rendered in a separate pass, rate limited
-- The entry section in __flow3r.toml__ can now be omitted if the Application
-  class is called __App__.
-- Improved handedness in buttons
+- Improved BPM tap accuracy in `gay drums`.
+- Some shell code rewritten to avoid the expensive calls `ctx.save_group()` and
+  `ctx.restore_group()`.
+- overlay graphics is rendered in a separate pass, rate limited.
+- The entry section in `flow3r.toml` can now be omitted if the Application
+  class is called `App`.
+- `ctx.image()` now supports clipping and drawing a part of the given image.
+- Split the `settings.py` file into two, creating `settings_menu.py` to hold
+  UI-related code and allow `settings` to be used import loops without
+  in many cases.
+- Improved handedness in buttons.
 
 ### Fixed
-- Fixed _tiny_sampler_ keeping the microphone active after app exit.
+- Fixed `tiny sampler` keeping the microphone active after app exit.
 - Fixed missing `include/` dir on builds on Darwin.
 - Fixed the `time` module in the simulator being broken for apps trying to use it.
 - Fixed wrong petal ordering in the simulator.
 - Fixed simulator not exiting when closed.
-- Fixed _Comic Mono_ missing in the simulator.
-- Fixed create nick.json on launch if absent
-- Fixed initialization orientation of display (which also fixed incorrect transform of gradients.)
+- Fixed `Comic Mono` missing in the simulator.
+- Fixed initialization orientation of display (which also fixed incorrect
+  transform of gradients)
 - Fixed cleanup at exit for firmware apps
 - Fixed sequencer bug in bl00mbox
 =======
