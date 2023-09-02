@@ -1,10 +1,8 @@
 import sys_kernel
+from st3m import settings
 
 
 class ftop:
-    auto_enable = (
-        False  # hiii this should be toggleable via settings at some point pls~
-    )
     auto_interval_ms = 5000  # maybe this one too idk~
     _auto_countdown_ms = 0
     _max_name_len = 0
@@ -17,7 +15,7 @@ class ftop:
         if a new report is scheduled and if so saves it in ftop.report.
         Returns True if a new report has been generated, else false.
         """
-        if ftop.auto_enable:
+        if settings.onoff_debug_ftop.value and sys_kernel.usb_console_active():
             ftop._auto_countdown_ms -= delta_t_ms
             if ftop._auto_countdown_ms <= 0:
                 ftop._auto_countdown_ms = ftop.auto_interval_ms
