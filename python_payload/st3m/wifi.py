@@ -1,12 +1,11 @@
 import network
 from network import WLAN
 from st3m import settings
-from st3m.goose import Optional
 from st3m.logging import Log
 
 log = Log(__name__)
 
-iface: Optional[WLAN] = None
+iface: WLAN = network.WLAN(network.STA_IF)
 
 
 def setup_wifi() -> None:
@@ -23,19 +22,16 @@ def setup_wifi() -> None:
 
 def enable() -> None:
     global iface
-    iface = network.WLAN(network.STA_IF)
     iface.active(True)
 
 
 def disable() -> None:
     global iface
-    if iface is not None:
-        iface.active(False)
-        iface = None
+    iface.active(False)
 
 
 def enabled() -> bool:
-    return iface is not None
+    return iface.active()
 
 
 def is_connected() -> bool:
