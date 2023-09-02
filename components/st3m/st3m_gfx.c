@@ -1,7 +1,6 @@
 #include "st3m_gfx.h"
 // Submit a filled ctx descriptor to the rasterization pipeline.
 
-#include <pthread.h>
 #include <string.h>
 
 #include "esp_log.h"
@@ -51,11 +50,12 @@ static Ctx *user_copy_ctx = NULL;
 
 // RGB565_byteswapped framebuffer ctx - our global ctx
 //   user_ctx gets replayed on this
-static Ctx *fb_ctx = NULL;
+static Ctx *fb16_ctx = NULL;
+static Ctx *fb32_ctx = NULL;
 
 // RGBA8 overlay ctx
 static Ctx *overlay_ctx = NULL;
-static pthread_mutex_t overlay_mutex = PTHREAD_MUTEX_INITIALIZER;
+static Ctx *overlay_copy_ctx = NULL;
 
 // corner pixel coordinates for overlay clip
 static int _st3m_overlay_y1 = 0;
@@ -189,18 +189,6 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode) {
     return st3m_overlay_fb;
 }
 
-Ctx *st3m_overlay_ctx(void) {
-    if (!overlay_ctx) {
-        Ctx *ctx = overlay_ctx = ctx_new_for_framebuffer(
-            st3m_overlay_fb, OVERLAY_WIDTH, OVERLAY_HEIGHT, OVERLAY_WIDTH * 4,
-            CTX_FORMAT_RGBA8);
-
-        ctx_translate(ctx, 120 - OVERLAY_X, 120 - OVERLAY_Y);
-        memset(st3m_overlay_fb, 0, sizeof(st3m_overlay_fb));
-    }
-    return overlay_ctx;
-}
-
 static void st3m_gfx_task(void *_arg) {
     (void)_arg;
 
@@ -210,24 +198,26 @@ static void st3m_gfx_task(void *_arg) {
         xQueueReceiveNotifyStarved(user_ctx_rastq, &descno,
                                    "rast task starved (user_ctx)!");
 
-        ctx_set_textureclock(fb_ctx, ctx_textureclock(fb_ctx) + 1);
-
-        st3m_overlay_ctx();
+        ctx_set_textureclock(fb16_ctx, ctx_textureclock(fb16_ctx) + 1);
 
         switch (_st3m_gfx_mode) {
             default:
             case st3m_gfx_8bpp:
             case st3m_gfx_24bpp:
+                flow3r_bsp_display_send_fb(st3m_overlay_fb, _st3m_gfx_mode);
+                break;
             case st3m_gfx_32bpp:
+                ctx_render_ctx(user_copy_ctx, fb32_ctx);
+                ctx_render_ctx(overlay_copy_ctx, fb32_ctx);
                 flow3r_bsp_display_send_fb(st3m_overlay_fb, _st3m_gfx_mode);
                 break;
             case st3m_gfx_overlay:
                 flow3r_bsp_display_send_fb(st3m_overlay_fb, 32);
                 break;
             case st3m_gfx_default:
-                ctx_render_ctx(user_copy_ctx, fb_ctx);
+                ctx_render_ctx(overlay_copy_ctx, fb32_ctx);
+                ctx_render_ctx(user_copy_ctx, fb16_ctx);
                 if (_st3m_overlay_y1 != _st3m_overlay_y0) {
-                    pthread_mutex_lock(&overlay_mutex);
                     st3m_ctx_merge_overlay(
                         fb,
                         st3m_overlay_fb + 4 * ((_st3m_overlay_y0 - OVERLAY_Y) *
@@ -243,7 +233,6 @@ static void st3m_gfx_task(void *_arg) {
                         _st3m_overlay_y0,
                         _st3m_overlay_x1 - _st3m_overlay_x0 + 1,
                         _st3m_overlay_y1 - _st3m_overlay_y0 + 1);
-                    pthread_mutex_unlock(&overlay_mutex);
                 } else
                     flow3r_bsp_display_send_fb(fb, 16);
                 break;
@@ -252,20 +241,30 @@ static void st3m_gfx_task(void *_arg) {
                 break;
         }
         ctx_drawlist_clear(user_copy_ctx);
+        ctx_drawlist_clear(overlay_copy_ctx);
 
         xQueueSend(user_ctx_freeq, &descno, portMAX_DELAY);
         st3m_counter_rate_sample(&rast_rate);
         float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
         smoothed_fps = smoothed_fps * 0.9 + 0.1 * rate;
+        // printf ("%.2f\n", smoothed_fps);
     }
 }
 
 void st3m_gfx_flow3r_logo(Ctx *ctx, float x, float y, float dim) {
+    static int frameno = 0;
+    static int dir = 1;
+    frameno += dir;
+    if (frameno > 7 || frameno < -6) {
+        dir *= -1;
+        frameno += dir;
+    }
     ctx_save(ctx);
     ctx_translate(ctx, x, y);
     ctx_scale(ctx, dim, dim);
     ctx_translate(ctx, -0.5f, -0.5f);
-    ctx_linear_gradient(ctx, 0.18f, 0.5f, 0.95f, 0.5f);
+    ctx_linear_gradient(ctx, 0.18f - frameno * 0.02, 0.5f,
+                        0.95f + frameno * 0.02, 0.5f);
     ctx_gradient_add_stop(ctx, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f);
     ctx_gradient_add_stop(ctx, 0.2f, 1.0f, 1.0f, 0.0f, 1.0f);
     ctx_gradient_add_stop(ctx, 0.4f, 0.0f, 1.0f, 0.0f, 1.0f);
@@ -505,23 +504,36 @@ void st3m_gfx_init(void) {
     assert(user_ctx_rastq != NULL);
 
     // Setup framebuffer descriptor.
-    fb_ctx = ctx_new_for_framebuffer(
+    fb16_ctx = ctx_new_for_framebuffer(
         fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
         FLOW3R_BSP_DISPLAY_WIDTH * 2, CTX_FORMAT_RGB565_BYTESWAPPED);
-    assert(fb_ctx != NULL);
+    assert(fb16_ctx != NULL);
+    fb32_ctx = ctx_new_for_framebuffer(
+        st3m_overlay_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
+        FLOW3R_BSP_DISPLAY_WIDTH * 4, CTX_FORMAT_RGBA8);
+    assert(fb32_ctx != NULL);
     // translate x and y by 120 px to have (0,0) at center of the screen
     int32_t offset_x = FLOW3R_BSP_DISPLAY_WIDTH / 2;
     int32_t offset_y = FLOW3R_BSP_DISPLAY_HEIGHT / 2;
-    ctx_apply_transform(fb_ctx, 1, 0, offset_x, 0, 1, offset_y, 0, 0, 1);
+    ctx_apply_transform(fb16_ctx, 1, 0, offset_x, 0, 1, offset_y, 0, 0, 1);
+    ctx_apply_transform(fb32_ctx, 1, 0, offset_x, 0, 1, offset_y, 0, 0, 1);
 
     // Setup user_ctx descriptor.
     user_ctx =
         ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT);
     user_copy_ctx =
         ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT);
+    overlay_ctx =
+        ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT);
+    overlay_copy_ctx =
+        ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT);
     assert(user_ctx != NULL);
-    ctx_set_texture_cache(user_ctx, fb_ctx);
-    ctx_set_texture_cache(user_copy_ctx, fb_ctx);
+    ctx_set_texture_cache(fb32_ctx, fb16_ctx);
+    ctx_set_texture_source(fb32_ctx, fb16_ctx);
+    ctx_set_texture_cache(user_ctx, fb16_ctx);
+    ctx_set_texture_cache(user_copy_ctx, fb16_ctx);
+    ctx_set_texture_cache(overlay_ctx, fb16_ctx);
+    ctx_set_texture_cache(overlay_copy_ctx, fb16_ctx);
 
     // Push descriptor to freeq.
     for (int i = 0; i < 2; i++) {
@@ -546,14 +558,18 @@ static void st3m_gfx_drawctx_pipe_put(void) {
     Ctx *tmp = user_ctx;
     user_ctx = user_copy_ctx;
     user_copy_ctx = tmp;
+    tmp = overlay_ctx;
+    overlay_ctx = overlay_copy_ctx;
+    overlay_copy_ctx = tmp;
+
     xQueueSend(user_ctx_rastq, &descno, portMAX_DELAY);
 }
 
 void st3m_ctx_end_frame(Ctx *ctx) {
-    if (ctx == overlay_ctx)
-        pthread_mutex_unlock(&overlay_mutex);
-    else
+    if (ctx == overlay_ctx) {
+    } else {
         st3m_gfx_drawctx_pipe_put();
+    }
 }
 
 uint8_t st3m_gfx_drawctx_pipe_full(void) {
@@ -580,20 +596,9 @@ void st3m_gfx_flush(void) {
     ESP_LOGW(TAG, "Pipeline flush/reset done.");
 }
 
-void st3m_overlay_clear(void) {
-    Ctx *ctx = st3m_overlay_ctx();
-    ctx_save(ctx);
-    ctx_compositing_mode(ctx, CTX_COMPOSITE_CLEAR);
-    ctx_gray(ctx, 0);  // BUG(ctx) - alpha=0 should be allowed here
-    ctx_rectangle(ctx, -120, -120, 240, 240);
-    ctx_fill(ctx);
-    ctx_restore(ctx);
-}
-
 Ctx *st3m_ctx(st3m_gfx_mode mode) {
     if (mode == st3m_gfx_overlay) {
-        pthread_mutex_lock(&overlay_mutex);
-        return st3m_overlay_ctx();
+        return overlay_ctx;
     }
     Ctx *ctx = st3m_gfx_drawctx_free_get(2000);
     if (!ctx) return NULL;
