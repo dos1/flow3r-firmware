@@ -1,7 +1,7 @@
 from st3m.input import InputController, InputState
 from st3m.goose import Optional
 from st3m.ui import colours
-import urequests
+from urllib.urequest import urlopen
 import gzip
 from utarfile import TarFile, DIRTYPE
 import io
@@ -11,7 +11,8 @@ from ctx import Context
 
 
 class DownloadView(BaseView):
-    response: Optional[urequests.Response]
+    response: Optional[bytes]
+    error_message: str = ""
 
     """
     View state
@@ -21,8 +22,9 @@ class DownloadView(BaseView):
     3 = Extracting
     4 = Extracting
     5 = Done
+    6 = Error
     """
-    state: int
+    _state: int
 
     input: InputController
 
@@ -39,6 +41,7 @@ class DownloadView(BaseView):
 
         ctx.save()
         ctx.move_to(0, 0)
+        text_to_draw = ""
         if self._state == 1 or self._state == 2:
             # Fetching
             ctx.rgb(*colours.WHITE)
@@ -46,7 +49,7 @@ class DownloadView(BaseView):
             ctx.font_size = 24
             ctx.text_align = ctx.CENTER
             ctx.text_baseline = ctx.MIDDLE
-            ctx.text("Downloading...")
+            text_to_draw = "Downloading..."
 
             self._state = 2
         elif self._state == 3 or self._state == 4:
@@ -56,7 +59,7 @@ class DownloadView(BaseView):
             ctx.font_size = 24
             ctx.text_align = ctx.CENTER
             ctx.text_baseline = ctx.MIDDLE
-            ctx.text("Extracting...")
+            text_to_draw = "Extracting..."
 
             self._state = 4
         elif self._state == 5:
@@ -68,42 +71,84 @@ class DownloadView(BaseView):
             ctx.font_size = 24
             ctx.text_align = ctx.CENTER
             ctx.text_baseline = ctx.MIDDLE
-            ctx.text("All done!")
+            text_to_draw = "All done...\nThe app will be\navailable after reboot"
+        elif self._state == 6:
+            # Errored
+            ctx.move_to(0, -30)
 
-            ctx.move_to(0, 0)
-            ctx.text("The app will be")
+            ctx.rgb(*colours.WHITE)
+            ctx.font = "Camp Font 3"
+            ctx.font_size = 24
+            ctx.text_align = ctx.CENTER
+            ctx.text_baseline = ctx.MIDDLE
+            ctx.text("oops...")
+            text_to_draw = self.error_message
 
-            ctx.move_to(0, 30)
-            ctx.text("available after reboot")
+        y_offset = 0
+        for line in text_to_draw.split("\n"):
+            ctx.move_to(0, y_offset)
+            ctx.text(line)
+            y_offset += 30
 
         ctx.restore()
+
+    def download_file(self, url: str, block_size=40960) -> Optional[bool]:
+        req = urlopen(url)
+        self.response = b""
+
+        try:
+            while True:
+                new_data = req.read(block_size)
+                self.response += new_data
+                if len(new_data) < block_size:
+                    break
+        finally:
+            req.close()
+        return True
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         # super().think(ins, delta_ms)  # Let BaseView do its thing
         self.input.think(ins, delta_ms)
 
         if self._state == 2:
+            fail_reason = ""
             try:
                 print("Getting it")
-                self.response = urequests.get(self._url)
+                download_result = self.download_file(self._url)
 
-                if self.response is not None and self.response.content is not None:
+                if download_result and self.response is not None:
                     print("Got something")
                     self._state = 3
                     return
-                print("no content...")
-            except:
-                print("Exception")
-            print("Next try")
+                fail_reason = "no content"
+            except MemoryError:
+                self.response = None
+                self.error_message = "Out of Memory\n(app too big?)"
+                self._state = 6
+                return
+            except Exception as e:
+                fail_reason = f"exception:\n{str(e)}"
+            print(fail_reason)
             self._try += 1
+            if self._try >= 3:
+                self.response = None
+                self.error_message = fail_reason
+                self._state = 6
 
         elif self._state == 4:
             if self.response is None:
                 raise RuntimeError("response is None")
 
-            tar = gzip.decompress(self.response.content)
-            self.response = None
-            t = TarFile(fileobj=io.BytesIO(tar))
+            try:
+                tar = gzip.decompress(self.response)
+                self.response = None
+                t = TarFile(fileobj=io.BytesIO(tar))
+            except MemoryError:
+                self.response = None
+                self.error_message = "Out of Memory\n(app too big?)"
+                self._state = 6
+                return
+
             for i in t:
                 print(i.name)
 
