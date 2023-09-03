@@ -42,46 +42,29 @@ class DownloadView(BaseView):
 
         ctx.save()
         ctx.move_to(0, 0)
+        ctx.rgb(*colours.WHITE)
+        ctx.font = "Camp Font 3"
+        ctx.font_size = 24
+        ctx.text_align = ctx.CENTER
+        ctx.text_baseline = ctx.MIDDLE
+
         text_to_draw = ""
         if self._state == 1 or self._state == 2:
             # Fetching
-            ctx.rgb(*colours.WHITE)
-            ctx.font = "Camp Font 3"
-            ctx.font_size = 24
-            ctx.text_align = ctx.CENTER
-            ctx.text_baseline = ctx.MIDDLE
             text_to_draw = "Downloading..."
-
             self._state = 2
         elif self._state == 3 or self._state == 4:
             # Extracting
-            ctx.rgb(*colours.WHITE)
-            ctx.font = "Camp Font 3"
-            ctx.font_size = 24
-            ctx.text_align = ctx.CENTER
-            ctx.text_baseline = ctx.MIDDLE
             text_to_draw = "Extracting..."
-
             self._state = 4
         elif self._state == 5:
             # Done
             ctx.move_to(0, -30)
-
-            ctx.rgb(*colours.WHITE)
-            ctx.font = "Camp Font 3"
-            ctx.font_size = 24
-            ctx.text_align = ctx.CENTER
-            ctx.text_baseline = ctx.MIDDLE
-            text_to_draw = "All done...\nThe app will be\navailable after reboot"
+            ctx.text("All done...")
+            text_to_draw = "The app will be\navailable after reboot"
         elif self._state == 6:
             # Errored
             ctx.move_to(0, -30)
-
-            ctx.rgb(*colours.WHITE)
-            ctx.font = "Camp Font 3"
-            ctx.font_size = 24
-            ctx.text_align = ctx.CENTER
-            ctx.text_baseline = ctx.MIDDLE
             ctx.text("oops...")
             text_to_draw = self.error_message
 
