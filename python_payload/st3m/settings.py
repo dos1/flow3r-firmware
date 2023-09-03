@@ -161,6 +161,19 @@ class StringTunable(UnaryTunable):
         pass
 
 
+class NumberTunable(UnaryTunable):
+    """
+    NumberTunable is a UnaryTunable that has a numeric value
+    """
+
+    def __init__(self, name: str, key: int | float, default: Optional[str]) -> None:
+        super().__init__(name, key, default)
+
+    def press(self, vm: Optional["ViewManager"]) -> None:
+        # Number adjustment not supported at the moment
+        pass
+
+
 # TODO: invert Tunable <-> Widget dependency to be able to define multiple different widget renderings for the same underlying tunable type
 class ObfuscatedStringTunable(UnaryTunable):
     """
@@ -189,6 +202,24 @@ onoff_wifi_preference = OnOffTunable(
 str_wifi_ssid = StringTunable("WiFi SSID", "system.wifi.ssid", "Camp2023-open")
 str_wifi_psk = ObfuscatedStringTunable("WiFi Password", "system.wifi.psk", None)
 str_hostname = StringTunable("Hostname", "system.hostname", "flow3r")
+num_volume_step_db = StringTunable(
+    "Volume Change dB", "system.audio.volume_step_db", 2.5
+)
+num_startup_volume_db = StringTunable(
+    "Startup Volume dB", "system.audio.startup_volume_db", -10
+)
+num_headphones_min_db = StringTunable(
+    "Min Headphone Volume dB", "system.audio.headphones_min_db", -30
+)
+num_speakers_min_db = StringTunable(
+    "Min Speakers Volume dB", "system.audio.speakers_min_db", -30
+)
+num_headphones_max_db = StringTunable(
+    "Max Headphone Volume dB", "system.audio.headphones_max_db", 3
+)
+num_speakers_max_db = StringTunable(
+    "Max Speakers Volume dB", "system.audio.speakers_max_db", 14
+)
 
 # List of all settings to be loaded/saved
 load_save_settings: List[UnaryTunable] = [
@@ -203,6 +234,12 @@ load_save_settings: List[UnaryTunable] = [
     str_wifi_ssid,
     str_wifi_psk,
     str_hostname,
+    num_volume_step_db,
+    num_startup_volume_db,
+    num_headphones_min_db,
+    num_speakers_min_db,
+    num_headphones_max_db,
+    num_speakers_max_db,
 ]
 
 

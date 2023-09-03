@@ -145,10 +145,12 @@ def run_main() -> None:
     log.info(f"free memory: {gc.mem_free()}")
 
     captouch.calibration_request()
-    # defaults, maybe expose in a config file someday
-    audio.set_volume_dB(-10)
-    audio.headphones_set_minimum_volume_dB(-30)
-    audio.speaker_set_minimum_volume_dB(-30)
+
+    audio.set_volume_dB(settings.num_startup_volume_db.value)
+    audio.headphones_set_minimum_volume_dB(settings.num_headphones_min_db.value)
+    audio.speaker_set_minimum_volume_dB(settings.num_speakers_min_db.value)
+    audio.headphones_set_maximum_volume_dB(settings.num_headphones_max_db.value)
+    audio.speaker_set_maximum_volume_dB(settings.num_speakers_max_db.value)
 
     leds.set_rgb(0, 255, 0, 0)
     leds.update()

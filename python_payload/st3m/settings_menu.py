@@ -154,6 +154,7 @@ tunable_widget_map = {
     Tunable: TunableWidget,
     OnOffTunable: OnOffWidget,
     StringTunable: StringWidget,
+    NumberTunable: StringWidget,  # temporary until an editable one is added
     ObfuscatedStringTunable: ObfuscatedValueWidget,
 }
 

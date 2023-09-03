@@ -1,6 +1,6 @@
 from ctx import Context
 
-from st3m import Responder
+from st3m import Responder, settings
 from st3m.input import InputState, InputController
 from st3m.goose import ABCBase, abstractmethod, List
 
@@ -30,14 +30,13 @@ class AudioProcessor(Processor):
     def __init__(self) -> None:
         super().__init__()
         self.input = InputController()
-        self.volume_step = 1.5
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.input.think(ins, delta_ms)
         if self.input.buttons.os.left.pressed:
-            audio.adjust_volume_dB(-self.volume_step)
+            audio.adjust_volume_dB(-settings.num_volume_step_db.value)
         if self.input.buttons.os.right.pressed:
-            audio.adjust_volume_dB(self.volume_step)
+            audio.adjust_volume_dB(settings.num_volume_step_db.value)
 
 
 class ProcessorMidldeware(Responder):
