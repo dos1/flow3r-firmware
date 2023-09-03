@@ -592,6 +592,8 @@ static inline uint16_t ctx_565_pack(uint8_t red, uint8_t green, uint8_t blue,
 
 static void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
                                  int pix_count) {
+    // TODO: pixel-doubling
+    //       overlay-compositing
     const uint8_t *fb = blit->fb;
     unsigned int start_off = blit->off;
     unsigned int end_off = start_off + pix_count;

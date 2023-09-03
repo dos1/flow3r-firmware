@@ -19,6 +19,8 @@
 #include "st3m_counter.h"
 #include "st3m_version.h"
 
+#define ST3M_GFX_DEFAULT_MODE st3m_gfx_16bpp_osd
+
 static EXT_RAM_BSS_ATTR uint16_t fb[240 * 240];
 
 // Get a free drawlist ctx to draw into.
@@ -33,34 +35,35 @@ static void st3m_gfx_drawctx_pipe_put(void);
 
 static const char *TAG = "st3m-gfx";
 
-#define N_DRAWLISTS 2
-#define OVERLAY_WIDTH 240
-#define OVERLAY_HEIGHT 240
-#define OVERLAY_X 0
-#define OVERLAY_Y 0
+#define N_DRAWLISTS 3
+
+// we keep the OSD buffer the same size as the main framebuffer,
+// allowing us to do different combos of which buffer is osd and not
+#define ST3M_OSD_WIDTH 240
+#define ST3M_OSD_HEIGHT 240
+#define ST3M_OSD_X 0
+#define ST3M_OSD_Y 0
 
 static st3m_gfx_mode _st3m_gfx_mode = st3m_gfx_default;
 
 EXT_RAM_BSS_ATTR static uint8_t
-    st3m_overlay_fb[OVERLAY_WIDTH * OVERLAY_HEIGHT * 4];
-EXT_RAM_BSS_ATTR uint16_t st3m_overlay_backup[OVERLAY_WIDTH * OVERLAY_HEIGHT];
+    st3m_osd_fb[ST3M_OSD_WIDTH * ST3M_OSD_HEIGHT * 4];
+EXT_RAM_BSS_ATTR uint16_t st3m_osd_backup[ST3M_OSD_WIDTH * ST3M_OSD_HEIGHT];
 
 // drawlist ctx
 static Ctx *user_ctx[N_DRAWLISTS];
 
-// RGB565_byteswapped framebuffer ctx - our global ctx
-//   user_ctx gets replayed on this
-static Ctx *fb16_ctx = NULL;
-static Ctx *fb32_ctx = NULL;
+// each frame buffer has an associated rasterizer context
+static Ctx *fb_GRAY8_ctx = NULL;
+static Ctx *fb_GRAYA8_ctx = NULL;
+static Ctx *fb_RGB565_BS_ctx = NULL;
+static Ctx *fb_RGBA8_ctx = NULL;
 
-// RGBA8 overlay ctx
-static Ctx *overlay_ctx[N_DRAWLISTS];
-
-// corner pixel coordinates for overlay clip
-static int _st3m_overlay_y1 = 0;
-static int _st3m_overlay_x1 = 0;
-static int _st3m_overlay_y0 = 0;
-static int _st3m_overlay_x0 = 0;
+// corner pixel coordinates for osd clip
+static int _st3m_osd_y1 = 0;
+static int _st3m_osd_x1 = 0;
+static int _st3m_osd_y0 = 0;
+static int _st3m_osd_x0 = 0;
 
 static float smoothed_fps = 0.0f;
 static QueueHandle_t user_ctx_freeq = NULL;
@@ -94,19 +97,17 @@ static void xQueueReceiveNotifyStarved(QueueHandle_t q, void *dst,
     }
 }
 
-void st3m_ctx_merge_overlay(uint16_t *fb, uint8_t *overlay, int ostride,
-                            uint16_t *overlay_backup, int x0, int y0, int w,
-                            int h);
-void st3m_ctx_unmerge_overlay(uint16_t *fb, uint16_t *overlay_backup, int x0,
-                              int y0, int w, int h);
+void st3m_ctx_merge_osd(uint16_t *fb, uint8_t *osd, int ostride,
+                        uint16_t *osd_backup, int x0, int y0, int w, int h);
+void st3m_ctx_unmerge_osd(uint16_t *fb, uint16_t *osd_backup, int x0, int y0,
+                          int w, int h);
 
 float st3m_gfx_fps(void) { return smoothed_fps; }
 
 void st3m_gfx_set_palette(uint8_t *pal_in, int count) {
     if (count > 256) count = 256;
     if (count < 0) count = 0;
-    uint8_t *pal =
-        ((uint8_t *)st3m_overlay_fb) + sizeof(st3m_overlay_fb) - 256 * 3;
+    uint8_t *pal = ((uint8_t *)st3m_osd_fb) + sizeof(st3m_osd_fb) - 256 * 3;
     for (int i = 0; i < count * 3; i++) pal[i] = pal_in[i];
 }
 
@@ -156,47 +157,92 @@ static void ice_palette(void) {
 
 void st3m_set_gfx_mode(st3m_gfx_mode mode) {
     memset(fb, 0, sizeof(fb));
-    memset(st3m_overlay_fb, 0, sizeof(st3m_overlay_fb));
+    memset(st3m_osd_fb, 0, sizeof(st3m_osd_fb));
+
+    if (mode == st3m_gfx_default) mode = ST3M_GFX_DEFAULT_MODE;
 
     switch ((int)mode) {
-        case 1:
-        case 2:
-        case 4:
+        case st3m_gfx_4bpp:
             ega_palette();
             break;
-        case 8:
+        case st3m_gfx_8bpp:
+        case st3m_gfx_8bpp_osd:
             fire_palette();
             break;
-        case 9:
+        case 10:
             ice_palette();
             mode = 8;
             break;
-        case 10:
+        case 12:
             grayscale_palette();
             mode = 8;
             break;
     }
-    _st3m_gfx_mode = mode;
+
+    if (mode == ST3M_GFX_DEFAULT_MODE)
+        _st3m_gfx_mode = st3m_gfx_default;
+    else
+        _st3m_gfx_mode = mode;
 }
 
 st3m_gfx_mode st3m_get_gfx_mode(void) { return _st3m_gfx_mode; }
 
 uint8_t *st3m_gfx_fb(st3m_gfx_mode mode) {
-    switch (_st3m_gfx_mode) {
+    st3m_gfx_mode set_mode =
+        _st3m_gfx_mode ? _st3m_gfx_mode : ST3M_GFX_DEFAULT_MODE;
+    if (mode == st3m_gfx_default) {
+        switch (set_mode) {
+            case st3m_gfx_default:
+            case st3m_gfx_16bpp:
+            case st3m_gfx_16bpp_osd:
+                return (uint8_t *)fb;
+            case st3m_gfx_32bpp:
+            case st3m_gfx_32bpp_osd:
+            case st3m_gfx_24bpp:
+            case st3m_gfx_8bpp:
+            case st3m_gfx_8bpp_osd:
+            case st3m_gfx_osd:
+            case st3m_gfx_4bpp:
+                return st3m_osd_fb;
+        }
+    }
+    if (mode == st3m_gfx_osd) {
+        switch (set_mode) {
+            case st3m_gfx_default:
+            case st3m_gfx_16bpp:
+            case st3m_gfx_16bpp_osd:
+            case st3m_gfx_osd:
+                return st3m_osd_fb;
+            case st3m_gfx_32bpp:
+            case st3m_gfx_32bpp_osd:
+            case st3m_gfx_24bpp:
+            case st3m_gfx_8bpp:
+            case st3m_gfx_8bpp_osd:
+            case st3m_gfx_4bpp:
+                return (uint8_t *)fb;
+        }
+    }
+
+    switch (set_mode) {
         case st3m_gfx_default:
         case st3m_gfx_16bpp:
+        case st3m_gfx_16bpp_osd:
             return (uint8_t *)fb;
+        case st3m_gfx_4bpp:
         case st3m_gfx_32bpp:
+        case st3m_gfx_32bpp_osd:
         case st3m_gfx_24bpp:
         case st3m_gfx_8bpp:
-        case st3m_gfx_overlay:
-            return st3m_overlay_fb;
+        case st3m_gfx_8bpp_osd:
+        case st3m_gfx_osd:
+            return st3m_osd_fb;
     }
-    return st3m_overlay_fb;
+    return (uint8_t *)fb;
 }
 
 static void st3m_gfx_task(void *_arg) {
     (void)_arg;
+    st3m_set_gfx_mode(0);
 
     while (true) {
         int desc_no = 0;
@@ -204,58 +250,70 @@ static void st3m_gfx_task(void *_arg) {
         xQueueReceiveNotifyStarved(user_ctx_rastq, &desc_no,
                                    "rast task starved (user_ctx)!");
 
-        ctx_set_textureclock(fb16_ctx, ctx_textureclock(fb16_ctx) + 1);
+        ctx_set_textureclock(fb_RGB565_BS_ctx,
+                             ctx_textureclock(fb_RGB565_BS_ctx) + 1);
+        ctx_set_textureclock(fb_RGBA8_ctx, ctx_textureclock(fb_RGB565_BS_ctx));
+        ctx_set_textureclock(fb_GRAY8_ctx, ctx_textureclock(fb_RGB565_BS_ctx));
+        ctx_set_textureclock(fb_GRAYA8_ctx, ctx_textureclock(fb_RGB565_BS_ctx));
 
-        switch (_st3m_gfx_mode) {
-            default:
+        st3m_gfx_mode set_mode =
+            _st3m_gfx_mode ? _st3m_gfx_mode : ST3M_GFX_DEFAULT_MODE;
+
+        switch (set_mode) {
+            case st3m_gfx_4bpp:
+                flow3r_bsp_display_send_fb(st3m_osd_fb, 4);
+                break;
             case st3m_gfx_8bpp:
+            case st3m_gfx_8bpp_osd:
+                ctx_render_ctx(user_ctx[desc_no], fb_GRAY8_ctx);
+                flow3r_bsp_display_send_fb(st3m_osd_fb, 8);
+                break;
             case st3m_gfx_24bpp:
-                flow3r_bsp_display_send_fb(st3m_overlay_fb, _st3m_gfx_mode);
+                flow3r_bsp_display_send_fb(st3m_osd_fb, 24);
                 break;
             case st3m_gfx_32bpp:
-                ctx_render_ctx(user_ctx[desc_no], fb32_ctx);
-                ctx_render_ctx(overlay_ctx[desc_no], fb32_ctx);
-                flow3r_bsp_display_send_fb(st3m_overlay_fb, _st3m_gfx_mode);
+                ctx_render_ctx(user_ctx[desc_no], fb_RGBA8_ctx);
+                flow3r_bsp_display_send_fb(st3m_osd_fb, 32);
                 break;
-            case st3m_gfx_overlay:
-                flow3r_bsp_display_send_fb(st3m_overlay_fb, 32);
+            case st3m_gfx_32bpp_osd:
+                ctx_render_ctx(user_ctx[desc_no], fb_RGBA8_ctx);
+                flow3r_bsp_display_send_fb(st3m_osd_fb, 32);
                 break;
-            case st3m_gfx_default:
-                ctx_render_ctx(overlay_ctx[desc_no], fb32_ctx);
-                ctx_render_ctx(user_ctx[desc_no], fb16_ctx);
-                if (_st3m_overlay_y1 != _st3m_overlay_y0) {
-                    st3m_ctx_merge_overlay(
+            case st3m_gfx_osd:
+                flow3r_bsp_display_send_fb(st3m_osd_fb, 32);
+                break;
+            case st3m_gfx_16bpp:
+                ctx_render_ctx(user_ctx[desc_no], fb_RGB565_BS_ctx);
+                flow3r_bsp_display_send_fb(fb, 16);
+                break;
+            case st3m_gfx_default:  // not neccesarily taken- overrriden above
+            case st3m_gfx_16bpp_osd:
+                ctx_render_ctx(user_ctx[desc_no], fb_RGB565_BS_ctx);
+                if (_st3m_osd_y1 != _st3m_osd_y0) {
+                    st3m_ctx_merge_osd(
                         fb,
-                        st3m_overlay_fb + 4 * ((_st3m_overlay_y0 - OVERLAY_Y) *
-                                                   OVERLAY_WIDTH +
-                                               (_st3m_overlay_x0 - OVERLAY_X)),
-                        OVERLAY_WIDTH * 4, st3m_overlay_backup,
-                        _st3m_overlay_x0, _st3m_overlay_y0,
-                        _st3m_overlay_x1 - _st3m_overlay_x0 + 1,
-                        _st3m_overlay_y1 - _st3m_overlay_y0 + 1);
+                        st3m_osd_fb +
+                            4 * ((_st3m_osd_y0 - ST3M_OSD_Y) * ST3M_OSD_WIDTH +
+                                 (_st3m_osd_x0 - ST3M_OSD_X)),
+                        ST3M_OSD_WIDTH * 4, st3m_osd_backup, _st3m_osd_x0,
+                        _st3m_osd_y0, _st3m_osd_x1 - _st3m_osd_x0 + 1,
+                        _st3m_osd_y1 - _st3m_osd_y0 + 1);
                     flow3r_bsp_display_send_fb(fb, 16);
-                    st3m_ctx_unmerge_overlay(
-                        fb, st3m_overlay_backup, _st3m_overlay_x0,
-                        _st3m_overlay_y0,
-                        _st3m_overlay_x1 - _st3m_overlay_x0 + 1,
-                        _st3m_overlay_y1 - _st3m_overlay_y0 + 1);
+                    st3m_ctx_unmerge_osd(fb, st3m_osd_backup, _st3m_osd_x0,
+                                         _st3m_osd_y0,
+                                         _st3m_osd_x1 - _st3m_osd_x0 + 1,
+                                         _st3m_osd_y1 - _st3m_osd_y0 + 1);
                 } else
                     flow3r_bsp_display_send_fb(fb, 16);
                 break;
-            case st3m_gfx_16bpp:
-                flow3r_bsp_display_send_fb(fb, 16);
-                break;
         }
         ctx_drawlist_clear(user_ctx[desc_no]);
-        ctx_drawlist_clear(overlay_ctx[desc_no]);
         st3m_ctx_viewport_transform(user_ctx[desc_no]);
-        st3m_ctx_viewport_transform(overlay_ctx[desc_no]);
 
         xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
         st3m_counter_rate_sample(&rast_rate);
         float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
         smoothed_fps = smoothed_fps * 0.9 + 0.1 * rate;
-        // printf ("%.2f\n", smoothed_fps);
     }
 }
 
@@ -511,37 +569,46 @@ void st3m_gfx_init(void) {
     user_ctx_rastq = xQueueCreate(1, sizeof(int));
     assert(user_ctx_rastq != NULL);
 
-    // Setup framebuffer descriptor.
-    fb16_ctx = ctx_new_for_framebuffer(
+    // Setup rasterizers for frame buffer formats
+    fb_GRAY8_ctx = ctx_new_for_framebuffer(
+        st3m_osd_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
+        FLOW3R_BSP_DISPLAY_WIDTH, CTX_FORMAT_GRAY8);
+    fb_GRAYA8_ctx = ctx_new_for_framebuffer(
+        st3m_osd_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
+        FLOW3R_BSP_DISPLAY_WIDTH * 2, CTX_FORMAT_GRAYA8);
+    fb_RGB565_BS_ctx = ctx_new_for_framebuffer(
         fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
         FLOW3R_BSP_DISPLAY_WIDTH * 2, CTX_FORMAT_RGB565_BYTESWAPPED);
-    assert(fb16_ctx != NULL);
-    fb32_ctx = ctx_new_for_framebuffer(
-        st3m_overlay_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
+    fb_RGBA8_ctx = ctx_new_for_framebuffer(
+        st3m_osd_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
         FLOW3R_BSP_DISPLAY_WIDTH * 4, CTX_FORMAT_RGBA8);
-    assert(fb32_ctx != NULL);
-    ctx_set_texture_source(fb32_ctx, fb16_ctx);
-    ctx_set_texture_cache(fb32_ctx, fb16_ctx);
+    assert(fb_GRAY8_ctx != NULL);
+    assert(fb_GRAYA8_ctx != NULL);
+    assert(fb_RGB565_BS_ctx != NULL);
+    assert(fb_RGBA8_ctx != NULL);
+
+    st3m_ctx_viewport_transform(fb_GRAY8_ctx);
+    st3m_ctx_viewport_transform(fb_GRAYA8_ctx);
+    st3m_ctx_viewport_transform(fb_RGB565_BS_ctx);
+    st3m_ctx_viewport_transform(fb_RGBA8_ctx);
+
+    ctx_set_texture_source(fb_RGBA8_ctx, fb_RGB565_BS_ctx);
+    ctx_set_texture_cache(fb_RGBA8_ctx, fb_RGB565_BS_ctx);
 
     // Setup user_ctx descriptor.
     for (int i = 0; i < N_DRAWLISTS; i++) {
         user_ctx[i] = ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH,
                                        FLOW3R_BSP_DISPLAY_HEIGHT);
         assert(user_ctx[i] != NULL);
-        overlay_ctx[i] = ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH,
-                                          FLOW3R_BSP_DISPLAY_HEIGHT);
-        assert(overlay_ctx[i] != NULL);
-        ctx_set_texture_cache(user_ctx[i], fb16_ctx);
-        ctx_set_texture_cache(overlay_ctx[i], fb16_ctx);
+        ctx_set_texture_cache(user_ctx[i], fb_RGB565_BS_ctx);
 
         st3m_ctx_viewport_transform(user_ctx[i]);
-        st3m_ctx_viewport_transform(overlay_ctx[i]);
 
         BaseType_t res = xQueueSend(user_ctx_freeq, &i, 0);
         assert(res == pdTRUE);
     }
 
-    // Start rasterization, compositing and scan-out
+    // Start rasterization, scan-out
     BaseType_t res = xTaskCreate(st3m_gfx_task, "graphics", 8192, NULL,
                                  ESP_TASK_PRIO_MIN + 1, &graphics_task);
     assert(res == pdPASS);
@@ -559,10 +626,8 @@ static void st3m_gfx_drawctx_pipe_put(void) {
 }
 
 void st3m_ctx_end_frame(Ctx *ctx) {
-    if ((ctx == overlay_ctx[0]) || (ctx == overlay_ctx[1])) {
-    } else {
-        st3m_gfx_drawctx_pipe_put();
-    }
+    if (ctx == st3m_ctx(st3m_gfx_osd)) return;
+    st3m_gfx_drawctx_pipe_put();
 }
 
 uint8_t st3m_gfx_drawctx_pipe_full(void) {
@@ -585,9 +650,7 @@ void st3m_gfx_flush(int timeout_ms) {
 
     for (int i = 0; i < N_DRAWLISTS; i++) {
         ctx_drawlist_clear(user_ctx[i]);
-        ctx_drawlist_clear(overlay_ctx[i]);
         st3m_ctx_viewport_transform(user_ctx[i]);
-        st3m_ctx_viewport_transform(overlay_ctx[i]);
         BaseType_t res = xQueueSend(user_ctx_freeq, &i, 0);
         assert(res == pdTRUE);
     }
@@ -595,8 +658,23 @@ void st3m_gfx_flush(int timeout_ms) {
 }
 
 Ctx *st3m_ctx(st3m_gfx_mode mode) {
-    if (mode == st3m_gfx_overlay) {
-        return overlay_ctx[last_descno];
+    if (mode == st3m_gfx_osd) {
+        st3m_gfx_mode set_mode =
+            _st3m_gfx_mode ? _st3m_gfx_mode : ST3M_GFX_DEFAULT_MODE;
+        switch (set_mode) {
+            case st3m_gfx_default:  // overriden
+            case st3m_gfx_16bpp:
+            case st3m_gfx_16bpp_osd:
+                return fb_RGBA8_ctx;
+            case st3m_gfx_32bpp:
+            case st3m_gfx_32bpp_osd:
+            case st3m_gfx_24bpp:
+            case st3m_gfx_8bpp:
+            case st3m_gfx_8bpp_osd:
+            case st3m_gfx_osd:
+            case st3m_gfx_4bpp:
+                return fb_GRAYA8_ctx;
+        }
     }
     Ctx *ctx = st3m_gfx_drawctx_free_get(1000);
 
@@ -607,22 +685,21 @@ Ctx *st3m_ctx(st3m_gfx_mode mode) {
 }
 
 void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1) {
-    if (y1 < OVERLAY_Y) y1 = OVERLAY_Y;
-    if (y1 > OVERLAY_Y + OVERLAY_HEIGHT) y1 = OVERLAY_Y + OVERLAY_HEIGHT;
-    if (y0 < OVERLAY_Y) y0 = OVERLAY_Y;
-    if (y0 > OVERLAY_Y + OVERLAY_HEIGHT) y0 = OVERLAY_Y + OVERLAY_HEIGHT;
+    if (y1 < ST3M_OSD_Y) y1 = ST3M_OSD_Y;
+    if (y1 > ST3M_OSD_Y + ST3M_OSD_HEIGHT) y1 = ST3M_OSD_Y + ST3M_OSD_HEIGHT;
+    if (y0 < ST3M_OSD_Y) y0 = ST3M_OSD_Y;
+    if (y0 > ST3M_OSD_Y + ST3M_OSD_HEIGHT) y0 = ST3M_OSD_Y + ST3M_OSD_HEIGHT;
 
-    if (x1 < OVERLAY_X) x1 = OVERLAY_X;
-    if (x1 > OVERLAY_X + OVERLAY_WIDTH) x1 = OVERLAY_X + OVERLAY_WIDTH;
-    if (x0 < OVERLAY_X) x0 = OVERLAY_X;
-    if (x0 > OVERLAY_X + OVERLAY_WIDTH) x0 = OVERLAY_X + OVERLAY_WIDTH;
+    if (x1 < ST3M_OSD_X) x1 = ST3M_OSD_X;
+    if (x1 > ST3M_OSD_X + ST3M_OSD_WIDTH) x1 = ST3M_OSD_X + ST3M_OSD_WIDTH;
+    if (x0 < ST3M_OSD_X) x0 = ST3M_OSD_X;
+    if (x0 > ST3M_OSD_X + ST3M_OSD_WIDTH) x0 = ST3M_OSD_X + ST3M_OSD_WIDTH;
     if ((x1 < x0) || (y1 < y0)) {
-        _st3m_overlay_y1 = _st3m_overlay_y0 = _st3m_overlay_x1 =
-            _st3m_overlay_x0 = 0;
+        _st3m_osd_y1 = _st3m_osd_y0 = _st3m_osd_x1 = _st3m_osd_x0 = 0;
     } else {
-        _st3m_overlay_y1 = y1;
-        _st3m_overlay_y0 = y0;
-        _st3m_overlay_x1 = x1;
-        _st3m_overlay_x0 = x0;
+        _st3m_osd_y1 = y1;
+        _st3m_osd_y0 = y0;
+        _st3m_osd_x1 = x1;
+        _st3m_osd_x0 = x0;
     }
 }

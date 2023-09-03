@@ -13,11 +13,19 @@
 // The two other modes cause a scan-out of without compositing/clipping
 typedef enum {
     st3m_gfx_default = 0,
+    st3m_gfx_osd = 1,
+    st3m_gfx_4bpp = 4,
+
     st3m_gfx_8bpp = 8,
+    st3m_gfx_8bpp_osd,
+
     st3m_gfx_16bpp = 16,
+    st3m_gfx_16bpp_osd,
+
     st3m_gfx_24bpp = 24,
+
     st3m_gfx_32bpp = 32,
-    st3m_gfx_overlay = 128,
+    st3m_gfx_32bpp_osd
 } st3m_gfx_mode;
 
 // sets the current graphics mode

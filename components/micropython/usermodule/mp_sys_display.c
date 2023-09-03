@@ -73,18 +73,20 @@ STATIC mp_obj_t mp_fb(mp_obj_t mode_in) {
     int mode = mp_obj_get_int(mode_in);
     int size = 240 * 240;
     switch (mode) {
-        case 0:
+        case st3m_gfx_default:
             size *= 2;
             mode = 16;
             break;
-        case 16:
+        case st3m_gfx_16bpp:
+        case st3m_gfx_16bpp_osd:
             size *= 2;
             break;
-        case 24:
+        case st3m_gfx_24bpp:
             size *= 3;
             break;
-        case st3m_gfx_overlay:
-        case 32:
+        case st3m_gfx_osd:
+        case st3m_gfx_32bpp:
+        case st3m_gfx_32bpp_osd:
             size *= 4;
             break;
     }

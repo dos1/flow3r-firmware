@@ -100,7 +100,7 @@ class Compositor(Responder):
         if sys_display.get_gfx_mode() != 0:
             return
         if self._frame_skip <= 0:
-            octx = sys_display.ctx(128)  # add symbolic name or overlay
+            octx = sys_display.ctx(1)  # XXX add symbolic name for overlay
             if settings.onoff_show_fps.value:
                 _clip_x0 = 110
                 _clip_y1 = 0
