@@ -160,6 +160,67 @@ qstr mp_obj_fun_get_name(mp_const_obj_t fun_in) {
     return mp_obj_code_get_name(fun, bc);
 }
 
+// returns a tuple that is somewhat compatible to inspect.FullArgSpec
+// FullArgSpec(args, varargs, varkw, defaults, kwonlyargs, kwonlydefaults, annotations)
+mp_obj_t mp_obj_fun_get_argspec(mp_const_obj_t fun_in) {
+    mp_obj_t tuple[7] = {
+        // args
+        mp_obj_new_list(0, NULL),
+        // varargs
+        mp_const_none,
+        // varkw
+        mp_const_none,
+        // defaults
+        mp_const_none,
+        // kwonlyargs
+        mp_obj_new_list(0, NULL),
+        // kwonlydefaults
+        mp_const_none,
+        // annotations
+        mp_const_none,
+    };
+
+    const mp_obj_fun_bc_t *fun = MP_OBJ_TO_PTR(fun_in);
+    #if MICROPY_EMIT_NATIVE
+    if (fun->base.type == &mp_type_fun_native || fun->base.type == &mp_type_native_gen_wrap) {
+        return mp_const_none;
+    }
+    #endif
+
+    const byte *bc = fun->bytecode;
+    MP_BC_PRELUDE_SIG_DECODE(bc);
+    MP_BC_PRELUDE_SIZE_DECODE(bc);
+
+    // args and kwonlyargs
+    const uint8_t *arg_names = mp_decode_uint_skip(bc);
+    for (size_t i = 0; i < (n_pos_args + n_kwonly_args); i++) {
+        qstr arg_qstr = mp_decode_uint(&arg_names);
+        #if MICROPY_EMIT_BYTECODE_USES_QSTR_TABLE
+        arg_qstr = fun->context->constants.qstr_table[arg_qstr];
+        #endif
+
+        mp_obj_t target = i >= n_pos_args ? tuple[4] : tuple[0];
+        mp_obj_list_append(target, MP_OBJ_NEW_QSTR(arg_qstr));
+    }
+
+    // varargs
+    if ((scope_flags & MP_SCOPE_FLAG_VARARGS) != 0) {
+        tuple[1] = MP_OBJ_NEW_QSTR(MP_QSTR_args);
+    }
+
+    // varkw
+    if ((scope_flags & MP_SCOPE_FLAG_VARKEYWORDS) != 0) {
+        tuple[2] = MP_OBJ_NEW_QSTR(MP_QSTR_kwargs);
+    }
+
+    // defaults: not implemented (tuple of n_def_pos_args length, with
+    //           contents from fun->extra_args)
+    // kwonlydefaults: not implemented
+    // annotations: not implemented
+
+    return mp_obj_new_tuple(7, tuple);
+}
+
 #if MICROPY_CPYTHON_COMPAT
 STATIC void fun_bc_print(const mp_print_t *print, mp_obj_t o_in, mp_print_kind_t kind) {
     (void)kind;
@@ -349,6 +410,10 @@ void mp_obj_fun_bc_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
         mp_obj_fun_bc_t *self = MP_OBJ_TO_PTR(self_in);
         dest[0] = MP_OBJ_FROM_PTR(self->context->module.globals);
     }
+    if (attr == MP_QSTR___argspec__) {
+        dest[0] = mp_obj_fun_get_argspec(self_in);
+    }
+
 }
 #endif
 
