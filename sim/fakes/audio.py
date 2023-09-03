@@ -24,6 +24,14 @@ def speaker_set_minimum_volume_dB(v: float) -> None:
     pass
 
 
+def headphones_set_maximum_volume_dB(v: float) -> None:
+    pass
+
+
+def speaker_set_maximum_volume_dB(v: float) -> None:
+    pass
+
+
 def adjust_volume_dB(v) -> float:
     global _volume
     _volume += v
