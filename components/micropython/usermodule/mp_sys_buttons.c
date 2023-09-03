@@ -52,6 +52,10 @@ STATIC const mp_rom_map_elem_t mp_module_sys_buttons_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_PRESSED_RIGHT), MP_ROM_INT(st3m_tripos_right) },
     { MP_ROM_QSTR(MP_QSTR_PRESSED_DOWN), MP_ROM_INT(st3m_tripos_mid) },
     { MP_ROM_QSTR(MP_QSTR_NOT_PRESSED), MP_ROM_INT(st3m_tripos_none) },
+
+    // deperecated calls last - and slowest to access during method dispatch
+    { MP_ROM_QSTR(MP_QSTR_get_left), MP_ROM_PTR(&mp_get_app_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_right), MP_ROM_PTR(&mp_get_os_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_sys_buttons_globals,
