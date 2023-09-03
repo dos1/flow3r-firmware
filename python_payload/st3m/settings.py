@@ -203,22 +203,22 @@ str_wifi_ssid = StringTunable("WiFi SSID", "system.wifi.ssid", "Camp2023-open")
 str_wifi_psk = ObfuscatedStringTunable("WiFi Password", "system.wifi.psk", None)
 str_hostname = StringTunable("Hostname", "system.hostname", "flow3r")
 num_volume_step_db = StringTunable(
-    "Volume Change dB", "system.audio.volume_step_db", 2.5
+    "Volume Change dB", "system.audio.volume_step_dB", 2.5
 )
 num_startup_volume_db = StringTunable(
-    "Startup Volume dB", "system.audio.startup_volume_db", -10
+    "Startup Volume dB", "system.audio.startup_volume_dB", -10
 )
 num_headphones_min_db = StringTunable(
-    "Min Headphone Volume dB", "system.audio.headphones_min_db", -30
+    "Min Headphone Volume dB", "system.audio.headphones_min_dB", -30
 )
 num_speakers_min_db = StringTunable(
-    "Min Speakers Volume dB", "system.audio.speakers_min_db", -30
+    "Min Speakers Volume dB", "system.audio.speakers_min_dB", -30
 )
 num_headphones_max_db = StringTunable(
-    "Max Headphone Volume dB", "system.audio.headphones_max_db", 3
+    "Max Headphone Volume dB", "system.audio.headphones_max_dB", 3
 )
 num_speakers_max_db = StringTunable(
-    "Max Speakers Volume dB", "system.audio.speakers_max_db", 14
+    "Max Speakers Volume dB", "system.audio.speakers_max_dB", 14
 )
 
 # List of all settings to be loaded/saved
