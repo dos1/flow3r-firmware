@@ -107,6 +107,7 @@ class DownloadView(BaseView):
                     return
                 fail_reason = "No content"
             except MemoryError:
+                gc.collect()
                 self.response = None
                 self.error_message = "Out of Memory\n(app too big?)"
                 self._state = 6
@@ -131,6 +132,7 @@ class DownloadView(BaseView):
                 gc.collect()
                 t = TarFile(fileobj=io.BytesIO(tar))
             except MemoryError:
+                gc.collect()
                 self.response = None
                 self.error_message = "Out of Memory\n(app too big?)"
                 self._state = 6
