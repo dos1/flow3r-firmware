@@ -106,16 +106,21 @@ class DownloadView(BaseView):
             t = TarFile(fileobj=io.BytesIO(tar))
             for i in t:
                 print(i.name)
+
+                if not os.path.exists("/flash/apps/"):
+                    print("making /flash/apps/")
+                    os.mkdir("/flash/apps/")
+
                 if i.type == DIRTYPE:
                     print("dirtype")
-                    dirname = "/flash/sys/apps/" + i.name
+                    dirname = "/flash/apps/" + i.name
                     if not os.path.exists(dirname):
                         print("making", dirname)
                         os.mkdir(dirname)
                     else:
                         print("dir", dirname, "exists")
                 else:
-                    filename = "/flash/sys/apps/" + i.name
+                    filename = "/flash/apps/" + i.name
                     print("writing to", filename)
                     f = t.extractfile(i)
                     with open(filename, "wb") as of:
