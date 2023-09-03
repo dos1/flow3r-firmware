@@ -145,7 +145,11 @@ def run_main() -> None:
     log.info(f"free memory: {gc.mem_free()}")
 
     captouch.calibration_request()
-    audio.set_volume_dB(-10)  # slightly less loud startup volume
+    # defaults, maybe expose in a config file someday
+    audio.set_volume_dB(-10)
+    audio.headphones_set_minimum_volume_dB(-30)
+    audio.speaker_set_minimum_volume_dB(-30)
+
     leds.set_rgb(0, 255, 0, 0)
     leds.update()
     bundles = BundleManager()

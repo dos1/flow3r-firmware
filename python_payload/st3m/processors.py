@@ -30,32 +30,14 @@ class AudioProcessor(Processor):
     def __init__(self) -> None:
         super().__init__()
         self.input = InputController()
+        self.volume_step = 1.5
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.input.think(ins, delta_ms)
-        # Whether the volume was adjusted. Used to do a second pass.
-        adjusted = False
-        # Whether the volume is so low that we should enable mute.
-        should_mute = False
         if self.input.buttons.os.left.pressed:
-            started_at = audio.get_volume_dB()
-            if started_at <= -20:
-                should_mute = True
-            audio.adjust_volume_dB(-5)
-            adjusted = True
+            audio.adjust_volume_dB(-self.volume_step)
         if self.input.buttons.os.right.pressed:
-            if not audio.get_mute():
-                audio.adjust_volume_dB(5)
-            adjusted = True
-        if adjusted:
-            # Clamp lower level to -20dB.
-            if audio.get_volume_dB() < -20:
-                audio.set_volume_dB(-20)
-            # Set audio mute
-            if should_mute:
-                audio.set_mute(True)
-            else:
-                audio.set_mute(False)
+            audio.adjust_volume_dB(self.volume_step)
 
 
 class ProcessorMidldeware(Responder):

@@ -302,17 +302,9 @@ class OverlayVolume(Overlay):
         return False
 
     def think(self, ins: InputState, delta_ms: int) -> None:
-        self._volume = audio.get_volume_dB()
+        self._volume = audio.get_volume_relative()
         self._headphones = audio.headphones_are_connected()
-        self._muted = audio.get_mute()
-        if self._headphones:
-            # -20 ... +3dB
-            self._volume += 20
-            self._volume /= 20 + 3
-        else:
-            # -20 ... +14dB
-            self._volume += 20
-            self._volume /= 20 + 14
+        self._muted = (self._volume == 0) or audio.get_mute()
 
         if self._started:
             if self.changed():
@@ -380,10 +372,7 @@ class OverlayVolume(Overlay):
         ctx.line_width = 2
         ctx.stroke()
 
-        v = self._volume
-        v = min(max(v, 0), 1)
-
-        width = 60 * v
+        width = 60 * self._volume
         ctx.round_rectangle(-30, 20, width, 10, 3)
         ctx.fill()
 

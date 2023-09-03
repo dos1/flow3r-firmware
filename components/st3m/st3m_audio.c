@@ -64,7 +64,6 @@ static float _output_set_volume(st3m_audio_output_t *out, float vol_dB) {
     }
     if (vol_dB < out->volume_min) {
         vol_dB = SILLY_LOW_VOLUME_DB;
-        out->mute = true;
     }
     out->volume = vol_dB;
     _output_apply(out);
@@ -131,6 +130,7 @@ static float _output_get_volume_relative(st3m_audio_output_t *out) {
 static void _audio_headphones_apply(st3m_audio_output_t *out) {
     bool mute = out->mute;
     float vol_dB = out->volume;
+    if (out->volume < (SILLY_LOW_VOLUME_DB + 1)) mute = true;
 
     bool headphones = _headphones_connected();
     if (!headphones) {
@@ -153,6 +153,7 @@ static void _audio_headphones_apply(st3m_audio_output_t *out) {
 static void _audio_speaker_apply(st3m_audio_output_t *out) {
     bool mute = out->mute;
     float vol_dB = out->volume;
+    if (out->volume < (SILLY_LOW_VOLUME_DB + 1)) mute = true;
 
     bool headphones = _headphones_connected();
     if (headphones) {
