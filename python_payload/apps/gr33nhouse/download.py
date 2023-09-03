@@ -65,7 +65,7 @@ class DownloadView(BaseView):
         elif self._state == 6:
             # Errored
             ctx.move_to(0, -30)
-            ctx.text("oops...")
+            ctx.text("Oops...")
             text_to_draw = self.error_message
 
         y_offset = 0
@@ -105,14 +105,14 @@ class DownloadView(BaseView):
                     print("Got something")
                     self._state = 3
                     return
-                fail_reason = "no content"
+                fail_reason = "No content"
             except MemoryError:
                 self.response = None
                 self.error_message = "Out of Memory\n(app too big?)"
                 self._state = 6
                 return
             except Exception as e:
-                fail_reason = f"exception:\n{str(e)}"
+                fail_reason = f"Exception:\n{str(e)}"
             print(fail_reason)
             self._try += 1
             if self._try >= 3:
