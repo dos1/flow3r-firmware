@@ -1,5 +1,10 @@
 import math
 
+try:
+    import inspect
+except ImportError:
+    inspect = None
+
 from st3m.goose import Any
 
 
@@ -39,6 +44,25 @@ def reduce(function: Any, iterable: Any, initializer: Any = None) -> Any:
     for element in it:
         value = function(value, element)
     return value
+
+
+def get_function_args(fun: Any) -> list[str]:
+    """
+    Returns a list of argument names for a function
+
+    Excludes keyword-only arguments (those are in argspec[4] if anyone needs it)
+
+    Uses either __argspec__ (an extension specific to our fork of micropython)
+    or inspect.getfullargspec() which are very similar except the latter
+    populates more fields and returns a named tuple
+    """
+
+    if hasattr(fun, "__argspec__"):
+        return fun.__argspec__[0]
+    elif inspect and hasattr(inspect, "getfullargspec"):
+        return inspect.getfullargspec(fun)[0]
+    else:
+        raise NotImplementedError("No implementation of getfullargspec found")
 
 
 tau = math.pi * 2
