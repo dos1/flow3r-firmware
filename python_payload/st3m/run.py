@@ -198,5 +198,6 @@ def run_main() -> None:
 __all__ = [
     "run_responder",
     "run_view",
+    "run_app",
     "run_main",
 ]

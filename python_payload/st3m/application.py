@@ -55,6 +55,7 @@ class Application(BaseView):
             )
         else:
             self._wifi_preference = None
+        self.delta_ms = 0
         super().__init__()
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
@@ -80,6 +81,7 @@ class Application(BaseView):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
+        self.delta_ms += delta_ms
 
 
 class BundleLoadException(BaseException):
@@ -118,12 +120,6 @@ class BundleMetadata:
        # will be loadable from.
        menu = "Apps"
 
-       [entry]
-       # Required for app to actually load. Defines the name of the class that
-       # will be imported from the __init__.py next to flow3r.toml. The class
-       # must inherit from st3m.application.Application.
-       class = "DemoApp"
-
        # Optional, but recommended. Might end up getting displayed somewhere in
        # a distribution web page or in system menus.
        [metadata]
@@ -131,6 +127,13 @@ class BundleMetadata:
        # A SPDX-compatible license identifier.
        license = "..."
        url = "https://example.com/demoapp"
+
+       # Optional, Defines the name of the class that will be imported from the
+       # __init__.py next to flow3r.toml. The class must inherit from
+       # st3m.application.Application. If not provided the class is presumed to
+       # be "App".
+       # [entry]
+       # class = "DemoApp"
 
     This data is used to discover bundles and load them as applications.
     """

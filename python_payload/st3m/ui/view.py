@@ -48,6 +48,7 @@ class BaseView(View):
     def __init__(self) -> None:
         self.input = InputController()
         self.vm: Optional["ViewManager"] = None
+        self.delta_ms = 0
 
     def on_enter(self, vm: Optional["ViewManager"]) -> None:
         self.input._ignore_pressed()
@@ -55,6 +56,7 @@ class BaseView(View):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.input.think(ins, delta_ms)
+        self.delta_ms += delta_ms
 
 
 class ViewTransition(ABCBase):
@@ -193,6 +195,7 @@ class ViewManager(Responder):
             ctx.save()
             self._incoming.draw(ctx)
             ctx.restore()
+        self._incoming.delta_ms = 0
 
     def replace(self, r: View, overide_vt: Optional[ViewTransition] = None) -> None:
         """
