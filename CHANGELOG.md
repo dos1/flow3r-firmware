@@ -16,6 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   settings: `Let apps change WiFi`)
 - Added task profiler which prints over serial (configurable in
   settings: `Debug: ftop`)
+- Added the `urllib.urequest` library. This library can be used to have
+  streamed HTTP requests.
 - Added an error screen to the `Nick` app when `nick.json` is invalid.
 - Added `urequests` support in the simulator.
 - Added audio/video media framework, and `Wurzelitzer` app as a small jukebox
@@ -32,6 +34,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   shoulder button, unless swapped in settings).
 - Improved performance of the `gr33nhouse` app list by not rendering hidden
   entries and scrolling ones too long to fit on screen.
+- Improved download reliability of the `gr33nhouse` app by adding chunked
+  downloads, some `gc.collect()` calls and an error screen.
 - Settings are now automatically loaded and saved when entering and leaving
   the settings page.
 - Moved the `Clouds` app to the `Badge` menu and updated it to use IMU data and
