@@ -1,2 +1,2 @@
 package("toml")
-package("urllib")
+require("urllib.urequest")
