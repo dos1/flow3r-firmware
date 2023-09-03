@@ -6,6 +6,7 @@ import gzip
 from utarfile import TarFile, DIRTYPE
 import io
 import os
+import gc
 from st3m.ui.view import BaseView
 from ctx import Context
 
@@ -93,6 +94,7 @@ class DownloadView(BaseView):
         ctx.restore()
 
     def download_file(self, url: str, block_size=40960) -> Optional[bool]:
+        gc.collect()
         req = urlopen(url)
         self.response = b""
 
@@ -140,8 +142,10 @@ class DownloadView(BaseView):
                 raise RuntimeError("response is None")
 
             try:
+                gc.collect()
                 tar = gzip.decompress(self.response)
                 self.response = None
+                gc.collect()
                 t = TarFile(fileobj=io.BytesIO(tar))
             except MemoryError:
                 self.response = None
