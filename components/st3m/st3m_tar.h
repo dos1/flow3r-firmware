@@ -51,7 +51,11 @@ typedef struct {
     // If set, will be called any file begins extraction. Useful for feedback.
     void (*on_file)(const char *name);
 
-    FILE *cur_file;
+    char *cur_file_path;
+    uint8_t *cur_file_contents;
+    uint8_t *cur_file_offset;
+    size_t cur_file_size;
+
     st3m_tar_parser_t parser;
 } st3m_tar_extractor_t;
 

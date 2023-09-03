@@ -7,6 +7,8 @@
 #include "esp_log.h"
 #include "miniz.h"
 
+#define READ_BUF_SIZE 4096
+
 static const char *TAG = "st3m-tar";
 
 void st3m_tar_parser_init(st3m_tar_parser_t *parser) {
@@ -201,9 +203,14 @@ static int _mkpath(char *file_path, mode_t mode) {
 static void _extractor_on_file_start(void *user, const char *name, size_t size,
                                      char type) {
     st3m_tar_extractor_t *extractor = (st3m_tar_extractor_t *)user;
-    if (extractor->cur_file != NULL) {
-        fclose(extractor->cur_file);
-        extractor->cur_file = NULL;
+    if (extractor->cur_file_contents != NULL) {
+        free(extractor->cur_file_contents);
+        extractor->cur_file_contents = NULL;
+        extractor->cur_file_offset = NULL;
+    }
+    if (extractor->cur_file_path != NULL) {
+        free(extractor->cur_file_path);
+        extractor->cur_file_path = NULL;
     }
 
     if (size == 0 || type != '0') {
@@ -222,33 +229,88 @@ static void _extractor_on_file_start(void *user, const char *name, size_t size,
         ESP_LOGW(TAG, "Failed to create parent directory for %s: %s", path,
                  strerror(errno));
     }
-    extractor->cur_file = fopen(path, "w");
-    if (extractor->cur_file == NULL) {
-        ESP_LOGW(TAG, "Failed to create %s: %s", path, strerror(errno));
-    }
+
+    extractor->cur_file_path = path;
+
+    extractor->cur_file_contents = malloc(size);
+    extractor->cur_file_offset = extractor->cur_file_contents;
+    extractor->cur_file_size = size;
 
     if (extractor->on_file != NULL) {
         extractor->on_file(path);
     }
-    free(path);
 }
 
 static void _extractor_on_file_data(void *user, const uint8_t *buffer,
                                     size_t bufsize) {
     st3m_tar_extractor_t *extractor = (st3m_tar_extractor_t *)user;
-    if (extractor->cur_file == NULL) {
+    if (extractor->cur_file_contents == NULL) {
         return;
     }
-    fwrite(buffer, 1, bufsize, extractor->cur_file);
+
+    memcpy(extractor->cur_file_offset, buffer, bufsize);
+    extractor->cur_file_offset += bufsize;
+}
+
+static bool _is_write_needed(char *path, uint8_t *contents, size_t size) {
+    struct stat sb;
+    if (stat(path, &sb) != 0 || sb.st_size != size) {
+        // file doesn't exist or size changed
+        return true;
+    }
+
+    // go on to compare file contents
+    FILE *file = fopen(path, "r");
+    if (file == NULL) {
+        return true;
+    }
+
+    // malloc because we don't have that much stack
+    uint8_t *buf = malloc(READ_BUF_SIZE);
+
+    for (size_t off = 0; off < size; off += READ_BUF_SIZE) {
+        size_t leftover = (size - off);
+        size_t read_size =
+            (leftover < READ_BUF_SIZE) ? leftover : READ_BUF_SIZE;
+
+        if ((fread(buf, 1, read_size, file) != read_size) ||
+            (memcmp(buf, contents + off, read_size) != 0)) {
+            fclose(file);
+            free(buf);
+            return true;
+        }
+    }
+
+    fclose(file);
+    free(buf);
+    return false;
 }
 
 static void _extractor_on_file_end(void *user) {
     st3m_tar_extractor_t *extractor = (st3m_tar_extractor_t *)user;
-    if (extractor->cur_file == NULL) {
+    if (extractor->cur_file_contents == NULL) {
         return;
     }
-    fclose(extractor->cur_file);
-    extractor->cur_file = NULL;
+
+    if (_is_write_needed(extractor->cur_file_path, extractor->cur_file_contents,
+                         extractor->cur_file_size)) {
+        FILE *cur_file = fopen(extractor->cur_file_path, "w");
+        if (cur_file == NULL) {
+            ESP_LOGW(TAG, "Failed to create %s: %s", extractor->cur_file_path,
+                     strerror(errno));
+        } else {
+            fwrite(extractor->cur_file_contents, 1, extractor->cur_file_size,
+                   cur_file);
+            fflush(cur_file);
+            fclose(cur_file);
+        }
+    }
+
+    free(extractor->cur_file_contents);
+    free(extractor->cur_file_path);
+    extractor->cur_file_contents = NULL;
+    extractor->cur_file_offset = NULL;
+    extractor->cur_file_path = NULL;
 }
 
 void st3m_tar_extractor_init(st3m_tar_extractor_t *extractor) {
