@@ -81,13 +81,10 @@ class Compositor(Responder):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.main.think(ins, delta_ms)
-        if sys_display.get_gfx_mode() != 0:
+        if sys_display.get_mode() != 0:
             return
         if self._frame_skip <= 0:
-            if (
-                not settings.onoff_show_fps.value
-                and not sys_display.get_gfx_mode() != 0
-            ):
+            if not settings.onoff_show_fps.value and not sys_display.get_mode() != 0:
                 for overlay in self._enabled_overlays():
                     overlay.think(ins, delta_ms)
 
@@ -97,7 +94,7 @@ class Compositor(Responder):
         global _clip_x1
         global _clip_y1
         self.main.draw(ctx)
-        if sys_display.get_gfx_mode() != 0:
+        if sys_display.get_mode() != 0:
             return
         if self._frame_skip <= 0:
             octx = sys_display.ctx(1)  # XXX add symbolic name for overlay

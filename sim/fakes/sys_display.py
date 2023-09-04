@@ -9,11 +9,11 @@ def overlay_clip(x0, y0, x1, y1):
     pass
 
 
-def get_gfx_mode():
+def get_mode():
     return 0
 
 
-def set_gfx_mode(no):
+def set_mode(no):
     pass
 
 

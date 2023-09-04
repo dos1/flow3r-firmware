@@ -193,7 +193,7 @@ static void ice_palette(void) {
     st3m_gfx_set_palette(pal, 256);
 }
 
-void st3m_set_gfx_mode(st3m_gfx_mode mode) {
+void st3m_gfx_set_mode(st3m_gfx_mode mode) {
     memset(fb, 0, sizeof(fb));
     memset(st3m_osd_fb, 0, sizeof(st3m_osd_fb));
 
@@ -223,7 +223,7 @@ void st3m_set_gfx_mode(st3m_gfx_mode mode) {
         _st3m_gfx_mode = mode;
 }
 
-st3m_gfx_mode st3m_get_gfx_mode(void) { return _st3m_gfx_mode; }
+st3m_gfx_mode st3m_gfx_get_mode(void) { return _st3m_gfx_mode; }
 
 uint8_t *st3m_gfx_fb(st3m_gfx_mode mode) {
     st3m_gfx_mode set_mode =
@@ -280,7 +280,7 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode) {
 
 static void st3m_gfx_task(void *_arg) {
     (void)_arg;
-    st3m_set_gfx_mode(0);
+    st3m_gfx_set_mode(0);
 
     while (true) {
         int desc_no = 0;

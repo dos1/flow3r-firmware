@@ -61,7 +61,7 @@ class App(Application):
     def on_enter(self, vm):
         # we are compositing heavy and going back and forth to 16bit is
         # too much overhead
-        sys_display.set_gfx_mode(32)
+        sys_display.set_mode(32)
         super().on_enter(vm)
 
     def draw(self, ctx):

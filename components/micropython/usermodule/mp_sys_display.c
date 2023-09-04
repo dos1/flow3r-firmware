@@ -36,16 +36,16 @@ STATIC mp_obj_t mp_set_backlight(mp_obj_t percent_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_backlight_obj, mp_set_backlight);
 
-STATIC mp_obj_t mp_set_gfx_mode(mp_obj_t mode) {
-    st3m_set_gfx_mode(mp_obj_get_int(mode));
+STATIC mp_obj_t mp_set_mode(mp_obj_t mode) {
+    st3m_gfx_set_mode(mp_obj_get_int(mode));
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_gfx_mode_obj, mp_set_gfx_mode);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_mode_obj, mp_set_mode);
 
-STATIC mp_obj_t mp_get_gfx_mode(void) {
-    return mp_obj_new_int(st3m_get_gfx_mode());
+STATIC mp_obj_t mp_get_mode(void) {
+    return mp_obj_new_int(st3m_gfx_get_mode());
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_gfx_mode_obj, mp_get_gfx_mode);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_mode_obj, mp_get_mode);
 
 STATIC mp_obj_t mp_set_palette(mp_obj_t pal_in) {
     size_t count = mp_obj_get_int(mp_obj_len(pal_in));
@@ -123,15 +123,15 @@ STATIC const mp_rom_map_elem_t mp_module_sys_display_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_sys_display) },
     { MP_ROM_QSTR(MP_QSTR_pipe_full), MP_ROM_PTR(&mp_pipe_full_obj) },
     { MP_ROM_QSTR(MP_QSTR_pipe_flush), MP_ROM_PTR(&mp_pipe_flush_obj) },
-    { MP_ROM_QSTR(MP_QSTR_set_backlight), MP_ROM_PTR(&mp_set_backlight_obj) },
-    { MP_ROM_QSTR(MP_QSTR_overlay_clip), MP_ROM_PTR(&mp_overlay_clip_obj) },
     { MP_ROM_QSTR(MP_QSTR_update), MP_ROM_PTR(&mp_update_obj) },
     { MP_ROM_QSTR(MP_QSTR_fb), MP_ROM_PTR(&mp_fb_obj) },
     { MP_ROM_QSTR(MP_QSTR_ctx), MP_ROM_PTR(&mp_ctx_obj) },
-    { MP_ROM_QSTR(MP_QSTR_set_gfx_mode), MP_ROM_PTR(&mp_set_gfx_mode_obj) },
-    { MP_ROM_QSTR(MP_QSTR_set_palette), MP_ROM_PTR(&mp_set_palette_obj) },
-    { MP_ROM_QSTR(MP_QSTR_get_gfx_mode), MP_ROM_PTR(&mp_get_gfx_mode_obj) },
     { MP_ROM_QSTR(MP_QSTR_fps), MP_ROM_PTR(&mp_fps_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_mode), MP_ROM_PTR(&mp_set_mode_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_mode), MP_ROM_PTR(&mp_get_mode_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_palette), MP_ROM_PTR(&mp_set_palette_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_backlight), MP_ROM_PTR(&mp_set_backlight_obj) },
+    { MP_ROM_QSTR(MP_QSTR_overlay_clip), MP_ROM_PTR(&mp_overlay_clip_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_sys_display_globals,

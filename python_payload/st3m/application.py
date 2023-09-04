@@ -76,7 +76,7 @@ class Application(BaseView):
         super().on_exit()
         # set the default graphics mode, this is a no-op if
         # it is already set
-        sys_display.set_gfx_mode(0)
+        sys_display.set_mode(0)
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)

@@ -8,7 +8,7 @@ class App(Application):
 
     def on_enter(self, vm):
         super().on_enter(vm)
-        sys_display.set_gfx_mode(4)
+        sys_display.set_mode(4)
         self.y = 0
         self.xa = -1.5
         self.xb = 1.5

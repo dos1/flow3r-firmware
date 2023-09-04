@@ -29,9 +29,9 @@ typedef enum {
 } st3m_gfx_mode;
 
 // sets the current graphics mode
-void st3m_set_gfx_mode(st3m_gfx_mode mode);
+void st3m_gfx_set_mode(st3m_gfx_mode mode);
 
-st3m_gfx_mode st3m_get_gfx_mode(void);
+st3m_gfx_mode st3m_gfx_get_mode(void);
 
 uint8_t *st3m_gfx_fb(st3m_gfx_mode mode);
 
