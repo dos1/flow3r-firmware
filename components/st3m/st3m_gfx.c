@@ -3,6 +3,7 @@
 
 #include <string.h>
 
+#include <pthread.h>
 #include "esp_log.h"
 #include "esp_system.h"
 #include "esp_task.h"
@@ -60,10 +61,13 @@ static Ctx *fb_RGB565_BS_ctx = NULL;
 static Ctx *fb_RGBA8_ctx = NULL;
 
 // corner pixel coordinates for osd clip
-static int _st3m_osd_y1 = 0;
-static int _st3m_osd_x1 = 0;
-static int _st3m_osd_y0 = 0;
-static int _st3m_osd_x0 = 0;
+
+static pthread_mutex_t osd_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static int _st3m_osd_y1[N_DRAWLISTS + 1];
+static int _st3m_osd_x1[N_DRAWLISTS + 1];
+static int _st3m_osd_y0[N_DRAWLISTS + 1];
+static int _st3m_osd_x0[N_DRAWLISTS + 1];
 
 static float smoothed_fps = 0.0f;
 static QueueHandle_t user_ctx_freeq = NULL;
@@ -73,6 +77,40 @@ static st3m_counter_rate_t rast_rate;
 static TaskHandle_t graphics_task;
 
 //////////////////////////
+
+static Ctx *st3m_ctx_int(st3m_gfx_mode mode) {
+    if (mode == st3m_gfx_osd) {
+        st3m_gfx_mode set_mode =
+            _st3m_gfx_mode ? _st3m_gfx_mode : ST3M_GFX_DEFAULT_MODE;
+        switch (set_mode) {
+            case st3m_gfx_default:  // overriden
+            case st3m_gfx_16bpp:
+            case st3m_gfx_16bpp_osd:
+                return fb_RGBA8_ctx;
+            case st3m_gfx_32bpp:
+            case st3m_gfx_32bpp_osd:
+            case st3m_gfx_24bpp:
+            case st3m_gfx_8bpp:
+            case st3m_gfx_8bpp_osd:
+            case st3m_gfx_osd:
+            case st3m_gfx_4bpp:
+                return fb_GRAYA8_ctx;
+        }
+    }
+    Ctx *ctx = st3m_gfx_drawctx_free_get(1000);
+
+    if (!ctx) {
+        return NULL;
+    }
+    return ctx;
+}
+Ctx *st3m_ctx(st3m_gfx_mode mode) {
+    Ctx *ctx = st3m_ctx_int(mode);
+    if (mode == st3m_gfx_osd) {
+        pthread_mutex_lock(&osd_mutex);
+    }
+    return ctx;
+}
 
 void st3m_ctx_viewport_transform(Ctx *ctx) {
     int32_t offset_x = FLOW3R_BSP_DISPLAY_WIDTH / 2;
@@ -289,20 +327,25 @@ static void st3m_gfx_task(void *_arg) {
             case st3m_gfx_default:  // not neccesarily taken- overrriden above
             case st3m_gfx_16bpp_osd:
                 ctx_render_ctx(user_ctx[desc_no], fb_RGB565_BS_ctx);
-                if (_st3m_osd_y1 != _st3m_osd_y0) {
+                if (_st3m_osd_y1[desc_no] != _st3m_osd_y0[desc_no]) {
+                    pthread_mutex_lock(&osd_mutex);
                     st3m_ctx_merge_osd(
                         fb,
                         st3m_osd_fb +
-                            4 * ((_st3m_osd_y0 - ST3M_OSD_Y) * ST3M_OSD_WIDTH +
-                                 (_st3m_osd_x0 - ST3M_OSD_X)),
-                        ST3M_OSD_WIDTH * 4, st3m_osd_backup, _st3m_osd_x0,
-                        _st3m_osd_y0, _st3m_osd_x1 - _st3m_osd_x0 + 1,
-                        _st3m_osd_y1 - _st3m_osd_y0 + 1);
+                            4 * ((_st3m_osd_y0[desc_no] - ST3M_OSD_Y) *
+                                     ST3M_OSD_WIDTH +
+                                 (_st3m_osd_x0[desc_no] - ST3M_OSD_X)),
+                        ST3M_OSD_WIDTH * 4, st3m_osd_backup,
+                        _st3m_osd_x0[desc_no], _st3m_osd_y0[desc_no],
+                        _st3m_osd_x1[desc_no] - _st3m_osd_x0[desc_no] + 1,
+                        _st3m_osd_y1[desc_no] - _st3m_osd_y0[desc_no] + 1);
                     flow3r_bsp_display_send_fb(fb, 16);
-                    st3m_ctx_unmerge_osd(fb, st3m_osd_backup, _st3m_osd_x0,
-                                         _st3m_osd_y0,
-                                         _st3m_osd_x1 - _st3m_osd_x0 + 1,
-                                         _st3m_osd_y1 - _st3m_osd_y0 + 1);
+                    st3m_ctx_unmerge_osd(
+                        fb, st3m_osd_backup, _st3m_osd_x0[desc_no],
+                        _st3m_osd_y0[desc_no],
+                        _st3m_osd_x1[desc_no] - _st3m_osd_x0[desc_no] + 1,
+                        _st3m_osd_y1[desc_no] - _st3m_osd_y0[desc_no] + 1);
+                    pthread_mutex_unlock(&osd_mutex);
                 } else
                     flow3r_bsp_display_send_fb(fb, 16);
                 break;
@@ -618,6 +661,12 @@ static int last_descno = 0;
 static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
     BaseType_t res = xQueueReceive(user_ctx_freeq, &last_descno, ticks_to_wait);
     if (res != pdTRUE) return NULL;
+
+    _st3m_osd_y1[last_descno] = _st3m_osd_y1[N_DRAWLISTS];
+    _st3m_osd_y0[last_descno] = _st3m_osd_y0[N_DRAWLISTS];
+    _st3m_osd_x1[last_descno] = _st3m_osd_x1[N_DRAWLISTS];
+    _st3m_osd_x0[last_descno] = _st3m_osd_x0[N_DRAWLISTS];
+
     return user_ctx[last_descno];
 }
 
@@ -625,8 +674,12 @@ static void st3m_gfx_drawctx_pipe_put(void) {
     xQueueSend(user_ctx_rastq, &last_descno, portMAX_DELAY);
 }
 
+static Ctx *st3m_ctx_int(st3m_gfx_mode mode);
 void st3m_ctx_end_frame(Ctx *ctx) {
-    if (ctx == st3m_ctx(st3m_gfx_osd)) return;
+    if (ctx == st3m_ctx_int(st3m_gfx_osd)) {
+        pthread_mutex_unlock(&osd_mutex);
+        return;
+    }
     st3m_gfx_drawctx_pipe_put();
 }
 
@@ -657,33 +710,6 @@ void st3m_gfx_flush(int timeout_ms) {
     ESP_LOGW(TAG, "Pipeline flush/reset done.");
 }
 
-Ctx *st3m_ctx(st3m_gfx_mode mode) {
-    if (mode == st3m_gfx_osd) {
-        st3m_gfx_mode set_mode =
-            _st3m_gfx_mode ? _st3m_gfx_mode : ST3M_GFX_DEFAULT_MODE;
-        switch (set_mode) {
-            case st3m_gfx_default:  // overriden
-            case st3m_gfx_16bpp:
-            case st3m_gfx_16bpp_osd:
-                return fb_RGBA8_ctx;
-            case st3m_gfx_32bpp:
-            case st3m_gfx_32bpp_osd:
-            case st3m_gfx_24bpp:
-            case st3m_gfx_8bpp:
-            case st3m_gfx_8bpp_osd:
-            case st3m_gfx_osd:
-            case st3m_gfx_4bpp:
-                return fb_GRAYA8_ctx;
-        }
-    }
-    Ctx *ctx = st3m_gfx_drawctx_free_get(1000);
-
-    if (!ctx) {
-        return NULL;
-    }
-    return ctx;
-}
-
 void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1) {
     if (y1 < ST3M_OSD_Y) y1 = ST3M_OSD_Y;
     if (y1 > ST3M_OSD_Y + ST3M_OSD_HEIGHT) y1 = ST3M_OSD_Y + ST3M_OSD_HEIGHT;
@@ -694,12 +720,21 @@ void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1) {
     if (x1 > ST3M_OSD_X + ST3M_OSD_WIDTH) x1 = ST3M_OSD_X + ST3M_OSD_WIDTH;
     if (x0 < ST3M_OSD_X) x0 = ST3M_OSD_X;
     if (x0 > ST3M_OSD_X + ST3M_OSD_WIDTH) x0 = ST3M_OSD_X + ST3M_OSD_WIDTH;
+
+    int no = last_descno;
+
     if ((x1 < x0) || (y1 < y0)) {
-        _st3m_osd_y1 = _st3m_osd_y0 = _st3m_osd_x1 = _st3m_osd_x0 = 0;
+        _st3m_osd_y1[no] = _st3m_osd_y0[no] = _st3m_osd_x1[no] =
+            _st3m_osd_x0[no] = 0;
     } else {
-        _st3m_osd_y1 = y1;
-        _st3m_osd_y0 = y0;
-        _st3m_osd_x1 = x1;
-        _st3m_osd_x0 = x0;
+        _st3m_osd_y1[no] = y1;
+        _st3m_osd_y0[no] = y0;
+        _st3m_osd_x1[no] = x1;
+        _st3m_osd_x0[no] = x0;
     }
+
+    _st3m_osd_y1[N_DRAWLISTS] = _st3m_osd_y1[no];
+    _st3m_osd_y0[N_DRAWLISTS] = _st3m_osd_y0[no];
+    _st3m_osd_x1[N_DRAWLISTS] = _st3m_osd_x1[no];
+    _st3m_osd_x0[N_DRAWLISTS] = _st3m_osd_x0[no];
 }
