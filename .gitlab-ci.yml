@@ -5,6 +5,7 @@ stages:
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  GIT_DEPTH: 0
 
 default:
   # built via:
