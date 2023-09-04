@@ -132,7 +132,7 @@ class Compositor(Responder):
                 octx.restore()
                 for overlay in self._enabled_overlays():
                     overlay.draw(octx)
-            self._frame_skip = 8
+            self._frame_skip = 4
             sys_display.overlay_clip(_clip_x0, _clip_y0, _clip_x1, _clip_y1)
             sys_display.update(octx)
         self._frame_skip -= 1
@@ -319,7 +319,7 @@ class OverlayVolume(Overlay):
 
         if self._showing is None:
             return
-        self._showing -= delta_ms * 8
+        self._showing -= delta_ms * 4
         if self._showing < 0:
             self._showing = None
 
