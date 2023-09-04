@@ -9,11 +9,20 @@ class App(Application):
         super().__init__(app_ctx)
         self.x = 23
         self.y = 42
+        self.x2 = 23
+        self.y2 = 42
         self.angle = 0.3
+        self.angle2 = 0.3
         self.bounces = 0
         self.x_vel = math.cos(self.angle) * 20
         self.y_vel = math.sin(self.angle) * 20
         self.color = [0, 1, 0, 1]
+
+    def think(self, ins, delta_ms):
+        super().think(ins, delta_ms)
+        self.x2 += (delta_ms / 1000.0) * self.x_vel
+        self.y2 += (delta_ms / 1000.0) * self.y_vel
+
 
     def draw(self, ctx: Context):
         ctx.rectangle(-120, -120, 240, 240)
@@ -28,6 +37,10 @@ class App(Application):
             ctx.scale(1.4, 1.4)
             ctx.parse(logo)
             ctx.fill()
+        ctx.restore()
+        ctx.save()
+        ctx.translate(self.x2, self.y2)
+        ctx.logo(0, 0, 100)
         ctx.restore()
 
         self.x += (self.delta_ms / 1000.0) * self.x_vel
