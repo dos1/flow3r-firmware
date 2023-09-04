@@ -14,17 +14,34 @@ static st3m_media *audio_media = NULL;
 
 static int16_t *audio_buffer = NULL;
 
+// XXX : it would be better to be able to push and pop the
+//       st3m_audio_player_function
+void bl00mbox_audio_render(int16_t *rx, int16_t *tx, uint16_t len);
+
+static inline int16_t mix_and_clip(int16_t a, int16_t b) {
+    if (a == 0) return b;
+    int32_t val = a;
+    val += b;
+    if (val > 32767) {
+        val = 32767;
+    } else if (val < -32767) {
+        val = -32767;
+    }
+    return val;
+}
+
 void st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len) {
+    bl00mbox_audio_render(rx, tx, len);
     if (!audio_media) return;
     for (int i = 0; i < len; i++) {
         if ((audio_media->audio_r + 1 != audio_media->audio_w) &&
             (audio_media->audio_r + 1 - AUDIO_BUF_SIZE !=
              audio_media->audio_w)) {
-            tx[i] = audio_media->audio_buffer[audio_media->audio_r++];
+            tx[i] = mix_and_clip(
+                tx[i], audio_media->audio_buffer[audio_media->audio_r++]);
             if (audio_media->audio_r >= AUDIO_BUF_SIZE)
                 audio_media->audio_r = 0;
-        } else
-            tx[i] = 0;
+        }
     }
 }
 int st3m_media_samples_queued(void) {
@@ -33,10 +50,6 @@ int st3m_media_samples_queued(void) {
         return (AUDIO_BUF_SIZE - audio_media->audio_r) + audio_media->audio_w;
     return audio_media->audio_w - audio_media->audio_r;
 }
-
-// XXX : it would be better to be able to push and pop the
-//       st3m_audio_player_function
-void bl00mbox_audio_render(int16_t *rx, int16_t *tx, uint16_t len);
 
 void st3m_media_stop(void) {
     if (audio_media && audio_media->destroy) audio_media->destroy(audio_media);
