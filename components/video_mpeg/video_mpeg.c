@@ -191,7 +191,7 @@ static void mpg1_destroy(st3m_media *media) {
     plm_destroy(self->plm);
     free(self->frame_data);
     free(self);
-    st3m_gfx_set_mode(0);
+    st3m_gfx_set_mode(st3m_gfx_default);
 }
 
 st3m_media *st3m_media_load_mpg1(const char *path) {
@@ -238,7 +238,7 @@ st3m_media *st3m_media_load_mpg1(const char *path) {
         (uint8_t *)malloc(plm_get_width(self->plm) * plm_get_height(self->plm) *
                           2);  // XXX : this is not quite right
 
-    st3m_gfx_set_mode(32);
+    st3m_gfx_set_mode(st3m_gfx_32bpp_low_latency);
     mpg1_think((st3m_media *)self, 0);  // the frame is constructed in think
     return (st3m_media *)self;
 }
