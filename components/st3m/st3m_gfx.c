@@ -194,6 +194,8 @@ static void ice_palette(void) {
 }
 
 void st3m_gfx_set_mode(st3m_gfx_mode mode) {
+    if (mode == _st3m_gfx_mode) return;
+
     memset(fb, 0, sizeof(fb));
     memset(st3m_osd_fb, 0, sizeof(st3m_osd_fb));
 
