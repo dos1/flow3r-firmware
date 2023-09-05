@@ -331,7 +331,7 @@ st3m_media *st3m_media_load_mp3(const char *path) {
             self->size = self->buffer_size;
 
             mp3dec_init(&self->mp3d);
-            self->control.duration = 1200;
+            self->control.duration = -1;
             free(hostname);
             self->in_buffering = 1;
             self->path = strdup(path);
@@ -370,6 +370,6 @@ st3m_media *st3m_media_load_mp3(const char *path) {
         return NULL;
     }
     mp3dec_init(&self->mp3d);
-    self->control.duration = 1200.0;
+    self->control.duration = -1;
     return (st3m_media *)self;
 }
