@@ -51,9 +51,6 @@ EXT_RAM_BSS_ATTR static uint8_t
     st3m_osd_fb[ST3M_OSD_WIDTH * ST3M_OSD_HEIGHT * 4];
 EXT_RAM_BSS_ATTR uint16_t st3m_osd_backup[ST3M_OSD_WIDTH * ST3M_OSD_HEIGHT];
 
-// drawlist ctx
-static Ctx *user_ctx[N_DRAWLISTS];
-
 // each frame buffer has an associated rasterizer context
 static Ctx *fb_GRAY8_ctx = NULL;
 static Ctx *fb_GRAYA8_ctx = NULL;
@@ -64,10 +61,21 @@ static Ctx *fb_RGBA8_ctx = NULL;
 
 static pthread_mutex_t osd_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-static int _st3m_osd_y1[N_DRAWLISTS + 1];
-static int _st3m_osd_x1[N_DRAWLISTS + 1];
-static int _st3m_osd_y0[N_DRAWLISTS + 1];
-static int _st3m_osd_x0[N_DRAWLISTS + 1];
+static int _st3m_osd_y1;
+static int _st3m_osd_x1;
+static int _st3m_osd_y0;
+static int _st3m_osd_x0;
+
+typedef struct {
+    Ctx *user_ctx;
+
+    int osd_y0;
+    int osd_x0;
+    int osd_y1;
+    int osd_x1;
+} st3m_gfx_drawlist;
+
+static st3m_gfx_drawlist drawlists[N_DRAWLISTS];
 
 static float smoothed_fps = 0.0f;
 static QueueHandle_t user_ctx_freeq = NULL;
@@ -291,6 +299,7 @@ static void st3m_gfx_task(void *_arg) {
 
         xQueueReceiveNotifyStarved(user_ctx_rastq, &desc_no,
                                    "rast task starved (user_ctx)!");
+        st3m_gfx_drawlist *drawlist = &drawlists[desc_no];
 
         ctx_set_textureclock(fb_RGB565_BS_ctx,
                              ctx_textureclock(fb_RGB565_BS_ctx) + 1);
@@ -308,7 +317,7 @@ static void st3m_gfx_task(void *_arg) {
             case st3m_gfx_8bpp:
             case st3m_gfx_8bpp_osd:
             case st3m_gfx_8bpp_low_latency:
-                ctx_render_ctx(user_ctx[desc_no], fb_GRAY8_ctx);
+                ctx_render_ctx(drawlist->user_ctx, fb_GRAY8_ctx);
                 flow3r_bsp_display_send_fb(st3m_osd_fb, 8);
                 break;
             case st3m_gfx_24bpp:
@@ -317,11 +326,11 @@ static void st3m_gfx_task(void *_arg) {
                 break;
             case st3m_gfx_32bpp:
             case st3m_gfx_32bpp_low_latency:
-                ctx_render_ctx(user_ctx[desc_no], fb_RGBA8_ctx);
+                ctx_render_ctx(drawlist->user_ctx, fb_RGBA8_ctx);
                 flow3r_bsp_display_send_fb(st3m_osd_fb, 32);
                 break;
             case st3m_gfx_32bpp_osd:
-                ctx_render_ctx(user_ctx[desc_no], fb_RGBA8_ctx);
+                ctx_render_ctx(drawlist->user_ctx, fb_RGBA8_ctx);
                 flow3r_bsp_display_send_fb(st3m_osd_fb, 32);
                 break;
             case st3m_gfx_osd:
@@ -330,37 +339,35 @@ static void st3m_gfx_task(void *_arg) {
             case st3m_gfx_16bpp:
             case st3m_gfx_16bpp_low_latency:
             case st3m_gfx_low_latency:
-                ctx_render_ctx(user_ctx[desc_no], fb_RGB565_BS_ctx);
+                ctx_render_ctx(drawlist->user_ctx, fb_RGB565_BS_ctx);
                 flow3r_bsp_display_send_fb(fb, 16);
                 break;
             case st3m_gfx_default:  // not neccesarily taken- overrriden above
             case st3m_gfx_16bpp_osd:
-                ctx_render_ctx(user_ctx[desc_no], fb_RGB565_BS_ctx);
-                if (_st3m_osd_y1[desc_no] != _st3m_osd_y0[desc_no]) {
+                ctx_render_ctx(drawlist->user_ctx, fb_RGB565_BS_ctx);
+                if (drawlist->osd_y0 != drawlist->osd_y1) {
                     pthread_mutex_lock(&osd_mutex);
                     st3m_ctx_merge_osd(
                         fb,
-                        st3m_osd_fb +
-                            4 * ((_st3m_osd_y0[desc_no] - ST3M_OSD_Y) *
-                                     ST3M_OSD_WIDTH +
-                                 (_st3m_osd_x0[desc_no] - ST3M_OSD_X)),
-                        ST3M_OSD_WIDTH * 4, st3m_osd_backup,
-                        _st3m_osd_x0[desc_no], _st3m_osd_y0[desc_no],
-                        _st3m_osd_x1[desc_no] - _st3m_osd_x0[desc_no] + 1,
-                        _st3m_osd_y1[desc_no] - _st3m_osd_y0[desc_no] + 1);
+                        st3m_osd_fb + 4 * ((drawlist->osd_y0 - ST3M_OSD_Y) *
+                                               ST3M_OSD_WIDTH +
+                                           (drawlist->osd_x0 - ST3M_OSD_X)),
+                        ST3M_OSD_WIDTH * 4, st3m_osd_backup, drawlist->osd_x0,
+                        drawlist->osd_y0,
+                        drawlist->osd_x1 - drawlist->osd_x0 + 1,
+                        drawlist->osd_y1 - drawlist->osd_y0 + 1);
                     pthread_mutex_unlock(&osd_mutex);
                     flow3r_bsp_display_send_fb(fb, 16);
                     st3m_ctx_unmerge_osd(
-                        fb, st3m_osd_backup, _st3m_osd_x0[desc_no],
-                        _st3m_osd_y0[desc_no],
-                        _st3m_osd_x1[desc_no] - _st3m_osd_x0[desc_no] + 1,
-                        _st3m_osd_y1[desc_no] - _st3m_osd_y0[desc_no] + 1);
+                        fb, st3m_osd_backup, drawlist->osd_x0, drawlist->osd_y0,
+                        drawlist->osd_x1 - drawlist->osd_x0 + 1,
+                        drawlist->osd_y1 - drawlist->osd_y0 + 1);
                 } else
                     flow3r_bsp_display_send_fb(fb, 16);
                 break;
         }
-        ctx_drawlist_clear(user_ctx[desc_no]);
-        st3m_ctx_viewport_transform(user_ctx[desc_no]);
+        ctx_drawlist_clear(drawlist->user_ctx);
+        st3m_ctx_viewport_transform(drawlist->user_ctx);
 
         xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
         st3m_counter_rate_sample(&rast_rate);
@@ -649,12 +656,12 @@ void st3m_gfx_init(void) {
 
     // Setup user_ctx descriptor.
     for (int i = 0; i < N_DRAWLISTS; i++) {
-        user_ctx[i] = ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH,
-                                       FLOW3R_BSP_DISPLAY_HEIGHT);
-        assert(user_ctx[i] != NULL);
-        ctx_set_texture_cache(user_ctx[i], fb_RGB565_BS_ctx);
+        drawlists[i].user_ctx = ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH,
+                                                 FLOW3R_BSP_DISPLAY_HEIGHT);
+        assert(drawlists[i].user_ctx != NULL);
+        ctx_set_texture_cache(drawlists[i].user_ctx, fb_RGB565_BS_ctx);
 
-        st3m_ctx_viewport_transform(user_ctx[i]);
+        st3m_ctx_viewport_transform(drawlists[i].user_ctx);
 
         BaseType_t res = xQueueSend(user_ctx_freeq, &i, 0);
         assert(res == pdTRUE);
@@ -671,12 +678,13 @@ static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
     BaseType_t res = xQueueReceive(user_ctx_freeq, &last_descno, ticks_to_wait);
     if (res != pdTRUE) return NULL;
 
-    _st3m_osd_y1[last_descno] = _st3m_osd_y1[N_DRAWLISTS];
-    _st3m_osd_y0[last_descno] = _st3m_osd_y0[N_DRAWLISTS];
-    _st3m_osd_x1[last_descno] = _st3m_osd_x1[N_DRAWLISTS];
-    _st3m_osd_x0[last_descno] = _st3m_osd_x0[N_DRAWLISTS];
+    st3m_gfx_drawlist *drawlist = &drawlists[last_descno];
+    drawlist->osd_x0 = _st3m_osd_x0;
+    drawlist->osd_y0 = _st3m_osd_y0;
+    drawlist->osd_x1 = _st3m_osd_x1;
+    drawlist->osd_y1 = _st3m_osd_y1;
 
-    return user_ctx[last_descno];
+    return drawlist->user_ctx;
 }
 
 static void st3m_gfx_drawctx_pipe_put(void) {
@@ -711,8 +719,8 @@ void st3m_gfx_flush(int timeout_ms) {
     xQueueReset(user_ctx_freeq);
 
     for (int i = 0; i < N_DRAWLISTS; i++) {
-        ctx_drawlist_clear(user_ctx[i]);
-        st3m_ctx_viewport_transform(user_ctx[i]);
+        ctx_drawlist_clear(drawlists[i].user_ctx);
+        st3m_ctx_viewport_transform(drawlists[i].user_ctx);
         BaseType_t res = xQueueSend(user_ctx_freeq, &i, 0);
         assert(res == pdTRUE);
     }
@@ -730,20 +738,23 @@ void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1) {
     if (x0 < ST3M_OSD_X) x0 = ST3M_OSD_X;
     if (x0 > ST3M_OSD_X + ST3M_OSD_WIDTH) x0 = ST3M_OSD_X + ST3M_OSD_WIDTH;
 
-    int no = last_descno;
+    st3m_gfx_drawlist *drawlist = &drawlists[last_descno];
 
     if ((x1 < x0) || (y1 < y0)) {
-        _st3m_osd_y1[no] = _st3m_osd_y0[no] = _st3m_osd_x1[no] =
-            _st3m_osd_x0[no] = 0;
+        drawlist->osd_x0 = drawlist->osd_y0 = drawlist->osd_x1 =
+            drawlist->osd_y1 = 0;
     } else {
-        _st3m_osd_y1[no] = y1;
-        _st3m_osd_y0[no] = y0;
-        _st3m_osd_x1[no] = x1;
-        _st3m_osd_x0[no] = x0;
+        drawlist->osd_x0 = x0;
+        drawlist->osd_y0 = y0;
+        drawlist->osd_x1 = x1;
+        drawlist->osd_y1 = y1;
     }
+    drawlist->osd_y0 = y0;
+    drawlist->osd_x1 = x1;
+    drawlist->osd_y1 = y1;
 
-    _st3m_osd_y1[N_DRAWLISTS] = _st3m_osd_y1[no];
-    _st3m_osd_y0[N_DRAWLISTS] = _st3m_osd_y0[no];
-    _st3m_osd_x1[N_DRAWLISTS] = _st3m_osd_x1[no];
-    _st3m_osd_x0[N_DRAWLISTS] = _st3m_osd_x0[no];
+    _st3m_osd_x0 = drawlist->osd_x0;
+    _st3m_osd_y0 = drawlist->osd_y0;
+    _st3m_osd_x1 = drawlist->osd_x1;
+    _st3m_osd_y1 = drawlist->osd_y1;
 }
