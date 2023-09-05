@@ -45,7 +45,7 @@ static const char *TAG = "st3m-gfx";
 #define ST3M_OSD_X 0
 #define ST3M_OSD_Y 0
 
-static st3m_gfx_mode _st3m_gfx_mode = st3m_gfx_default;
+static st3m_gfx_mode _st3m_gfx_mode = st3m_gfx_default + 1;
 
 EXT_RAM_BSS_ATTR static uint8_t
     st3m_osd_fb[ST3M_OSD_WIDTH * ST3M_OSD_HEIGHT * 4];
