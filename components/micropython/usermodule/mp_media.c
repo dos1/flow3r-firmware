@@ -33,11 +33,84 @@ STATIC mp_obj_t mp_stop(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_stop_obj, mp_stop);
 
+STATIC mp_obj_t mp_pause(void) {
+    st3m_media_pause();
+    return 0;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_pause_obj, mp_pause);
+
+STATIC mp_obj_t mp_play(void) {
+    st3m_media_play();
+    return 0;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_play_obj, mp_play);
+
+STATIC mp_obj_t mp_is_playing(void) {
+    return mp_obj_new_bool(st3m_media_is_playing());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_is_playing_obj, mp_is_playing);
+
+STATIC mp_obj_t mp_get_duration(void) {
+    return mp_obj_new_float(st3m_media_get_duration());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_duration_obj, mp_get_duration);
+
+STATIC mp_obj_t mp_get_position(void) {
+    return mp_obj_new_float(st3m_media_get_position());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_position_obj, mp_get_position);
+
+STATIC mp_obj_t mp_get_time(void) {
+    return mp_obj_new_float(st3m_media_get_time());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_time_obj, mp_get_time);
+
+STATIC mp_obj_t mp_seek(mp_obj_t position) {
+    st3m_media_seek(mp_obj_get_float(position));
+    return 0;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_seek_obj, mp_seek);
+
+STATIC mp_obj_t mp_seek_relative(mp_obj_t time) {
+    st3m_media_seek_relative(mp_obj_get_float(time));
+    return 0;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_seek_relative_obj, mp_seek_relative);
+
+STATIC mp_obj_t mp_set(mp_obj_t key, mp_obj_t value) {
+    st3m_media_set(mp_obj_str_get_str(key), mp_obj_get_float(value));
+    return 0;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_set_obj, mp_set);
+
+STATIC mp_obj_t mp_get(mp_obj_t key) {
+    return mp_obj_new_float(st3m_media_get(mp_obj_str_get_str(key)));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_get_obj, mp_get);
+
+STATIC mp_obj_t mp_get_string(mp_obj_t key) {
+    char *str = st3m_media_get_string(mp_obj_str_get_str(key));
+    if (!str) return 0;
+    return mp_obj_new_str(str, strlen(str));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_get_string_obj, mp_get_string);
+
 STATIC const mp_rom_map_elem_t globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_draw), MP_ROM_PTR(&mp_draw_obj) },
     { MP_ROM_QSTR(MP_QSTR_think), MP_ROM_PTR(&mp_think_obj) },
     { MP_ROM_QSTR(MP_QSTR_stop), MP_ROM_PTR(&mp_stop_obj) },
     { MP_ROM_QSTR(MP_QSTR_load), MP_ROM_PTR(&mp_load_obj) },
+    { MP_ROM_QSTR(MP_QSTR_pause), MP_ROM_PTR(&mp_pause_obj) },
+    { MP_ROM_QSTR(MP_QSTR_play), MP_ROM_PTR(&mp_play_obj) },
+    { MP_ROM_QSTR(MP_QSTR_is_playing), MP_ROM_PTR(&mp_is_playing_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_duration), MP_ROM_PTR(&mp_get_duration_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_position), MP_ROM_PTR(&mp_get_position_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_time), MP_ROM_PTR(&mp_get_time_obj) },
+    { MP_ROM_QSTR(MP_QSTR_seek), MP_ROM_PTR(&mp_seek_obj) },
+    { MP_ROM_QSTR(MP_QSTR_seek_relative), MP_ROM_PTR(&mp_seek_relative_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set), MP_ROM_PTR(&mp_set_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get), MP_ROM_PTR(&mp_get_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_string), MP_ROM_PTR(&mp_get_string_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(globals, globals_table);
