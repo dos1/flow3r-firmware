@@ -10,7 +10,7 @@
 
 #ifndef __clang__
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-#pragma GCC optimize("O2")
+#pragma GCC optimize("Oz")
 #else
 #pragma GCC optimize("Oz")
 #endif
@@ -61,8 +61,11 @@
 #define CTX_STRINGPOOL_SIZE        256
 #define CTX_AUDIO                    0
 #define CTX_CLIENTS                  0
+#define CTX_ALWAYS_USE_NEAREST_FOR_SCALE1 1
+
 
 #if defined(CONFIG_FLOW3R_CTX_FLAVOUR_FULL)
+#define CTX_COMPOSITE_O3                1
 #define CTX_GSTATE_PROTECT              1
 #define CTX_ENABLE_CLIP                 1
 #define CTX_FRAGMENT_SPECIALIZE         1

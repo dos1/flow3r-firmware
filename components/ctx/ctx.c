@@ -14,21 +14,10 @@
 #define FB_WIDTH  240
 #define FB_HEIGHT 240
 
-static inline uint16_t
-ctx_565_pack (uint8_t  red,
-              uint8_t  green,
-              uint8_t  blue,
-              const int      byteswap);
-static inline void
-ctx_565_unpack (const uint16_t pixel,
-                uint8_t *red,
-                uint8_t *green,
-                uint8_t *blue,
-                const int byteswap);
-
 void st3m_ctx_merge_osd(uint16_t *restrict fb,
-                            const uint8_t *osd, int ostride,
-                            uint16_t *restrict osd_backup, int x0, int y0, int w, int h)
+                        const uint8_t *osd, int ostride,
+                        uint16_t *restrict osd_backup,
+                        int x0, int y0, int w, int h)
 {
   uint8_t rgba[4]={0,0,0,255};
   uint32_t *rgba_32 = (uint32_t*)&rgba[0];
@@ -58,7 +47,8 @@ void st3m_ctx_merge_osd(uint16_t *restrict fb,
   }
 }
 
-void st3m_ctx_unmerge_osd(uint16_t *restrict fb, const uint16_t *osd_backup, int x0, int y0, int w, int h)
+void st3m_ctx_unmerge_osd(uint16_t *restrict fb, const uint16_t *osd_backup,
+                          int x0, int y0, int w, int h)
 {
   for (int scanline = y0; scanline < y0 + h; scanline++)
   {
