@@ -42,6 +42,12 @@ STATIC mp_obj_t mp_set_mode(mp_obj_t mode) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_mode_obj, mp_set_mode);
 
+STATIC mp_obj_t mp_set_default_mode(mp_obj_t mode) {
+    st3m_gfx_set_default_mode(mp_obj_get_int(mode));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_default_mode_obj, mp_set_default_mode);
+
 STATIC mp_obj_t mp_get_mode(void) {
     return mp_obj_new_int(st3m_gfx_get_mode());
 }
@@ -65,31 +71,13 @@ STATIC mp_obj_t mp_set_palette(mp_obj_t pal_in) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_palette_obj, mp_set_palette);
 
 STATIC mp_obj_t mp_ctx(mp_obj_t mode_in) {
-    return mp_ctx_from_ctx(st3m_ctx(mp_obj_get_int(mode_in)));
+    return mp_ctx_from_ctx(st3m_gfx_ctx(mp_obj_get_int(mode_in)));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_ctx_obj, mp_ctx);
 
 STATIC mp_obj_t mp_fb(mp_obj_t mode_in) {
     int mode = mp_obj_get_int(mode_in);
-    int size = 240 * 240;
-    switch (mode) {
-        case st3m_gfx_default:
-            size *= 2;
-            mode = 16;
-            break;
-        case st3m_gfx_16bpp:
-        case st3m_gfx_16bpp_osd:
-            size *= 2;
-            break;
-        case st3m_gfx_24bpp:
-            size *= 3;
-            break;
-        case st3m_gfx_osd:
-        case st3m_gfx_32bpp:
-        case st3m_gfx_32bpp_osd:
-            size *= 4;
-            break;
-    }
+    int size = 240 * 240 * st3m_gfx_bpp(mode) / 8;
     return mp_obj_new_bytearray_by_ref(size, st3m_gfx_fb(mode));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_fb_obj, mp_fb);
@@ -100,13 +88,13 @@ STATIC mp_obj_t mp_update(mp_obj_t ctx_in) {
         mp_raise_ValueError("not a ctx");
         return mp_const_none;
     }
-    st3m_ctx_end_frame(self->ctx);
+    st3m_gfx_end_frame(self->ctx);
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_update_obj, mp_update);
 
 STATIC mp_obj_t mp_pipe_full(void) {
-    if (st3m_gfx_drawctx_pipe_full()) {
+    if (st3m_gfx_pipe_full()) {
         return mp_const_true;
     }
     return mp_const_false;
@@ -129,6 +117,8 @@ STATIC const mp_rom_map_elem_t mp_module_sys_display_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_fps), MP_ROM_PTR(&mp_fps_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_mode), MP_ROM_PTR(&mp_set_mode_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_mode), MP_ROM_PTR(&mp_get_mode_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_default_mode),
+      MP_ROM_PTR(&mp_set_default_mode_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_palette), MP_ROM_PTR(&mp_set_palette_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_backlight), MP_ROM_PTR(&mp_set_backlight_obj) },
     { MP_ROM_QSTR(MP_QSTR_overlay_clip), MP_ROM_PTR(&mp_overlay_clip_obj) },

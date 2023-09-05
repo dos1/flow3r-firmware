@@ -38,7 +38,7 @@ static void _header_draw(Ctx *ctx) {
 }
 
 void rec_erasing_draw(void) {
-    Ctx *ctx = st3m_ctx(st3m_gfx_default);
+    Ctx *ctx = st3m_gfx_ctx(st3m_gfx_default);
     _header_draw(ctx);
 
     ctx_move_to(ctx, 0, 0);
@@ -46,11 +46,11 @@ void rec_erasing_draw(void) {
     ctx_gray(ctx, 0.8);
     ctx_text(ctx, "Erasing...");
 
-    st3m_ctx_end_frame(ctx);
+    st3m_gfx_end_frame(ctx);
 }
 
 void rec_flashing_draw(int percent) {
-    Ctx *ctx = st3m_ctx(st3m_gfx_default);
+    Ctx *ctx = st3m_gfx_ctx(st3m_gfx_default);
     _header_draw(ctx);
 
     ctx_move_to(ctx, 0, 0);
@@ -64,11 +64,11 @@ void rec_flashing_draw(int percent) {
     ctx_rectangle(ctx, -120, 20, 240 * percent / 100, 20);
     ctx_fill(ctx);
 
-    st3m_ctx_end_frame(ctx);
+    st3m_gfx_end_frame(ctx);
 }
 
 void rec_menu_draw(menu_t *menu) {
-    Ctx *ctx = st3m_ctx(st3m_gfx_default);
+    Ctx *ctx = st3m_gfx_ctx(st3m_gfx_default);
     _header_draw(ctx);
 
     int y = -20;
@@ -112,7 +112,7 @@ void rec_menu_draw(menu_t *menu) {
         y += 18;
     }
 
-    st3m_ctx_end_frame(ctx);
+    st3m_gfx_end_frame(ctx);
 }
 
 void rec_menu_process(menu_t *menu) {

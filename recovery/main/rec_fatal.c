@@ -6,7 +6,7 @@
 
 void rec_fatal(const char *msg) {
     for (;;) {
-        Ctx *ctx = st3m_ctx(st3m_gfx_default);
+        Ctx *ctx = st3m_gfx_ctx(st3m_gfx_default);
 
         // Draw background.
         ctx_rgb(ctx, 0.29, 0.0, 0.0);
@@ -20,7 +20,7 @@ void rec_fatal(const char *msg) {
         ctx_move_to(ctx, 0, 0);
         ctx_text(ctx, msg);
 
-        st3m_ctx_end_frame(ctx);
+        st3m_gfx_end_frame(ctx);
 
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }

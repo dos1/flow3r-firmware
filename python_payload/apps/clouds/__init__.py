@@ -58,12 +58,6 @@ class App(Application):
                 c.x = -200
         self.clouds = sorted(self.clouds, key=lambda c: -c.z)
 
-    def on_enter(self, vm):
-        # we are compositing heavy and going back and forth to 16bit is
-        # too much overhead
-        sys_display.set_mode(32)
-        super().on_enter(vm)
-
     def draw(self, ctx):
         # faster, and with smoothing is incorrect
         ctx.image_smoothing = False
@@ -76,3 +70,9 @@ class App(Application):
 
         for c in self.clouds:
             c.draw(ctx)
+
+
+if __name__ == "__main__":
+    from st3m.run import run_app
+
+    run_app(App)

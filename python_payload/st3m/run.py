@@ -20,7 +20,7 @@ from st3m.application import (
 from st3m.about import About
 from st3m import settings_menu as settings, logging, processors, wifi
 
-import captouch, audio, leds, gc, sys_buttons
+import captouch, audio, leds, gc, sys_buttons, sys_display
 import os
 
 import machine
@@ -135,6 +135,54 @@ def run_app(klass):
     run_view(klass(ApplicationContext()))
 
 
+# 256 is overlay
+#
+
+
+def _8bpp() -> None:
+    sys_display.set_default_mode(8 + 256)
+
+
+def _8bpp_pal1() -> None:
+    sys_display.set_default_mode(9 + 256)
+
+
+def _8bpp_pal2() -> None:
+    sys_display.set_default_mode(10 + 256)
+
+
+def _8bpp_pal3() -> None:
+    sys_display.set_default_mode(11 + 256)
+
+
+def _8bpp_RGB332() -> None:
+    sys_display.set_default_mode(12 + 256)
+
+
+def _8bpp_3x() -> None:
+    sys_display.set_default_mode(8 + 256 + 4096)
+
+
+def _8bpp_low_latency() -> None:
+    sys_display.set_default_mode(8 + 256 + 512)
+
+
+def _16bpp_low_latency() -> None:
+    sys_display.set_default_mode(16 + 256 + 512)
+
+
+def _16bpp() -> None:
+    sys_display.set_default_mode(16 + 256)
+
+
+def _24bpp() -> None:
+    sys_display.set_default_mode(24 + 256)
+
+
+def _32bpp() -> None:
+    sys_display.set_default_mode(32 + 256)
+
+
 def _yeet_local_changes() -> None:
     os.remove("/flash/sys/.sys-installed")
     machine.reset()
@@ -165,10 +213,27 @@ def run_main() -> None:
         log.error(f"Failed to set hostname {e}")
 
     menu_settings = settings.build_menu()
+    menu_gfx = SimpleMenu(
+        [
+            MenuItemBack(),
+            MenuItemForeground("Graphics Mode", menu_settings),
+            MenuItemAction("8bpp", _8bpp),
+            MenuItemAction("8bpp-low latency", _8bpp_low_latency),
+            # MenuItemAction("8bpp_3x", _8bpp_3x),
+            MenuItemAction("16bpp", _16bpp),
+            MenuItemAction("16bpp-low latency", _16bpp_low_latency),
+            MenuItemAction("24bpp", _24bpp),
+            MenuItemAction("8bpp Red", _8bpp_pal1),
+            MenuItemAction("8bpp Grayscale", _8bpp_pal2),
+            MenuItemAction("8bpp Cool", _8bpp_pal3),
+            MenuItemAction("8bpp RGB332", _8bpp_RGB332),
+        ],
+    )
     menu_system = SimpleMenu(
         [
             MenuItemBack(),
             MenuItemForeground("Settings", menu_settings),
+            MenuItemForeground("Graphics Mode", menu_gfx),
             MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/gr33nhouse")),
             MenuItemAction("Disk Mode (Flash)", machine.disk_mode_flash),
             MenuItemAction("Disk Mode (SD)", machine.disk_mode_sd),

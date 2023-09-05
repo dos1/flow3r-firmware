@@ -36,13 +36,16 @@ void flow3r_bsp_display_init(void) {
     }
 }
 
-void flow3r_bsp_display_send_fb(void *fb_data, int bits) {
+void flow3r_bsp_display_send_fb_osd(void *fb_data, int bits, void *osd_data,
+                                    int osd_x0, int osd_y0, int osd_x1,
+                                    int osd_y1) {
     if (!gc9a01_initialized) {
         return;
     }
     static bool had_error = false;
 
-    esp_err_t ret = flow3r_bsp_gc9a01_blit_full(&gc9a01, fb_data, bits);
+    esp_err_t ret = flow3r_bsp_gc9a01_blit_osd(&gc9a01, fb_data, bits, osd_data,
+                                               osd_x0, osd_y0, osd_x1, osd_y1);
     if (ret != ESP_OK) {
         if (!had_error) {
             ESP_LOGE(TAG, "display blit failed: %s", esp_err_to_name(ret));
@@ -54,6 +57,10 @@ void flow3r_bsp_display_send_fb(void *fb_data, int bits) {
             had_error = false;
         }
     }
+}
+
+void flow3r_bsp_display_send_fb(void *fb_data, int bits) {
+    flow3r_bsp_display_send_fb_osd(fb_data, bits, NULL, 0, 0, 0, 0);
 }
 
 void flow3r_bsp_display_set_backlight(uint8_t percent) {

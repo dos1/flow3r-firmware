@@ -50,7 +50,7 @@
 #define CTX_SHAPE_CACHE         0
 #define CTX_SHAPE_CACHE_DEFAULT 0
 #define CTX_RASTERIZER_MAX_CIRCLE_SEGMENTS 64
-#define CTX_NATIVE_GRAYA8       0
+#define CTX_NATIVE_GRAYA8       0 // set this to 1 for faster 8bpp mode - with some glitching
 #define CTX_ENABLE_SHADOW_BLUR  0
 #define CTX_FONTS_FROM_FILE     0
 #define CTX_MAX_KEYDB          16
