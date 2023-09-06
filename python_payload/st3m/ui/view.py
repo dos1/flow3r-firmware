@@ -110,6 +110,8 @@ class ViewTransitionSwipeLeft(ViewTransition):
 
         ctx.save()
         ctx.translate(240 + transition * -240, 0)
+        ctx.rectangle(-120, -120, 240, 240)
+        ctx.clip()
         incoming.draw(ctx)
         ctx.restore()
 
@@ -129,6 +131,8 @@ class ViewTransitionSwipeRight(ViewTransition):
 
         ctx.save()
         ctx.translate(-240 + transition * 240, 0)
+        ctx.rectangle(-120, -120, 240, 240)
+        ctx.clip()
         incoming.draw(ctx)
         ctx.restore()
 
