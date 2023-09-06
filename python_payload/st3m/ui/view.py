@@ -89,10 +89,10 @@ class ViewTransitionBlend(ViewTransition):
     ) -> None:
         outgoing.draw(ctx)
 
-        ctx.start_group()
-        incoming.draw(ctx)
+        ctx.save()
         ctx.global_alpha = transition
-        ctx.end_group()
+        incoming.draw(ctx)
+        ctx.restore()
 
 
 class ViewTransitionSwipeLeft(ViewTransition):
