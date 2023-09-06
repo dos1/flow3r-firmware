@@ -20,6 +20,7 @@
 #define CTX_TVG_STDIO 0
 #define CTX_DITHER    1
 
+#define CTX_ST3M_FB_INTERNAL_RAM      0
 #define CTX_PDF                       0
 #define CTX_PROTOCOL_U8_COLOR         1
 #define CTX_AVOID_CLIPPED_SUBDIVISION 0
@@ -28,7 +29,7 @@
 #define CTX_32BIT_SEGMENTS            0
 #define CTX_ENABLE_RGBA8              1
 #define CTX_ENABLE_RGB8               1
-#define CTX_ENABLE_RGB332             0
+#define CTX_ENABLE_RGB332             1
 #define CTX_ENABLE_RGB565             1
 #define CTX_ENABLE_RGB565_BYTESWAPPED 1
 #define CTX_ENABLE_CBRLE              0

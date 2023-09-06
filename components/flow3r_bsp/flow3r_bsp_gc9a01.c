@@ -106,6 +106,7 @@ typedef struct {
     int osd_y1;
     uint16_t *pal_16;
     int bits;
+    int scale;
     size_t left;
     size_t off;  // current pixel offset in blit
 
@@ -618,9 +619,12 @@ static inline uint16_t ctx_565_pack(uint8_t red, uint8_t green, uint8_t blue,
 
 #define U8_LERP(a, b, t) ((a) + ((((b) - (a)) * t + 256) >> 8))
 
+extern uint8_t st3m_pal[256 * 3];
+EXT_RAM_BSS_ATTR static uint16_t st3m_pal16[256];
+
 static void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
                                  int pix_count) {
-    int scale = 1;
+    int scale = blit->scale;
     const uint8_t *fb = blit->fb;
     const uint8_t *osd_fb = blit->osd_fb;
     unsigned int start_off = blit->off;
@@ -631,37 +635,56 @@ static void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
         /* XXX : this code has room for optimization */
         if (osd_fb && (start_off < blit->osd_y1 * 240)) switch (blit->bits) {
                 case 8:
+                case 9:
                     for (unsigned int i = start_off; i < end_off; i++) {
                         int x = i % 240;
                         int y = i / 240;
                         int j = ((y / scale) * 240) + x / scale;
-                        temp_blit[o++] = blit->pal_16[U8_LERP(
-                            fb[j], osd_fb[i * 4 + 1], osd_fb[i * 4 + 3])];
+                        int idx = fb[j];
+                        uint8_t r = (((idx >> 5) & 7) * 255) / 7;
+                        uint8_t g = (((idx >> 2) & 7) * 255) / 7;
+                        uint8_t b =
+                            ((((idx & 3) << 1) | ((idx >> 2) & 1)) * 255) / 7;
+
+                        uint8_t ya = osd_fb[j * 4 + 3];
+
+                        r = U8_LERP(r, osd_fb[j * 4 + 0], ya);
+                        g = U8_LERP(g, osd_fb[j * 4 + 1], ya);
+                        b = U8_LERP(b, osd_fb[j * 4 + 2], ya);
+
+                        idx = ((ctx_sadd8(r, 15) >> 5) << 5) |
+                              ((ctx_sadd8(g, 15) >> 5) << 2) |
+                              (ctx_sadd8(b, 15) >> 6);
+
+                        temp_blit[o++] = blit->pal_16[idx];
                     }
                     break;
                 case 24:
                     for (unsigned int i = start_off; i < end_off; i++) {
-                        uint8_t Y = osd_fb[i * 2];
-                        uint8_t ya = osd_fb[i * 2 + 1];
                         int x = i % 240;
                         int y = i / 240;
                         int j = ((y / scale) * 240) + x / scale;
-                        uint8_t r = U8_LERP(fb[j * 3 + 0], Y, ya);
-                        uint8_t g = U8_LERP(fb[j * 3 + 1], Y, ya);
-                        uint8_t b = U8_LERP(fb[j * 3 + 2], Y, ya);
+                        uint8_t Y = osd_fb[j * 2];
+                        uint8_t ya = osd_fb[j * 2 + 1];
+                        j *= 3;
+                        uint8_t r = U8_LERP(fb[j + 0], Y, ya);
+                        uint8_t g = U8_LERP(fb[j + 1], Y, ya);
+                        uint8_t b = U8_LERP(fb[j + 2], Y, ya);
                         temp_blit[o++] = ctx_565_pack(r, g, b, 1);
                     }
                     break;
                 case 32:
                     for (unsigned int i = start_off; i < end_off; i++) {
-                        uint8_t Y = osd_fb[i * 2];
-                        uint8_t Ya = osd_fb[i * 2 + 1];
                         int x = i % 240;
                         int y = i / 240;
                         int j = ((y / scale) * 240) + x / scale;
-                        uint8_t r = U8_LERP(fb[j * 4 + 0], Y, Ya);
-                        uint8_t g = U8_LERP(fb[j * 4 + 1], Y, Ya);
-                        uint8_t b = U8_LERP(fb[j * 4 + 2], Y, Ya);
+                        j *= 2;
+                        uint8_t Y = osd_fb[j];
+                        uint8_t Ya = osd_fb[j + 1];
+                        j *= 2;
+                        uint8_t r = U8_LERP(fb[j + 0], Y, Ya);
+                        uint8_t g = U8_LERP(fb[j + 1], Y, Ya);
+                        uint8_t b = U8_LERP(fb[j + 2], Y, Ya);
                         temp_blit[o++] = ctx_565_pack(r, g, b, 1);
                     }
                     break;
@@ -673,10 +696,11 @@ static void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
                         uint32_t col =
                             ctx_565_unpack_32(((uint16_t *)fb)[j], 1);
                         uint8_t *rgba = (uint8_t *)&col;
-                        uint8_t sr = osd_fb[i * 4];
-                        uint8_t sg = osd_fb[i * 4 + 1];
-                        uint8_t sb = osd_fb[i * 4 + 2];
-                        uint8_t sa = osd_fb[i * 4 + 3];
+                        j *= 4;
+                        uint8_t sr = osd_fb[j];
+                        uint8_t sg = osd_fb[j + 1];
+                        uint8_t sb = osd_fb[j + 2];
+                        uint8_t sa = osd_fb[j + 3];
                         uint8_t dr = U8_LERP(rgba[0], sr, sa);
                         uint8_t dg = U8_LERP(rgba[1], sg, sa);
                         uint8_t db = U8_LERP(rgba[2], sb, sa);
@@ -695,6 +719,7 @@ static void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
                     }
                     break;
                 case 8:
+                case 9:
                     for (unsigned int i = start_off; i < end_off; i++) {
                         int x = i % 240;
                         int y = i / 240;
@@ -724,18 +749,21 @@ static void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
             // blit->osd_fb = NULL;
             // blit->fb += ((end_off*blit->bits)/8);
         }
-    } else {
+    }
+
+    else {  // not scaled
         if (osd_fb && (start_off < blit->osd_y1 * 240)) switch (blit->bits) {
-#if 0
-        case 1:
-            for (unsigned int i = 0; i < pix_count; i++)
-                temp_blit[o++] = blit->pal_16[(fb[i / 8] >> ((i & 7))) & 0x1];
-            break;
-        case 2:
-            for (unsigned int i = 0; i < pix_count; i++)
-                temp_blit[o++] =
-                    blit->pal_16[(fb[i / 4] >> ((i & 3) * 2)) & 0x3];
-            break;
+#if 1
+                case 1:
+                    for (unsigned int i = start_off; i < end_off; i++)
+                        temp_blit[o++] =
+                            blit->pal_16[(fb[i / 8] >> ((i & 7))) & 0x1];
+                    break;
+                case 2:
+                    for (unsigned int i = start_off; i < end_off; i++)
+                        temp_blit[o++] =
+                            blit->pal_16[(fb[i / 4] >> ((i & 3) * 2)) & 0x3];
+                    break;
 #endif
                 case 4:
                     for (unsigned int i = start_off; i < end_off; i++) {
@@ -747,6 +775,26 @@ static void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
                     for (unsigned int i = start_off; i < end_off; i++)
                         temp_blit[o++] = blit->pal_16[U8_LERP(
                             fb[i], osd_fb[i * 4 + 1], osd_fb[i * 4 + 3])];
+                    break;
+                case 9:
+                    for (unsigned int i = start_off; i < end_off; i++) {
+                        int idx = fb[i];
+                        uint8_t r = (((idx >> 5) & 7) * 255) / 7;
+                        uint8_t g = (((idx >> 2) & 7) * 255) / 7;
+                        uint8_t b =
+                            ((((idx & 3) << 1) | ((idx >> 2) & 1)) * 255) / 7;
+                        uint8_t ya = osd_fb[i * 4 + 3];
+
+                        r = U8_LERP(r, osd_fb[i * 4 + 0], ya);
+                        g = U8_LERP(g, osd_fb[i * 4 + 1], ya);
+                        b = U8_LERP(b, osd_fb[i * 4 + 2], ya);
+
+                        idx = ((ctx_sadd8(r, 15) >> 5) << 5) |
+                              ((ctx_sadd8(g, 15) >> 5) << 2) |
+                              (ctx_sadd8(b, 15) >> 6);
+
+                        temp_blit[o++] = blit->pal_16[idx];
+                    }
                     break;
                 case 24:
                     for (unsigned int i = start_off; i < end_off; i++) {
@@ -810,6 +858,7 @@ static void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
                     }
                     break;
                 case 8:
+                case 9:
                     for (unsigned int i = start_off; i < end_off; i++)
                         temp_blit[o++] = blit->pal_16[fb[i]];
                     break;
@@ -837,7 +886,9 @@ static esp_err_t flow3r_bsp_gc9a01_blit_next(flow3r_bsp_gc9a01_blit_t *blit) {
         size = SPI_MAX_DMA_LEN;
     }
     unsigned int pix_count = size / 2;
-    size_t osize = pix_count * blit->bits / 8;
+    int bits = blit->bits;
+    if (bits == 9) bits = 8;
+    size_t osize = pix_count * bits / 8;
 
     blit->gc9a01_tx.gc9a01 = blit->gc9a01;
     blit->gc9a01_tx.dc = 1;
@@ -875,9 +926,9 @@ static esp_err_t flow3r_bsp_gc9a01_blit_next(flow3r_bsp_gc9a01_blit_t *blit) {
 static esp_err_t flow3r_bsp_gc9a01_blit_start(flow3r_bsp_gc9a01_t *gc9a01,
                                               flow3r_bsp_gc9a01_blit_t *blit,
                                               const uint16_t *fb, int bits,
-                                              const void *osd_fb, int osd_x0,
-                                              int osd_y0, int osd_x1,
-                                              int osd_y1) {
+                                              int scale, const void *osd_fb,
+                                              int osd_x0, int osd_y0,
+                                              int osd_x1, int osd_y1) {
     memset(blit, 0, sizeof(flow3r_bsp_gc9a01_blit_t));
 
     blit->gc9a01 = gc9a01;
@@ -888,10 +939,11 @@ static esp_err_t flow3r_bsp_gc9a01_blit_start(flow3r_bsp_gc9a01_t *gc9a01,
     blit->osd_x1 = osd_x1;
     blit->osd_y0 = osd_y0;
     blit->osd_y1 = osd_y1;
+    blit->scale = scale;
     blit->left = 2 * 240 * 240;  // left in native bytes (16bpp)
     if (bits < 16) {
-        uint8_t *pal_24 = ((uint8_t *)fb) + 240 * 240 * 2 - 3 * 256;
-        blit->pal_16 = (uint16_t *)(pal_24 - 256 * 2);
+        uint8_t *pal_24 = st3m_pal;
+        blit->pal_16 = st3m_pal16;
         for (int i = 0; i < 256; i++)
             blit->pal_16[i] = ctx_565_pack(pal_24[i * 3 + 0], pal_24[i * 3 + 1],
                                            pal_24[i * 3 + 2], 1);
@@ -915,12 +967,12 @@ static esp_err_t flow3r_bsp_gc9a01_blit_wait_done(
 }
 
 esp_err_t flow3r_bsp_gc9a01_blit_osd(flow3r_bsp_gc9a01_t *gc9a01,
-                                     const void *fb, int bits,
+                                     const void *fb, int bits, int scale,
                                      const void *osd_fb, int osd_x0, int osd_y0,
                                      int osd_x1, int osd_y1) {
     flow3r_bsp_gc9a01_blit_t blit;
     esp_err_t res = flow3r_bsp_gc9a01_blit_start(
-        gc9a01, &blit, fb, bits, osd_fb, osd_x0, osd_y0, osd_x1, osd_y1);
+        gc9a01, &blit, fb, bits, scale, osd_fb, osd_x0, osd_y0, osd_x1, osd_y1);
     if (res != ESP_OK) {
         return res;
     }
@@ -940,5 +992,5 @@ esp_err_t flow3r_bsp_gc9a01_blit_osd(flow3r_bsp_gc9a01_t *gc9a01,
 
 esp_err_t flow3r_bsp_gc9a01_blit_full(flow3r_bsp_gc9a01_t *gc9a01,
                                       const void *fb, int bits) {
-    return flow3r_bsp_gc9a01_blit_osd(gc9a01, fb, bits, NULL, 0, 0, 0, 0);
+    return flow3r_bsp_gc9a01_blit_osd(gc9a01, fb, bits, 1, NULL, 0, 0, 0, 0);
 }

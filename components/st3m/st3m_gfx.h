@@ -17,13 +17,23 @@ typedef enum {
     // shallower pipeline, in the future might mean immediate mode
     st3m_gfx_low_latency = 512,
     st3m_gfx_unset = 1024,
+    st3m_gfx_force = 8192,
+    st3m_gfx_2x = 2048,
+    st3m_gfx_3x = 4096,
+    st3m_gfx_4x = 6144,
     // 4 and 8bpp modes use the configured palette, the palette resides
     // in video ram and is lost upon mode change
+    st3m_gfx_1bpp = 1,
+    st3m_gfx_2bpp = 2,
     st3m_gfx_4bpp = 4,
     // a flag for modes >4bpp requesting that ctx calls are direct, this is
     // slower since micropython cannot run in parallell with rasterization.
     st3m_gfx_8bpp = 8,
+    st3m_gfx_palette = 10,
     st3m_gfx_8bpp_osd = 8 + st3m_gfx_osd,
+    st3m_gfx_rgb332 = 9,
+    st3m_gfx_sepia = 10,
+    st3m_gfx_cool = 11,
     st3m_gfx_8bpp_direct_ctx = 8 + st3m_gfx_direct_ctx,
     st3m_gfx_8bpp_low_latency = 8 + st3m_gfx_low_latency,
     st3m_gfx_8bpp_osd_low_latency = 8 + st3m_gfx_osd + st3m_gfx_low_latency,
@@ -52,7 +62,7 @@ typedef enum {
 void st3m_gfx_set_default_mode(st3m_gfx_mode mode);
 
 // sets the current graphics mode
-void st3m_gfx_set_mode(st3m_gfx_mode mode);
+st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode);
 
 // gets the current graphics mode
 st3m_gfx_mode st3m_gfx_get_mode(void);

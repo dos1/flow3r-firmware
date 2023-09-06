@@ -70,7 +70,7 @@ esp_err_t flow3r_bsp_gc9a01_init(flow3r_bsp_gc9a01_t *gc9a01,
 esp_err_t flow3r_bsp_gc9a01_blit_full(flow3r_bsp_gc9a01_t *gc9a01,
                                       const void *fb, int bits);
 esp_err_t flow3r_bsp_gc9a01_blit_osd(flow3r_bsp_gc9a01_t *gc9a01,
-                                     const void *fb, int bits,
+                                     const void *fb, int bits, int scale,
                                      const void *osd_fb, int osd_x0, int osd_y0,
                                      int osd_x1, int osd_y1);
 

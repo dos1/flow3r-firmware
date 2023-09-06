@@ -78,6 +78,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_ctx_obj, mp_ctx);
 STATIC mp_obj_t mp_fb(mp_obj_t mode_in) {
     int mode = mp_obj_get_int(mode_in);
     int size = 240 * 240 * st3m_gfx_bpp(mode) / 8;
+    if (mode == st3m_gfx_palette) size = 256 * 3;
     return mp_obj_new_bytearray_by_ref(size, st3m_gfx_fb(mode));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_fb_obj, mp_fb);
@@ -122,6 +123,26 @@ STATIC const mp_rom_map_elem_t mp_module_sys_display_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_set_palette), MP_ROM_PTR(&mp_set_palette_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_backlight), MP_ROM_PTR(&mp_set_backlight_obj) },
     { MP_ROM_QSTR(MP_QSTR_overlay_clip), MP_ROM_PTR(&mp_overlay_clip_obj) },
+
+    { MP_ROM_QSTR(MP_QSTR_default), MP_ROM_INT((int)st3m_gfx_default) },
+    { MP_ROM_QSTR(MP_QSTR_rgb332), MP_ROM_INT((int)st3m_gfx_rgb332) },
+    { MP_ROM_QSTR(MP_QSTR_sepia), MP_ROM_INT((int)st3m_gfx_sepia) },
+    { MP_ROM_QSTR(MP_QSTR_cool), MP_ROM_INT((int)st3m_gfx_cool) },
+    { MP_ROM_QSTR(MP_QSTR_low_latency), MP_ROM_INT((int)st3m_gfx_low_latency) },
+    { MP_ROM_QSTR(MP_QSTR_direct_ctx), MP_ROM_INT((int)st3m_gfx_direct_ctx) },
+    { MP_ROM_QSTR(MP_QSTR_unset), MP_ROM_INT((int)st3m_gfx_unset) },
+    { MP_ROM_QSTR(MP_QSTR_force), MP_ROM_INT((int)st3m_gfx_force) },
+    { MP_ROM_QSTR(MP_QSTR_x2), MP_ROM_INT((int)st3m_gfx_2x) },
+    { MP_ROM_QSTR(MP_QSTR_x3), MP_ROM_INT((int)st3m_gfx_3x) },
+    { MP_ROM_QSTR(MP_QSTR_x4), MP_ROM_INT((int)st3m_gfx_4x) },
+    { MP_ROM_QSTR(MP_QSTR_bpp1), MP_ROM_INT((int)st3m_gfx_1bpp) },
+    { MP_ROM_QSTR(MP_QSTR_bpp2), MP_ROM_INT((int)st3m_gfx_2bpp) },
+    { MP_ROM_QSTR(MP_QSTR_bpp4), MP_ROM_INT((int)st3m_gfx_4bpp) },
+    { MP_ROM_QSTR(MP_QSTR_bpp8), MP_ROM_INT((int)st3m_gfx_8bpp) },
+    { MP_ROM_QSTR(MP_QSTR_bpp16), MP_ROM_INT((int)st3m_gfx_16bpp) },
+    { MP_ROM_QSTR(MP_QSTR_bpp24), MP_ROM_INT((int)st3m_gfx_24bpp) },
+    { MP_ROM_QSTR(MP_QSTR_osd), MP_ROM_INT((int)st3m_gfx_osd) },
+    { MP_ROM_QSTR(MP_QSTR_palette), MP_ROM_INT((int)st3m_gfx_palette) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_sys_display_globals,

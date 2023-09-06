@@ -135,54 +135,6 @@ def run_app(klass):
     run_view(klass(ApplicationContext()))
 
 
-# 256 is overlay
-#
-
-
-def _8bpp() -> None:
-    sys_display.set_default_mode(8 + 256)
-
-
-def _8bpp_pal1() -> None:
-    sys_display.set_default_mode(9 + 256)
-
-
-def _8bpp_pal2() -> None:
-    sys_display.set_default_mode(10 + 256)
-
-
-def _8bpp_pal3() -> None:
-    sys_display.set_default_mode(11 + 256)
-
-
-def _8bpp_RGB332() -> None:
-    sys_display.set_default_mode(12 + 256)
-
-
-def _8bpp_3x() -> None:
-    sys_display.set_default_mode(8 + 256 + 4096)
-
-
-def _8bpp_low_latency() -> None:
-    sys_display.set_default_mode(8 + 256 + 512)
-
-
-def _16bpp_low_latency() -> None:
-    sys_display.set_default_mode(16 + 256 + 512)
-
-
-def _16bpp() -> None:
-    sys_display.set_default_mode(16 + 256)
-
-
-def _24bpp() -> None:
-    sys_display.set_default_mode(24 + 256)
-
-
-def _32bpp() -> None:
-    sys_display.set_default_mode(32 + 256)
-
-
 def _yeet_local_changes() -> None:
     os.remove("/flash/sys/.sys-installed")
     machine.reset()
@@ -216,17 +168,80 @@ def run_main() -> None:
     menu_gfx = SimpleMenu(
         [
             MenuItemBack(),
-            MenuItemForeground("Graphics Mode", menu_settings),
-            MenuItemAction("8bpp", _8bpp),
-            MenuItemAction("8bpp-low latency", _8bpp_low_latency),
-            # MenuItemAction("8bpp_3x", _8bpp_3x),
-            MenuItemAction("16bpp", _16bpp),
-            MenuItemAction("16bpp-low latency", _16bpp_low_latency),
-            MenuItemAction("24bpp", _24bpp),
-            MenuItemAction("8bpp Red", _8bpp_pal1),
-            MenuItemAction("8bpp Grayscale", _8bpp_pal2),
-            MenuItemAction("8bpp Cool", _8bpp_pal3),
-            MenuItemAction("8bpp RGB332", _8bpp_RGB332),
+            MenuItemAction(
+                "RGB565_BS", lambda: sys_display.set_default_mode(16 + sys_display.osd)
+            ),
+            MenuItemAction(
+                "RGB888", lambda: sys_display.set_default_mode(24 + sys_display.osd)
+            ),
+            MenuItemAction(
+                "RGB332",
+                lambda: sys_display.set_default_mode(
+                    sys_display.rgb332 + sys_display.osd
+                ),
+            ),
+            MenuItemAction(
+                "gray", lambda: sys_display.set_default_mode(8 + sys_display.osd)
+            ),
+            MenuItemAction(
+                "sepia",
+                lambda: sys_display.set_default_mode(
+                    sys_display.sepia + sys_display.osd
+                ),
+            ),
+            MenuItemAction(
+                "cool",
+                lambda: sys_display.set_default_mode(
+                    sys_display.cool + sys_display.osd
+                ),
+            ),
+            MenuItemAction(
+                "1x",
+                lambda: sys_display.set_default_mode(
+                    sys_display.unset + sys_display.x4
+                ),
+            ),
+            MenuItemAction("2x", lambda: sys_display.set_default_mode(sys_display.x2)),
+            MenuItemAction("3x", lambda: sys_display.set_default_mode(sys_display.x3)),
+            MenuItemAction("4x", lambda: sys_display.set_default_mode(sys_display.x4)),
+            MenuItemAction(
+                "osd on", lambda: sys_display.set_default_mode(sys_display.osd)
+            ),
+            MenuItemAction(
+                "osd off",
+                lambda: sys_display.set_default_mode(
+                    sys_display.unset + sys_display.osd
+                ),
+            ),
+            MenuItemAction(
+                "high fps",
+                lambda: sys_display.set_default_mode(
+                    sys_display.unset + sys_display.low_latency
+                ),
+            ),
+            MenuItemAction(
+                "low-latency",
+                lambda: sys_display.set_default_mode(sys_display.low_latency),
+            ),
+            MenuItemAction(
+                "drawlists",
+                lambda: sys_display.set_default_mode(
+                    sys_display.unset + sys_display.direct_ctx
+                ),
+            ),
+            MenuItemAction(
+                "direct ctx",
+                lambda: sys_display.set_default_mode(sys_display.direct_ctx),
+            ),
+            MenuItemAction(
+                "force mode", lambda: sys_display.set_default_mode(sys_display.force)
+            ),
+            MenuItemAction(
+                "force mode off",
+                lambda: sys_display.set_default_mode(
+                    sys_display.unset + sys_display.force
+                ),
+            ),
         ],
     )
     menu_system = SimpleMenu(

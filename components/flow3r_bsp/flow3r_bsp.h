@@ -25,9 +25,9 @@ void flow3r_bsp_display_init(void);
 // performed simultaneously.
 void flow3r_bsp_display_send_fb(void *fb_data, int bits);
 
-void flow3r_bsp_display_send_fb_osd(void *fb_data, int bits, void *osd_data,
-                                    int osd_x0, int osd_y0, int osd_x1,
-                                    int osd_y1);
+void flow3r_bsp_display_send_fb_osd(void *fb_data, int bits, int scale,
+                                    void *osd_data, int osd_x0, int osd_y0,
+                                    int osd_x1, int osd_y1);
 
 // Set display backlight, as integer percent value (from 0 to 100, clamped).
 // No-op if display hasn't been succesfully initialized.
