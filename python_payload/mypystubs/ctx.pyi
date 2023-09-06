@@ -75,17 +75,6 @@ class Context(Protocol):
         should be balanced.
         """
         pass
-    def start_group(self) -> "Context":
-        """
-        Start a compositing group.
-        """
-        pass
-    def end_group(self) -> "Context":
-        """
-        End a compositing group, the global alpha, compositing mode and blend
-        mode set before this call is used to apply the group.
-        """
-        pass
     def clip(self) -> "Context":
         """
         Use the current path as a clipping mask, subsequent draw calls are

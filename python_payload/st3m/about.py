@@ -189,7 +189,7 @@ class About(BaseView):
             ctx.translate(-240 * offs, 0)
 
             # Opaque circle
-            ctx.start_group()
+            ctx.save()
             ctx.global_alpha = 0.5
             ctx.rgb(0, 0, 0)
             ctx.arc(0, 0, 90, 0, tau, 0)
@@ -208,10 +208,10 @@ class About(BaseView):
                 ctx.font_size = 30
                 ctx.text_align = ctx.MIDDLE
                 ctx.text("\ue5c8")
-            ctx.end_group()
+            ctx.restore()
 
             # Text
-            ctx.start_group()
+            ctx.save()
             ctx.global_alpha = 1.0
             ctx.gray(1)
 
@@ -219,5 +219,5 @@ class About(BaseView):
 
             screen.draw(ctx)
 
-            ctx.end_group()
+            ctx.restore()
             ctx.restore()

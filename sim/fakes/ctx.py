@@ -259,14 +259,6 @@ class Context:
         self._emit(f"stroke")
         return self
 
-    def start_group(self):
-        self._emit(f"start_group")
-        return self
-
-    def end_group(self):
-        self._emit(f"end_group")
-        return self
-
     def save(self):
         self._emit(f"save")
         return self

@@ -202,8 +202,12 @@ MP_CTX_COMMON_FUN_0(restore);
 MP_CTX_COMMON_FUN_0(start_frame);
 MP_CTX_COMMON_FUN_0(end_frame);
 
+#define UCTX_COMPOSITING_GROUPS 0
+
+#if UCTX_COMPOSITING_GROUPS
 MP_CTX_COMMON_FUN_0(start_group);
 MP_CTX_COMMON_FUN_0(end_group);
+#endif
 MP_CTX_COMMON_FUN_0(clip);
 MP_CTX_COMMON_FUN_1F(rotate);
 MP_CTX_COMMON_FUN_2F(scale);
@@ -804,6 +808,9 @@ STATIC void mp_ctx_attr(mp_obj_t obj, qstr attr, mp_obj_t *dest) {
 /* CTX class/type */
 
 static const mp_rom_map_elem_t mp_ctx_locals_dict_table[] = {
+    MP_CTX_METHOD(gray),
+    MP_CTX_METHOD(rgb),
+    MP_CTX_METHOD(rgba),
     MP_CTX_METHOD(line_to),
     MP_CTX_METHOD(move_to),
     MP_CTX_METHOD(curve_to),
@@ -823,6 +830,8 @@ static const mp_rom_map_elem_t mp_ctx_locals_dict_table[] = {
     MP_CTX_METHOD(fill),
     MP_CTX_METHOD(stroke),
     MP_CTX_METHOD(paint),
+    MP_CTX_METHOD(save),
+    MP_CTX_METHOD(restore),
     MP_CTX_METHOD(clip),
     MP_CTX_METHOD(text),
     MP_CTX_METHOD(text_width),
@@ -830,8 +839,13 @@ static const mp_rom_map_elem_t mp_ctx_locals_dict_table[] = {
     MP_CTX_METHOD(scale),
     MP_CTX_METHOD(translate),
     MP_CTX_METHOD(apply_transform),
+#if UCTX_COMPOSITING_GROUPS
     MP_CTX_METHOD(start_group),
     MP_CTX_METHOD(end_group),
+#else
+    { MP_ROM_QSTR(MP_QSTR_start_group), MP_ROM_PTR(&mp_ctx_save_obj) },
+    { MP_ROM_QSTR(MP_QSTR_end_group), MP_ROM_PTR(&mp_ctx_restore_obj) },
+#endif
     MP_CTX_METHOD(preserve),
     MP_CTX_METHOD(linear_gradient),
     MP_CTX_METHOD(radial_gradient),
@@ -839,15 +853,10 @@ static const mp_rom_map_elem_t mp_ctx_locals_dict_table[] = {
     MP_CTX_METHOD(line_dash),
     MP_CTX_METHOD(texture),
     MP_CTX_METHOD(image),
-    MP_CTX_METHOD(save),
-    MP_CTX_METHOD(restore),
     MP_CTX_METHOD(start_frame),
     MP_CTX_METHOD(end_frame),
     MP_CTX_METHOD(get_font_name),
 
-    MP_CTX_METHOD(gray),
-    MP_CTX_METHOD(rgb),
-    MP_CTX_METHOD(rgba),
 #if CTX_PARSER
     MP_CTX_METHOD(parse),
 #endif
