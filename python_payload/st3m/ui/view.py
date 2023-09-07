@@ -104,12 +104,12 @@ class ViewTransitionSwipeLeft(ViewTransition):
         self, ctx: Context, transition: float, incoming: Responder, outgoing: Responder
     ) -> None:
         ctx.save()
-        ctx.translate(transition * -240, 0)
+        ctx.translate(int(transition * -240), 0)
         outgoing.draw(ctx)
         ctx.restore()
 
         ctx.save()
-        ctx.translate(240 + transition * -240, 0)
+        ctx.translate(240 + int(transition * -240), 0)
         ctx.rectangle(-120, -120, 240, 240)
         ctx.clip()
         incoming.draw(ctx)
@@ -125,12 +125,12 @@ class ViewTransitionSwipeRight(ViewTransition):
         self, ctx: Context, transition: float, incoming: Responder, outgoing: Responder
     ) -> None:
         ctx.save()
-        ctx.translate(transition * 240, 0)
+        ctx.translate(int(transition * 240), 0)
         outgoing.draw(ctx)
         ctx.restore()
 
         ctx.save()
-        ctx.translate(-240 + transition * 240, 0)
+        ctx.translate(-240 + int(transition * 240), 0)
         ctx.rectangle(-120, -120, 240, 240)
         ctx.clip()
         incoming.draw(ctx)
