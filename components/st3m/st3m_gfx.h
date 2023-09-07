@@ -76,7 +76,7 @@ Ctx *st3m_gfx_ctx(st3m_gfx_mode mode);
 // get the framebuffer associated with graphics mode
 // if you ask for st3m_gfx_default you get the current modes fb
 // and if you ask for st3m_gfx_osd you get the current modes overlay fb
-uint8_t *st3m_gfx_fb(st3m_gfx_mode mode);
+uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *stride, int *width, int *height);
 
 // get the bits per pixel for a given mode
 int st3m_gfx_bpp(st3m_gfx_mode mode);

@@ -169,10 +169,10 @@ def run_main() -> None:
         [
             MenuItemBack(),
             MenuItemAction(
-                "RGB565_BS", lambda: sys_display.set_default_mode(16 + sys_display.osd)
+                "RGB565_BS", lambda: sys_display.set_default_mode(16)
             ),
             MenuItemAction(
-                "RGB888", lambda: sys_display.set_default_mode(24 + sys_display.osd)
+                "RGB888", lambda: sys_display.set_default_mode(24)
             ),
             MenuItemAction(
                 "RGB332",
@@ -181,7 +181,7 @@ def run_main() -> None:
                 ),
             ),
             MenuItemAction(
-                "gray", lambda: sys_display.set_default_mode(8 + sys_display.osd)
+                "gray", lambda: sys_display.set_default_mode(8)
             ),
             MenuItemAction(
                 "sepia",
@@ -237,7 +237,7 @@ def run_main() -> None:
                 "force mode", lambda: sys_display.set_default_mode(sys_display.force)
             ),
             MenuItemAction(
-                "force mode off",
+                "force mode off (apps can change graphics mode)",
                 lambda: sys_display.set_default_mode(
                     sys_display.unset + sys_display.force
                 ),

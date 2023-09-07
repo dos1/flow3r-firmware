@@ -77,9 +77,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_ctx_obj, mp_ctx);
 
 STATIC mp_obj_t mp_fb(mp_obj_t mode_in) {
     int mode = mp_obj_get_int(mode_in);
-    int size = 240 * 240 * st3m_gfx_bpp(mode) / 8;
-    if (mode == st3m_gfx_palette) size = 256 * 3;
-    return mp_obj_new_bytearray_by_ref(size, st3m_gfx_fb(mode));
+    int stride, width, height;
+    void *fb = st3m_gfx_fb(mode, &stride, &width, &height);
+    int size = height * stride;
+    return mp_obj_new_bytearray_by_ref(size, fb);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_fb_obj, mp_fb);
 

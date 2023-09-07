@@ -218,6 +218,9 @@ void st3m_gfx_set_default_mode(st3m_gfx_mode mode) {
             default_mode &= ~st3m_gfx_low_latency;
         else if (mode & st3m_gfx_direct_ctx)
             default_mode &= ~st3m_gfx_direct_ctx;
+    } else if ((mode & (1|2|4|8|16|32)) == mode) {
+        default_mode &= ~(1|2|4|8|16|32);
+        default_mode |= mode;
     } else if (mode == st3m_gfx_2x) {
         default_mode &= ~st3m_gfx_4x;
         default_mode |= st3m_gfx_2x;
@@ -335,19 +338,32 @@ st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode) {
 
 st3m_gfx_mode st3m_gfx_get_mode(void) { return _st3m_gfx_mode; }
 
-uint8_t *st3m_gfx_fb(st3m_gfx_mode mode) {
+uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *stride, int *width, int *height) {
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
+    int bpp = st3m_gfx_bpp(set_mode);
     if (mode == st3m_gfx_palette) {
+        if (stride) *stride = 3;
+        if (width) *width = 1;
+        if (height) *height = 256;
         return st3m_pal;
     } else if (mode == st3m_gfx_default) {
-        if (st3m_gfx_bpp(set_mode) <= 16) return (uint8_t *)st3m_fb;
+        if (stride) *stride = 240 * bpp / 8;
+        if (width) *width = 240;
+        if (height) *height = 240;
+        if (bpp <= 16) return (uint8_t *)st3m_fb;
         return st3m_osd_fb;
     } else if (mode == st3m_gfx_osd) {
+        if (stride) *stride = 240 * bpp / 8;
+        if (width) *width = 240;
+        if (height) *height = 240;
         if (st3m_gfx_bpp(set_mode) <= 16) return st3m_osd_fb;
         return (uint8_t *)st3m_fb;
     }
 
-    if (st3m_gfx_bpp(set_mode) <= 16) return (uint8_t *)st3m_fb;
+    if (stride) *stride = 240 * bpp / 8;
+    if (width) *width = 240;
+    if (height) *height = 240;
+    if (bpp <= 16) return (uint8_t *)st3m_fb;
     return st3m_osd_fb;
 }
 
