@@ -3,9 +3,18 @@ from st3m import settings
 
 
 class ftop:
-    auto_interval_ms = 5000  # maybe this one too idk~
-    _auto_countdown_ms = 0
+    auto_interval_ms = 5000
+    _auto_countdown_ms = 1000  # for initial report
     _max_name_len = 0
+    _max_delta_t_ms = None
+    _min_delta_t_ms = None
+    _avg_delta_t_ms = None
+
+    _max_delta_t_ms_new = -99999
+    _min_delta_t_ms_new = 99999
+    _avg_delta_t_ms_acc = 0
+    _avg_delta_t_ms_div = 0
+    _delta_t_ms_throwaway = True
     report = ""
 
     @staticmethod
@@ -14,14 +23,50 @@ class ftop:
         If enabled: Increments a timer by delta_t_ms milliseconds checks
         if a new report is scheduled and if so saves it in ftop.report.
         Returns True if a new report has been generated, else false.
+
+        The first report generated might be buggy.
         """
         if settings.onoff_debug_ftop.value and sys_kernel.usb_console_active():
+            ftop.delta_t_update(delta_t_ms)
             ftop._auto_countdown_ms -= delta_t_ms
             if ftop._auto_countdown_ms <= 0:
                 ftop._auto_countdown_ms = ftop.auto_interval_ms
                 ftop.report = ftop.make_report()
                 return True
+
         return False
+
+    @staticmethod
+    def delta_t_update(delta_t_ms):
+        if ftop._delta_t_ms_throwaway:
+            ftop._delta_t_ms_throwaway = False
+            return
+
+        if ftop._max_delta_t_ms_new < delta_t_ms:
+            ftop._max_delta_t_ms_new = delta_t_ms
+
+        if ftop._min_delta_t_ms_new > delta_t_ms:
+            ftop._min_delta_t_ms_new = delta_t_ms
+
+        if ftop._avg_delta_t_ms_acc < 99999:
+            ftop._avg_delta_t_ms_acc += delta_t_ms
+            ftop._avg_delta_t_ms_div += 1
+
+    @staticmethod
+    def delta_t_capture():
+        if ftop._avg_delta_t_ms_div == 0:
+            ftop._avg_delta_t_ms = 0
+        else:
+            ftop._avg_delta_t_ms = ftop._avg_delta_t_ms_acc / ftop._avg_delta_t_ms_div
+        ftop._max_delta_t_ms = ftop._max_delta_t_ms_new
+        ftop._min_delta_t_ms = ftop._min_delta_t_ms_new
+
+        ftop._avg_delta_t_ms_acc = 0
+        ftop._avg_delta_t_ms_div = 0
+
+        ftop._max_delta_t_ms_new = -99999
+        ftop._min_delta_t_ms_new = 99999
+        ftop._delta_t_ms_throwaway = True
 
     @staticmethod
     def make_report():
@@ -54,6 +99,14 @@ class ftop:
         for task in snap.tasks:
             ftop_str += "\n " + ftop.make_task_report(task)
         # do another run to remove self from cpu load measurement
+
+        ftop.delta_t_capture()
+
+        ftop_str += "\n\n[think rate]\n"
+        ftop_str += " avg: " + str(ftop._avg_delta_t_ms) + "ms  "
+        ftop_str += " min: " + str(ftop._min_delta_t_ms) + "ms  "
+        ftop_str += " max: " + str(ftop._max_delta_t_ms) + "ms"
+
         _ = sys_kernel.scheduler_snapshot()
         return ftop_str
 
@@ -100,9 +153,9 @@ class ftop:
         else:
             task_str += " ??? "
         task_str += " | "
-        aff = str(task.core_affinity)
-        if aff == "3":
-            aff = "1+2"
+        aff = str(task.core_affinity - 1)
+        if aff == "2":
+            aff = "0+1"
         else:
             aff = " " + aff
         task_str += aff
