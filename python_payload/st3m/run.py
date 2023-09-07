@@ -168,32 +168,20 @@ def run_main() -> None:
     menu_gfx = SimpleMenu(
         [
             MenuItemBack(),
-            MenuItemAction(
-                "RGB565_BS", lambda: sys_display.set_default_mode(16)
-            ),
-            MenuItemAction(
-                "RGB888", lambda: sys_display.set_default_mode(24)
-            ),
+            MenuItemAction("RGB565_BS", lambda: sys_display.set_default_mode(16)),
+            MenuItemAction("RGB888", lambda: sys_display.set_default_mode(24)),
             MenuItemAction(
                 "RGB332",
-                lambda: sys_display.set_default_mode(
-                    sys_display.rgb332 + sys_display.osd
-                ),
+                lambda: sys_display.set_default_mode(sys_display.rgb332),
+            ),
+            MenuItemAction("gray 8bit", lambda: sys_display.set_default_mode(8)),
+            MenuItemAction(
+                "sepia 8bit",
+                lambda: sys_display.set_default_mode(sys_display.sepia),
             ),
             MenuItemAction(
-                "gray", lambda: sys_display.set_default_mode(8)
-            ),
-            MenuItemAction(
-                "sepia",
-                lambda: sys_display.set_default_mode(
-                    sys_display.sepia + sys_display.osd
-                ),
-            ),
-            MenuItemAction(
-                "cool",
-                lambda: sys_display.set_default_mode(
-                    sys_display.cool + sys_display.osd
-                ),
+                "cool 8bit",
+                lambda: sys_display.set_default_mode(sys_display.cool),
             ),
             MenuItemAction(
                 "1x",
@@ -234,10 +222,10 @@ def run_main() -> None:
                 lambda: sys_display.set_default_mode(sys_display.direct_ctx),
             ),
             MenuItemAction(
-                "force mode", lambda: sys_display.set_default_mode(sys_display.force)
+                "forced mode", lambda: sys_display.set_default_mode(sys_display.force)
             ),
             MenuItemAction(
-                "force mode off (apps can change graphics mode)",
+                "apps can set mode",
                 lambda: sys_display.set_default_mode(
                     sys_display.unset + sys_display.force
                 ),

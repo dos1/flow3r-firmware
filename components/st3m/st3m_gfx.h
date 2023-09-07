@@ -29,11 +29,11 @@ typedef enum {
     // a flag for modes >4bpp requesting that ctx calls are direct, this is
     // slower since micropython cannot run in parallell with rasterization.
     st3m_gfx_8bpp = 8,
-    st3m_gfx_palette = 10,
     st3m_gfx_8bpp_osd = 8 + st3m_gfx_osd,
     st3m_gfx_rgb332 = 9,
     st3m_gfx_sepia = 10,
     st3m_gfx_cool = 11,
+    st3m_gfx_palette = 15,
     st3m_gfx_8bpp_direct_ctx = 8 + st3m_gfx_direct_ctx,
     st3m_gfx_8bpp_low_latency = 8 + st3m_gfx_low_latency,
     st3m_gfx_8bpp_osd_low_latency = 8 + st3m_gfx_osd + st3m_gfx_low_latency,
@@ -76,7 +76,7 @@ Ctx *st3m_gfx_ctx(st3m_gfx_mode mode);
 // get the framebuffer associated with graphics mode
 // if you ask for st3m_gfx_default you get the current modes fb
 // and if you ask for st3m_gfx_osd you get the current modes overlay fb
-uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *stride, int *width, int *height);
+uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride);
 
 // get the bits per pixel for a given mode
 int st3m_gfx_bpp(st3m_gfx_mode mode);

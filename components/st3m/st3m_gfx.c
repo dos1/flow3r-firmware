@@ -1,5 +1,11 @@
+// TODO:   18bit output in 24bit mode
+//         avoid tearing
+//         unify video-ram in one allocation
+//         resizing/panning buffers
+//         dithering of overlay compositing
+//         text-modes
+
 #include "st3m_gfx.h"
-// Submit a filled ctx descriptor to the rasterization pipeline.
 
 #include <string.h>
 
@@ -31,9 +37,10 @@ static st3m_gfx_mode default_mode = ST3M_GFX_DEFAULT_MODE;
 static uint16_t st3m_fb[240 * 240];
 uint8_t st3m_pal[256 * 3];
 #else
-EXT_RAM_BSS_ATTR static uint16_t st3m_fb[240 * 240];
 EXT_RAM_BSS_ATTR uint8_t st3m_pal[256 * 3];
+EXT_RAM_BSS_ATTR static uint16_t st3m_fb[240 * 240];
 #endif
+EXT_RAM_BSS_ATTR static uint8_t st3m_fb2[240 * 240 * 4];
 
 // Get a free drawlist ctx to draw into.
 //
@@ -51,15 +58,8 @@ static const char *TAG = "st3m-gfx";
 
 // we keep the OSD buffer the same size as the main framebuffer,
 // allowing us to do different combos of which buffer is osd and not
-#define ST3M_OSD_WIDTH 240
-#define ST3M_OSD_HEIGHT 240
-#define ST3M_OSD_X 0
-#define ST3M_OSD_Y 0
 
 static st3m_gfx_mode _st3m_gfx_mode = st3m_gfx_default + 1;
-
-EXT_RAM_BSS_ATTR static uint8_t
-    st3m_osd_fb[ST3M_OSD_WIDTH * ST3M_OSD_HEIGHT * 4];
 
 // each frame buffer has an associated rasterizer context
 static Ctx *fb_GRAY8_ctx = NULL;
@@ -69,14 +69,7 @@ static Ctx *fb_RGB332_ctx = NULL;
 static Ctx *fb_RGBA8_ctx = NULL;
 static Ctx *fb_RGB8_ctx = NULL;
 
-// corner pixel coordinates for osd clip
-
 pthread_mutex_t st3m_osd_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-static int _st3m_osd_y1 = 0;
-static int _st3m_osd_x1 = 0;
-static int _st3m_osd_y0 = 0;
-static int _st3m_osd_x0 = 0;
 
 typedef struct {
     Ctx *user_ctx;
@@ -86,10 +79,16 @@ typedef struct {
     int osd_y1;
     int osd_x1;
 } st3m_gfx_drawlist;
-
 static st3m_gfx_drawlist drawlists[N_DRAWLISTS];
 
+static int _st3m_osd_y1 =
+    0;  // the corner coordinates of the part of osd that needs to
+static int _st3m_osd_x1 = 0;  // be composited - more might be composited
+static int _st3m_osd_y0 = 0;
+static int _st3m_osd_x0 = 0;
+
 static float smoothed_fps = 0.0f;
+
 static QueueHandle_t user_ctx_freeq = NULL;
 static QueueHandle_t user_ctx_rastq = NULL;
 
@@ -98,7 +97,7 @@ static TaskHandle_t graphics_task;
 
 static int _st3m_gfx_low_latency = 0;
 
-static int st3m_gfx_scale(void) {
+static inline int st3m_gfx_scale(void) {
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
     switch ((int)(set_mode & st3m_gfx_4x)) {
         case st3m_gfx_4x:
@@ -114,7 +113,7 @@ static int st3m_gfx_scale(void) {
 ///////////////////////////////////////////////////////
 
 // get the bits per pixel for a given mode
-int st3m_gfx_bpp(st3m_gfx_mode mode) {
+static inline int _st3m_gfx_bpp(st3m_gfx_mode mode) {
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
     if (mode == st3m_gfx_default) {
         mode = set_mode;
@@ -124,20 +123,24 @@ int st3m_gfx_bpp(st3m_gfx_mode mode) {
         else
             return 16;
     }
-    if ((mode & 0xf) == 4) return 4;
-    return (mode & (8 | 16 | 24 | 32));
+    int bpp = (mode & (1 | 2 | 4 | 8 | 16 | 24 | 32));
+    if (bpp >= 2 && bpp < 4) bpp = 2;
+    if (bpp >= 4 && bpp < 8) bpp = 4;
+    if (bpp >= 8 && bpp < 16) bpp = 8;
+    return bpp;
 }
+int st3m_gfx_bpp(st3m_gfx_mode mode) { return _st3m_gfx_bpp(mode); }
 
 static Ctx *st3m_gfx_ctx_int(st3m_gfx_mode mode) {
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
     if (mode == st3m_gfx_osd) {
-        if ((st3m_gfx_bpp(set_mode) == 16) || (st3m_gfx_bpp(set_mode) == 8))
+        if ((_st3m_gfx_bpp(set_mode) == 16) || (st3m_gfx_bpp(set_mode) == 8))
             return fb_RGBA8_ctx;
         return fb_GRAYA8_ctx;
     }
     Ctx *ctx = st3m_gfx_drawctx_free_get(1000);
 
-    if (set_mode & st3m_gfx_direct_ctx) switch (st3m_gfx_bpp(set_mode)) {
+    if (set_mode & st3m_gfx_direct_ctx) switch (_st3m_gfx_bpp(set_mode)) {
             case 16:
                 return fb_RGB565_BS_ctx;
             case 8:
@@ -218,8 +221,8 @@ void st3m_gfx_set_default_mode(st3m_gfx_mode mode) {
             default_mode &= ~st3m_gfx_low_latency;
         else if (mode & st3m_gfx_direct_ctx)
             default_mode &= ~st3m_gfx_direct_ctx;
-    } else if ((mode & (1|2|4|8|16|32)) == mode) {
-        default_mode &= ~(1|2|4|8|16|32);
+    } else if ((mode & (1 | 2 | 4 | 8 | 16 | 32)) == mode) {
+        default_mode &= ~(1 | 2 | 4 | 8 | 16 | 32);
         default_mode |= mode;
     } else if (mode == st3m_gfx_2x) {
         default_mode &= ~st3m_gfx_4x;
@@ -260,7 +263,7 @@ void st3m_gfx_set_default_mode(st3m_gfx_mode mode) {
 
 static void st3m_gfx_init_palette(st3m_gfx_mode mode) {
     switch (mode & 0xf) {
-        case 4: {
+        case 4: {  // ega palette
             int idx = 0;
             for (int i = 0; i < 2; i++)
                 for (int r = 0; r < 2; r++)
@@ -307,11 +310,13 @@ static void st3m_gfx_init_palette(st3m_gfx_mode mode) {
 
 st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode) {
     if ((mode == _st3m_gfx_mode) || (0 != (default_mode & st3m_gfx_force))) {
+        st3m_gfx_init_palette(
+            mode);  // we say it is a no-op but reset the palette
         return (mode ? mode : default_mode);
     }
 
     memset(st3m_fb, 0, sizeof(st3m_fb));
-    memset(st3m_osd_fb, 0, sizeof(st3m_osd_fb));
+    memset(st3m_fb2, 0, sizeof(st3m_fb2));
 
     if (mode == st3m_gfx_default)
         mode = default_mode;
@@ -338,9 +343,10 @@ st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode) {
 
 st3m_gfx_mode st3m_gfx_get_mode(void) { return _st3m_gfx_mode; }
 
-uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *stride, int *width, int *height) {
+uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride) {
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
-    int bpp = st3m_gfx_bpp(set_mode);
+    int bpp = _st3m_gfx_bpp(set_mode);
+    int scale = st3m_gfx_scale();
     if (mode == st3m_gfx_palette) {
         if (stride) *stride = 3;
         if (width) *width = 1;
@@ -351,20 +357,20 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *stride, int *width, int *height) {
         if (width) *width = 240;
         if (height) *height = 240;
         if (bpp <= 16) return (uint8_t *)st3m_fb;
-        return st3m_osd_fb;
+        return st3m_fb2;
     } else if (mode == st3m_gfx_osd) {
         if (stride) *stride = 240 * bpp / 8;
         if (width) *width = 240;
         if (height) *height = 240;
-        if (st3m_gfx_bpp(set_mode) <= 16) return st3m_osd_fb;
+        if (_st3m_gfx_bpp(set_mode) <= 16) return st3m_fb2;
         return (uint8_t *)st3m_fb;
     }
 
     if (stride) *stride = 240 * bpp / 8;
-    if (width) *width = 240;
-    if (height) *height = 240;
+    if (width) *width = 240 / scale;
+    if (height) *height = 240 / scale;
     if (bpp <= 16) return (uint8_t *)st3m_fb;
-    return st3m_osd_fb;
+    return st3m_fb2;
 }
 
 static void st3m_gfx_task(void *_arg) {
@@ -390,8 +396,8 @@ static void st3m_gfx_task(void *_arg) {
 
         Ctx *user_target = fb_RGB565_BS_ctx;
         void *user_fb = st3m_fb;
-        void *osd_fb = st3m_osd_fb;
-        int bits = st3m_gfx_bpp(set_mode);
+        void *osd_fb = st3m_fb2;
+        int bits = _st3m_gfx_bpp(set_mode);
 
         switch (bits) {
             case 4:
@@ -405,12 +411,12 @@ static void st3m_gfx_task(void *_arg) {
                 break;
             case 24:
                 user_target = fb_RGB8_ctx;
-                user_fb = st3m_osd_fb;
+                user_fb = st3m_fb2;
                 osd_fb = st3m_fb;
                 break;
             case 32:
                 user_target = fb_RGBA8_ctx;
-                user_fb = st3m_osd_fb;
+                user_fb = st3m_fb2;
                 osd_fb = st3m_fb;
                 break;
         }
@@ -432,11 +438,17 @@ static void st3m_gfx_task(void *_arg) {
 
         if (scale || ((set_mode & st3m_gfx_osd) &&
                       (drawlist->osd_y0 != drawlist->osd_y1))) {
-            pthread_mutex_lock(&st3m_osd_mutex);
-            flow3r_bsp_display_send_fb_osd(user_fb, bits, scale, osd_fb,
-                                           drawlist->osd_x0, drawlist->osd_y0,
-                                           drawlist->osd_x1, drawlist->osd_y1);
-            pthread_mutex_unlock(&st3m_osd_mutex);
+            if (((set_mode & st3m_gfx_osd) &&
+                 (drawlist->osd_y0 != drawlist->osd_y1))) {
+                pthread_mutex_lock(&st3m_osd_mutex);
+                flow3r_bsp_display_send_fb_osd(
+                    user_fb, bits, scale, osd_fb, drawlist->osd_x0,
+                    drawlist->osd_y0, drawlist->osd_x1, drawlist->osd_y1);
+                pthread_mutex_unlock(&st3m_osd_mutex);
+            } else {
+                flow3r_bsp_display_send_fb_osd(user_fb, bits, scale, NULL, 0, 0,
+                                               0, 0);
+            }
         } else {
             flow3r_bsp_display_send_fb(user_fb, bits);
         }
@@ -447,7 +459,7 @@ static void st3m_gfx_task(void *_arg) {
         xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
         st3m_counter_rate_sample(&rast_rate);
         float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
-        smoothed_fps = smoothed_fps * 0.9 + 0.1 * rate;
+        smoothed_fps = smoothed_fps * 0.75 + 0.25 * rate;
     }
 }
 
@@ -717,10 +729,10 @@ void st3m_gfx_init(void) {
         st3m_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
         FLOW3R_BSP_DISPLAY_WIDTH * 2, CTX_FORMAT_RGB565_BYTESWAPPED);
     fb_RGBA8_ctx = ctx_new_for_framebuffer(
-        st3m_osd_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
+        st3m_fb2, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
         FLOW3R_BSP_DISPLAY_WIDTH * 4, CTX_FORMAT_RGBA8);
     fb_RGB8_ctx = ctx_new_for_framebuffer(
-        st3m_osd_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
+        st3m_fb2, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
         FLOW3R_BSP_DISPLAY_WIDTH * 3, CTX_FORMAT_RGB8);
     assert(fb_GRAY8_ctx != NULL);
     assert(fb_GRAYA8_ctx != NULL);
@@ -835,15 +847,15 @@ void st3m_gfx_flush(int timeout_ms) {
 }
 
 void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1) {
-    if (y1 < ST3M_OSD_Y) y1 = ST3M_OSD_Y;
-    if (y1 > ST3M_OSD_Y + ST3M_OSD_HEIGHT) y1 = ST3M_OSD_Y + ST3M_OSD_HEIGHT;
-    if (y0 < ST3M_OSD_Y) y0 = ST3M_OSD_Y;
-    if (y0 > ST3M_OSD_Y + ST3M_OSD_HEIGHT) y0 = ST3M_OSD_Y + ST3M_OSD_HEIGHT;
+    if (y1 < 0) y1 = 0;
+    if (y1 > 240) y1 = 240;
+    if (y0 < 0) y0 = 0;
+    if (y0 > 240) y0 = 240;
 
-    if (x1 < ST3M_OSD_X) x1 = ST3M_OSD_X;
-    if (x1 > ST3M_OSD_X + ST3M_OSD_WIDTH) x1 = ST3M_OSD_X + ST3M_OSD_WIDTH;
-    if (x0 < ST3M_OSD_X) x0 = ST3M_OSD_X;
-    if (x0 > ST3M_OSD_X + ST3M_OSD_WIDTH) x0 = ST3M_OSD_X + ST3M_OSD_WIDTH;
+    if (x1 < 0) x1 = 0;
+    if (x1 > 240) x1 = 240;
+    if (x0 < 0) x0 = 0;
+    if (x0 > 240) x0 = 240;
 
     st3m_gfx_drawlist *drawlist = &drawlists[last_descno];
 
