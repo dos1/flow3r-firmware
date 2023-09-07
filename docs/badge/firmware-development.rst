@@ -194,10 +194,12 @@ Then, you can run your firmware by distributing the resulting ``.bin`` file and 
 
 For an example, see our doom port at **TODO**.
 
-Rewrite it in Rust
-^^^^^^^^^^^^^^^^^^
+Alternative Firmware Projects
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If you fancy playing with Rust on the flow3r, check out the `flow3-rs <https://git.flow3r.garden/flow3r/flow3-rs>`_ project.
+
+A port of Open-Smartwatch is also `in the works <https://github.com/Open-Smartwatch/open-smartwatch-os/pull/368>`_.
 
 Hardware Generations
 --------------------
