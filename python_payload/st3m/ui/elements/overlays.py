@@ -99,12 +99,13 @@ class Compositor(Responder):
         if self._frame_skip <= 0:
             octx = sys_display.ctx(256)  # XXX add symbolic name for overlay
             if settings.onoff_show_fps.value:
-                _clip_x0 = 110
+                _clip_x0 = 50
                 _clip_y1 = 0
-                _clip_x1 = 130
-                _clip_y1 = 7
+                _clip_x1 = 190
+                _clip_y1 = 16
                 octx.save()
-                octx.compositing_mode = octx.CLEAR
+                octx.rgba(0, 0, 0, 0.5)
+                octx.compositing_mode = octx.COPY
                 octx.rectangle(
                     _clip_x0 - 120,
                     _clip_y0 - 120,
@@ -113,9 +114,9 @@ class Compositor(Responder):
                 ).fill()
                 octx.restore()
                 octx.gray(1)
-                octx.font_size = 11
+                octx.font_size = 15
                 octx.font = "Bold"
-                octx.move_to(0, -113)
+                octx.move_to(0, -106)
                 octx.text_align = octx.CENTER
                 octx.text("{0:.1f}".format(sys_display.fps()))
             else:
