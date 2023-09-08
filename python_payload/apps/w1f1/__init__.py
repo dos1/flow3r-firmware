@@ -2,6 +2,7 @@ from st3m.application import Application, ApplicationContext
 from st3m.input import InputState
 from st3m.goose import Optional
 from st3m.ui.view import ViewManager
+from st3m.settings import SETTINGS_JSON_FILE
 from ctx import Context
 import network
 import leds
@@ -20,7 +21,6 @@ from .helpers import (
 class WifiApp(Application):
     WIFI_CONFIG_FILE = "/flash/w1f1_config.json"
     WIFI_CONFIG_FILE_SD = "/sd/w1f1_config.json"
-    SETTINGS_JSON_FILE = "/flash/settings.json"
 
     _scroll_pos: float = 0.0
 
@@ -184,8 +184,8 @@ class WifiApp(Application):
 
     def update_settings_json(self, ssid: str, psk: str) -> None:
         # weirdo case
-        if os.path.exists(self.SETTINGS_JSON_FILE):
-            with open(self.SETTINGS_JSON_FILE) as f:
+        if os.path.exists(SETTINGS_JSON_FILE):
+            with open(SETTINGS_JSON_FILE) as f:
                 settings_json = json.load(f)
         else:
             settings_json = {"system": {}}
@@ -203,7 +203,7 @@ class WifiApp(Application):
         settings_json["system"]["wifi"]["ssid"] = ssid
         settings_json["system"]["wifi"]["psk"] = psk
 
-        with open(self.SETTINGS_JSON_FILE, "w") as f:
+        with open(SETTINGS_JSON_FILE, "w") as f:
             json.dump(settings_json, f)
 
     def add_wlan_to_config_json(self, ssid: str, psk: str) -> None:

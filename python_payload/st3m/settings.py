@@ -24,6 +24,8 @@ from st3m.utils import reduce
 
 log = logging.Log(__name__, level=logging.INFO)
 
+SETTINGS_JSON_FILE = "/flash/settings.json"
+
 
 class Tunable(ABCBase):
     """
@@ -249,7 +251,7 @@ def load_all() -> None:
     """
     data = {}
     try:
-        with open("/flash/settings.json", "r") as f:
+        with open(SETTINGS_JSON_FILE, "r") as f:
             data = json.load(f)
     except Exception as e:
         log.warning("Could not load settings: " + str(e))
@@ -280,7 +282,7 @@ def save_all() -> None:
     for setting in load_save_settings:
         res = _update(res, setting.save())
     try:
-        with open("/flash/settings.json", "w") as f:
+        with open(SETTINGS_JSON_FILE, "w") as f:
             json.dump(res, f)
     except Exception as e:
         log.warning("Could not save settings: " + str(e))
