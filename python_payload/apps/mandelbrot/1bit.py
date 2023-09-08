@@ -8,7 +8,19 @@ class App(Application):
 
     def on_enter(self, vm):
         super().on_enter(vm)
-        sys_display.set_mode(4)
+        sys_display.set_mode(1)
+        pal = bytearray(256 * 3)
+        modr = random.getrandbits(7) + 1
+        modg = random.getrandbits(7) + 1
+        modb = random.getrandbits(7) + 1
+
+        pal[0 * 3] = 0
+        pal[0 * 3 + 1] = 0
+        pal[0 * 3 + 2] = 0
+        pal[1 * 3] = 255
+        pal[1 * 3 + 1] = 255
+        pal[1 * 3 + 2] = 255
+        sys_display.set_palette(pal)
         self.y = 0
         self.xa = -1.5
         self.xb = 1.5
@@ -41,32 +53,10 @@ class App(Application):
                         z = z * z + c
                         reached = i
                     val = reached * 255 / max_iterations
-                    val = math.sqrt(val / 255) * 16
-                    if val > 15:
-                        val = 15
-                    fb[int((y * stride * 2 + x) / 2)] |= int(val) << ((x & 1) * 4)
+                    val = int(math.sqrt(val / 255) * 16) & 1
+                    fb[int((y * stride * 8 + x) / 8)] |= int(val) << (x & 7)
+
                 self.y += 1
-
-    def think(self, ins, delta_ms):
-        super().think(ins, delta_ms)
-        if self.input.buttons.app.right.pressed:
-            pal = bytearray(256 * 3)
-            modr = random.getrandbits(7) + 1
-            modg = random.getrandbits(7) + 1
-            modb = random.getrandbits(7) + 1
-
-            for i in range(256):
-                pal[i * 3] = int((i % modr) * (255 / modr))
-                pal[i * 3 + 1] = int((i % modg) * (255 / modg))
-                pal[i * 3 + 2] = int((i % modb) * (255 / modb))
-            sys_display.set_palette(pal)
-        if self.input.buttons.app.left.pressed:
-            pal = bytearray(256 * 3)
-            for i in range(256):
-                pal[i * 3] = i
-                pal[i * 3 + 1] = i
-                pal[i * 3 + 2] = i
-            sys_display.set_palette(pal)
 
 
 if __name__ == "__main__":

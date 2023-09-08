@@ -71,6 +71,10 @@ class App(Application):
         for c in self.clouds:
             c.draw(ctx)
 
+    def on_enter(self, vm):
+        super().on_enter(vm)
+        sys_display.set_mode(24 + sys_display.osd)
+
 
 if __name__ == "__main__":
     from st3m.run import run_app

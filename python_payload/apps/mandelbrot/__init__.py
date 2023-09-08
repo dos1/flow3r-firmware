@@ -8,7 +8,7 @@ class App(Application):
 
     def on_enter(self, vm):
         super().on_enter(vm)
-        sys_display.set_mode(8)
+        sys_display.set_mode(sys_display.cool | sys_display.x2)
         self.y = 0
         self.xa = -1.5
         self.xb = 1.5
@@ -16,24 +16,26 @@ class App(Application):
         self.yb = 1.0
 
     def draw(self, ctx: Context):
-        fb = sys_display.fb(8)
+        fb_info = sys_display.fb(sys_display.cool)
+        fb = fb_info[0]
 
         max_iterations = 30
 
-        imgx = 240
-        imgy = 240
+        width = fb_info[1]
+        height = fb_info[2]
+        stride = fb_info[3]
 
         for chunk in range(3):  # do 3 scanlines at a time
             y = self.y
-            if y < 240:
-                zy = y * (self.yb - self.ya) / (imgy - 1) + self.ya
+            if y < height:
+                zy = y * (self.yb - self.ya) / (height - 1) + self.ya
                 inners = 0
-                for x in range(imgx / 2):
-                    zx = x * (self.xb - self.xa) / (imgx - 1) + self.xa
+                for x in range(width / 2):
+                    zx = x * (self.xb - self.xa) / (width - 1) + self.xa
                     z = zy + zx * 1j
                     c = z
                     reached = 0
-                    if inners > 10 and y < 180:
+                    if inners > 10 and y < height * 0.7:
                         reached = max_iterations - 1
                     else:
                         for i in range(max_iterations):
@@ -45,8 +47,8 @@ class App(Application):
                         inners += 1
                     val = reached * 255 / max_iterations
                     val = math.sqrt(val / 255) * 255
-                    fb[y * 240 + x] = int(val)
-                    fb[y * 240 + 239 - x] = int(val)
+                    fb[y * stride + x] = int(val)
+                    fb[y * stride + width - 1 - x] = int(val)
                 self.y += 1
 
     def think(self, ins, delta_ms):
