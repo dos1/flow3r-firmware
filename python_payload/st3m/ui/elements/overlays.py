@@ -394,7 +394,7 @@ class USBIcon(Icon):
     Might or might not be related to a certain serial bus.
     """
 
-    WIDTH: int = 20
+    WIDTH: int = 30
 
     def visible(self) -> bool:
         return sys_kernel.usb_connected()
@@ -415,7 +415,7 @@ class USBIcon(Icon):
 
 
 class WifiIcon(Icon):
-    WIDTH: int = 15
+    WIDTH: int = 30
 
     def __init__(self) -> None:
         super().__init__()
@@ -444,6 +444,8 @@ class WifiIcon(Icon):
 
 
 class BatteryIcon(Icon):
+    WIDTH: int = 30
+
     def __init__(self) -> None:
         super().__init__()
         self._percent = 100.0
@@ -519,7 +521,7 @@ class IconTray(Overlay):
         for i, v in enumerate(self.visible):
             ctx.save()
             ctx.translate(x0, -100)
-            ctx.scale(0.1, 0.1)
+            ctx.scale(0.13, 0.13)
             v.draw(ctx)
             ctx.restore()
             x0 = x0 + v.WIDTH
