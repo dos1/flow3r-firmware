@@ -66,7 +66,6 @@ class Compositor(Responder):
             OverlayKind.Debug: True,
             OverlayKind.Toast: True,
         }
-        self._frame_skip = 0
 
     def _enabled_overlays(self) -> List[Responder]:
         res: List[Responder] = []
@@ -83,57 +82,50 @@ class Compositor(Responder):
         self.main.think(ins, delta_ms)
         if sys_display.get_mode() != 0:
             return
-        if self._frame_skip <= 0:
-            if not settings.onoff_show_fps.value and not sys_display.get_mode() != 0:
-                for overlay in self._enabled_overlays():
-                    overlay.think(ins, delta_ms)
+        if not settings.onoff_show_fps.value and not sys_display.get_mode() != 0:
+            for overlay in self._enabled_overlays():
+                overlay.think(ins, delta_ms)
 
     def draw(self, ctx: Context) -> None:
-        global _clip_x0
-        global _clip_y0
-        global _clip_x1
-        global _clip_y1
+        global _clip_x0, _clip_y0, _clip_x1, _clip_y1
         self.main.draw(ctx)
         if sys_display.get_mode() != 0:
             return
-        if self._frame_skip <= 0:
-            octx = sys_display.ctx(256)  # XXX add symbolic name for overlay
-            if settings.onoff_show_fps.value:
-                _clip_x0 = 50
-                _clip_y1 = 0
-                _clip_x1 = 190
-                _clip_y1 = 16
-                octx.save()
-                octx.rgba(0, 0, 0, 0.5)
-                octx.compositing_mode = octx.COPY
-                octx.rectangle(
-                    _clip_x0 - 120,
-                    _clip_y0 - 120,
-                    _clip_x1 - _clip_x0 + 1,
-                    _clip_y1 - _clip_y0 + 1,
-                ).fill()
-                octx.restore()
-                octx.gray(1)
-                octx.font_size = 15
-                octx.font = "Bold"
-                octx.move_to(0, -106)
-                octx.text_align = octx.CENTER
-                octx.text("{0:.1f}".format(sys_display.fps()))
-            else:
-                _clip_x0 = 80
-                _clip_y0 = 0
-                _clip_x1 = 160
-                _clip_y1 = 0
-                octx.save()
-                octx.compositing_mode = octx.CLEAR
-                octx.rectangle(-120, -120, 240, 240).fill()
-                octx.restore()
-                for overlay in self._enabled_overlays():
-                    overlay.draw(octx)
-            self._frame_skip = 4
-            sys_display.overlay_clip(_clip_x0, _clip_y0, _clip_x1, _clip_y1)
-            sys_display.update(octx)
-        self._frame_skip -= 1
+        octx = sys_display.ctx(256)  # XXX add symbolic name for overlay
+        if settings.onoff_show_fps.value:
+            _clip_x0 = 0
+            _clip_y1 = 0
+            _clip_x1 = 240
+            _clip_y1 = 24
+            octx.save()
+            octx.rgba(0, 0, 0, 0.5)
+            octx.compositing_mode = octx.COPY
+            octx.rectangle(
+                _clip_x0 - 120,
+                _clip_y0 - 120,
+                _clip_x1 - _clip_x0 + 1,
+                _clip_y1 - _clip_y0 + 1,
+            ).fill()
+            octx.restore()
+            octx.gray(1)
+            octx.font_size = 18
+            octx.font = "Bold"
+            octx.move_to(0, -103)
+            octx.text_align = octx.CENTER
+            octx.text("{0:.1f}".format(sys_display.fps()))
+        else:
+            _clip_x0 = 80
+            _clip_y0 = 0
+            _clip_x1 = 160
+            _clip_y1 = 0
+            octx.save()
+            octx.compositing_mode = octx.CLEAR
+            octx.rectangle(-120, -120, 240, 240).fill()
+            octx.restore()
+            for overlay in self._enabled_overlays():
+                overlay.draw(octx)
+        sys_display.overlay_clip(_clip_x0, _clip_y0, _clip_x1, _clip_y1)
+        sys_display.update(octx)
 
     def add_overlay(self, ov: Overlay) -> None:
         """
@@ -259,11 +251,16 @@ class OverlayCaptouch(Overlay):
             dot.think(ins, delta_ms)
 
     def draw(self, ctx: Context) -> None:
+        global _clip_y1, _clip_x0, _clip_y0, _clip_y1
         ctx.rgb(1, 0, 1)
         for dot in self.dots:
             ctx.save()
             dot.draw(ctx)
             ctx.restore()
+        _clip_x0 = 0
+        _clip_x1 = 240
+        _clip_y0 = 0
+        _clip_y1 = 240
 
 
 class OverlayVolume(Overlay):
@@ -317,7 +314,7 @@ class OverlayVolume(Overlay):
 
         if self._showing is None:
             return
-        self._showing -= delta_ms * 4
+        self._showing -= delta_ms
         if self._showing < 0:
             self._showing = None
 

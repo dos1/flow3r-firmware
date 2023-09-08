@@ -220,8 +220,8 @@ settings_menu_structure: "MenuStructure" = [
     onoff_button_swap,
     onoff_show_fps,
     onoff_debug_ftop,
+    onoff_debug_touch,
     # onoff_debug,
-    # onoff_debug_touch,
 ]
 
 
