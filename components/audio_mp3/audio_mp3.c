@@ -174,6 +174,7 @@ static void mp3_think(st3m_media *media, float ms_elapsed) {
                 printf("[[%s]]\n", self->data + self->pos);
             }
             self->pos += info.frame_bytes;
+            self->control.time += samples / (float)self->samplerate;
 
             if (self->samplerate != 48000) {
                 int phase = 0;
