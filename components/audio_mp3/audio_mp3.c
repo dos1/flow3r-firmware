@@ -150,6 +150,8 @@ static void mp3_think(st3m_media *media, float ms_elapsed) {
         self->in_buffering = 0;
     }
 
+    if (self->control.paused) return;
+
     if (!self->started) {
         self->started = 1;
         mp3_think(media, 100);
