@@ -842,12 +842,12 @@ static void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
                     blit->fb += (end_off * 2);
                     break;
                 case 1:
-                    for (unsigned int i = 0; i < pix_count; i++)
+                    for (unsigned int i = start_off; i < end_off; i++)
                         temp_blit[o++] =
                             blit->pal_16[(fb[i / 8] >> ((i & 7))) & 0x1];
                     break;
                 case 2:
-                    for (unsigned int i = 0; i < pix_count; i++)
+                    for (unsigned int i = start_off; i < end_off; i++)
                         temp_blit[o++] =
                             blit->pal_16[(fb[i / 4] >> ((i & 3) * 2)) & 0x3];
                     break;
