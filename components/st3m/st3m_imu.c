@@ -23,6 +23,13 @@ static float _gyro_x, _gyro_y, _gyro_z;
 static float _pressure;
 static float _temperature;
 
+static st3m_imu_sink_t * _sink = NULL;
+static SemaphoreHandle_t * _sink_sema;
+void st3m_imu_set_sink(void * sink, SemaphoreHandle_t * sink_sema ){
+    _sink = sink;
+    _sink_sema = sink_sema;
+}
+
 void st3m_imu_init() {
     _mu = xSemaphoreCreateMutex();
     assert(_mu != NULL);
@@ -93,5 +100,21 @@ static void _task(void *data) {
             _temperature = b;
         }
         UNLOCK;
+
+        if(_sink != NULL){
+            xSemaphoreTake(*_sink_sema, portMAX_DELAY);
+            _sink->acc[0] = _acc_x;
+            _sink->acc[1] = _acc_y;
+            _sink->acc[2] = _acc_z;
+
+            _sink->gyro[0] = _gyro_x;
+            _sink->gyro[1] = _gyro_y;
+            _sink->gyro[2] = _gyro_z;
+
+            _sink->pressure = _pressure;
+            _sink->temperature = _temperature;
+            xSemaphoreGive(*_sink_sema);
+        }
+        
     }
 }

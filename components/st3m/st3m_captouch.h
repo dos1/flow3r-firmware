@@ -1,5 +1,12 @@
 #pragma once
 
+#include <stdbool.h>
+#include <stdint.h>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
+#include "freertos/task.h"
+
 // GENERAL INFORMATION
 //
 // Geometry:
@@ -37,8 +44,6 @@
 //     touch. Top petals have two degrees of freedom, bottom petals have a
 //     single degree of freedom (distance from center).
 
-#include "st3m_ringbuffer.h"
-
 // NOTE: keep the enum definitions below in-sync with flow3r_bsp_captouch.h, as
 // they are converted by numerical value internally.
 
@@ -66,13 +71,12 @@ typedef enum {
 
 // State of capacitive touch for a petal's pad.
 typedef struct {
-    // Raw data ringbuffer.
-    st3m_ringbuffer_t rb;
-    // Whether the pad is currently being touched. Calculated from ringbuffer
-    // data.
+    // Whether the pad is currently being touched.
     bool pressed;
     // How strongly the pad is currently being pressed, in arbitrary units.
     uint16_t pressure;
+    uint16_t raw;
+    uint16_t thres;
 } st3m_petal_pad_state_t;
 
 // State of capacitive touch for a petal.
@@ -115,3 +119,23 @@ bool st3m_captouch_calibrating(void);
 void st3m_captouch_request_calibration(void);
 void st3m_captouch_get_all(st3m_captouch_state_t *dest);
 void st3m_captouch_get_petal(st3m_petal_state_t *dest, uint8_t petal_ix);
+
+void st3m_captouch_set_sink(void * sink, SemaphoreHandle_t * sink_sema );
+
+typedef struct _st3m_captouch_sink_petal_pad_t {
+    bool is_pressed;
+    uint16_t raw;
+    uint16_t thres;
+} st3m_captouch_sink_petal_pad_t;
+
+typedef struct _st3m_captouch_sink_petal_t {
+    st3m_captouch_sink_petal_pad_t base;
+    st3m_captouch_sink_petal_pad_t tip;
+    st3m_captouch_sink_petal_pad_t cw;
+    st3m_captouch_sink_petal_pad_t ccw;
+} st3m_captouch_sink_petal_t;
+
+typedef struct _st3m_captouch_sink_t {
+    st3m_captouch_sink_petal_t petals[10];
+    bool fresh_run;
+} st3m_captouch_sink_t;

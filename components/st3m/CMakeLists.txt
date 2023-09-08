@@ -30,6 +30,7 @@ idf_component_register(
         "${ST3M_VERSION_PATH}"
         st3m_badgenet.c
         st3m_badgenet_switch.c
+        st3m_inputstate.c
     INCLUDE_DIRS
         .
     REQUIRES

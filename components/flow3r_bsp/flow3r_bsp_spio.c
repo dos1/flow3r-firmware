@@ -1,11 +1,18 @@
 #include "flow3r_bsp.h"
-
-#include <stdbool.h>
+#include "flow3r_bsp_spio.h"
 
 #include "driver/gpio.h"
 #include "esp_log.h"
 
 static const char *TAG = "flow3r-spio";
+
+// if non-NULL: fill struct w fresh data every time update is called
+static flow3r_bsp_spio_sink_t * _sink = NULL;
+static SemaphoreHandle_t * _sink_sema;
+void flow3r_bsp_spio_set_sink(void * sink, SemaphoreHandle_t * sink_sema ){
+    _sink = sink;
+    _sink_sema = sink_sema;
+}
 
 typedef enum {
     flow3r_bsp_iochip_esp32 = 0,
@@ -220,7 +227,7 @@ static esp_err_t _iopin_init(const flow3r_bsp_iopin_t *iopin) {
     return ESP_ERR_NOT_SUPPORTED;
 }
 
-static bool _iopin_esp32_get_pin(const flow3r_bsp_iopin_t *iopin) {
+static inline bool _iopin_esp32_get_pin(const flow3r_bsp_iopin_t *iopin) {
     return gpio_get_level(iopin->pin);
 }
 
@@ -234,7 +241,7 @@ static bool _iopin_get_pin(const flow3r_bsp_iopin_t *iopin) {
             res = _iopin_portexp_get_pin(iopin);
             break;
         case flow3r_bsp_iochip_dummy:
-            res = false;
+            break;
     }
     if (iopin->invert) {
         res = !res;
@@ -285,19 +292,38 @@ esp_err_t flow3r_bsp_spio_init(void) {
     return _portexp_update();
 }
 
-esp_err_t flow3r_bsp_spio_update(void) { return _portexp_update(); }
+static inline void button_to_sink(int8_t * sink, flow3r_bsp_tripos_state_t source, bool fresh_run){
+    if((source != flow3r_bsp_tripos_none) || fresh_run) *sink = source;
+}
 
-static flow3r_bsp_tripos_state_t _tripos_get(
+esp_err_t flow3r_bsp_spio_update(void) {
+    return _portexp_update();
+    if(_sink != NULL){
+        int8_t * right;
+        int8_t * left;
+        if(_sink->app_button_is_left){
+            left = &(_sink->app_button);
+            right = &(_sink->os_button);
+        } else {
+            left = &(_sink->os_button);
+            right = &(_sink->app_button);
+        }
+        
+        xSemaphoreTake(*_sink_sema, portMAX_DELAY);
+        button_to_sink(left, flow3r_bsp_spio_left_button_get(), _sink->fresh_run);
+        button_to_sink(right, flow3r_bsp_spio_right_button_get(), _sink->fresh_run);
+        _sink->charger_state = flow3r_bsp_spio_jacksense_right_get();
+        _sink->jacksense_line_in = flow3r_bsp_spio_jacksense_right_get();
+        _sink->fresh_run = false;
+        xSemaphoreGive(*_sink_sema);
+    }
+}
+
+static int8_t _tripos_get(
     const flow3r_bsp_iodef_tripos_t *io) {
-    if (_iopin_get_pin(&io->mid)) {
-        return flow3r_bsp_tripos_mid;
-    }
-    if (_iopin_get_pin(&io->left)) {
-        return flow3r_bsp_tripos_left;
-    }
-    if (_iopin_get_pin(&io->right)) {
-        return flow3r_bsp_tripos_right;
-    }
+    if (_iopin_get_pin(&io->mid)) return flow3r_bsp_tripos_mid;
+    if (_iopin_get_pin(&io->left)) return flow3r_bsp_tripos_left;
+    if (_iopin_get_pin(&io->right)) return flow3r_bsp_tripos_right;
     return flow3r_bsp_tripos_none;
 }
 

@@ -19,13 +19,19 @@ static st3m_captouch_state_t _state = {};
 static bool _request_calibration = false;
 static bool _calibrating = false;
 
+static st3m_captouch_sink_t * _sink = NULL;
+static SemaphoreHandle_t * _sink_sema = NULL;
+void st3m_captouch_set_sink(void * sink, SemaphoreHandle_t * sink_sema){
+    _sink = sink;
+    _sink_sema = sink_sema;
+}
+
 static inline void _pad_feed(st3m_petal_pad_state_t *pad, uint16_t data,
                              bool top) {
-    ringbuffer_write(&pad->rb, data);
-    int32_t thres = top ? 8000 : 12000;
-    pad->pressed = data > thres;
+    pad->raw = data;
+    pad->pressed = data > pad->thres;
     if (pad->pressed) {
-        pad->pressure = data - thres;
+        pad->pressure = data - pad->thres;
     } else {
         pad->pressure = 0;
     }
@@ -38,9 +44,9 @@ static inline void _petal_process(st3m_petal_state_t *petal, bool top) {
         petal->pressure =
             (petal->base.pressure + petal->ccw.pressure + petal->cw.pressure) /
             3;
-        int32_t left = ringbuffer_avg(&petal->ccw.rb);
-        int32_t right = ringbuffer_avg(&petal->cw.rb);
-        int32_t base = ringbuffer_avg(&petal->base.rb);
+        int32_t left = petal->ccw.raw;
+        int32_t right = petal->cw.raw;
+        int32_t base = petal->base.raw;
         petal->pos_distance = (left + right) / 2 - base;
         petal->pos_angle = right - left;
 #if defined(CONFIG_FLOW3R_HW_GEN_P3)
@@ -49,11 +55,18 @@ static inline void _petal_process(st3m_petal_state_t *petal, bool top) {
     } else {
         petal->pressed = petal->base.pressed || petal->tip.pressed;
         petal->pressure = (petal->base.pressure + petal->tip.pressure) / 2;
-        int32_t base = ringbuffer_avg(&petal->base.rb);
-        int32_t tip = ringbuffer_avg(&petal->tip.rb);
+        int32_t base = petal->base.raw;
+        int32_t tip = petal->tip.raw;
         petal->pos_distance = tip - base;
         petal->pos_angle = 0;
     }
+}
+
+static inline void pad_to_sink(st3m_captouch_sink_petal_pad_t * sink, st3m_petal_pad_state_t * source, bool fresh_run) {
+    // tfw no memcpy ;w;
+    if(source->pressed || fresh_run) sink->is_pressed = source->pressed;
+    sink->thres = source->thres;
+    sink->raw = source->raw;
 }
 
 static void _on_data(const flow3r_bsp_captouch_state_t *st) {
@@ -85,6 +98,21 @@ static void _on_data(const flow3r_bsp_captouch_state_t *st) {
     }
     _calibrating = flow3r_bsp_captouch_calibrating();
     xSemaphoreGive(_mu);
+
+    if(_sink != NULL){
+        xSemaphoreTake(*_sink_sema, portMAX_DELAY);
+        for(uint8_t i = 0; i < 10; i += 2){
+            pad_to_sink(&(_sink->petals[i].base), &(_state.petals[i].base), _sink->fresh_run);
+            pad_to_sink(&(_sink->petals[i].cw), &(_state.petals[i].cw), _sink->fresh_run);
+            pad_to_sink(&(_sink->petals[i].ccw), &(_state.petals[i].ccw), _sink->fresh_run);
+        }
+        for(uint8_t i = 1; i < 10; i += 2){
+            pad_to_sink(&(_sink->petals[i].base), &(_state.petals[i].base), _sink->fresh_run);
+            pad_to_sink(&(_sink->petals[i].tip), &(_state.petals[i].tip), _sink->fresh_run);
+        }
+        _sink->fresh_run = false;
+        xSemaphoreGive(*_sink_sema);
+    }
 }
 
 void st3m_captouch_init(void) {
@@ -93,6 +121,17 @@ void st3m_captouch_init(void) {
     assert(_mu != NULL);
 
     esp_err_t ret = flow3r_bsp_captouch_init(_on_data);
+
+    for(uint8_t i = 0; i< 10; i++){
+        if(i%2){
+            _state.petals[i].base.thres = 12000;
+            _state.petals[i].tip.thres = 12000;
+        } else {
+            _state.petals[i].base.thres = 8000;
+            _state.petals[i].cw.thres = 8000;
+            _state.petals[i].ccw.thres = 8000;
+        }
+    }
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Captouch init failed: %s", esp_err_to_name(ret));
     }
