@@ -48,6 +48,11 @@ class App(Application):
             if self._stream_no < 0:
                 self._stream_no = 0
             self.load_stream()
+        if self.input.buttons.app.middle.pressed:
+            if media.is_playing():
+                media.pause()
+            else:
+                media.play()
         media.think(delta_ms)
 
     def draw(self, ctx):
