@@ -132,8 +132,8 @@ def run_view(v: View, debug_vm=True) -> None:
     reactor.run()
 
 
-def run_app(klass):
-    run_view(klass(ApplicationContext()), debug_vm=True)
+def run_app(klass, bundle_path=None):
+    run_view(klass(ApplicationContext(bundle_path)), debug_vm=True)
 
 
 def _yeet_local_changes() -> None:
