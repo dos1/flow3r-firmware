@@ -28,13 +28,10 @@ class App(Application):
     def __init__(self, app_ctx):
         super().__init__(app_ctx)
         self.clouds = []
-        bundle_path = app_ctx.bundle_path
-        if bundle_path == "":
-            bundle_path = "/flash/sys/apps/clouds"
         for i in range(10):
             self.clouds.append(
                 Cloud(
-                    bundle_path + "/cloud.png",
+                    app_ctx.bundle_path + "/cloud.png",
                     ((random.getrandbits(16) - 32767) / 32767.0) * 200,
                     ((random.getrandbits(16)) / 65535.0) * 60 - 10,
                     ((random.getrandbits(16)) / 65535.0) * 200 + 5,
@@ -79,4 +76,4 @@ class App(Application):
 if __name__ == "__main__":
     from st3m.run import run_app
 
-    run_app(App)
+    run_app(App, "/flash/sys/apps/clouds")
