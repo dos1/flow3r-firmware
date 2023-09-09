@@ -236,16 +236,19 @@ class ViewManager(Responder):
 
         self.replace(r, override_vt)
 
-    def pop(self, override_vt: Optional[ViewTransition] = None) -> None:
+    def pop(self, override_vt: Optional[ViewTransition] = None, depth: int = 1) -> None:
         """
-        Pop a view from the history stack and start transitioning to it. If set,
-        override_vt will be used instead of the default ViewTransition
+        Pop a view (or more views) from the history stack and start transitioning.
+        If set, override_vt will be used instead of the default ViewTransition
         animation.
         """
-        if len(self._history) < 1:
-            return
-        r = self._history.pop()
-        self.replace(r, override_vt)
+        r = None
+        for i in range(depth):
+            if len(self._history) < 1:
+                break
+            r = self._history.pop()
+        if r:
+            self.replace(r, override_vt)
 
     def wants_icons(self) -> bool:
         """
