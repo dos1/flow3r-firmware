@@ -50,6 +50,18 @@ class ScrollController(st3m.Responder):
             count = 0
         self._nitems = count
 
+    def set_position(self, position: int) -> None:
+        """
+        Immediately set a position without animating the transition.
+        """
+        self._target_position = self._current_position = position
+
+    def scroll_to(self, position: int) -> None:
+        """
+        Scroll to specified position.
+        """
+        self._target_position = position
+
     def scroll_left(self) -> None:
         """
         Call when the user wants to scroll left by discrete action (eg. button
