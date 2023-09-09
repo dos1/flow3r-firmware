@@ -63,6 +63,17 @@ class IMUState:
 
 
 class MomentarySwitch:
+
+    __slots__ = (
+        "_is_pressed",
+        "_press_event",
+        "_release_event",
+        "_pressed_since_ms",
+        "_is_pressed_prev",
+        "_ignore",
+        "_ignore_stop",
+    )
+
     def __init__(self, copyfrom=None) -> None:
         # _*: unstable, do not use for application development
         # these mirror exposed properties but bypass self._ignore for debug purposes
@@ -206,6 +217,8 @@ class InputButtonState:
     PRESSED_DOWN = sys_buttons.PRESSED_DOWN
     NOT_PRESSED = sys_buttons.NOT_PRESSED
 
+    __slots__ = ("app", "os", "_app_button_is_left")
+
     def __init__(self, copyfrom=None):
         if copyfrom is None:
             self.app = IntTriButton()
@@ -214,20 +227,40 @@ class InputButtonState:
         else:
             self.app = copyfrom.app.copy()
             self.os = copyfrom.os.copy()
-            self.app_button_is_left = copyfrom.app_button_is_left
+            self._app_button_is_left = copyfrom._app_button_is_left
 
     def _update(self, delta_t_ms):
-        self.app_button_is_left = sys_buttons.app_is_left()
+        self._app_button_is_left = sys_buttons.app_is_left()
         self.app.is_left_button = self.app_button_is_left
         self.os.is_left_button = not self.app_button_is_left
-        self.app._update(delta_t_ms, sys_buttons.get_app())
-        self.os._update(delta_t_ms, sys_buttons.get_os())
+        app_val = sys_buttons.get_app()
+        os_val = sys_buttons.get_os()
+        self.app._update(delta_t_ms, app_val)
+        self.os._update(delta_t_ms, os_val)
+        app = self.app
+        os = self.os
+        self.app = IntTriButton(app_val)
+        self.app._copyover(app)
+        self.os = IntTriButton(os_val)
+        self.os._copyover(os)
 
     def copy(self):
         return InputButtonState(self)
 
+    @property
+    def app_button_is_left(self):
+        return self._app_button_is_left
+
+    # TODO: Deprecate
+    @property
+    def app_is_left(self):
+        return self._app_button_is_left
+
 
 class PetalPad:
+
+    __slots__ = ("_raw_pressure", "_is_pressed")
+
     def __init__(self, copyfrom=None):
         if copyfrom is None:
             self._raw_pressure = 0
@@ -254,6 +287,7 @@ class PetalPad:
 
 
 class PetalPads:
+
     def __init__(self, is_top, copyfrom=None):
         if copyfrom is None:
             self._is_top = is_top
@@ -287,6 +321,9 @@ class PetalPads:
 
 
 class Petal(MomentarySwitch):
+
+    __slots__ = ("_num", "pads", "_raw_position", "_raw_pressure")
+
     def __init__(self, num, copyfrom=None):
         super().__init__(copyfrom)
         if copyfrom is None:
@@ -414,6 +451,9 @@ class CaptouchRotaryDial:
 
 
 class Captouch:
+
+    __slots__ = ("petals", "_rotary_dial")
+
     def __init__(self, copyfrom=None):
         if copyfrom is None:
             self.petals = [PetalDeprecate(i) for i in range(10)]
@@ -447,6 +487,17 @@ class InputState:
     Current state of inputs from badge user. Passed via think() to every
     Responder.
     """
+
+    __slots__ = (
+        "buttons",
+        "captouch",
+        "_imu",
+        "_pressure",
+        "_battery_voltage",
+        "_temperature",
+        "_gyro",
+        "_acc",
+    )
 
     def __init__(self, copyfrom=None) -> None:
         if copyfrom is None:
@@ -511,6 +562,73 @@ class InputState:
         return (1 - (self.pressure / 101325) ** (1 / 5.256)) * (100000 / 2.2557)
 
 
+class TriButton:
+    """
+    State of a tri-stat shoulder button
+    """
+
+    def __init__(self, copyfrom=None) -> None:
+        if copyfrom is None:
+            self.left = MomentarySwitch()
+            self.middle = MomentarySwitch()
+            self.right = MomentarySwitch()
+            self._is_left_button_prev = True
+            self.is_left_button = False
+        elif isinstance(copyfrom, TriButton):
+            self.left = copyfrom.left.copy()
+            self.middle = copyfrom.middle.copy()
+            self.right = copyfrom.right.copy()
+            self._is_left_button_prev = copyfrom._is_left_button_prev
+            self.is_left_button = copyfrom.is_left_button
+
+    @property
+    def is_left_button(self):
+        return self._is_left_button
+
+    @is_left_button.setter
+    def is_left_button(self, val):
+        self._is_left_button = val
+        self._update_ward()
+
+    def _update(self, delta_t_ms: int, st: int) -> None:
+        self.left._update(delta_t_ms, st == -1)
+        self.middle._update(delta_t_ms, st == 2)
+        self.right._update(delta_t_ms, st == 1)
+
+    def _update_ward(self):
+        if self.is_left_button:
+            self.outward = self.left
+            self.inward = self.right
+        else:
+            self.outward = self.right
+            self.inward = self.left
+        if self._is_left_button_prev != self.is_left_button:
+            self._ignore_pressed()
+            self._is_left_button_prev = self.is_left_button
+
+    def _ignore_pressed(self) -> None:
+        self.left._ignore_pressed()
+        self.middle._ignore_pressed()
+        self.right._ignore_pressed()
+
+    def copy(self):
+        return TriButton(self)
+
+
+class IntTriButton(int, TriButton):
+    def _copyover(self, copyfrom):
+        self.left = copyfrom.left.copy()
+        self.middle = copyfrom.middle.copy()
+        self.right = copyfrom.right.copy()
+        self._is_left_button_prev = copyfrom._is_left_button_prev
+        self.is_left_button = copyfrom.is_left_button
+
+    def copy(self):
+        a = IntTriButton(int(self))
+        a._copyover(self)
+        return a
+
+
 class RepeatSettings:
     # TODO: DEPRECATE
     def __init__(self, first: float, subsequent: float) -> None:
@@ -521,126 +639,6 @@ class RepeatSettings:
         return RepeatSettings(self.first, self.subsequent)
 
 
-class Pressable(MomentarySwitch):
-    # TODO: DEPRECATE
-    PRESSED = "pressed"
-    REPEATED = "repeated"
-    RELEASED = "released"
-    DOWN = "down"
-    UP = "up"
-
-    def __init__(self, copyfrom=None) -> None:
-        super().__init__(copyfrom)
-        if copyfrom is None:
-            self._is_pressed = False
-            self._repeat: Optional[RepeatSettings] = RepeatSettings(400, 200)
-            self._pressed_or_repeated_since_ms: Optional[float] = None
-            self._first_repeat_happened = False
-            self._repeat_event = False
-        else:
-            self._is_pressed = copyfrom._is_pressed
-            self._repeat = copyfrom._repeat.copy()
-            self._pressed_or_repeated_since_ms = copyfrom._pressed_or_repeated_since_ms
-            self._first_repeat_happened = copyfrom._first_repeat_happened
-            self._repeat_event = copyfrom._repeat_event
-
-    def _update(self, delta_t_ms: int, is_pressed: bool) -> None:
-        super()._update(delta_t_ms, is_pressed)
-        if self.is_pressed:
-            if self.press_event:
-                self._pressed_or_repeated_since_ms = 0
-            else:
-                self._pressed_or_repeated_since_ms += delta_t_ms
-        else:
-            self._pressed_or_repeated_since_ms = None
-            self._first_repeat_happened = False
-
-        repeat_event = False
-        if (
-            self.is_pressed
-            and self._repeat is not None
-            and self._pressed_or_repeated_since_ms is not None
-        ):
-            repeat_time = self._repeat.subsequent
-            if not self._first_repeat_happened:
-                repeat_time = self._repeat.first
-            if self._pressed_or_repeated_since_ms > repeat_time:
-                self._first_repeat_happened = True
-                self._pressed_or_repeated_since_ms = 0
-                repeat_event = True
-        self._repeat_event = repeat_event
-
-    def _ignore_pressed(self) -> None:
-        super()._ignore_pressed()
-        self._first_repeat_happened = False
-        self._repeat_event = False
-
-    @property
-    def state(self):
-        """
-        Returns one of self.{UP,DOWN,PRESSED,RELEASED,REPEATED}.
-        """
-        if self._repeat_event:
-            return self.REPEATED
-        if self.press_event:
-            return self.PRESSED
-        if self.release_event:
-            return self.RELEASED
-        if self.is_pressed:
-            return self.DOWN
-        return self.UP
-
-    @property
-    def pressed(self) -> bool:
-        """
-        True if the button has just been pressed.
-        """
-        return self.state == self.PRESSED
-
-    @property
-    def repeated(self) -> bool:
-        """
-        True if the button has been held long enough that a virtual 'repeat'
-        press should be acted upon.
-        """
-        return self.state == self.REPEATED
-
-    @property
-    def released(self) -> bool:
-        """
-        True if the button has just been released.
-        """
-        return self.state == self.RELEASED
-
-    @property
-    def down(self) -> bool:
-        """
-        True if the button is held down, after first being pressed.
-        """
-        return self.state == self.DOWN
-
-    @property
-    def up(self) -> bool:
-        """
-        True if the button is currently not being held down.
-        """
-        return self.state == self.UP
-
-    def repeat_enable(self, first: int = 400, subsequent: int = 200) -> None:
-        """
-        Enable key repeat functionality. Arguments are amount to wait in ms
-        until first repeat is emitted and until subsequent repeats are emitted.
-
-        Repeat is enabled by default on Pressables.
-        """
-        self._repeat = RepeatSettings(first, subsequent)
-
-    def repeat_disable(self) -> None:
-        """
-        TODO: DEPRECATE
-        Disable repeat functionality on this Pressable.
-        """
-        self._repeat = None
 
 
 class TouchableState(Enum):
@@ -834,66 +832,65 @@ class Touchable:
         return self.Gesture(first, last)
 
 
-class TriButton:
+class PetalState:
+    def __init__(self, ix: int) -> None:
+        self.ix = ix
+        self.whole = Pressable(False)
+        self.pressure = 0
+        self.gesture = Touchable()
+
+    def _update(self, ts: int, petal: captouch.CaptouchPetalState) -> None:
+        self.whole._update(ts, petal.pressed)
+        self.pressure = petal.pressure
+        self.gesture._update(ts, petal)
+
+
+class CaptouchState:
+    """
+    State of capacitive touch petals.
+
+    The petals are indexed from 0 to 9 (inclusive). Petal 0 is above the USB-C
+    socket, then the numbering continues clockwise.
+    """
+
+    __slots__ = "petals"
+
+    def __init__(self) -> None:
+        self.petals = [PetalState(i) for i in range(10)]
+
+    def _update(self, ts: int, ins: InputState) -> None:
+        for i, petal in enumerate(self.petals):
+            petal._update(ts, ins.captouch.petals[i])
+
+    def _ignore_pressed(self) -> None:
+        for petal in self.petals:
+            petal.whole._ignore_pressed()
+
+
+class TriSwitchState:
     """
     State of a tri-stat shoulder button
     """
 
-    def __init__(self, copyfrom=None) -> None:
-        if copyfrom is None:
-            self.left = Pressable()
-            self.middle = Pressable()
-            self.right = Pressable()
-            self._is_left_button_prev = True
-            self.is_left_button = False
-        else:
-            self.left = copyfrom.left.copy()
-            self.middle = copyfrom.middle.copy()
-            self.right = copyfrom.right.copy()
-            self._is_left_button_prev = copyfrom._is_left_button_prev
-            self.is_left_button = copyfrom.is_left_button
+    __slots__ = ("left", "middle", "right")
 
-    @property
-    def is_left_button(self):
-        return self._is_left_button
+    def __init__(self) -> None:
+        self.left = Pressable(False)
+        self.middle = Pressable(False)
+        self.right = Pressable(False)
 
-    @is_left_button.setter
-    def is_left_button(self, val):
-        self._is_left_button = val
-        self._update_ward()
-
-    def _update(self, delta_t_ms: int, st: int) -> None:
-        self.left._update(delta_t_ms, st == -1)
-        self.middle._update(delta_t_ms, st == 2)
-        self.right._update(delta_t_ms, st == 1)
-
-    def _update_ward(self):
-        if self.is_left_button:
-            self.outward = self.left
-            self.inward = self.right
-        else:
-            self.outward = self.right
-            self.inward = self.left
-        if self._is_left_button_prev != self.is_left_button:
-            self._ignore_pressed()
-            self._is_left_button_prev = self.is_left_button
+    def _update(self, ts: int, st: int) -> None:
+        self.left._update(ts, st == -1)
+        self.middle._update(ts, st == 2)
+        self.right._update(ts, st == 1)
 
     def _ignore_pressed(self) -> None:
         self.left._ignore_pressed()
         self.middle._ignore_pressed()
         self.right._ignore_pressed()
 
-    def copy(self):
-        return TriButton(self)
-
-
-class IntTriButton(int, TriButton):
-    # TODO: DEPRECATE
-    pass
-
 
 class ButtonsState:
-    # TODO: DEPRECATE
     """
     Edge-trigger detection for input button state.
 
@@ -901,63 +898,194 @@ class ButtonsState:
     _left, _right and app_is_left.
     """
 
+    __slots__ = ("app", "os", "_left", "_right", "app_is_left", "_app_is_left_prev")
+
     def __init__(self) -> None:
-        self.app = TriButton()
-        self.os = TriButton()
+        self.app = TriSwitchState()
+        self.os = TriSwitchState()
 
         # Defaults. Real data coming from _update will change this to the
         # correct values from an InputState.
-        self.app_is_left = True
-
         self._left = self.app
         self._right = self.os
+        self.app_is_left = True
+        self._app_is_left_prev = self.app_is_left
 
-    @property
-    def app_is_left(self):
-        return self._app_is_left
+    def _update(self, ts: int, hr: InputState) -> None:
+        # Check whether we swapped left/right buttons. If so, carry over changes
+        # from buttons as mapped previously, otherwise we get spurious presses.
+        self.app_is_left = hr.buttons.app_is_left
+        if self._app_is_left_prev != self.app_is_left:
+            # BUG(q3k): if something is holding on to controller button
+            # references, then this will break their code.
+            self.app, self.os = self.os, self.app
 
-    @app_is_left.setter
-    def app_is_left(self, val):
-        self._app_is_left = val
+        self.app._update(ts, hr.buttons.app)
+        self.os._update(ts, hr.buttons.os)
+        self._app_is_left_prev = self.app_is_left
 
-    def _update(self, delta_t_ms: int) -> None:
-        self.app._update(delta_t_ms, sys_buttons.get_app())
-        self.os._update(delta_t_ms, sys_buttons.get_os())
+        if self.app_is_left:
+            self._left = self.app
+            self._right = self.os
+        else:
+            self._left = self.os
+            self._right = self.app
 
     def _ignore_pressed(self) -> None:
         self.app._ignore_pressed()
         self.os._ignore_pressed()
 
+class PressableState(Enum):
+    PRESSED = "pressed"
+    REPEATED = "repeated"
+    RELEASED = "released"
+    DOWN = "down"
+    UP = "up"
 
-class PetalPressableDeprecate:
-    # TODO: DEPRECATE
-    def __init__(self, num, copyfrom=None):
-        self.whole = Pressable()
-        self._num = num
+
+class Pressable:
+    """
+    A pressable button or button-acting object (like captouch petal in button
+    mode).
+
+    Carries information about current and previous state of button, allowing to
+    detect edges (pressed/released) and state (down/up). Additionally implements
+    button repeating.
+    """
+
+    PRESSED = PressableState.PRESSED
+    REPEATED = PressableState.REPEATED
+    RELEASED = PressableState.RELEASED
+    DOWN = PressableState.DOWN
+    UP = PressableState.UP
+
+    def __init__(self, state: bool) -> None:
+        self._state = state
+        self._prev_state = state
+        self._repeat: Optional[RepeatSettings] = RepeatSettings(400, 200)
+
+        self._pressed_at: Optional[float] = None
+        self._repeating = False
+        self._repeated = False
+
+        self._ignoring = 0
+
+    def repeat_enable(self, first: int = 400, subsequent: int = 200) -> None:
+        """
+        Enable key repeat functionality. Arguments are amount to wait in ms
+        until first repeat is emitted and until subsequent repeats are emitted.
+
+        Repeat is enabled by default on Pressables.
+        """
+        self._repeat = RepeatSettings(first, subsequent)
+
+    def repeat_disable(self) -> None:
+        """
+        Disable repeat functionality on this Pressable.
+        """
+        self._repeat = None
+
+    def _update(self, ts: int, state: bool) -> None:
+        if self._ignoring > 0:
+            self._ignoring -= 1
+
+        self._prev_state = self._state
+        self._state = state
+        self._repeated = False
+
+        if state == False:
+            self._pressed_at = None
+            self._repeating = False
+        else:
+            if self._pressed_at is None:
+                self._pressed_at = ts
+
+        repeat = self._repeat
+        if state and repeat is not None and self._pressed_at is not None:
+            if not self._repeating:
+                if ts > self._pressed_at + repeat.first:
+                    self._repeating = True
+                    self._repeated = True
+                    self._prev_state = False
+                    self._pressed_at = ts
+            else:
+                if ts > self._pressed_at + repeat.subsequent:
+                    self._prev_state = False
+                    self._pressed_at = ts
+                    self._repeated = True
 
     @property
-    def ix(self):
-        return self._num
+    def state(self) -> PressableState:
+        """
+        Returns one of PressableState.{UP,DOWN,PRESSED,RELEASED,REPEATED}.
+        """
+        prev = self._prev_state
+        cur = self._state
 
+        if self._ignoring > 0:
+            return self.UP
 
-class CaptouchPressable:
-    # TODO: DEPRECATE
-    def __init__(self):
-        self.petals = [PetalPressableDeprecate(i) for i in range(10)]
-        self._update(0)
+        if self._repeated:
+            return self.REPEATED
 
-    def _update(self, delta_t_ms):
-        captouch_state = captouch.read()
-        for i, petal in enumerate(self.petals):
-            petal.whole._update(delta_t_ms, captouch_state.petals[i].pressed)
+        if cur and not prev:
+            return self.PRESSED
+        if not cur and prev:
+            return self.RELEASED
+        if cur and prev:
+            return self.DOWN
+        return self.UP
 
-    def _ignore_pressed(self):
-        for petal in self.petals:
-            petal.whole._ignore_pressed()
+    @property
+    def pressed(self) -> bool:
+        """
+        True if the button has just been pressed.
+        """
+        return self.state == self.PRESSED
 
+    @property
+    def repeated(self) -> bool:
+        """
+        True if the button has been held long enough that a virtual 'repeat'
+        press should be acted upon.
+        """
+        return self.state == self.REPEATED
+
+    @property
+    def released(self) -> bool:
+        """
+        True if the button has just been released.
+        """
+        return self.state == self.RELEASED
+
+    @property
+    def down(self) -> bool:
+        """
+        True if the button is held down, after first being pressed.
+        """
+        return self.state == self.DOWN
+
+    @property
+    def up(self) -> bool:
+        """
+        True if the button is currently not being held down.
+        """
+        return self.state == self.UP
+
+    def _ignore_pressed(self) -> None:
+        """
+        Pretend the button isn't being pressed for the next two update
+        iterations. Used to prevent spurious presses to be routed to apps that
+        have just been foregrounded.
+        """
+        self._ignoring = 2
+        self._repeating = False
+        self._repeated = False
+
+    def __repr__(self) -> str:
+        return "<Pressable: " + str(self.state) + ">"
 
 class InputController:
-    # TODO: DEPRECATE
     """
     A stateful input controller. It accepts InputState updates from the Reactor
     and allows a Responder to detect input events, like a button having just
@@ -972,18 +1100,20 @@ class InputController:
     __slots__ = (
         "captouch",
         "buttons",
+        "_ts",
     )
 
     def __init__(self) -> None:
+        self.captouch = CaptouchState()
         self.buttons = ButtonsState()
-        self.captouch = CaptouchPressable()
+        self._ts = 0
 
-    def think(self, hr: InputState, delta_t_ms: int) -> None:
-        self.buttons._update(delta_t_ms)
-        self.captouch._update(delta_t_ms)
+    def think(self, hr: InputState, delta_ms: int) -> None:
+        self._ts += delta_ms
+        self.captouch._update(self._ts, hr)
+        self.buttons._update(self._ts, hr)
 
     def _ignore_pressed(self) -> None:
-        # TODO: DEPRECATE
         """
         Pretend input buttons aren't being pressed for the next two update
         iterations. Used to prevent spurious presses to be routed to apps that
