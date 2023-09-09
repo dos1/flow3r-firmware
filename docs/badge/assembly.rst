@@ -14,7 +14,7 @@ Your flow3r badge should've come in a brown paper bag, in which you will find:
 4. A blue battery
 5. A metal battery cover
 6. Two speakers
-7. A bag containg: 6 M3 screws, 6 plastic feet, an adhesive sheet, an allen (imbus) wrench, sandpaper
+7. A bag containing: 6 M3 screws, 6 plastic feet, an adhesive sheet, an Allen wrench (Inbus), sandpaper
 8. A lanyard
 9. An instruction booklet
 10. A 3.5 mm aux cable (to be used for badgelink/badgenet)
@@ -44,9 +44,9 @@ everything should align correctly.
 
 Take the two speakers, and for each of them take the white adhesive protector
 off and glue them in the two spacer labeled as 'speakers'. They should stick
-onto the PCB, with the cables facing eachother in the middle of the badge.
+onto the PCB, with the cables facing each other in the middle of the badge.
 
-One the speakers are glued in, take off the spacer and route the speaker wires
+Once the speakers are glued in, take off the spacer and route the speaker wires
 to the two connectors on the PCB. The cables should go around the display. Put
 the spacer back on top and make sure it mates correctly with the top PCB, and
 that it doesn't catch the speaker wires.
@@ -90,9 +90,9 @@ this:
 3. Ensure the two board-to-board connectors are aligned. You can stare through
    the side of the PCB sandwich to check if things look okay.
 
-Take five screws and the allen key and screw the two PCBs together, alongside
+Take five screws and the Allen wrench and screw the two PCBs together, alongside
 with the metal battery case on the bottom. Be *very* gentle with the torque -
-overtorqueing the screws can rip off the standoffs on the top PCB!
+overtightening the screws can rip off the standoffs on the top PCB!
 
 Of course, if you're not using the badge with a battery, feel free to skip the
 battery cover.
