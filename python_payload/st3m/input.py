@@ -227,22 +227,30 @@ class InputButtonState:
         return InputButtonState(self)
 
 
-class PetalPad(MomentarySwitch):
+class PetalPad:
     def __init__(self, copyfrom=None):
-        super().__init__(copyfrom)
         if copyfrom is None:
             self._raw_pressure = 0
+            self._is_pressed = False
         else:
             self._raw_pressure = copyfrom._raw_pressure
+            self._is_pressed = copyfrom._is_pressed
 
     def _update(self, delta_t_ms, is_pressed, raw=0):
-        super()._update(delta_t_ms, is_pressed)
+        self._is_pressed = is_pressed
         self._raw_pressure = raw
 
     @property
     def touch_area(self):
         # magic number
         return min(1.0, self._raw_pressure / 35000.0)
+
+    @property
+    def is_pressed(self):
+        return self._is_pressed
+
+    def copy(self):
+        return PetalPad(self)
 
 
 class PetalPads:

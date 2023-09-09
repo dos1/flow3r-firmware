@@ -329,13 +329,19 @@ Captouch
     
         Returns a deep copy of the instance.
 
-.. py:class:: PetalPad(MomentarySwitch)
+.. py:class:: PetalPad
 
     .. py:property:: touch_area
         :type: float
 
         Estimate of how much area of the pad is being touched. Clamped
         between 0..1
+
+    .. py:property:: is_pressed
+        :type: bool
+
+        True if the segment has been pressed at the time of the last update,
+        else False
 
 .. py:class:: CaptouchRotaryDial
 
