@@ -2,8 +2,11 @@
 #include "py/runtime.h"
 
 #include "st3m_captouch.h"
+#include "st3m_inputstate.h"
 
 #include <string.h>
+
+st3m_inputstate_t * ins = st3m_inputstate_get_ins();
 
 typedef struct {
     mp_obj_base_t base;
@@ -29,6 +32,22 @@ typedef struct {
 
 const mp_obj_type_t captouch_state_type;
 
+typedef struct {
+    mp_obj_base_t base;
+    mp_obj_t inputstate;
+} mp_inputstate_imu_t;
+
+const mp_obj_type_t inputstate_imu_type;
+
+typedef struct {
+    mp_obj_base_t base;
+    mp_obj_t imu;
+    mp_obj_t captouch;
+    mp_obj_t buttons;
+} mp_inputstate_t;
+
+const mp_obj_type_t inputstate_type;
+
 STATIC void mp_captouch_petal_pads_state_attr(mp_obj_t self_in, qstr attr,
                                               mp_obj_t *dest) {
     mp_captouch_petal_pads_state_t *self = MP_OBJ_TO_PTR(self_in);
@@ -51,15 +70,6 @@ STATIC void mp_captouch_petal_pads_state_attr(mp_obj_t self_in, qstr attr,
                 break;
             case MP_QSTR_ccw:
                 dest[0] = mp_obj_new_bool(state->ccw.pressed);
-                break;
-            case MP_QSTR__base_raw:
-                dest[0] = mp_obj_new_int(state->base.pressure);
-                break;
-            case MP_QSTR__cw_raw:
-                dest[0] = mp_obj_new_int(state->cw.pressure);
-                break;
-            case MP_QSTR__ccw_raw:
-                dest[0] = mp_obj_new_int(state->ccw.pressure);
                 break;
         }
     } else {
@@ -91,8 +101,42 @@ STATIC void mp_captouch_petal_state_attr(mp_obj_t self_in, qstr attr,
     st3m_petal_state_t *state = &captouch->underlying.petals[self->ix];
 
     bool top = (self->ix % 2) == 0;
+    uint8_t i = self->ix;
 
     switch (attr) {
+        case MP_QSTR_is_top:
+            dest[0] = mp_obj_new_bool(top);
+            break;
+        case MP_QSTR_is_pressed:
+            dest[0] = mp_obj_new_bool(ins.captouch[i].sw.is_pressed);
+            break;
+        case MP_QSTR_press_event:
+            dest[0] = mp_obj_new_bool(ins.captouch[i].sw.press_event);
+            break;
+        case MP_QSTR_release_event:
+            dest[0] = mp_obj_new_bool(ins.captouch[i].sw.release_event);
+            break;
+        case MP_QSTR_pressed_since_ms:
+            dest[0] = mp_obj_new_int(ins.captouch[i].sw.pressed_since_ms);
+            break;
+        case MP_QSTR_touch_area:
+            st3m_inputstate_update_petal_touch(i);
+            dest[0] = mp_obj_new_float(ins.captouch[i].touch_area);
+            break;
+        case MP_QSTR_touch_radius:
+            st3m_inputstate_update_petal_touch(i);
+            dest[0] = mp_obj_new_float(ins.captouch[i].touch_area);
+            break;
+        case MP_QSTR_touch_angle_cw:
+            st3m_inputstate_update_petal_touch(i);
+            dest[0] = mp_obj_new_float(ins.captouch[i].touch_area);
+            break;
+
+        case MP_QSTR_pads:
+            dest[0] = self->pads;
+            break;
+
+        // TODO: DEPRECATE
         case MP_QSTR_top:
             dest[0] = mp_obj_new_bool(top);
             break;
@@ -100,13 +144,10 @@ STATIC void mp_captouch_petal_state_attr(mp_obj_t self_in, qstr attr,
             dest[0] = mp_obj_new_bool(!top);
             break;
         case MP_QSTR_pressed:
-            dest[0] = mp_obj_new_bool(state->pressed);
+            dest[0] = st3m_inputstate_get_petal_is_pressed(i);
             break;
         case MP_QSTR_pressure:
             dest[0] = mp_obj_new_int(state->pressure);
-            break;
-        case MP_QSTR_pads:
-            dest[0] = self->pads;
             break;
         case MP_QSTR_position: {
             mp_obj_t items[2] = {
@@ -132,6 +173,48 @@ STATIC void mp_captouch_state_attr(mp_obj_t self_in, qstr attr,
             break;
     }
 }
+
+STATIC void mp_inputstate_imu_attr(mp_obj_t self_in, qstr attr,
+                                   mp_obj_t *dest) {
+    mp_inputstate_imu_t *self = MP_OBJ_TO_PTR(self_in);
+    if (dest[0] != MP_OBJ_NULL) {
+        return;
+    }
+    switch (attr) {
+        case MP_QSTR_acc:
+            dest[0] = self->acc;
+            break;
+        case MP_QSTR_gyro:
+            dest[0] = self->gyro;
+            break;
+    }
+}
+
+STATIC void mp_inputstate_attr(mp_obj_t self_in, qstr attr,
+                                   mp_obj_t *dest) {
+    mp_inputstate_t *self = MP_OBJ_TO_PTR(self_in);
+    if (dest[0] != MP_OBJ_NULL) {
+        return;
+    }
+    switch (attr) {
+        case MP_QSTR_temperature:
+            dest[0] = mp_obj_new_float(st3m_inputstate_get_temperature());
+            break;
+        case MP_QSTR_pressure:
+            dest[0] = mp_obj_new_float(st3m_inputstate_get_pressure());
+            break;
+        case MP_QSTR_imu:
+            dest[0] = self->imu;
+            break;
+        case MP_QSTR_captouch:
+            dest[0] = self->imu;
+            break;
+        case MP_QSTR_buttons:
+            dest[0] = self->imu;
+            break;
+    }
+}
+
 
 MP_DEFINE_CONST_OBJ_TYPE(captouch_petal_pads_state_type,
                          MP_QSTR_CaptouchPetalPadsState, MP_TYPE_FLAG_NONE,

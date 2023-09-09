@@ -4,9 +4,13 @@
 #include "freertos/task.h"
 
 static SemaphoreHandle_t sink_sema;
+static SemaphoreHandle_t mp_sema;
 
 static st3m_inputstate_sink_t sink;
 static st3m_inputstate_sink_t sink_processing;
+
+static st3m_inputstate_t ins;
+
 static bool _next_run_app_button_is_left;
 
 // the stateful views handed off to applications
@@ -26,6 +30,7 @@ static void end_run(){
     sink.captouch.fresh_run = true;
     sink.buttons.fresh_run = true;
     xSemaphoreGive(sink_sema);
+    xSemaphoreGive(mp_sema);
 }
 
 static void sw_run(st3m_inputstate_sw_t * sw, bool is_pressed, uint32_t delta_t_ms){
@@ -88,6 +93,40 @@ static void os_sw_run(st3m_inputstate_sw_t * tri_sw, int8_t is_pressed_dir, uint
     if(tri_sw[1].press_event) {} // TODO: send exit application signal
 }
 
+void st3m_inputstate_petal_touch_update(i){
+    if(ins.captouch[i].touch_is_calculated) return;
+    float tmp;
+    if(i%2){
+        tmp = ins.captouch[i].pads.tip.raw + ins.captouch[i].pads.base.raw -
+            ins.captouch[i].pads.tip.thres - ins.captouch[i].pads.base.thres;
+        tmp /= 2.0;
+        tmp /= 35000;
+        ins.captouch[i].touch_area = tmp > 1. ? 1. : (tmp < 0. ? 0. : tmp);
+
+        tmp = ins.captouch[i].pads.tip.raw - ins.captouch[i].pads.base.raw;
+        tmp = (tmp + 35000./80000.)
+        ins.captouch[i].touch_radius = tmp > 1. ? 1. : (tmp < 0. ? 0. : tmp);
+
+        ins.captouch[i].touch_angle_cw = 0;
+    } else {
+        tmp = ins.captouch[i].pads.cw.raw + ins.captouch[i].pads.ccw.raw +
+            ins.captouch[i].pads.base.raw - ins.captouch[i].pads.cw.thres -
+            ins.captouch[i].pads.ccw.thres - ins.captouch[i].pads.base.thres;
+        tmp /= 3.0;
+        tmp /= 35000;
+        ins.captouch[i].touch_area = tmp > 1. ? 1. : (tmp < 0. ? 0. : tmp);
+
+        tmp = (ins.captouch[i].pads.cw.raw + ins.captouch[i].pads.ccw.raw)/2 -
+            ins.captouch[i].pads.base.raw;
+        tmp = (tmp + 35000./80000.)
+        ins.captouch[i].touch_radius = tmp > 1. ? 1. : (tmp < 0. ? 0. : tmp);
+
+        tmp = ins.captouch[i].pads.cw.raw - ins.captouch[i].pads.ccw.raw;
+        tmp *= 6.28/350000.
+        ins.captouch[i].touch_angle_cw = tmp > 0.628. ? 0.628 : (tmp < -0.628 ? -0.628 : tmp);
+    }
+    ins.captouch[i].touch_is_calculated = true;
+}
 
 void st3m_inputstate_set_app_button_left(bool app_button_is_left){
     _next_run_app_button_is_left = app_button_is_left;
@@ -113,21 +152,24 @@ void st3m_inputstate_application_update(uint32_t delta_t_ms){
     for(uint8_t i = 0; i < 10; i++){
         petal_is_pressed = petals[i].cw.is_pressed || petals[i].ccw.is_pressed
             || petals[i].base.is_pressed || petals[i].tip.is_pressed;
-        sw_run(&(captouch_sw[i]), petal_is_pressed, delta_t_ms);
+        sw_run(&(ins.captouch[i].sw), petal_is_pressed, delta_t_ms);
     }
 
-    tri_sw_run(os_sw, sink_processing.buttons.os_button, delta_t_ms);
-    tri_sw_run(app_sw, sink_processing.buttons.app_button, delta_t_ms);
+    tri_sw_run(ins.os_sw, sink_processing.buttons.os_button, delta_t_ms);
+    tri_sw_run(ins.app_sw, sink_processing.buttons.app_button, delta_t_ms);
+    for(uint8_t i = 0; i < 10; i++){
+        ins.captouch[i].touch_is_calculated = false;
+    }
 
 }
 
 void st3m_inputstate_ignore_all(){
     for(uint8_t i = 0; i < 3; i++){
-        app_sw[i].ignore = true;
-        os_sw[i].ignore = true;
+        ins.app_sw[i].ignore = true;
+        ins.os_sw[i].ignore = true;
     }
     for(uint8_t i = 0; i < 10; i++){
-        captouch_sw[i].ignore = true;
+        ins.captouch[i].sw.ignore = true;
     }
 }
 
@@ -138,3 +180,5 @@ void st3m_inputstate_os_update(uint32_t delta_t_ms){
     // take care of os responsibilities like volume and application exit
     os_sw_run(os_os_sw, os_os, delta_t_ms);
 }
+
+void st3m_inputstate_get_ins(){ return &ins; }
