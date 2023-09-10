@@ -190,6 +190,8 @@ class ViewManager(Responder):
         self._history: List[View] = []
         self._input = InputController()
 
+        self._first_think = False
+
     def think(self, ins: InputState, delta_ms: int) -> None:
         self._input.think(ins, delta_ms)
 
@@ -201,7 +203,10 @@ class ViewManager(Responder):
                 self.pop(ViewTransitionSwipeRight())
 
         if self._transitioning:
-            self._transition += (delta_ms / 1000.0) * (1000 / self._time_ms)
+            if not self._first_think:
+                self._transition += (delta_ms / 1000.0) * (1000 / self._time_ms)
+            else:
+                self._first_think = False
             if self._transition >= 1.0:
                 self._transition = 0
                 self._transitioning = False
@@ -249,6 +254,7 @@ class ViewManager(Responder):
         self._transitioning = True
         self._transition = 0.0
         self._direction = direction
+        self._first_think = True
 
         self._outgoing = self._incoming
         if self._outgoing is not None:
