@@ -46,6 +46,12 @@ class MenuItem(Responder):
         """
         pass
 
+    def highlight(self, active: bool) -> None:
+        """
+        Called when the item starts or stops being highlighted.
+        """
+        pass
+
     def draw(self, ctx: Context) -> None:
         ctx.text(self.label())
 
@@ -197,9 +203,15 @@ class MenuController(BaseView):
 
         self._scroll_controller.think(ins, delta_ms)
 
+        target = self._scroll_controller.target_position()
+
         if self.input.buttons.app.middle.pressed:
             self.select()
         self._parse_state()
+
+        if self._scroll_controller.target_position() != target:
+            self._items[target].highlight(False)
+            self._items[self._scroll_controller.target_position()].highlight(True)
 
     def draw(self, ctx: Context) -> None:
         pass
