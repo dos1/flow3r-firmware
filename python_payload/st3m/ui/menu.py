@@ -203,6 +203,9 @@ class MenuController(BaseView):
 
         self._scroll_controller.think(ins, delta_ms)
 
+        if not self.is_active():
+            return
+
         target = self._scroll_controller.target_position()
 
         if self.input.buttons.app.middle.pressed:
