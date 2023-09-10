@@ -49,18 +49,25 @@ class ScrollController(st3m.Responder):
         if count < 0:
             count = 0
         self._nitems = count
-
-    def set_position(self, position: int) -> None:
-        """
-        Immediately set a position without animating the transition.
-        """
-        self._target_position = self._current_position = position
+        if self._target_position >= self._nitems:
+            self._target_position = self._nitems - 1
 
     def scroll_to(self, position: int) -> None:
         """
         Scroll to specified position.
         """
         self._target_position = position
+        if self._target_position < 0:
+            self._target_position = 0
+        if self._target_position >= self._nitems:
+            self._target_position = self._nitems - 1
+
+    def set_position(self, position: int) -> None:
+        """
+        Immediately set a position without animating the transition.
+        """
+        self.scroll_to(position)
+        self._current_position = self._target_position
 
     def scroll_left(self) -> None:
         """
@@ -69,6 +76,8 @@ class ScrollController(st3m.Responder):
         """
         self._target_position -= 1
         self._velocity = -10
+        if self._target_position < 0:
+            self._target_position = 0
 
     def scroll_right(self) -> None:
         """
@@ -77,6 +86,8 @@ class ScrollController(st3m.Responder):
         """
         self._target_position += 1
         self._velocity = 10
+        if self._target_position >= self._nitems:
+            self._target_position = self._nitems - 1
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         if self._nitems == 0:
@@ -84,10 +95,6 @@ class ScrollController(st3m.Responder):
             self._current_position = 0
             self._velocity = 0
             return
-        if self._target_position < 0:
-            self._target_position = 0
-        if self._target_position >= self._nitems:
-            self._target_position = self._nitems - 1
 
         self._physics_step(min(delta_ms, 100) / 1000.0)
 
