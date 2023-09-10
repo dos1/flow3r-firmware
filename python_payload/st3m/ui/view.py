@@ -258,3 +258,9 @@ class ViewManager(Responder):
             return self._incoming.show_icons()
         else:
             return True
+
+    def is_active(self, view: View) -> bool:
+        """
+        Returns true if the passed view is currently the active one.
+        """
+        return self._incoming == view
