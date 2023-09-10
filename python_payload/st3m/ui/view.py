@@ -259,6 +259,8 @@ class ViewManager(Responder):
 
         The new view will _not_ be added to history!
         """
+        if self._transitioning:
+            self._end_transition()
         self._transitioning = True
         self._transition = 0.0
         self._direction = direction
@@ -272,7 +274,7 @@ class ViewManager(Responder):
         self._incoming.on_enter(self)
         self._overriden_vt = overide_vt
         if self._outgoing is None:
-            self._transition = 1.0
+            self._end_transition()
 
     def push(self, r: View, override_vt: Optional[ViewTransition] = None) -> None:
         """
