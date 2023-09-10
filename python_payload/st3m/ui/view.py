@@ -43,7 +43,7 @@ class BaseView(View):
     Remember to call super().__init__() in __init__() and super().think() in think()!
     """
 
-    __slots__ = ("input",)
+    __slots__ = ("input", "vm")
 
     def __init__(self) -> None:
         self.input = InputController()
