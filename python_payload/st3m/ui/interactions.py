@@ -77,7 +77,7 @@ class ScrollController(st3m.Responder):
         if self._target_position >= self._nitems:
             self._target_position = self._nitems - 1
 
-        self._physics_step(delta_ms / 1000.0)
+        self._physics_step(min(delta_ms, 100) / 1000.0)
 
     def draw(self, ctx: Context) -> None:
         pass
