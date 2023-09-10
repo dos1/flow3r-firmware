@@ -18,6 +18,7 @@ import stat
 import sys
 import sys_display
 import random
+from math import sin
 
 log = Log(__name__)
 
@@ -320,6 +321,8 @@ class MenuItemAppLaunch(MenuItem):
     def __init__(self, bundle: BundleMetadata):
         self._bundle = bundle
         self._instance: Optional[Application] = None
+        self._scroll_pos = 0.0
+        self._highlighted = False
 
     def press(self, vm: Optional[ViewManager]) -> None:
         if vm is None:
@@ -339,6 +342,21 @@ class MenuItemAppLaunch(MenuItem):
 
     def label(self) -> str:
         return self._bundle.name
+
+    def highlight(self, active: bool) -> None:
+        self._highlighted = active
+        self._scroll_pos = 0.0
+
+    def draw(self, ctx: Context) -> None:
+        ctx.save()
+        if self._highlighted and (width := ctx.text_width(self.label())) > 220:
+            ctx.translate(sin(self._scroll_pos) * (width - 220) / 2, 0)
+        super().draw(ctx)
+        ctx.restore()
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        if self._highlighted:
+            self._scroll_pos += delta_ms / 1000
 
 
 class BundleManager:
