@@ -191,6 +191,16 @@ class ViewManager(Responder):
         self._input = InputController()
 
         self._first_think = False
+        self._fully_drawn = 0
+
+    def _end_transition(self) -> None:
+        self._transitioning = False
+
+        if self._incoming is not None:
+            self._incoming.on_enter_done()
+        if self._outgoing is not None:
+            self._outgoing.on_exit_done()
+            self._outgoing = None
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self._input.think(ins, delta_ms)
@@ -207,15 +217,11 @@ class ViewManager(Responder):
                 self._transition += (delta_ms / 1000.0) * (1000 / self._time_ms)
             else:
                 self._first_think = False
-            if self._transition >= 1.0:
-                self._transition = 0
-                self._transitioning = False
 
-                if self._incoming is not None:
-                    self._incoming.on_enter_done()
-                if self._outgoing is not None:
-                    self._outgoing.on_exit_done()
-                    self._outgoing = None
+            if self._transition >= 1.0:
+                self._transition = 1.0
+                if self._fully_drawn > 3:  # TODO: use actual pipeline depth
+                    self._end_transition()
 
         if self._outgoing is not None:
             self._outgoing.think(ins, delta_ms)
@@ -224,6 +230,9 @@ class ViewManager(Responder):
 
     def draw(self, ctx: Context) -> None:
         if self._transitioning:
+            if self._transition >= 1.0:
+                self._fully_drawn += 1
+
             vt = self._default_vt
             if self._overriden_vt is not None:
                 vt = self._overriden_vt
@@ -237,7 +246,6 @@ class ViewManager(Responder):
             ctx.save()
             self._incoming.draw(ctx)
             ctx.restore()
-
 
     def replace(
         self,
@@ -255,6 +263,7 @@ class ViewManager(Responder):
         self._transition = 0.0
         self._direction = direction
         self._first_think = True
+        self._fully_drawn = 0
 
         self._outgoing = self._incoming
         if self._outgoing is not None:
