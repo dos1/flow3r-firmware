@@ -2,6 +2,7 @@ from st3m.ui.view import (
     BaseView,
     ViewTransitionSwipeLeft,
     ViewManager,
+    ViewTransitionDirection,
 )
 from st3m.ui.menu import MenuItem
 from st3m.input import InputState
@@ -67,9 +68,7 @@ class Application(BaseView):
         super().on_enter(vm)
 
     def on_exit(self) -> None:
-        fully_exiting = not self.vm._history or not isinstance(
-            self.vm._history[-1], type(self)
-        )
+        fully_exiting = self.vm.direction == ViewTransitionDirection.BACKWARD
         # If the app requested to change wifi state
         # fall back to system defaults on exit
         if fully_exiting and self._wifi_preference is not None:
