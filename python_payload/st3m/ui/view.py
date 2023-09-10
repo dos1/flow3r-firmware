@@ -1,5 +1,5 @@
 from st3m.reactor import Responder
-from st3m.goose import ABCBase, abstractmethod, Optional, List
+from st3m.goose import ABCBase, abstractmethod, Optional, List, Enum
 from st3m.input import InputState, InputController
 from ctx import Context
 import machine
@@ -156,6 +156,12 @@ class ViewTransitionSwipeRight(ViewTransition):
         ctx.restore()
 
 
+class ViewTransitionDirection(Enum):
+    NONE = 1
+    FORWARD = 2
+    BACKWARD = 3
+
+
 class ViewManager(Responder):
     """
     The ViewManager implements stateful routing between Views.
@@ -227,7 +233,13 @@ class ViewManager(Responder):
             self._incoming.draw(ctx)
             ctx.restore()
 
-    def replace(self, r: View, overide_vt: Optional[ViewTransition] = None) -> None:
+
+    def replace(
+        self,
+        r: View,
+        overide_vt: Optional[ViewTransition] = None,
+        direction: ViewTransitionDirection = ViewTransitionDirection.NONE,
+    ) -> None:
         """
         Replace the existing view with the given View, optionally using a given
         ViewTransition instead of the default.
@@ -236,6 +248,7 @@ class ViewManager(Responder):
         """
         self._transitioning = True
         self._transition = 0.0
+        self._direction = direction
 
         self._outgoing = self._incoming
         if self._outgoing is not None:
@@ -255,7 +268,7 @@ class ViewManager(Responder):
         if self._incoming is not None:
             self._history.append(self._incoming)
 
-        self.replace(r, override_vt)
+        self.replace(r, override_vt, ViewTransitionDirection.FORWARD)
 
     def pop(self, override_vt: Optional[ViewTransition] = None, depth: int = 1) -> None:
         """
@@ -269,7 +282,7 @@ class ViewManager(Responder):
                 break
             r = self._history.pop()
         if r:
-            self.replace(r, override_vt)
+            self.replace(r, override_vt, ViewTransitionDirection.BACKWARD)
 
     def wants_icons(self) -> bool:
         """
@@ -292,3 +305,13 @@ class ViewManager(Responder):
         Returns true if a transition is in progress.
         """
         return self._transitioning
+
+    @property
+    def direction(self) -> ViewTransitionDirection:
+        """
+        Returns the direction in which the currently active view has became one:
+          - ViewTransitionDirection.NONE if it has replaced another view
+          - ViewTransitionDirection.FORWARD if it was pushed into the stack
+          - ViewTransitionDirection.BACKWARD if another view was popped
+        """
+        return self._direction
