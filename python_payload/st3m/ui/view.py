@@ -27,6 +27,18 @@ class View(Responder):
         """
         pass
 
+    def on_enter_done(self) -> None:
+        """
+        Called after a transition into the view has finished.
+        """
+        pass
+
+    def on_exit_done(self) -> None:
+        """
+        Called after a transition out of the view has finished.
+        """
+        pass
+
     def show_icons(self) -> bool:
         """
         View should return True if it accepts having system icons drawn on top
@@ -188,7 +200,11 @@ class ViewManager(Responder):
                 self._transition = 0
                 self._transitioning = False
 
-                self._outgoing = None
+                if self._incoming is not None:
+                    self._incoming.on_enter_done()
+                if self._outgoing is not None:
+                    self._outgoing.on_exit_done()
+                    self._outgoing = None
 
         if self._outgoing is not None:
             self._outgoing.think(ins, delta_ms)
