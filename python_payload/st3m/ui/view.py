@@ -218,6 +218,9 @@ class ViewManager(Responder):
 
         The new view will _not_ be added to history!
         """
+        self._transitioning = True
+        self._transition = 0.0
+
         self._outgoing = self._incoming
         if self._outgoing is not None:
             self._outgoing.on_exit()
@@ -225,10 +228,7 @@ class ViewManager(Responder):
         self._incoming.on_enter(self)
         self._overriden_vt = overide_vt
         if self._outgoing is None:
-            return
-
-        self._transitioning = True
-        self._transition = 0.0
+            self._transition = 1.0
 
     def push(self, r: View, override_vt: Optional[ViewTransition] = None) -> None:
         """
@@ -269,3 +269,10 @@ class ViewManager(Responder):
         Returns true if the passed view is currently the active one.
         """
         return self._incoming == view
+
+    @property
+    def transitioning(self) -> bool:
+        """
+        Returns true if a transition is in progress.
+        """
+        return self._transitioning
