@@ -8,6 +8,62 @@ except ImportError:
 from st3m.goose import Any
 
 
+class RingBuf:
+    """Store max n values in a static buffer, overwriting oldest with latest."""
+
+    size: int
+    cursor: int
+
+    def __init__(self, capacity: int) -> None:
+        self.buf = [None] * capacity
+        self.size = 0
+        self.cursor = 0
+
+    def append(self, val: any) -> None:
+        self.buf[self.cursor] = val
+        self.cursor += 1
+        if self.cursor > self.size:
+            self.size = self.cursor
+        if self.cursor == len(self.buf):
+            self.cursor = 0
+
+    def _current(self) -> int:
+        current = self.cursor - 1
+        if current < 0:
+            current = len(self.buf) - 1
+        return current
+
+    def peek(self) -> any:
+        return self.buf[self._current()]
+
+    def __repr__(self) -> str:
+        return repr(list(self))
+
+    def __len__(self) -> int:
+        return self.size
+
+    def __iter__(self):
+        # could use yield from or slices, but ranges leave less memory behind
+        if self.size == len(self.buf):
+            for i in range(self.cursor, len(self.buf)):
+                yield self.buf[i]
+        for i in range(0, self.cursor):
+            yield self.buf[i]
+
+    def __getitem__(self, key: int) -> any:
+        if self.size < len(self.buf):
+            if key < 0:
+                return self.buf[key - len(self.buf) + self.cursor]
+            return self.buf[key]
+
+        element = self.cursor + key
+        if element >= len(self.buf):
+            element -= len(self.buf)
+        if element < 0:
+            element += len(self.buf)
+        return self.buf[element]
+
+
 def lerp(a: float, b: float, v: float) -> float:
     """Interpolate between a and b, based on v in [0, 1]."""
     if v <= 0:

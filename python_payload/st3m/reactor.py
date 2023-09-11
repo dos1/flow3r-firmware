@@ -1,6 +1,7 @@
 from st3m.goose import ABCBase, abstractmethod, List, Optional
 from st3m.input import InputState
 from st3m.profiling import ftop
+from st3m.utils import RingBuf
 from ctx import Context
 
 import time
@@ -52,21 +53,17 @@ class Responder(ABCBase):
 
 
 class ReactorStats:
+    SIZE = 20
+
     def __init__(self) -> None:
-        self.run_times: List[int] = []
-        self.render_times: List[int] = []
+        self.run_times = RingBuf(self.SIZE)
+        self.render_times = RingBuf(self.SIZE)
 
     def record_run_time(self, ms: int) -> None:
         self.run_times.append(ms)
-        delete = len(self.run_times) - 20
-        if delete > 0:
-            self.run_times = self.run_times[delete:]
 
     def record_render_time(self, ms: int) -> None:
         self.render_times.append(ms)
-        delete = len(self.render_times) - 20
-        if delete > 0:
-            self.render_times = self.render_times[delete:]
 
 
 class Reactor:
