@@ -205,13 +205,6 @@ class ViewManager(Responder):
     def think(self, ins: InputState, delta_ms: int) -> None:
         self._input.think(ins, delta_ms)
 
-        if self._input.buttons.os.middle.pressed:
-            if not self._history and self._debug:
-                utime.sleep(0.5)
-                machine.reset()
-            else:
-                self.pop(ViewTransitionSwipeRight())
-
         if self._transitioning:
             if not self._first_think:
                 self._transition += (delta_ms / 1000.0) * (1000 / self._time_ms)
@@ -222,6 +215,13 @@ class ViewManager(Responder):
                 self._transition = 1.0
                 if self._fully_drawn > 3:  # TODO: use actual pipeline depth
                     self._end_transition()
+
+        if self._input.buttons.os.middle.pressed:
+            if not self._history and self._debug:
+                utime.sleep(0.5)
+                machine.reset()
+            else:
+                self.pop(ViewTransitionSwipeRight())
 
         if self._outgoing is not None:
             self._outgoing.think(ins, delta_ms)
