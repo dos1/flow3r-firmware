@@ -198,7 +198,7 @@ static void _task(void *arg) {
                     .title = "Restarting...",
                 };
                 st3m_gfx_show_textview(&tv);
-                vTaskDelay(100 / portTICK_PERIOD_MS);
+                vTaskDelay(500 / portTICK_PERIOD_MS);
                 esp_restart();
             }
         }
