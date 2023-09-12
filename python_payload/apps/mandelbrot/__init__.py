@@ -8,14 +8,20 @@ class App(Application):
 
     def on_enter(self, vm):
         super().on_enter(vm)
-        sys_display.set_mode(sys_display.cool | sys_display.x2)
         self.y = 0
         self.xa = -1.5
         self.xb = 1.5
         self.ya = -2.0
         self.yb = 1.0
 
+    def on_enter_done(self):
+        sys_display.set_mode(sys_display.cool | sys_display.x2)
+
     def draw(self, ctx: Context):
+        if self.vm.transitioning:
+            ctx.gray(0).rectangle(-120, -120, 240, 240).fill()
+            return
+
         fb_info = sys_display.fb(sys_display.cool)
         fb = fb_info[0]
 
