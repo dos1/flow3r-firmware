@@ -30,7 +30,7 @@ class AppWorms(Application):
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
         self.just_shown = False
-        self._bg = 3  # animation requires multiple bg draws at the moment
+        self._bg = True
         self.worms = []  # reset worms
 
     def draw_background(self, ctx):
@@ -41,9 +41,9 @@ class AppWorms(Application):
         ctx.move_to(0, 0).rgb(*WHITE).text("touch me :)")
 
     def draw(self, ctx: Context) -> None:
-        if self._bg > 0:
+        if self._bg or (self.vm.transitioning and self.is_active()):
             self.draw_background(ctx)
-            self._bg -= 1
+            self._bg = False
         else:
             for w in self.worms:
                 w.draw(ctx)
