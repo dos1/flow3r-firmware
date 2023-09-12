@@ -141,7 +141,7 @@ class Reactor:
         self._input_state.update(delta)
 
         # Think!
-        self._top.think(self._input_state, delta)
+        self._top.think(self._input_state.copy(), delta)
 
         # Draw!
         if self._ctx is None:
