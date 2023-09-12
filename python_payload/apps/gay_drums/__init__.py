@@ -66,16 +66,14 @@ class GayDrums(Application):
 
         self._group_highlight_on = [False] * 4
         self._group_highlight_redraw = [False] * 4
-        self._redraw_background = 2
         self._group_gap = 5
         self.background_col: Color = (0, 0, 0)
         self.bar_col = (0.5, 0.5, 0.5)
         self.highlight_col: Color = self.bar_col
         self.highlight_outline: bool = True
 
-        self.draw_background_counter = 0
-        self.full_redraw_timer_ms = 0
         self.bar = 0
+        self._tracks_empty: bool = True
 
         self._bpm_saved = None
         self._steps_saved = None
@@ -347,7 +345,11 @@ class GayDrums(Application):
         rgb = self._track_col(track)
         rgbf = (rgb[0] / 256, rgb[1] / 256, rgb[2] / 256)
         y = -int(12 * (track - (self.num_samplers - 1) / 2))
-        trigger_state = self.track_get_state(track, step)
+        empty = self._tracks_empty
+        # retrieving the state is super slow, so don't do it when transitioning
+        if self.vm.transitioning:
+            empty = True
+        trigger_state = self.track_get_state(track, step) if not empty else 0
         size = 2
         x = 12 * (7.5 - step)
         x += self._group_gap * (1.5 - (step // 4))
@@ -438,7 +440,7 @@ class GayDrums(Application):
             ctx.rgb(0.8, 0.8, 0.8)
             if self.samples_loaded == self.samples_total:
                 ctx.text("Loading complete")
-                self.loading_text = "(drawing screen will take a sec)"
+                self.loading_text = ""
             else:
                 ctx.text("Loading samples...")
 
@@ -469,10 +471,8 @@ class GayDrums(Application):
                 ctx.rectangle(x * bar_len - 60, -8, bar_len, 10).fill()
             return
 
-        if self.draw_background_counter > 0:
+        if self.vm.transitioning:
             self._render_list += [(self.draw_background, None)]
-            self._render_list += [(self.draw_background, None)]
-            self.draw_background_counter -= 1
 
         for i in range(4):
             if self._group_highlight_redraw[i]:
@@ -592,6 +592,8 @@ class GayDrums(Application):
         super().think(ins, delta_ms)
 
         if not self.init_complete:
+            if self.vm.transitioning:
+                return
             try:
                 self.samples_loaded, self.loading_text = next(self.load_iter)
             except StopIteration:
@@ -632,6 +634,7 @@ class GayDrums(Application):
                     if ct.petals[4 - j].pressed and not (
                         self.ct_prev.petals[4 - j].pressed
                     ):
+                        self._tracks_empty = False
                         self.track_incr_state(self.track, self.bar * 16 + i * 4 + j)
 
                         self._render_list += [
@@ -720,10 +723,12 @@ class GayDrums(Application):
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
         self.ct_prev = None
-        self.draw_background_counter = 2
 
-    def on_exit(self):
-        super().on_exit()
+    def on_enter_done(self) -> None:
+        # schedule one more redraw so draw_track_step_marker draws the real state
+        self._render_list += [(self.draw_background, None)]
+
+    def on_exit_done(self):
         self._bpm_saved = self.bpm
         self._steps_saved = self.steps
         self._save_settings()
@@ -734,6 +739,7 @@ class GayDrums(Application):
             self.blm.free = True
             self.blm = None
             self.init_complete = False
+            self.samples_loaded = 0
             self.load_iter = self.iterate_loading()
         else:
             self.blm.background_mute_override = True
@@ -743,4 +749,4 @@ class GayDrums(Application):
 if __name__ == "__main__":
     import st3m.run
 
-    st3m.run.run_view(GayDrums(ApplicationContext()))
+    st3m.run.run_app(GayDrums)
