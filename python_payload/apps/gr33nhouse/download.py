@@ -1,7 +1,7 @@
 from st3m.input import InputController, InputState
 from st3m.goose import Optional, List
 from st3m.ui import colours
-from urllib.urequest import urlopen
+import urequests
 import gzip
 from utarfile import TarFile, DIRTYPE
 import io
@@ -84,12 +84,12 @@ class DownloadView(BaseView):
 
     def download_file(self, url: str, block_size=40960) -> List[bytes]:
         gc.collect()
-        req = urlopen(url)
+        req = urequests.get(url)
         yield
 
         try:
             while True:
-                new_data = req.read(block_size)
+                new_data = req.raw.read(block_size)
                 yield new_data
                 if len(new_data) < block_size:
                     break
