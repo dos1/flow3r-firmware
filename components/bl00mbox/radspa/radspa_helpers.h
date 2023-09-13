@@ -40,32 +40,5 @@ inline void radspa_signal_set_value(radspa_signal_t * sig, int16_t index, int16_
     if(!index) sig->value = val;
 }
 
-// #define RADSPA_SIGNAL_CACHING
 // get signal struct from a signal index
-inline radspa_signal_t * radspa_signal_get_by_index(radspa_t * plugin, uint16_t signal_index){
-    radspa_signal_t * ret = NULL;
-    if(plugin == NULL) return ret; // clang-tidy
-#ifdef RADSPA_SIGNAL_CACHING
-    static radspa_signal_t * cache_s = NULL;
-    static radspa_t * cache_p = NULL;
-    static uint16_t cache_i = 0;
-
-    if((plugin == cache_p) && (signal_index == cache_i + 1) && (cache_s != NULL)){
-        ret = cache_s->next;
-    }
-    if(ret == NULL){
-#endif
-        ret = plugin->signals;
-        for(uint16_t i = 0; i < signal_index; i++){
-            ret = ret->next;
-            if(ret == NULL) break;
-        }
-#ifdef RADSPA_SIGNAL_CACHING
-    }
-    cache_s = ret;
-    cache_p = plugin;
-    cache_i = signal_index;
-#endif
-    return ret;
-}
-
+radspa_signal_t * radspa_signal_get_by_index(radspa_t * plugin, uint16_t signal_index);

@@ -152,24 +152,29 @@ class sampler(_Patch):
             frames = self.memory_len
         self.sample_len = frames
 
+        BUFFER_SIZE = int(48000 * 2.5)
+
         if f.getnchannels() == 1:
             # fast path for mono
             table = self.plugins.sampler.table_bytearray
             for i in range(
                 2 * self.buffer_offset_i16,
                 (self.sample_len + self.buffer_offset_i16) * 2,
-                100,
+                BUFFER_SIZE * 2,
             ):
-                table[i : i + 100] = f.readframes(50)
+                table[i : i + BUFFER_SIZE * 2] = f.readframes(BUFFER_SIZE)
         else:
             # somewhat fast path for stereo
             table = self.plugins.sampler.table_int16_array
             for i in range(
-                self.buffer_offset_i16, self.sample_len + self.buffer_offset_i16
+                self.buffer_offset_i16,
+                self.sample_len + self.buffer_offset_i16,
+                BUFFER_SIZE,
             ):
-                frame = f.readframes(1)
-                value = int.from_bytes(frame[0:2], "little")
-                table[i] = value
+                frame = f.readframes(BUFFER_SIZE)
+                for j in range(0, len(frame) // 4):
+                    value = int.from_bytes(frame[4 * j : 4 * j + 2], "little")
+                    table[i + j] = value
         f.close()
 
     def save(self, filename, overwrite=True):

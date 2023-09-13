@@ -168,12 +168,7 @@ void bl00mbox_audio_bud_render(bl00mbox_bud_t * bud){
 }
 
 static void bl00mbox_audio_channel_render(bl00mbox_channel_t * chan, int16_t * out, bool adding){
-    if(adding){
-        // ^ to make clang-tidy happy
-        // only to pass flow3r ci, omit before compliling
-        if(render_pass_id == chan->render_pass_id) return;
-    }
-
+    if(render_pass_id == chan->render_pass_id) return;
     chan->render_pass_id = render_pass_id;
 
     bl00mbox_channel_root_t * root = chan->root_list;
@@ -184,7 +179,6 @@ static void bl00mbox_audio_channel_render(bl00mbox_channel_t * chan, int16_t * o
         memset(out, 0, full_buffer_len*sizeof(int16_t)); // mute
         return;
     }
-    if(root == NULL) return; // more clang garbage, undo before compliling
 
     int32_t acc[256];
     bool first = true;

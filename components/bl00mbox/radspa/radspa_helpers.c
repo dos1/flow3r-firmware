@@ -1,9 +1,36 @@
 //SPDX-License-Identifier: CC0-1.0
 #include "radspa_helpers.h"
 
-extern inline radspa_signal_t * radspa_signal_get_by_index(radspa_t * plugin, uint16_t signal_index);
 extern inline int16_t radspa_signal_get_value(radspa_signal_t * sig, int16_t index, uint32_t render_pass_id);
 extern inline void radspa_signal_set_value(radspa_signal_t * sig, int16_t index, int16_t value);
+
+#define RADSPA_SIGNAL_CACHING
+// get signal struct from a signal index
+radspa_signal_t * radspa_signal_get_by_index(radspa_t * plugin, uint16_t signal_index){
+    radspa_signal_t * ret = NULL;
+    if(plugin == NULL) return ret;
+#ifdef RADSPA_SIGNAL_CACHING
+    static radspa_signal_t * cache_s = NULL;
+    static radspa_t * cache_p = NULL;
+    static uint16_t cache_i = 0;
+
+    if((plugin == cache_p) && (signal_index == cache_i + 1) && (cache_s != NULL)){
+        ret = cache_s->next;
+    } else {
+#endif
+        ret = plugin->signals;
+        for(uint16_t i = 0; i < signal_index; i++){
+            ret = ret->next;
+            if(ret == NULL) break;
+        }
+#ifdef RADSPA_SIGNAL_CACHING
+    }
+    cache_s = ret;
+    cache_p = plugin;
+    cache_i = signal_index;
+#endif
+    return ret;
+}
 
 void radspa_signal_set(radspa_t * plugin, uint8_t signal_index, char * name, uint32_t hints, int16_t value){
     radspa_signal_t * sig = radspa_signal_get_by_index(plugin, signal_index);

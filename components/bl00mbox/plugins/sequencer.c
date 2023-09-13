@@ -61,10 +61,7 @@ void sequencer_run(radspa_t * sequencer, uint16_t num_samples, uint32_t render_p
     int16_t beat_div = radspa_signal_get_value(beat_div_sig, 0, render_pass_id);
     if((bpm != data->bpm_prev) || (beat_div != data->beat_div_prev)){
         data->counter_target = target(data->track_step_len, bpm, beat_div);
-        if(!data->counter_target){
-            data->is_stopped = false;
-        }
-            data->is_stopped = true;
+        data->is_stopped = data->counter_target ? false : true;
         data->bpm_prev = bpm;
         data->beat_div_prev = beat_div;
     }
@@ -76,13 +73,17 @@ void sequencer_run(radspa_t * sequencer, uint16_t num_samples, uint32_t render_p
             data->counter = 0;
             data->step = data->step_start;
             data->sync_out_start = true;
-            data->is_stopped = false;
+            data->sync_out_stop = false;
         } else if(sync_in < 0){
             data->is_stopped = true; // stop signal
+            data->sync_out_start = false;
             data->sync_out_stop = true;
+        } else {
+            data->sync_out_start = false;
+            data->sync_out_stop = false;
         }
 
-        if(data->is_stopped){
+        if(!data->is_stopped){
             data->counter++;
 
             if(data->counter >= data->counter_target){
@@ -107,9 +108,13 @@ void sequencer_run(radspa_t * sequencer, uint16_t num_samples, uint32_t render_p
                 }
             }
           
+        } else {
             for(uint8_t j = 0; j < data->num_tracks; j++){
-                radspa_signal_set_value(track_sigs[j], i, data->tracks[j].track_fill);
+                data->tracks[j].track_fill = radspa_trigger_stop(&(data->tracks[j].trigger_hist));
             }
+        }
+        for(uint8_t j = 0; j < data->num_tracks; j++){
+            radspa_signal_set_value(track_sigs[j], i, data->tracks[j].track_fill);
         }
 
         int16_t sync_out = 0;

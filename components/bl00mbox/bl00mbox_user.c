@@ -1,6 +1,18 @@
 //SPDX-License-Identifier: CC0-1.0
 #include "bl00mbox_user.h"
 
+// get signal struct from a signal index
+radspa_signal_t * bl00mbox_signal_get_by_index(radspa_t * plugin, uint16_t signal_index){
+    radspa_signal_t * ret = NULL;
+    if(plugin == NULL) return ret;
+    ret = plugin->signals;
+    for(uint16_t i = 0; i < signal_index; i++){
+        ret = ret->next;
+        if(ret == NULL) break;
+    }
+    return ret;
+}
+
 static uint64_t bl00mbox_bud_index = 1;
 bl00mbox_bud_t * bl00mbox_channel_get_bud_by_index(uint8_t channel, uint32_t index);
 
@@ -99,7 +111,7 @@ uint16_t bl00mbox_channel_subscriber_num(uint8_t channel, uint64_t bud_index, ui
     if(chan == NULL) return 0;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return 0;
-    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, signal_index);
+    radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, signal_index);
     if(sig == NULL) return 0;
     bl00mbox_connection_t * conn = (bl00mbox_connection_t *) sig->buffer; // buffer sits on top of struct
     if(conn == NULL) return 0;
@@ -122,7 +134,7 @@ uint64_t bl00mbox_channel_get_bud_by_subscriber_list_pos(uint8_t channel, uint64
     if(chan == NULL) return 0;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return 0;
-    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, signal_index);
+    radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, signal_index);
     if(sig == NULL) return 0;
     bl00mbox_connection_t * conn = (bl00mbox_connection_t *) sig->buffer; // buffer sits on top of struct
     if(conn == NULL) return 0;
@@ -147,7 +159,7 @@ int32_t bl00mbox_channel_get_signal_by_subscriber_list_pos(uint8_t channel, uint
     if(chan == NULL) return 0;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return 0;
-    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, signal_index);
+    radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, signal_index);
     if(sig == NULL) return 0;
     bl00mbox_connection_t * conn = (bl00mbox_connection_t *) sig->buffer; // buffer sits on top of struct
     if(conn == NULL) return 0;
@@ -171,7 +183,7 @@ uint64_t bl00mbox_channel_get_source_bud(uint8_t channel, uint64_t bud_index, ui
     if(chan == NULL) return 0;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return 0;
-    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, signal_index);
+    radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, signal_index);
     if(sig == NULL) return 0;
     bl00mbox_connection_t * conn = (bl00mbox_connection_t *) sig->buffer; // buffer sits on top of struct
     if(conn == NULL) return 0;
@@ -183,7 +195,7 @@ uint16_t bl00mbox_channel_get_source_signal(uint8_t channel, uint64_t bud_index,
     if(chan == NULL) return 0;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return 0;
-    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, signal_index);
+    radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, signal_index);
     if(sig == NULL) return 0;
     bl00mbox_connection_t * conn = (bl00mbox_connection_t *) sig->buffer; // buffer sits on top of struct
     if(conn == NULL) return 0;
@@ -216,7 +228,7 @@ static bool weak_delete_connection(bl00mbox_connection_t * conn){
     // nullify source bud connection;
     bl00mbox_bud_t * bud = conn->source_bud;
     if(bud != NULL){
-        radspa_signal_t * tx = radspa_signal_get_by_index(bud->plugin, conn->signal_index);
+        radspa_signal_t * tx = bl00mbox_signal_get_by_index(bud->plugin, conn->signal_index);
         if(tx != NULL){
             bl00mbox_audio_waitfor_pointer_change(&(tx->buffer), NULL);
         }
@@ -344,7 +356,7 @@ bool bl00mbox_channel_connect_signal_to_output_mixer(uint8_t channel, uint32_t b
     if(chan == NULL) return false;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return false;
-    radspa_signal_t * tx = radspa_signal_get_by_index(bud->plugin, bud_signal_index);
+    radspa_signal_t * tx = bl00mbox_signal_get_by_index(bud->plugin, bud_signal_index);
     if(tx == NULL) return false;
     if(!(tx->hints & RADSPA_SIGNAL_HINT_OUTPUT)) return false;
 
@@ -413,7 +425,7 @@ bool bl00mbox_channel_disconnect_signal_from_output_mixer(uint8_t channel, uint3
     if(chan == NULL) return false;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return false;
-    radspa_signal_t * tx = radspa_signal_get_by_index(bud->plugin, bud_signal_index);
+    radspa_signal_t * tx = bl00mbox_signal_get_by_index(bud->plugin, bud_signal_index);
     if(tx == NULL) return false;
     if(tx->buffer == NULL) return false;
     if(!(tx->hints & RADSPA_SIGNAL_HINT_OUTPUT)) return false;
@@ -467,7 +479,7 @@ bool bl00mbox_channel_disconnect_signal_rx(uint8_t channel, uint32_t bud_rx_inde
     bl00mbox_bud_t * bud_rx = bl00mbox_channel_get_bud_by_index(channel, bud_rx_index);
     if(bud_rx == NULL) return false; // bud index doesn't exist
 
-    radspa_signal_t * rx = radspa_signal_get_by_index(bud_rx->plugin, bud_rx_signal_index);
+    radspa_signal_t * rx = bl00mbox_signal_get_by_index(bud_rx->plugin, bud_rx_signal_index);
     if(rx == NULL) return false; // signal index doesn't exist
     if(rx->buffer ==  NULL) return false;
     if(!(rx->hints & RADSPA_SIGNAL_HINT_INPUT)) return false;
@@ -477,7 +489,7 @@ bool bl00mbox_channel_disconnect_signal_rx(uint8_t channel, uint32_t bud_rx_inde
 
     bl00mbox_bud_t * bud_tx = conn->source_bud;
     if(bud_tx == NULL) return false; // bud index doesn't exist
-    radspa_signal_t * tx = radspa_signal_get_by_index(bud_tx->plugin, conn->signal_index);
+    radspa_signal_t * tx = bl00mbox_signal_get_by_index(bud_tx->plugin, conn->signal_index);
     if(tx == NULL) return false; // signal index doesn't exist
 
     bl00mbox_audio_waitfor_pointer_change(&(rx->buffer), NULL);
@@ -513,7 +525,7 @@ bool bl00mbox_channel_disconnect_signal_tx(uint8_t channel, uint32_t bud_tx_inde
     bl00mbox_bud_t * bud_tx = bl00mbox_channel_get_bud_by_index(channel, bud_tx_index);
     if(bud_tx == NULL) return false; // bud index doesn't exist
 
-    radspa_signal_t * tx = radspa_signal_get_by_index(bud_tx->plugin, bud_tx_signal_index);
+    radspa_signal_t * tx = bl00mbox_signal_get_by_index(bud_tx->plugin, bud_tx_signal_index);
     if(tx == NULL) return false; // signal index doesn't exist
     if(tx->buffer ==  NULL) return false;
     if(!(tx->hints & RADSPA_SIGNAL_HINT_OUTPUT)) return false;
@@ -538,7 +550,7 @@ bool bl00mbox_channel_disconnect_signal_tx(uint8_t channel, uint32_t bud_tx_inde
 bool bl00mbox_channel_disconnect_signal(uint8_t channel, uint32_t bud_index, uint32_t signal_index){
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return false; // bud index doesn't exist
-    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, signal_index);
+    radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, signal_index);
     if(sig == NULL) return false; // signal index doesn't exist
     if(sig->buffer ==  NULL) return false;
 
@@ -555,8 +567,8 @@ bool bl00mbox_channel_connect_signal(uint8_t channel, uint32_t bud_rx_index, uin
     bl00mbox_bud_t * bud_tx = bl00mbox_channel_get_bud_by_index(channel, bud_tx_index);
     if(bud_tx == NULL || bud_rx == NULL) return false; // bud index doesn't exist
 
-    radspa_signal_t * rx = radspa_signal_get_by_index(bud_rx->plugin, bud_rx_signal_index);
-    radspa_signal_t * tx = radspa_signal_get_by_index(bud_tx->plugin, bud_tx_signal_index);
+    radspa_signal_t * rx = bl00mbox_signal_get_by_index(bud_rx->plugin, bud_rx_signal_index);
+    radspa_signal_t * tx = bl00mbox_signal_get_by_index(bud_tx->plugin, bud_tx_signal_index);
     if(tx == NULL || rx == NULL) return false; // signal index doesn't exist
     if(!(rx->hints & RADSPA_SIGNAL_HINT_INPUT)) return false;
     if(!(tx->hints & RADSPA_SIGNAL_HINT_OUTPUT)) return false;
@@ -649,7 +661,7 @@ char * bl00mbox_channel_bud_get_signal_name(uint8_t channel, uint32_t bud_index,
     if(chan == NULL) return false;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return false;
-    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, bud_signal_index);
+    radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, bud_signal_index);
     if(sig == NULL) return false;
     return sig->name;
 }
@@ -659,7 +671,7 @@ int8_t bl00mbox_channel_bud_get_signal_name_multiplex(uint8_t channel, uint32_t 
     if(chan == NULL) return false;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return false;
-    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, bud_signal_index);
+    radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, bud_signal_index);
     if(sig == NULL) return false;
     return sig->name_multiplex;
 }
@@ -669,7 +681,7 @@ char * bl00mbox_channel_bud_get_signal_description(uint8_t channel, uint32_t bud
     if(chan == NULL) return false;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return false;
-    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, bud_signal_index);
+    radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, bud_signal_index);
     if(sig == NULL) return false;
     return sig->description;
 }
@@ -679,7 +691,7 @@ char * bl00mbox_channel_bud_get_signal_unit(uint8_t channel, uint32_t bud_index,
     if(chan == NULL) return false;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return false;
-    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, bud_signal_index);
+    radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, bud_signal_index);
     if(sig == NULL) return false;
     return sig->unit;
 }
@@ -689,7 +701,7 @@ bool bl00mbox_channel_bud_set_signal_value(uint8_t channel, uint32_t bud_index, 
     if(chan == NULL) return false;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return false;
-    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, bud_signal_index);
+    radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, bud_signal_index);
     if(sig == NULL) return false;
 
     sig->value = value;
@@ -702,7 +714,7 @@ int16_t bl00mbox_channel_bud_get_signal_value(uint8_t channel, uint32_t bud_inde
     if(chan == NULL) return false;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return false;
-    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, bud_signal_index);
+    radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, bud_signal_index);
     if(sig == NULL) return false;
 
     if((sig->hints & RADSPA_SIGNAL_HINT_OUTPUT) && (sig->buffer != NULL)){
@@ -716,7 +728,7 @@ uint32_t bl00mbox_channel_bud_get_signal_hints(uint8_t channel, uint32_t bud_ind
     if(chan == NULL) return false;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
     if(bud == NULL) return false;
-    radspa_signal_t * sig = radspa_signal_get_by_index(bud->plugin, bud_signal_index);
+    radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, bud_signal_index);
     if(sig == NULL) return false;
 
     return sig->hints;
