@@ -16,8 +16,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   settings: `Let apps change WiFi`)
 - Added task profiler which prints over serial (configurable in
   settings: `Debug: ftop`)
-- Added the `urllib.urequest` library. This library can be used to have
-  streamed HTTP requests.
 - Added an error screen to the `Nick` app when `nick.json` is invalid.
 - Added `urequests` support in the simulator.
 - Added audio/video media framework, and `Wurzelitzer` app as a small jukebox
