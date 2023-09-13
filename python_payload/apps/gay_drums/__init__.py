@@ -23,8 +23,6 @@ class GayDrums(Application):
         self.blm = bl00mbox.Channel("gay drums")
         self.num_samplers = 6
         self.seq = self.blm.new(bl00mbox.patches.sequencer, num_tracks=8, num_steps=32)
-        self.bar = self.seq.signals.step.value // 16
-        self.set_bar_mode(0)
 
         self.kick: Optional[bl00mbox.patches._Patch] = None
         self.hat: Optional[bl00mbox.patches._Patch] = None
@@ -74,18 +72,17 @@ class GayDrums(Application):
 
         self.draw_background_counter = 0
         self.full_redraw_timer_ms = 0
+        self.steps = 16
+        self.bar = 0
 
-    def set_bar_mode(self, mode: int) -> None:
-        # TODO: figure out how to speed up re-render
-        if mode == 0:
-            self.seq.signals.step_start = 0
-            self.seq.signals.step_end = 15
-        if mode == 1:
-            self.seq.signals.step_start = 16
-            self.seq.signals.step_end = 31
-        if mode == 2:
-            self.seq.signals.step_start = 0
-            self.seq.signals.step_end = 31
+    @property
+    def steps(self):
+        return self.seq.signals.step_end.value + 1
+
+    @steps.setter
+    def steps(self, val):
+        self.seq.signals.step_start = 0
+        self.seq.signals.step_end = val - 1
 
     def iterate_loading(self) -> Iterator[Tuple[int, str]]:
         yield 0, "kick.wav"
@@ -188,26 +185,35 @@ class GayDrums(Application):
 
     def track_incr_state(self, track: int, step: int) -> None:
         sequencer_track = track
+        step = step % 16
         if track > 1:
             sequencer_track += 2
         if track == 1:
             state = self.track_get_state(track, step)
             if state == 0:
-                self.seq.trigger_start(1, step)
-                self.seq.trigger_stop(2, step)
-                self.seq.trigger_stop(3, step)
+                while step < 32:
+                    self.seq.trigger_start(1, step)
+                    self.seq.trigger_stop(2, step)
+                    self.seq.trigger_stop(3, step)
+                    step += 16
             if state == 1:
-                self.seq.trigger_stop(1, step)
-                self.seq.trigger_start(2, step)
-                self.seq.trigger_stop(3, step)
+                while step < 32:
+                    self.seq.trigger_stop(1, step)
+                    self.seq.trigger_start(2, step)
+                    self.seq.trigger_stop(3, step)
+                    step += 16
             if state == 2:
-                self.seq.trigger_stop(1, step)
-                self.seq.trigger_stop(2, step)
-                self.seq.trigger_start(3, step)
+                while step < 32:
+                    self.seq.trigger_stop(1, step)
+                    self.seq.trigger_stop(2, step)
+                    self.seq.trigger_start(3, step)
+                    step += 16
             if state == 3:
-                self.seq.trigger_clear(1, step)
-                self.seq.trigger_clear(2, step)
-                self.seq.trigger_clear(3, step)
+                while step < 32:
+                    self.seq.trigger_clear(1, step)
+                    self.seq.trigger_clear(2, step)
+                    self.seq.trigger_clear(3, step)
+                    step += 16
         else:
             state = self.seq.trigger_state(sequencer_track, step)
             if state == 0:
@@ -217,6 +223,7 @@ class GayDrums(Application):
             else:
                 new_state = 32767
             self.seq.trigger_start(sequencer_track, step, new_state)
+            self.seq.trigger_start(sequencer_track, step + 16, new_state)
 
     def draw_track_step_marker(self, ctx: Context, data: Tuple[int, int]) -> None:
         track, step = data
@@ -380,16 +387,64 @@ class GayDrums(Application):
 
         st = self.seq.signals.step.value
 
-        stepx = -12 * (7.5 - st)
-        stepx -= self._group_gap * (1.5 - (st // 4))
-        stepy = -12 - 5 * self.num_samplers
+        stepx = -12 * (7.5 - (st % 16))
+        stepx -= self._group_gap * (1.5 - ((st % 16) // 4))
+        stepy = -13 - 5 * self.num_samplers
 
         trigger_state = self.track_get_state(self.track, st)
         dotsize = 1
         if trigger_state:
             dotsize = 4
-        self.ctx_draw_centered_rect(ctx, 0, stepy, 200, 4, self.background_col)
+        self.ctx_draw_centered_rect(ctx, 0, stepy, 240, 8, self.background_col)
         self.ctx_draw_centered_rect(ctx, stepx, stepy, dotsize, dotsize, (1, 1, 1))
+
+        st_old = st
+        st = self.steps - 1
+        st_mod = st % 16
+
+        repeater_col = (0.5, 0.5, 0.5)
+        if st != 15:
+            stepx = -12 * (7.5 - st_mod)
+            stepx -= self._group_gap * (1.5 - (st_mod // 4))
+            if st_mod == 3 or st_mod == 11:
+                stepx += self._group_gap / 2
+            elif st_mod == 7:
+                stepx += (self._group_gap + 1) / 2
+
+            if st == st_mod:
+                stepx += 6
+                self.ctx_draw_centered_rect(ctx, stepx, stepy, 1, 6, repeater_col)
+            else:
+                stepx += 5
+                if st_old < 16:
+                    self.ctx_draw_centered_rect(
+                        ctx, stepx, stepy + 2.5, 1, 3, repeater_col
+                    )
+                    self.ctx_draw_centered_rect(
+                        ctx, stepx, stepy - 2.5, 1, 3, repeater_col
+                    )
+                    stepx += 2
+                    self.ctx_draw_centered_rect(
+                        ctx, stepx, stepy + 2.5, 1, 3, repeater_col
+                    )
+                    self.ctx_draw_centered_rect(
+                        ctx, stepx, stepy - 2.5, 1, 3, repeater_col
+                    )
+                else:
+                    self.ctx_draw_centered_rect(ctx, stepx, stepy, 1, 6, repeater_col)
+                    stepx += 2
+                    self.ctx_draw_centered_rect(ctx, stepx, stepy, 1, 6, repeater_col)
+
+    def draw_steps(self, ctx, data):
+        self.ctx_draw_centered_rect(ctx, 0, 60, 200, 40, self.background_col)
+        ctx.font = ctx.get_font_name(1)
+        ctx.text_align = ctx.MIDDLE
+
+        ctx.font_size = 20
+        ctx.rgb(1, 1, 1)
+
+        ctx.move_to(120, -120)
+        ctx.text(str(data))
 
     def draw_track_name(self, ctx: Context, data: None) -> None:
         self.ctx_draw_centered_rect(ctx, 0, 60, 200, 40, self.background_col)
@@ -443,6 +498,14 @@ class GayDrums(Application):
         if self.input.buttons.os.left.pressed or self.input.buttons.os.right.pressed:
             self.full_redraw_timer_ms = 2000
 
+        if self.input.buttons.app.left.pressed:
+            if self.steps > 3:
+                self.steps -= 1
+
+        if self.input.buttons.app.right.pressed:
+            if self.steps < 31:
+                self.steps += 1
+
         if self.ct_prev is None:
             self.ct_prev = ins.captouch
             return
@@ -464,7 +527,7 @@ class GayDrums(Application):
 
         if self.bar != (st // 16):
             self.bar = st // 16
-            self._group_highlight_redraw = [True] * 4
+            # self._group_highlight_redraw = [True] * 4
 
         ct = ins.captouch
         for i in range(4):
@@ -565,3 +628,10 @@ class GayDrums(Application):
         super().on_enter(vm)
         self.ct_prev = None
         self.draw_background_counter = 2
+
+
+# For running with `mpremote run`:
+if __name__ == "__main__":
+    import st3m.run
+
+    st3m.run.run_view(GayDrums(ApplicationContext()))
