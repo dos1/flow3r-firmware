@@ -20,6 +20,7 @@ def set_mode(no):
 update = _sim.display_update
 get_ctx = _sim.get_ctx
 get_overlay_ctx = _sim.get_overlay_ctx
+osd = 256
 
 
 def ctx(foo):
