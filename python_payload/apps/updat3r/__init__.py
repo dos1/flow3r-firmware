@@ -7,7 +7,6 @@ import sys_kernel
 import urequests
 from st3m.ui.view import ViewManager
 import st3m.wifi
-from urllib.urequest import urlopen
 
 # from .helpers import sd_card_plugged
 
@@ -85,11 +84,11 @@ class UpdaterApp(Application):
                 self._sd_failed = True
             return
 
-        req = urlopen(url)
+        req = urequests.get(url)
 
         try:
             while True:
-                new_data = req.read(block_size)
+                new_data = req.raw.read(block_size)
                 path_fd.write(new_data)
                 yield path_fd.tell()
                 if len(new_data) < block_size:
@@ -103,12 +102,12 @@ class UpdaterApp(Application):
         if os.path.exists(path):
             os.delete(path)
 
-        req = urlopen(url)
+        req = urequests.get(url)
         print("opened url")
         path_fd = open(path, "wb")
         print("opened file")
         while True:
-            new_data = req.read(block_size)
+            new_data = req.raw.read(block_size)
             path_fd.write(new_data)
             print(path_fd.tell())
             if len(new_data) < block_size:
