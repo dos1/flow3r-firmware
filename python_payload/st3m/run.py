@@ -165,78 +165,11 @@ def run_main() -> None:
         log.error(f"Failed to set hostname {e}")
 
     menu_settings = settings.build_menu()
-    menu_gfx = SimpleMenu(
-        [
-            MenuItemBack(),
-            MenuItemAction("RGB565_BS", lambda: sys_display.set_default_mode(16)),
-            MenuItemAction("RGB888", lambda: sys_display.set_default_mode(24)),
-            MenuItemAction(
-                "RGB332",
-                lambda: sys_display.set_default_mode(sys_display.rgb332),
-            ),
-            MenuItemAction("gray 8bit", lambda: sys_display.set_default_mode(8)),
-            MenuItemAction(
-                "sepia 8bit",
-                lambda: sys_display.set_default_mode(sys_display.sepia),
-            ),
-            MenuItemAction(
-                "cool 8bit",
-                lambda: sys_display.set_default_mode(sys_display.cool),
-            ),
-            MenuItemAction(
-                "1x",
-                lambda: sys_display.set_default_mode(
-                    sys_display.unset + sys_display.x4
-                ),
-            ),
-            MenuItemAction("2x", lambda: sys_display.set_default_mode(sys_display.x2)),
-            MenuItemAction("3x", lambda: sys_display.set_default_mode(sys_display.x3)),
-            MenuItemAction("4x", lambda: sys_display.set_default_mode(sys_display.x4)),
-            MenuItemAction(
-                "osd on", lambda: sys_display.set_default_mode(sys_display.osd)
-            ),
-            MenuItemAction(
-                "osd off",
-                lambda: sys_display.set_default_mode(
-                    sys_display.unset + sys_display.osd
-                ),
-            ),
-            MenuItemAction(
-                "high fps",
-                lambda: sys_display.set_default_mode(
-                    sys_display.unset + sys_display.low_latency
-                ),
-            ),
-            MenuItemAction(
-                "low-latency",
-                lambda: sys_display.set_default_mode(sys_display.low_latency),
-            ),
-            MenuItemAction(
-                "drawlists",
-                lambda: sys_display.set_default_mode(
-                    sys_display.unset + sys_display.direct_ctx
-                ),
-            ),
-            MenuItemAction(
-                "direct ctx",
-                lambda: sys_display.set_default_mode(sys_display.direct_ctx),
-            ),
-            MenuItemAction(
-                "forced mode", lambda: sys_display.set_default_mode(sys_display.force)
-            ),
-            MenuItemAction(
-                "apps can set mode",
-                lambda: sys_display.set_default_mode(
-                    sys_display.unset + sys_display.force
-                ),
-            ),
-        ],
-    )
     menu_system = SimpleMenu(
         [
             MenuItemBack(),
             MenuItemForeground("Settings", menu_settings),
-            MenuItemForeground("Graphics Mode", menu_gfx),
+            MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/graphics_mode")),
             MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/gr33nhouse")),
             MenuItemAction("Disk Mode (Flash)", machine.disk_mode_flash),
             MenuItemAction("Disk Mode (SD)", machine.disk_mode_sd),
