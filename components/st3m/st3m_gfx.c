@@ -341,7 +341,9 @@ st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode) {
     return mode;
 }
 
-st3m_gfx_mode st3m_gfx_get_mode(void) { return _st3m_gfx_mode; }
+st3m_gfx_mode st3m_gfx_get_mode(void) {
+    return _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
+}
 
 uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride) {
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
