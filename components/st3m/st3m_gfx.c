@@ -34,13 +34,15 @@ static st3m_gfx_mode default_mode = ST3M_GFX_DEFAULT_MODE;
 // faster but it is not possible to enable wifi
 
 #if CTX_ST3M_FB_INTERNAL_RAM
-static uint16_t st3m_fb[240 * 240];
+static uint16_t st3m_fb[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT];
 uint8_t st3m_pal[256 * 3];
 #else
 EXT_RAM_BSS_ATTR uint8_t st3m_pal[256 * 3];
-EXT_RAM_BSS_ATTR static uint16_t st3m_fb[240 * 240];
+EXT_RAM_BSS_ATTR static uint16_t
+    st3m_fb[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT];
 #endif
-EXT_RAM_BSS_ATTR static uint8_t st3m_fb2[240 * 240 * 4];
+EXT_RAM_BSS_ATTR static uint8_t
+    st3m_fb2[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 4];
 
 // Get a free drawlist ctx to draw into.
 //
@@ -123,7 +125,7 @@ static inline int _st3m_gfx_bpp(st3m_gfx_mode mode) {
         else
             return 16;
     }
-    int bpp = (mode & (1 | 2 | 4 | 8 | 16 | 24 | 32));
+    int bpp = (mode & 63);
     if (bpp >= 2 && bpp < 4) bpp = 2;
     if (bpp >= 4 && bpp < 8) bpp = 4;
     if (bpp >= 8 && bpp < 16) bpp = 8;
@@ -170,7 +172,7 @@ void st3m_gfx_start_frame(Ctx *ctx) {
     int scale = st3m_gfx_scale();
     ctx_save(ctx);
     st3m_gfx_viewport_transform(ctx);
-    if (scale) {
+    if (scale > 1) {
         ctx_rectangle(ctx, -120, -120, 240, 240);
         ctx_clip(ctx);
     }
@@ -348,29 +350,29 @@ st3m_gfx_mode st3m_gfx_get_mode(void) {
 uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride) {
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
     int bpp = _st3m_gfx_bpp(set_mode);
-    int scale = st3m_gfx_scale();
     if (mode == st3m_gfx_palette) {
         if (stride) *stride = 3;
         if (width) *width = 1;
         if (height) *height = 256;
         return st3m_pal;
     } else if (mode == st3m_gfx_default) {
-        if (stride) *stride = 240 * bpp / 8;
-        if (width) *width = 240;
-        if (height) *height = 240;
+        if (stride) *stride = FLOW3R_BSP_DISPLAY_WIDTH * bpp / 8;
+        if (width) *width = FLOW3R_BSP_DISPLAY_WIDTH;
+        if (height) *height = FLOW3R_BSP_DISPLAY_HEIGHT;
         if (bpp <= 16) return (uint8_t *)st3m_fb;
         return st3m_fb2;
     } else if (mode == st3m_gfx_osd) {
-        if (stride) *stride = 240 * bpp / 8;
-        if (width) *width = 240;
-        if (height) *height = 240;
+        if (stride) *stride = FLOW3R_BSP_DISPLAY_WIDTH * bpp / 8;
+        if (width) *width = FLOW3R_BSP_DISPLAY_WIDTH;
+        if (height) *height = FLOW3R_BSP_DISPLAY_HEIGHT;
         if (_st3m_gfx_bpp(set_mode) <= 16) return st3m_fb2;
         return (uint8_t *)st3m_fb;
     }
 
-    if (stride) *stride = 240 * bpp / 8;
-    if (width) *width = 240 / scale;
-    if (height) *height = 240 / scale;
+    int scale = st3m_gfx_scale();
+    if (stride) *stride = FLOW3R_BSP_DISPLAY_WIDTH * bpp / 8;
+    if (width) *width = FLOW3R_BSP_DISPLAY_WIDTH / scale;
+    if (height) *height = FLOW3R_BSP_DISPLAY_HEIGHT / scale;
     if (bpp <= 16) return (uint8_t *)st3m_fb;
     return st3m_fb2;
 }
@@ -438,8 +440,8 @@ static void st3m_gfx_task(void *_arg) {
         if ((set_mode & st3m_gfx_direct_ctx) == 0)
             ctx_render_ctx(drawlist->user_ctx, user_target);
 
-        if (scale || ((set_mode & st3m_gfx_osd) &&
-                      (drawlist->osd_y0 != drawlist->osd_y1))) {
+        if ((scale > 1) || ((set_mode & st3m_gfx_osd) &&
+                            (drawlist->osd_y0 != drawlist->osd_y1))) {
             if (((set_mode & st3m_gfx_osd) &&
                  (drawlist->osd_y0 != drawlist->osd_y1))) {
                 pthread_mutex_lock(&st3m_osd_mutex);
@@ -850,14 +852,14 @@ void st3m_gfx_flush(int timeout_ms) {
 
 void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1) {
     if (y1 < 0) y1 = 0;
-    if (y1 > 240) y1 = 240;
+    if (y1 > FLOW3R_BSP_DISPLAY_HEIGHT) y1 = FLOW3R_BSP_DISPLAY_HEIGHT;
     if (y0 < 0) y0 = 0;
-    if (y0 > 240) y0 = 240;
+    if (y0 > FLOW3R_BSP_DISPLAY_HEIGHT) y0 = FLOW3R_BSP_DISPLAY_HEIGHT;
 
     if (x1 < 0) x1 = 0;
-    if (x1 > 240) x1 = 240;
+    if (x1 > FLOW3R_BSP_DISPLAY_WIDTH) x1 = FLOW3R_BSP_DISPLAY_WIDTH;
     if (x0 < 0) x0 = 0;
-    if (x0 > 240) x0 = 240;
+    if (x0 > FLOW3R_BSP_DISPLAY_WIDTH) x0 = FLOW3R_BSP_DISPLAY_WIDTH;
 
     st3m_gfx_drawlist *drawlist = &drawlists[last_descno];
 
