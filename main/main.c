@@ -57,21 +57,7 @@ static QueueHandle_t _core1_init_done_q;
 void _init_core1(void *unused) {
     st3m_usb_init();
     st3m_console_init();
-    st3m_usb_app_conf_t app = {
-        .fn_rx = st3m_console_cdc_on_rx,
-        .fn_txpoll = st3m_console_cdc_on_txpoll,
-        .fn_detach = st3m_console_cdc_on_detach,
-    };
-    st3m_usb_mode_t usb_mode = {
-        .kind = st3m_usb_mode_kind_app,
-        .app = &app,
-    };
-    st3m_usb_mode_switch(&usb_mode);
-    puts(" ___ _           ___     _         _");
-    puts("|  _| |___ _ _ _|_  |___| |_ ___ _| |___ ___");
-    puts("|  _| | . | | | |_  |  _| . | .'| . | . | -_|");
-    puts("|_| |_|___|_____|___|_| |___|__,|___|_  |___|");
-    puts("                                    |___|");
+    st3m_usb_startup();
 
     // Load bearing delay. USB crashes otherwise?
     // TODO(q3k): debug this

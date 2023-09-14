@@ -1,4 +1,14 @@
 #include "st3m_usb.h"
+#ifndef CONFIG_DEBUG_GDB_ENABLED
+#ifndef CONFIG_DEBUG_GDB_DISABLED
+#error "st3m: no debug flags"
+#endif
+#endif
+#ifdef CONFIG_DEBUG_GDB_ENABLED
+#ifdef CONFIG_DEBUG_GDB_DISABLED
+#error "st3m: invalid debug flags"
+#endif
+#endif
 
 static const char *TAG = "st3m-usb";
 
@@ -10,6 +20,8 @@ static const char *TAG = "st3m-usb";
 #include "esp_mac.h"
 #include "esp_private/usb_phy.h"
 #include "tusb.h"
+
+#include "st3m_console.h"
 
 static SemaphoreHandle_t _mu = NULL;
 static st3m_usb_mode_kind_t _mode = st3m_usb_mode_kind_disabled;
@@ -45,12 +57,16 @@ static void _generate_serial(void) {
 }
 
 void st3m_usb_init(void) {
+#ifdef CONFIG_DEBUG_GDB_ENABLED
+    return;
+#endif
     assert(_mu == NULL);
     _mu = xSemaphoreCreateMutex();
     assert(_mu != NULL);
     _mode = st3m_usb_mode_kind_disabled;
 
     _generate_serial();
+#ifndef CONFIG_DEBUG_GDB_ENABLED
     st3m_usb_cdc_init();
     usb_phy_config_t phy_conf = {
         .controller = USB_PHY_CTRL_OTG,
@@ -68,9 +84,13 @@ void st3m_usb_init(void) {
 
     xTaskCreate(_usb_task, "usb", 4096, NULL, 5, NULL);
     ESP_LOGI(TAG, "USB stack started");
+#endif
 }
 
 void st3m_usb_mode_switch(st3m_usb_mode_t *mode) {
+#ifdef CONFIG_DEBUG_GDB_ENABLED
+    return;
+#endif
     xSemaphoreTake(_mu, portMAX_DELAY);
 
     bool running = false;
@@ -120,6 +140,9 @@ void st3m_usb_mode_switch(st3m_usb_mode_t *mode) {
 }
 
 bool st3m_usb_connected(void) {
+#ifdef CONFIG_DEBUG_GDB_ENABLED
+    return false;
+#endif
     xSemaphoreTake(_mu, portMAX_DELAY);
     bool res = _connected;
     xSemaphoreGive(_mu);
@@ -143,4 +166,25 @@ void tud_suspend_cb(bool remote_wakeup_en) {
     if (mode == st3m_usb_mode_kind_app) {
         st3m_usb_cdc_detached();
     }
+}
+
+void st3m_usb_startup() {
+#ifdef CONFIG_DEBUG_GDB_ENABLED
+    return;
+#endif
+    st3m_usb_app_conf_t app = {
+        .fn_rx = st3m_console_cdc_on_rx,
+        .fn_txpoll = st3m_console_cdc_on_txpoll,
+        .fn_detach = st3m_console_cdc_on_detach,
+    };
+    st3m_usb_mode_t usb_mode = {
+        .kind = st3m_usb_mode_kind_app,
+        .app = &app,
+    };
+    st3m_usb_mode_switch(&usb_mode);
+    puts(" ___ _           ___     _         _");
+    puts("|  _| |___ _ _ _|_  |___| |_ ___ _| |___ ___");
+    puts("|  _| | . | | | |_  |  _| . | .'| . | . | -_|");
+    puts("|_| |_|___|_____|___|_| |___|__,|___|_  |___|");
+    puts("                                    |___|");
 }

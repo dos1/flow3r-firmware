@@ -38,6 +38,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include "sdkconfig.h"
 
 typedef enum {
     // Device should not enumerate.
@@ -105,6 +106,8 @@ void st3m_usb_mode_switch(st3m_usb_mode_t *target);
 
 // Initialize the subsystem. Must be called, bad things will happen otherwise.
 void st3m_usb_init();
+
+void st3m_usb_startup();
 
 // Return true if the badge is connected to a host.
 bool st3m_usb_connected(void);
