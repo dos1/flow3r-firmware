@@ -332,14 +332,7 @@ st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode) {
     _st3m_gfx_mode = (mode == default_mode) ? st3m_gfx_default : mode;
 
     _st3m_gfx_low_latency = ((mode & st3m_gfx_low_latency) != 0);
-    switch ((int)mode) {
-        case st3m_gfx_16bpp_direct_ctx:
-        case st3m_gfx_16bpp_direct_ctx_osd:
-        case st3m_gfx_8bpp_direct_ctx:
-        case st3m_gfx_32bpp_direct_ctx:
-        case st3m_gfx_24bpp_direct_ctx:
-            _st3m_gfx_low_latency = 1;
-    }
+    if (mode & st3m_gfx_direct_ctx) _st3m_gfx_low_latency = 1;
     return mode;
 }
 
@@ -377,6 +370,7 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride) {
     return st3m_fb2;
 }
 
+static int fb_ready = 1;  // ugly synch hack
 static void st3m_gfx_task(void *_arg) {
     (void)_arg;
     st3m_gfx_set_mode(st3m_gfx_default);
@@ -387,6 +381,7 @@ static void st3m_gfx_task(void *_arg) {
         xQueueReceiveNotifyStarved(user_ctx_rastq, &desc_no,
                                    "rast task starved (user_ctx)!");
         st3m_gfx_drawlist *drawlist = &drawlists[desc_no];
+        fb_ready = 0;
 
         ctx_set_textureclock(fb_RGB565_BS_ctx,
                              ctx_textureclock(fb_RGB565_BS_ctx) + 1);
@@ -456,9 +451,12 @@ static void st3m_gfx_task(void *_arg) {
         } else {
             flow3r_bsp_display_send_fb(user_fb, bits);
         }
+        fb_ready = 1;
 
-        ctx_drawlist_clear(drawlist->user_ctx);
-        st3m_gfx_viewport_transform(drawlist->user_ctx);
+        if ((set_mode & st3m_gfx_direct_ctx) == 0) {
+            ctx_drawlist_clear(drawlist->user_ctx);
+            st3m_gfx_viewport_transform(drawlist->user_ctx);
+        }
 
         xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
         st3m_counter_rate_sample(&rast_rate);
@@ -778,7 +776,6 @@ void st3m_gfx_init(void) {
                                  ESP_TASK_PRIO_MIN + 1, &graphics_task);
     assert(res == pdPASS);
 }
-
 static int last_descno = 0;
 static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
     BaseType_t res = xQueueReceive(user_ctx_freeq, &last_descno, ticks_to_wait);
@@ -791,11 +788,21 @@ static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
     drawlist->osd_y1 = _st3m_osd_y1;
 
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
-    switch ((int)set_mode) {
-        case st3m_gfx_16bpp_direct_ctx:
-        case st3m_gfx_16bpp_direct_ctx_osd:
-            st3m_gfx_viewport_transform(fb_RGB565_BS_ctx);
-            return fb_RGB565_BS_ctx;
+
+    if (set_mode & st3m_gfx_direct_ctx) {
+        while (!fb_ready) usleep(1);
+
+        switch (_st3m_gfx_bpp(set_mode)) {
+            case 16:
+                st3m_gfx_viewport_transform(fb_RGB565_BS_ctx);
+                return fb_RGB565_BS_ctx;
+            case 8:
+                st3m_gfx_viewport_transform(fb_GRAY8_ctx);
+                return fb_GRAY8_ctx;
+            case 24:
+                st3m_gfx_viewport_transform(fb_RGB8_ctx);
+                return fb_RGB8_ctx;
+        }
     }
 
     return drawlist->user_ctx;
@@ -816,14 +823,6 @@ void st3m_gfx_end_frame(Ctx *ctx) {
 }
 
 uint8_t st3m_gfx_pipe_full(void) {
-    st3m_gfx_mode mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
-    switch ((int)mode) {
-        case st3m_gfx_16bpp_direct_ctx:
-        case st3m_gfx_16bpp_direct_ctx_osd:
-            return (uxQueueSpacesAvailable(user_ctx_rastq) == 0) ||
-                   (uxQueueMessagesWaiting(user_ctx_freeq) <=
-                    _st3m_gfx_low_latency);
-    }
     return uxQueueMessagesWaiting(user_ctx_freeq) <= _st3m_gfx_low_latency;
 }
 

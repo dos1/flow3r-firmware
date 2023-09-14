@@ -164,6 +164,8 @@ class App(Application):
         ctx.text(str(curmode))
 
         bpp = self.draw_choice("bpp", ["8", "16", "24"], bpp)
+        if bpp > 0:
+            palette = 0
         palette = self.draw_choice("palette", ["RGB", "gray", "sepia", "cool"], palette)
         scale = self.draw_choice("scale", ["1x", "2x", "3x", "4x"], scale)
         low_latency = self.draw_boolean("low latency", low_latency)
@@ -172,9 +174,6 @@ class App(Application):
         lock = self.draw_boolean("lock", lock)
         if direct_ctx:
             low_latency = True
-            bpp = 8
-            if palette < 1:
-                palette = 2
         if palette != 0:
             bpp = 0
 
