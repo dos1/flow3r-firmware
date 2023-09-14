@@ -115,17 +115,26 @@ class ftop:
         mem_used_rel = 1 - mem_free / (1048576 * 8 + 1024 * 512)
         if mem_used_rel < 0:
             mem_used_rel = 0
-        if mem_used_rel > 0.995:
-            mem_used_rel = 0.995
-        ftop_str += "\n mem_free   |  "
-        ftop_str += ("   " + str(int(mem_used_rel * 100)))[-2:]
+        if mem_used_rel > 1:
+            mem_used_rel = 1
+        ftop_str += "\n heap use   | "
+        ftop_str += ("   " + str(int(mem_used_rel * 100)))[-3:]
         ftop_str += "%   ["
         ftop_str += "#" * int(mem_used_rel * 20)
         ftop_str += "." * (20 - int(mem_used_rel * 20))
         ftop_str += "]"
-        ftop_str += " |  free: " + str(mem_free) + "B"
+        mem_str = str(mem_free)
+        mem_str_new = ""
+        while True:
+            mem_str_new = mem_str[-3:] + mem_str_new
+            mem_str = mem_str[:-3]
+            if len(mem_str) > 0:
+                mem_str_new = "_" + mem_str_new
+            else:
+                break
+        ftop_str += " |  free bytes: " + mem_str_new
         if ftop._gc_collect_enabled:
-            ftop_str += "\n  (ran gc.collect() before capture)"
+            ftop_str += "\n    (ran gc.collect() before capture)"
 
         _ = sys_kernel.scheduler_snapshot()
         return ftop_str
