@@ -20,7 +20,7 @@ from st3m.application import (
 from st3m.about import About
 from st3m import settings_menu as settings, logging, processors, wifi
 
-import captouch, audio, leds, gc, sys_buttons, sys_display
+import captouch, audio, leds, gc, sys_buttons, sys_display, sys_mode
 import os
 
 import machine
@@ -116,15 +116,16 @@ def _make_compositor(reactor: Reactor, vm: ViewManager) -> overlays.Compositor:
     return compositor
 
 
-def run_view(v: View) -> None:
+def run_view(v: View, debug_vm=True) -> None:
     """
     Run a given View in the foreground, with an empty ViewManager underneath.
 
     This is useful for debugging simple applications from the REPL.
     """
     reactor = _make_reactor()
-    vm = ViewManager(ViewTransitionBlend())
+    vm = ViewManager(ViewTransitionBlend(), debug=debug_vm)
     vm.push(v)
+    sys_mode.mode_set(2)  # st3m_mode_kind_app
     compositor = _make_compositor(reactor, vm)
     top = processors.ProcessorMidldeware(compositor)
     reactor.set_top(top)
@@ -132,7 +133,7 @@ def run_view(v: View) -> None:
 
 
 def run_app(klass):
-    run_view(klass(ApplicationContext()))
+    run_view(klass(ApplicationContext()), debug_vm=True)
 
 
 def _yeet_local_changes() -> None:
@@ -192,8 +193,8 @@ def run_main() -> None:
             raise Exception(f"More than one bundle named {override_main_app}")
         if len(requested) == 0:
             raise Exception(f"Requested bundle {override_main_app} not found")
-        run_view(requested[0].load())
-    run_view(menu_main)
+        run_view(requested[0].load(), debug_vm=True)
+    run_view(menu_main, debug_vm=False)
 
 
 __all__ = [

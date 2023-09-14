@@ -158,6 +158,7 @@ soft_reset:
             }
             esp_log_set_vprintf(vprintf_log);
         } else {
+            st3m_mode_set(st3m_mode_kind_repl, NULL);
             if ((ret = pyexec_friendly_repl() != 0)) {
                 _diskmode_maybe(pyexec_system_exit);
                 break;

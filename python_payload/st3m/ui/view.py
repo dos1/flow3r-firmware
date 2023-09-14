@@ -2,6 +2,8 @@ from st3m.reactor import Responder
 from st3m.goose import ABCBase, abstractmethod, Optional, List
 from st3m.input import InputState, InputController
 from ctx import Context
+import machine
+import utime
 
 
 class View(Responder):
@@ -145,12 +147,14 @@ class ViewManager(Responder):
     popped.
     """
 
-    def __init__(self, vt: ViewTransition) -> None:
+    def __init__(self, vt: ViewTransition, debug: bool) -> None:
         """
         Create a new ViewManager with a default ViewTransition.
         """
         self._incoming: Optional[View] = None
         self._outgoing: Optional[View] = None
+
+        self._debug = debug
 
         # Transition time.
         self._time_ms = 150
@@ -167,7 +171,11 @@ class ViewManager(Responder):
         self._input.think(ins, delta_ms)
 
         if self._input.buttons.os.middle.pressed:
-            self.pop(ViewTransitionSwipeRight())
+            if not self._history and self._debug:
+                utime.sleep(0.5)
+                machine.reset()
+            else:
+                self.pop(ViewTransitionSwipeRight())
 
         if self._transitioning:
             self._transition += (delta_ms / 1000.0) * (1000 / self._time_ms)
