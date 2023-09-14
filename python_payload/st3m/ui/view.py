@@ -58,6 +58,11 @@ class BaseView(View):
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.input.think(ins, delta_ms)
 
+    def is_active(self) -> bool:
+        if not self.vm:
+            return False
+        return self.vm.is_active(self)
+
 
 class ViewTransition(ABCBase):
     """
