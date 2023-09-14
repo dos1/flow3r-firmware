@@ -79,7 +79,7 @@ class ftop:
         max_name_len = 0
         for task in snap.tasks:
             max_name_len = max(len(task.name), max_name_len)
-        ftop._max_name_len = max_name_len
+        ftop._max_name_len = max(max_name_len, 14)
 
         snap.tasks.sort(key=lambda x: getattr(x, "name"))
         ftop_str = "\n[task cpu loads]\n"
@@ -105,19 +105,39 @@ class ftop:
         ftop.delta_t_capture()
 
         ftop_str += "\n[stats]\n"
-        ftop_str += " think time | "
+        ftop_str += " think time" + " " * (ftop._max_name_len - 10) + " | "
         ftop_str += " avg: " + str(int(ftop._avg_delta_t_ms)) + "ms"
         ftop_str += " min: " + str(int(ftop._min_delta_t_ms)) + "ms"
         ftop_str += " max: " + str(int(ftop._max_delta_t_ms)) + "ms"
+
         if ftop._gc_collect_enabled:
             gc.collect()
-        mem_free = gc.mem_free()
-        mem_used_rel = 1 - mem_free / (1048576 * 8 + 1024 * 512)
+
+        stats = sys_kernel.heap_stats().general
+        total_heap = stats.total_free_bytes + stats.total_allocated_bytes
+        ftop_str += ftop.make_mem_report("mp heap", gc.mem_free(), total_heap / 2)
+
+        if ftop._gc_collect_enabled:
+            ftop_str += "\n    (ran gc.collect() before capture)"
+
+        ftop_str += ftop.make_mem_report("sys heap", stats.total_free_bytes, total_heap)
+        ftop_str += ftop.make_mem_report(
+            "sys max blk", stats.largest_free_block, total_heap
+        )
+
+        _ = sys_kernel.scheduler_snapshot()
+        return ftop_str
+
+    @staticmethod
+    def make_mem_report(name, mem_free, mem_max):
+        ftop_str = ""
+        mem_used_rel = 1 - mem_free / mem_max
         if mem_used_rel < 0:
             mem_used_rel = 0
         if mem_used_rel > 1:
             mem_used_rel = 1
-        ftop_str += "\n heap use   | "
+        name = name[: ftop._max_name_len]
+        ftop_str += "\n " + name + " " * (ftop._max_name_len - len(name)) + " | "
         ftop_str += ("   " + str(int(mem_used_rel * 100)))[-3:]
         ftop_str += "%   ["
         ftop_str += "#" * int(mem_used_rel * 20)
@@ -133,10 +153,6 @@ class ftop:
             else:
                 break
         ftop_str += " |  free bytes: " + mem_str_new
-        if ftop._gc_collect_enabled:
-            ftop_str += "\n    (ran gc.collect() before capture)"
-
-        _ = sys_kernel.scheduler_snapshot()
         return ftop_str
 
     @staticmethod
