@@ -106,10 +106,10 @@ class GayDrums(Application):
 
         if self._seq_table_saved is not None:
             self.seq.plugins.seq.table = self._seq_table_saved
+        if self.stopped:
             self.seq.signals.bpm = 0
             self.seq.signals.sync_in.start()
             self._render_list += [(self.draw_bpm, None)]
-            self.stopped = True
             self.blm.foreground = False
 
         yield 0, "kick.wav"

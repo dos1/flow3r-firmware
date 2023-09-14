@@ -83,12 +83,12 @@ class TinySampler(Application):
         ctx.text_align = ctx.MIDDLE
         ctx.font_size = 24
         for i in range(5):
-            if self.is_playing[i]:
+            if not self.has_data[i]:
+                ctx.rgb(0.4, 0.4, 0.4)
+            elif self.is_playing[i]:
                 ctx.rgb(0.2, 0.9, 0.2)
-            elif self.has_data[i]:
-                ctx.rgb(0.8, 0.8, 0.8)
             else:
-                ctx.rgb(0.5, 0.5, 0.5)
+                ctx.rgb(0.8, 0.8, 0.8)
             ctx.move_to(0, -dist)
             ctx.rel_line_to(0, -8)
             ctx.rel_line_to(11, 8)
