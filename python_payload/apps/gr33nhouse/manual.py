@@ -111,6 +111,9 @@ class ManualInputView(BaseView):
         super().think(ins, delta_ms)
         self.background.think(ins, delta_ms)
 
+        if not self.is_active():
+            return
+
         if self.state == ViewState.ENTER_SEED:
             if self.current_petal is not None:
                 if not ins.captouch.petals[self.current_petal].pressed:
