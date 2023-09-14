@@ -30,7 +30,7 @@ class ShoegazeApp(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
 
-        # synth is initialized in on_enter!
+        # synth is initialized in on_enter_done!
         self.blm: Optional[bl00mbox.Channel] = None
         self.chord_index = 0
         self.chord: List[int] = []
@@ -254,8 +254,7 @@ class ShoegazeApp(Application):
             self.bass_string.decay = 1000
             self.bass_string.signals.trigger.start()
 
-    def on_enter(self, vm: Optional[ViewManager]) -> None:
-        super().on_enter(vm)
+    def on_enter_done(self) -> None:
         if self.blm is None:
             self._build_synth()
         self.blm.foreground = True
@@ -272,4 +271,4 @@ class ShoegazeApp(Application):
 if __name__ == "__main__":
     import st3m.run
 
-    st3m.run.run_view(ShoegazeApp(ApplicationContext()))
+    st3m.run.run_app(ShoegazeApp)
