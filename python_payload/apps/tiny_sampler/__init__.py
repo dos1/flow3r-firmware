@@ -89,6 +89,10 @@ class TinySampler(Application):
 
         self.ct_prev = ct
 
+    def on_enter(self, vm) -> None:
+        super().on_enter(vm)
+        self.blm.foreground = True
+
     def on_exit(self) -> None:
         super().on_exit()
         for i in range(5):
@@ -96,3 +100,4 @@ class TinySampler(Application):
                 self.samplers[i].signals.rec_trigger.stop()
                 self.is_recording[i] = False
         audio.input_set_source(audio.INPUT_SOURCE_NONE)
+        self.blm.foreground = False

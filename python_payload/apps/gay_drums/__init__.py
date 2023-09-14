@@ -20,9 +20,9 @@ else:
 class GayDrums(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
-        self.blm = bl00mbox.Channel("gay drums")
+        self.blm = None
         self.num_samplers = 6
-        self.seq = self.blm.new(bl00mbox.patches.sequencer, num_tracks=8, num_steps=32)
+        self.seq = None
 
         self.kick: Optional[bl00mbox.patches._Patch] = None
         self.hat: Optional[bl00mbox.patches._Patch] = None
@@ -31,12 +31,9 @@ class GayDrums(Application):
         self.crash: Optional[bl00mbox.patches._Patch] = None
         self.snare: Optional[bl00mbox.patches._Patch] = None
 
-        self.seq.signals.bpm.value = 80
-
         self.track_names = ["kick", "hihat", "snare", "crash", "nya", "woof"]
         self.ct_prev: Optional[captouch.CaptouchState] = None
         self.track = 1
-        self.blm.background_mute_override = True
         self.tap_tempo_press_counter = 0
         self.track_back_press_counter = 0
         self.stopped = False
@@ -51,15 +48,14 @@ class GayDrums(Application):
             "count": 0,
         }
         self.track_back = False
-        self.bpm = self.seq.signals.bpm.value
 
+        self.bpm = 0
         self.samples_loaded = 0
         self.samples_total = len(self.track_names)
         self.loading_text = ""
         self.init_complete = False
         self.load_iter = self.iterate_loading()
-        self._render_list_2: List[Tuple[Rendee, Any]] = []
-        self._render_list_1: List[Tuple[Rendee, Any]] = []
+        self._render_list: List[Tuple[Rendee, Any]] = []
 
         self._group_highlight_on = [False] * 4
         self._group_highlight_redraw = [False] * 4
@@ -72,19 +68,50 @@ class GayDrums(Application):
 
         self.draw_background_counter = 0
         self.full_redraw_timer_ms = 0
-        self.steps = 16
         self.bar = 0
+
+        self._bpm_saved = None
+        self._steps_saved = None
+        self._seq_table_saved = None
 
     @property
     def steps(self):
-        return self.seq.signals.step_end.value + 1
+        if self.blm is not None:
+            return self.seq.signals.step_end.value + 1
+        return 0
 
     @steps.setter
     def steps(self, val):
-        self.seq.signals.step_start = 0
-        self.seq.signals.step_end = val - 1
+        if self.blm is not None:
+            self.seq.signals.step_start = 0
+            self.seq.signals.step_end = val - 1
 
     def iterate_loading(self) -> Iterator[Tuple[int, str]]:
+        if self.blm is None:
+            self.blm = bl00mbox.Channel("gay drums")
+        self.seq = self.blm.new(bl00mbox.patches.sequencer, num_tracks=8, num_steps=32)
+
+        if self._bpm_saved is None:
+            bpm = 80
+        else:
+            bpm = self._bpm_saved
+        if self._steps_saved is None:
+            steps = 16
+        else:
+            steps = self._steps_saved
+
+        self.steps = steps
+        self.seq.signals.bpm.value = bpm
+        self.bpm = self.seq.signals.bpm.value
+
+        if self._seq_table_saved is not None:
+            self.seq.plugins.seq.table = self._seq_table_saved
+            self.seq.signals.bpm = 0
+            self.seq.signals.sync_in.start()
+            self._render_list += [(self.draw_bpm, None)]
+            self.stopped = True
+            self.blm.foreground = False
+
         yield 0, "kick.wav"
         self.nya = self.blm.new(bl00mbox.patches.sampler, "nya.wav")
         self.nya.signals.output = self.blm.mixer
@@ -158,6 +185,13 @@ class GayDrums(Application):
         for track in range(self.num_samplers):
             for step in range(16):
                 self.draw_track_step_marker(ctx, (track, step))
+
+    def tracks_are_empty(self):
+        for track in range(6):
+            for step in range(16):
+                if self.track_get_state(track, step):
+                    return False
+        return True
 
     def track_get_state(self, track: int, step: int) -> int:
         sequencer_track = track
@@ -310,18 +344,6 @@ class GayDrums(Application):
         ctx.rgb(255, 255, 255)
         ctx.text(str(bpm) + " bpm")
 
-    def draw_volume_area(self, ctx: Context, data: None) -> None:
-        ctx.move_to(0, 0)
-        bar_len = 10 * (1 + self.num_samplers)
-        self.ctx_draw_centered_rect(ctx, 0, 0, 6 * 12, bar_len, (0, 0, 0))
-        self.ctx_draw_centered_rect(ctx, 0, 0, 1, bar_len, (0.5, 0.5, 0.5))
-
-        for track in range(self.num_samplers):
-            for step in range(5, 16 - 5):
-                self.draw_track_step_marker(ctx, (track, step))
-        for i in range(1, 3):
-            self._group_highlight_redraw[i] = True
-
     def draw(self, ctx: Context) -> None:
         ctx.text_align = ctx.MIDDLE
         if not self.init_complete:
@@ -365,23 +387,19 @@ class GayDrums(Application):
             return
 
         if self.draw_background_counter > 0:
-            self._render_list_1 += [(self.draw_background, None)]
-            self._render_list_1 += [(self.draw_background, None)]
+            self._render_list += [(self.draw_background, None)]
+            self._render_list += [(self.draw_background, None)]
             self.draw_background_counter -= 1
 
         for i in range(4):
             if self._group_highlight_redraw[i]:
                 self._group_highlight_redraw[i] = False
-                self._render_list_1 += [(self.draw_group_highlight, i)]
+                self._render_list += [(self.draw_group_highlight, i)]
 
-        for rendee in self._render_list_1:
+        for rendee in self._render_list:
             fun, param = rendee
             fun(ctx, param)
-        for rendee in self._render_list_2:
-            fun, param = rendee
-            fun(ctx, param)
-        # self._render_list_2 = self._render_list_1.copy()
-        self._render_list_1 = []
+        self._render_list = []
 
         size = 4
 
@@ -490,13 +508,13 @@ class GayDrums(Application):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
 
-        if self.full_redraw_timer_ms > 0:
-            self.full_redraw_timer_ms -= delta_ms
-            if self.full_redraw_timer_ms < 0:
-                self._render_list_1 += [(self.draw_volume_area, None)]
-
-        if self.input.buttons.os.left.pressed or self.input.buttons.os.right.pressed:
-            self.full_redraw_timer_ms = 2000
+        if not self.init_complete:
+            try:
+                self.samples_loaded, self.loading_text = next(self.load_iter)
+            except StopIteration:
+                self.init_complete = True
+                self._render_list += [(self.draw_background, None)]
+            return
 
         if self.input.buttons.app.left.pressed:
             if self.steps > 3:
@@ -508,14 +526,6 @@ class GayDrums(Application):
 
         if self.ct_prev is None:
             self.ct_prev = ins.captouch
-            return
-
-        if not self.init_complete:
-            try:
-                self.samples_loaded, self.loading_text = next(self.load_iter)
-            except StopIteration:
-                self.init_complete = True
-                self._render_list_1 += [(self.draw_background, None)]
             return
 
         st = self.seq.signals.step.value
@@ -541,7 +551,7 @@ class GayDrums(Application):
                     ):
                         self.track_incr_state(self.track, self.bar * 16 + i * 4 + j)
 
-                        self._render_list_1 += [
+                        self._render_list += [
                             (self.draw_track_step_marker, (self.track, i * 4 + j))
                         ]
             else:
@@ -554,14 +564,14 @@ class GayDrums(Application):
                 self.track_back = False
             else:
                 self.track = (self.track - 1) % self.num_samplers
-                self._render_list_1 += [(self.draw_track_name, None)]
+                self._render_list += [(self.draw_track_name, None)]
 
         if ct.petals[0].pressed and not (self.ct_prev.petals[0].pressed):
             if self.stopped:
                 self.seq.signals.bpm = self.bpm
-                self._render_list_1 += [(self.draw_bpm, None)]
-                self.blm.background_mute_override = True
+                self._render_list += [(self.draw_bpm, None)]
                 self.stopped = False
+                self.blm.foreground = True
             elif self.tapping:
                 t = self.tap["time_ms"] * 0.001
                 n = self.tap["count"]
@@ -584,7 +594,7 @@ class GayDrums(Application):
                 else:
                     bpm = int(60 / T)
                     self.seq.signals.bpm = bpm
-                    self._render_list_1 += [(self.draw_bpm, None)]
+                    self._render_list += [(self.draw_bpm, None)]
                     self.bpm = bpm
 
             if not self.tapping:
@@ -603,9 +613,9 @@ class GayDrums(Application):
             if self.tap_tempo_press_counter > 500:
                 self.seq.signals.bpm = 0
                 self.seq.signals.sync_in.start()
-                self._render_list_1 += [(self.draw_bpm, None)]
+                self._render_list += [(self.draw_bpm, None)]
                 self.stopped = True
-                self.blm.background_mute_override = False
+                self.blm.foreground = False
             else:
                 self.tap_tempo_press_counter += delta_ms
         else:
@@ -614,7 +624,7 @@ class GayDrums(Application):
         if ct.petals[5].pressed:
             if (self.track_back_press_counter > 500) and not self.track_back:
                 self.track = (self.track + 1) % self.num_samplers
-                self._render_list_1 += [(self.draw_track_name, None)]
+                self._render_list += [(self.draw_track_name, None)]
                 self.track_back = True
             else:
                 self.track_back_press_counter += delta_ms
@@ -628,6 +638,21 @@ class GayDrums(Application):
         super().on_enter(vm)
         self.ct_prev = None
         self.draw_background_counter = 2
+
+    def on_exit(self):
+        super().on_exit()
+        self._bpm_saved = self.bpm
+        self._steps_saved = self.steps
+        self._seq_table_saved = self.seq.plugins.seq.table
+        if self.tracks_are_empty() or self.stopped:
+            self.blm.background_mute_override = False
+            self.blm.clear()
+            self.blm.free = True
+            self.blm = None
+            self.init_complete = False
+            self.load_iter = self.iterate_loading()
+        else:
+            self.blm.background_mute_override = True
 
 
 # For running with `mpremote run`:

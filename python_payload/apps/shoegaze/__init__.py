@@ -12,6 +12,8 @@ import bl00mbox
 import leds
 import random
 
+import sys_display
+
 chords = [
     [-5, -5, 2, 7, 10],
     [-4, -4, 0, 5, 8],
@@ -151,7 +153,7 @@ class ShoegazeApp(Application):
         ctx.font = ctx.get_font_name(5)
         ctx.font_size = 35
 
-        ctx.move_to(0, -112)
+        ctx.move_to(0, -105)
         ctx.rgb(0.2, 0, 0.2)
         ctx.text("bass")
 
@@ -232,6 +234,7 @@ class ShoegazeApp(Application):
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
+        sys_display.set_mode(2313)
         if self.blm is None:
             self._build_synth()
         if self.blm is not None:  # silly mypy
