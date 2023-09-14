@@ -26,7 +26,7 @@
 #include "st3m_counter.h"
 #include "st3m_version.h"
 
-#define ST3M_GFX_DEFAULT_MODE (16 | st3m_gfx_osd)
+#define ST3M_GFX_DEFAULT_MODE (16 | st3m_gfx_osd | st3m_gfx_low_latency)
 
 static st3m_gfx_mode default_mode = ST3M_GFX_DEFAULT_MODE;
 
