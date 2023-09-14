@@ -1,5 +1,6 @@
 import sys_kernel
 from st3m import settings
+import gc
 
 
 class ftop:
@@ -15,6 +16,7 @@ class ftop:
     _avg_delta_t_ms_acc = 0
     _avg_delta_t_ms_div = 0
     _delta_t_ms_throwaway = True
+    _gc_collect_enabled = True
     report = ""
 
     @staticmethod
@@ -102,10 +104,28 @@ class ftop:
 
         ftop.delta_t_capture()
 
-        ftop_str += "\n\n[think rate]\n"
-        ftop_str += " avg: " + str(ftop._avg_delta_t_ms) + "ms  "
-        ftop_str += " min: " + str(ftop._min_delta_t_ms) + "ms  "
-        ftop_str += " max: " + str(ftop._max_delta_t_ms) + "ms"
+        ftop_str += "\n[stats]\n"
+        ftop_str += " think time | "
+        ftop_str += " avg: " + str(int(ftop._avg_delta_t_ms)) + "ms"
+        ftop_str += " min: " + str(int(ftop._min_delta_t_ms)) + "ms"
+        ftop_str += " max: " + str(int(ftop._max_delta_t_ms)) + "ms"
+        if ftop._gc_collect_enabled:
+            gc.collect()
+        mem_free = gc.mem_free()
+        mem_used_rel = 1 - mem_free / (1048576 * 8 + 1024 * 512)
+        if mem_used_rel < 0:
+            mem_used_rel = 0
+        if mem_used_rel > 0.995:
+            mem_used_rel = 0.995
+        ftop_str += "\n mem_free   |  "
+        ftop_str += ("   " + str(int(mem_used_rel * 100)))[-2:]
+        ftop_str += "%   ["
+        ftop_str += "#" * int(mem_used_rel * 20)
+        ftop_str += "." * (20 - int(mem_used_rel * 20))
+        ftop_str += "]"
+        ftop_str += " |  free: " + str(mem_free) + "B"
+        if ftop._gc_collect_enabled:
+            ftop_str += "\n  (ran gc.collect() before capture)"
 
         _ = sys_kernel.scheduler_snapshot()
         return ftop_str
