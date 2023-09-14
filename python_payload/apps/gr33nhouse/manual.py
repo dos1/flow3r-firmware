@@ -1,5 +1,5 @@
 from st3m.goose import Optional, Enum
-from st3m.input import InputController, InputState
+from st3m.input import InputState
 from st3m.ui import colours
 from st3m.ui.view import BaseView, ViewManager
 from ctx import Context
@@ -34,8 +34,7 @@ class ManualInputView(BaseView):
     wait_timer: Optional[int]
 
     def __init__(self) -> None:
-        self.input = InputController()
-        self.vm = None
+        super().__init__()
         self.background = Flow3rView()
 
         self.flow3r_seed = ""
@@ -109,7 +108,7 @@ class ManualInputView(BaseView):
             ctx.text(f"not found!")
 
     def think(self, ins: InputState, delta_ms: int) -> None:
-        self.input.think(ins, delta_ms)
+        super().think(ins, delta_ms)
         self.background.think(ins, delta_ms)
 
         if self.state == ViewState.ENTER_SEED:

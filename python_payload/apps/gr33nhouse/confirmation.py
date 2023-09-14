@@ -1,4 +1,4 @@
-from st3m.input import InputController, InputState
+from st3m.input import InputState
 from st3m.ui import colours
 from st3m.ui.view import BaseView, ViewManager
 from ctx import Context
@@ -8,15 +8,13 @@ from .download import DownloadView
 
 class ConfirmationView(BaseView):
     background: Flow3rView
-    input: InputController
 
     url: str
     name: str
     author: str
 
     def __init__(self, url: str, name: str, author: str) -> None:
-        self.input = InputController()
-        self.vm = None
+        super().__init__()
         self.background = Flow3rView()
 
         self.url = url
@@ -71,7 +69,7 @@ class ConfirmationView(BaseView):
         ctx.restore()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
-        self.input.think(ins, delta_ms)
+        super().think(ins, delta_ms)
         self.background.think(ins, delta_ms)
 
         if self.vm is None:

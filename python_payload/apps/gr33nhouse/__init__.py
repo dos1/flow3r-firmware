@@ -1,6 +1,6 @@
 from st3m.goose import Enum
 from st3m.application import Application, ApplicationContext
-from st3m.input import InputController, InputState
+from st3m.input import InputState
 from st3m.ui.interactions import ScrollController
 from st3m.ui import colours
 from st3m.ui.view import ViewManager
@@ -20,14 +20,12 @@ class ViewState(Enum):
 class Gr33nhouseApp(Application):
     items = ["Browse apps", "Record flow3r seed", "Enter flow3r seed"]
 
-    input: InputController
     background: Flow3rView
     state: ViewState
 
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx=app_ctx)
 
-        self.input = InputController()
         self.background = Flow3rView()
         self._sc = ScrollController()
         self._sc.set_item_count(3)
@@ -105,7 +103,7 @@ class Gr33nhouseApp(Application):
         ctx.restore()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
-        self.input.think(ins, delta_ms)
+        super().think(ins, delta_ms)
         self._sc.think(ins, delta_ms)
 
         if self.vm is None:

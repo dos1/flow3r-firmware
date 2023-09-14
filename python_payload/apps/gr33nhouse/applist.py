@@ -1,5 +1,5 @@
 from st3m.goose import Optional, Enum, Any
-from st3m.input import InputController, InputState
+from st3m.input import InputState
 from st3m.ui import colours
 from st3m.ui.view import BaseView, ViewManager
 from st3m.ui.interactions import ScrollController
@@ -25,12 +25,10 @@ class AppList(BaseView):
 
     apps: list[Any] = []
 
-    input: InputController
     background: Flow3rView
 
     def __init__(self) -> None:
-        self.input = InputController()
-        self.vm = None
+        super().__init__()
         self.background = Flow3rView()
         self._sc = ScrollController()
 
@@ -122,11 +120,10 @@ class AppList(BaseView):
             raise RuntimeError(f"Invalid view state {self._state}")
 
     def think(self, ins: InputState, delta_ms: int) -> None:
+        super().think(ins, delta_ms)
         self._sc.think(ins, delta_ms)
         if self.initial_ticks == 0 or time.ticks_ms() < self.initial_ticks + 300:
             return
-
-        self.input.think(ins, delta_ms)
 
         if self._state == ViewState.INITIAL:
             try:

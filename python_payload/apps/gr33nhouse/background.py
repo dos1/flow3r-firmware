@@ -1,16 +1,13 @@
 import random
-from st3m.input import InputController, InputState
+from st3m.input import InputState
 
 from st3m.ui.view import BaseView
 from ctx import Context
 
 
 class Flow3rView(BaseView):
-    input: InputController
-
     def __init__(self) -> None:
-        self.vm = None
-        self.input = InputController()
+        super().__init__()
 
         self.flowers = []
         for i in range(8):

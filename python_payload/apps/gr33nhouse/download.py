@@ -1,4 +1,4 @@
-from st3m.input import InputController, InputState
+from st3m.input import InputState
 from st3m.goose import Optional, List
 from st3m.ui import colours
 import urequests
@@ -28,8 +28,6 @@ class DownloadView(BaseView):
     """
     _state: int
 
-    input: InputController
-
     def __init__(self, url: str) -> None:
         super().__init__()
         self._state = 1
@@ -37,8 +35,6 @@ class DownloadView(BaseView):
         self._url = url
         self.response = b""
         self._download_instance = None
-
-        self.input = InputController()
 
     def draw(self, ctx: Context) -> None:
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
@@ -97,8 +93,7 @@ class DownloadView(BaseView):
             req.close()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
-        # super().think(ins, delta_ms)  # Let BaseView do its thing
-        self.input.think(ins, delta_ms)
+        super().think(ins, delta_ms)  # Let BaseView do its thing
 
         if self.input.buttons.app.middle.pressed:
             if self.vm is None:

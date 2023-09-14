@@ -1,4 +1,4 @@
-from st3m.input import InputController, InputState
+from st3m.input import InputState
 from st3m.ui import colours
 from st3m.ui.view import BaseView, ViewManager
 from ctx import Context
@@ -6,11 +6,8 @@ from .background import Flow3rView
 
 
 class RecordView(BaseView):
-    input: InputController
-
     def __init__(self) -> None:
-        self.input = InputController()
-        self.vm = None
+        super().__init__()
         self.background = Flow3rView()
 
     def on_enter(self, vm: ViewManager | None) -> None:
@@ -37,6 +34,3 @@ class RecordView(BaseView):
         ctx.text_baseline = ctx.MIDDLE
         ctx.text("Coming soon")
         ctx.restore()
-
-    def think(self, ins: InputState, delta_ms: int) -> None:
-        self.input.think(ins, delta_ms)
