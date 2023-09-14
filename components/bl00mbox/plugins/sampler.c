@@ -6,60 +6,47 @@ radspa_descriptor_t sampler_desc = {
     .id = 696969,
     .description = "simple sampler that stores a copy of the sample in ram and has basic recording functionality."
                    "\ninit_var: length of pcm sample memory\ntable layout: [0:2] read head position (uint32_t), [2:4] sample start (uint32_t), "
-                   "[4:6] sample length (uint32_t), [6] new record event (bool), [7:init_var+7] pcm sample data (int16_t)",
+                   "[4:6] sample length (uint32_t), [6:8] sample rate (uint32_t, [8] new record event (bool), [9:init_var+9] pcm sample data (int16_t)",
     .create_plugin_instance = sampler_create,
     .destroy_plugin_instance = radspa_standard_plugin_destroy
 };
 
-#define SAMPLER_NUM_SIGNALS 4
+#define SAMPLER_NUM_SIGNALS 5
 #define SAMPLER_OUTPUT 0
 #define SAMPLER_TRIGGER 1
 #define SAMPLER_REC_IN 2
 #define SAMPLER_REC_TRIGGER 3
+#define SAMPLER_PITCH_SHIFT 4
 
 #define READ_HEAD_POS 0
 #define SAMPLE_START 2
 #define SAMPLE_LEN 4
-#define BUFFER_OFFSET 7
-
-static inline int16_t define_behavior(uint32_t in){
-    int32_t ret = in & 0xFFFF;
-    if(ret > 32767) return ret - 65536;
-    return ret;
-}
-
-static inline void write_uint32_to_buffer_pos(int16_t * buf, uint32_t pos, uint32_t input){
-    buf[pos] = define_behavior(input);
-    buf[pos+1] = define_behavior(input>>16);
-}
-
-static inline uint32_t read_uint32_from_buffer_pos(int16_t * buf, uint32_t pos){
-    int32_t lsb = buf[pos];
-    if(lsb < 0) lsb += 65536;
-    int32_t msb = buf[pos+1];
-    if(msb < 0) msb += 65536;
-    return (((uint32_t) msb) << 16) + ((uint32_t) lsb);
-}
+#define SAMPLE_RATE 6
+#define BUFFER_OFFSET 9
 
 void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_id){
     radspa_signal_t * output_sig = radspa_signal_get_by_index(sampler, SAMPLER_OUTPUT);
     if(output_sig->buffer == NULL) return;
     sampler_data_t * data = sampler->plugin_data;
     int16_t * buf = sampler->plugin_table;
+    uint32_t * buf32 = (uint32_t *) buf;
     radspa_signal_t * trigger_sig = radspa_signal_get_by_index(sampler, SAMPLER_TRIGGER);
     radspa_signal_t * rec_in_sig = radspa_signal_get_by_index(sampler, SAMPLER_REC_IN);
     radspa_signal_t * rec_trigger_sig = radspa_signal_get_by_index(sampler, SAMPLER_REC_TRIGGER);
+    radspa_signal_t * pitch_shift_sig = radspa_signal_get_by_index(sampler, SAMPLER_PITCH_SHIFT);
 
     static int32_t ret = 0;
     
     uint32_t buffer_size = sampler->plugin_table_len - BUFFER_OFFSET;
 
-    uint32_t read_head_pos = read_uint32_from_buffer_pos(buf, READ_HEAD_POS);
-    uint32_t sample_start = read_uint32_from_buffer_pos(buf, SAMPLE_START);
-    uint32_t sample_len = read_uint32_from_buffer_pos(buf, SAMPLE_LEN);
+    data->read_head_pos = buf32[READ_HEAD_POS/2];
+    uint32_t sample_start = buf32[SAMPLE_START/2];
+    uint32_t sample_len = buf32[SAMPLE_LEN/2];
+    uint32_t sample_rate = buf32[SAMPLE_RATE/2];
+
     if(sample_start >= buffer_size) sample_start = buffer_size - 1;
     if(sample_len >= buffer_size) sample_len = buffer_size - 1;
-    if(read_head_pos >= buffer_size) read_head_pos = buffer_size - 1;
+    if(data->read_head_pos >= buffer_size) data->read_head_pos = buffer_size - 1;
     
     for(uint16_t i = 0; i < num_samples; i++){
         int16_t trigger = radspa_trigger_get(radspa_signal_get_value(trigger_sig, i, render_pass_id), &(data->trigger_prev));
@@ -67,19 +54,20 @@ void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_
 
         if(rec_trigger > 0){
             if(!(data->rec_active)){
-                read_head_pos = sample_len;
-                data->write_head_position = 0;
+                data->read_head_pos = sample_len;
+                data->write_head_pos = 0;
+                data->write_head_pos_long = 0;
                 sample_len = 0;
                 data->rec_active = true;
             }
         } else if(rec_trigger < 0){
             if(data->rec_active){
                 if(sample_len == buffer_size){
-                    sample_start = data->write_head_position;
+                    sample_start = data->write_head_pos;
                 } else {
                     sample_start = 0;
                 }
-                buf[6] = 1;
+                buf[8] = 1;
                 data->rec_active = false;
             }
         }
@@ -87,28 +75,51 @@ void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_
 
         if(data->rec_active){
             int16_t rec_in = radspa_signal_get_value(rec_in_sig, i, render_pass_id);
-            buf[data->write_head_position + BUFFER_OFFSET] = rec_in;
-            data->write_head_position++;
-            if(data->write_head_position >= buffer_size) data->write_head_position = 0;
+            buf[data->write_head_pos + BUFFER_OFFSET] = rec_in;
+
+            data->write_head_pos_long += sample_rate;
+            if(sample_rate == 48000){
+                data->write_head_pos++;
+            } else {
+                data->write_head_pos = (data->write_head_pos_long * 699) >> 25; // equiv to _/48000 (acc 0.008%)
+            }
+            if(data->write_head_pos >= buffer_size){
+                data->write_head_pos = 0;
+                data->write_head_pos_long = 0;
+            }
             if(sample_len < buffer_size){
                 sample_len++;
-                write_uint32_to_buffer_pos(buf, SAMPLE_LEN, sample_len);
+                buf32[SAMPLE_LEN] = sample_len;
             }
         } else {
             if(trigger > 0){
-                read_head_pos = 0;
-                write_uint32_to_buffer_pos(buf, READ_HEAD_POS, read_head_pos);
+                data->read_head_pos_long = 0;
+                data->read_head_pos = 0;
                 data->volume = trigger;
             } else if(trigger < 0){
-                read_head_pos = sample_len;
-                write_uint32_to_buffer_pos(buf, READ_HEAD_POS, read_head_pos);
+                data->read_head_pos = sample_len;
             }
 
-            if(read_head_pos < sample_len){
-                uint32_t sample_offset_pos = read_head_pos + sample_start;
+            if(data->read_head_pos < sample_len){
+                uint32_t sample_offset_pos = data->read_head_pos + sample_start;
                 if(sample_offset_pos >= sample_len) sample_offset_pos -= sample_len;
                 ret = radspa_mult_shift(buf[sample_offset_pos + BUFFER_OFFSET], data->volume);
-                read_head_pos++;
+
+                int32_t pitch_shift = radspa_signal_get_value(pitch_shift_sig, i, render_pass_id);
+                if(pitch_shift != data->pitch_shift_prev){
+                    data->pitch_shift_mult = radspa_sct_to_rel_freq(radspa_clip(pitch_shift - 18376 - 10986 - 4800), 0);
+                    if(data->pitch_shift_mult > (1<<13)) data->pitch_shift_mult = (1<<13);
+                    
+                    data->pitch_shift_prev = pitch_shift;
+                }
+
+                if(sample_rate == 48000 && data->pitch_shift_mult == (1<<11)){
+                    data->read_head_pos_long += sample_rate;
+                    data->read_head_pos++;
+                } else {
+                    data->read_head_pos_long += (sample_rate * data->pitch_shift_mult) >> 11;
+                    data->read_head_pos = (data->read_head_pos_long * 699) >> 25; // equiv to _/48000 (acc 0.008%)
+                }
             } else {
                 //ret = (ret * 255)>>8; // avoid dc clicks with bad samples
                 ret = 0;
@@ -116,9 +127,9 @@ void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_
             radspa_signal_set_value(output_sig, i, ret);
         }
     }
-    write_uint32_to_buffer_pos(buf, READ_HEAD_POS, read_head_pos);
-    write_uint32_to_buffer_pos(buf, SAMPLE_START, sample_start);
-    write_uint32_to_buffer_pos(buf, SAMPLE_LEN, sample_len);
+    buf32[READ_HEAD_POS/2] = data->read_head_pos;
+    buf32[SAMPLE_START/2] = sample_start;
+    buf32[SAMPLE_LEN/2] = sample_len;
 }
 
 radspa_t * sampler_create(uint32_t init_var){
@@ -131,10 +142,14 @@ radspa_t * sampler_create(uint32_t init_var){
     radspa_signal_set(sampler, SAMPLER_TRIGGER, "trigger", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_TRIGGER, 0);
     radspa_signal_set(sampler, SAMPLER_REC_IN, "rec_in", RADSPA_SIGNAL_HINT_INPUT, 0);
     radspa_signal_set(sampler, SAMPLER_REC_TRIGGER, "rec_trigger", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_TRIGGER, 0);
+    radspa_signal_set(sampler, SAMPLER_PITCH_SHIFT, "pitch_shift", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_SCT, 18367);
     sampler_data_t * data = sampler->plugin_data;
     data->trigger_prev = 0;
     data->rec_trigger_prev = 0;
     data->rec_active = false;
+    data->pitch_shift_mult = 1<<11;
+    uint32_t * buf32 = (uint32_t *) sampler->plugin_table;
+    buf32[SAMPLE_RATE/2] = 48000;
     //int16_t * buf = sampler->plugin_table;
     //write_uint32_to_buffer_pos(buf, SAMPLE_START, 0);
     //write_uint32_to_buffer_pos(buf, SAMPLE_LEN, sampler->plugin_table_len);

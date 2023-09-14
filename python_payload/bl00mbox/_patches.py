@@ -107,7 +107,7 @@ class sampler(_Patch):
     def __init__(self, chan, init_var):
         # init can be filename to load into ram
         super().__init__(chan)
-        self.buffer_offset_i16 = 7
+        self.buffer_offset_i16 = 9
         self._filename = ""
         if type(init_var) == str:
             filename = init_var
@@ -141,16 +141,23 @@ class sampler(_Patch):
             return "/flash/sys/samples/" + filename
 
     def load(self, filename):
-        f = wave.open(self._convert_filename(filename), "r")
-
-        assert f.getsampwidth() == 2
-        assert f.getnchannels() in (1, 2)
-        assert f.getcomptype() == "NONE"
+        filename = self._convert_filename(filename)
+        if not os.path.exists(filename):
+            return False
+        try:
+            f = wave.open(filename, "r")
+            assert f.getsampwidth() == 2
+            assert f.getnchannels() in (1, 2)
+            assert f.getcomptype() == "NONE"
+        except:
+            return False
 
         frames = f.getnframes()
         if frames > self.memory_len:
             frames = self.memory_len
         self.sample_len = frames
+
+        self.sample_rate = f.getframerate()
 
         BUFFER_SIZE = int(48000 * 2.5)
 
@@ -176,21 +183,31 @@ class sampler(_Patch):
                     value = int.from_bytes(frame[4 * j : 4 * j + 2], "little")
                     table[i + j] = value
         f.close()
+        return True
 
-    def save(self, filename, overwrite=True):
-        # remove when we actually write
-        return False
+    def save(self, filename, overwrite=False):
+        filename = self._convert_filename(filename)
         if os.path.exists(filename):
             if overwrite:
                 os.remove(filename)
             else:
                 return False
-        f = wave.open(self._convert_filename(filename), "w")
-        for i in range(self.sample_len):
-            data = self.plugins.sampler.table[self._offset_index(i)]
-            # TODO: figure out python bytes
-            # note: index wraps around, ringbuffer!
-            # f.writeframesraw???
+        f = wave.open(filename, "w")
+        f.setnchannels(1)
+        f.setsampwidth(2)
+        f.setframerate(self.sample_rate)
+        start = self._offset_index(0)
+        end = self._offset_index(self.sample_len)
+        print("start: " + str(start))
+        print("end: " + str(end))
+        print("memory_len: " + str(self.memory_len))
+
+        table = self.plugins.sampler.table_bytearray
+        if end > start:
+            f.writeframes(table[2 * start : 2 * end])
+        else:
+            f.writeframes(table[2 * start :])
+            f.writeframes(table[2 * self.buffer_offset_i16 : 2 * end])
         f.close()
         return True
 
@@ -232,33 +249,50 @@ class sampler(_Patch):
 
     @property
     def read_head_position(self):
-        return self._decode_uint32(0)
+        table = self.plugins.sampler.table_uint32_array
+        return table[0]
 
     @read_head_position.setter
     def read_head_position(self, val):
         if val >= self.memory_len:
             val = self.memory_len - 1
-        self._encode_uint32(0, val)
+        table = self.plugins.sampler.table_uint32_array
+        table[0] = int(val)
 
     @property
     def sample_start(self):
-        return self._decode_uint32(2)
+        table = self.plugins.sampler.table_uint32_array
+        return table[1]
 
     @sample_start.setter
     def sample_start(self, val):
         if val >= self.memory_len:
             val = self.memory_len - 1
-        self._encode_uint32(2, val)
+        table = self.plugins.sampler.table_uint32_array
+        table[1] = int(val)
 
     @property
     def sample_len(self):
-        return self._decode_uint32(4)
+        table = self.plugins.sampler.table_uint32_array
+        return table[2]
 
     @sample_len.setter
     def sample_len(self, val):
         if val > self.memory_len:
             val = self.memory_len
-        self._encode_uint32(4, val)
+        table = self.plugins.sampler.table_uint32_array
+        table[2] = int(val)
+
+    @property
+    def sample_rate(self):
+        table = self.plugins.sampler.table_uint32_array
+        return table[3]
+
+    @sample_rate.setter
+    def sample_rate(self, val):
+        table = self.plugins.sampler.table_uint32_array
+        if val < 0:
+            table[3] = int(val)
 
     @property
     def filename(self):
@@ -270,8 +304,8 @@ class sampler(_Patch):
         returns true once after a record cycle has been completed. useful for checking whether a save is necessary if nothing else has modified the table.
         """
 
-        if self.plugins.sampler_table[6]:
-            self.plugins.sampler_table[6] = 0
+        if self.plugins.sampler_table[8]:
+            self.plugins.sampler_table[8] = 0
             return True
         return False
 

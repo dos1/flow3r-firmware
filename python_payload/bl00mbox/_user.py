@@ -444,6 +444,13 @@ class Plugin:
         struct = uctypes.struct(pointer, descriptor)
         return struct.table
 
+    @property
+    def table_uint32_array(self):
+        pointer, max_len = self.table_pointer
+        descriptor = {"table": (0 | uctypes.ARRAY, (max_len // 2) | uctypes.UINT32)}
+        struct = uctypes.struct(pointer, descriptor)
+        return struct.table
+
 
 class Channel:
     def __init__(self, name=None):

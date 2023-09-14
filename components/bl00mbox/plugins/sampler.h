@@ -3,10 +3,15 @@
 #include <radspa_helpers.h>
 
 typedef struct {
-    uint32_t write_head_position;
+    uint64_t write_head_pos_long;
+    uint64_t read_head_pos_long;
+    uint32_t write_head_pos;
+    uint32_t read_head_pos;
+    int16_t pitch_shift_prev;
     int16_t trigger_prev;
     int16_t rec_trigger_prev;
     int16_t volume;
+    uint32_t pitch_shift_mult;
     bool rec_active;
 } sampler_data_t;
 
