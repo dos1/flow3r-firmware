@@ -19,7 +19,6 @@ class ViewState(Enum):
 
 
 class AppList(BaseView):
-    initial_ticks: int = 0
     _scroll_pos: float = 0.0
     _state: ViewState = ViewState.INITIAL
 
@@ -31,10 +30,6 @@ class AppList(BaseView):
         super().__init__()
         self.background = Flow3rView()
         self._sc = ScrollController()
-
-    def on_enter(self, vm: Optional[ViewManager]) -> None:
-        self.vm = vm
-        self.initial_ticks = time.ticks_ms()
 
     def draw(self, ctx: Context) -> None:
         ctx.move_to(0, 0)
@@ -122,7 +117,7 @@ class AppList(BaseView):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
         self._sc.think(ins, delta_ms)
-        if self.initial_ticks == 0 or time.ticks_ms() < self.initial_ticks + 300:
+        if self.is_active() and self.vm.transitioning:
             return
 
         if self._state == ViewState.INITIAL:

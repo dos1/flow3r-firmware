@@ -95,6 +95,9 @@ class DownloadView(BaseView):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)  # Let BaseView do its thing
 
+        if self.vm.transitioning:
+            return
+
         if self.input.buttons.app.middle.pressed:
             if self.vm is None:
                 raise RuntimeError("vm is None")
