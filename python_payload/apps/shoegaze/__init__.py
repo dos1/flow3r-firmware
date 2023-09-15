@@ -44,6 +44,7 @@ class ShoegazeApp(Application):
         self._rand_rot = 0.0
         self.delay_on = True
         self.fuzz_on = True
+        self._lofi = False
 
     def _build_synth(self) -> None:
         if self.blm is None:
@@ -209,6 +210,8 @@ class ShoegazeApp(Application):
         if buttons.app.left.pressed:
             pass
             # self.fuzz_toggle()
+        if buttons.app.middle.pressed:
+            self.lofi = not self.lofi
 
         for i in range(1, 10, 2):
             if petals[i].whole.pressed:
@@ -232,18 +235,30 @@ class ShoegazeApp(Application):
             self.bass_string.decay = 1000
             self.bass_string.signals.trigger.start()
 
+    @property
+    def lofi(self):
+        return self._lofi
+
+    @lofi.setter
+    def lofi(self, val):
+        self._lofi = bool(val)
+        if self._lofi:
+            sys_display.set_mode(2313)
+        else:
+            sys_display.set_mode(912)
+
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
-        sys_display.set_mode(2313)
+        self.lofi = self.lofi
         if self.blm is None:
             self._build_synth()
-        if self.blm is not None:  # silly mypy
-            self.blm.foreground = True
+        self.blm.foreground = True
 
     def on_exit(self) -> None:
         super().on_exit()
         if self.blm is not None:
-            self.blm.free = True  # yeeting the channel in the backend
+            self.blm.clear()
+            self.blm.free = True
         self.blm = None
 
 
