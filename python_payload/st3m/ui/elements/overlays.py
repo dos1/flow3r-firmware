@@ -66,6 +66,7 @@ class Compositor(Responder):
             OverlayKind.Debug: True,
             OverlayKind.Toast: True,
         }
+        self._last_fps_string = ""
 
     def _enabled_overlays(self) -> List[Responder]:
         res: List[Responder] = []
@@ -95,26 +96,29 @@ class Compositor(Responder):
             return
         octx = sys_display.ctx(sys_display.osd)
         if settings.onoff_show_fps.value:
-            _clip_x0 = 0
-            _clip_y1 = 0
-            _clip_x1 = 240
-            _clip_y1 = 24
-            octx.save()
-            octx.rgba(0, 0, 0, 0.5)
-            octx.compositing_mode = octx.COPY
-            octx.rectangle(
-                _clip_x0 - 120,
-                _clip_y0 - 120,
-                _clip_x1 - _clip_x0 + 1,
-                _clip_y1 - _clip_y0 + 1,
-            ).fill()
-            octx.restore()
-            octx.gray(1)
-            octx.font_size = 18
-            octx.font = "Bold"
-            octx.move_to(0, -103)
-            octx.text_align = octx.CENTER
-            octx.text("{0:.1f}".format(sys_display.fps()))
+            fps_string = "{0:.1f}".format(sys_display.fps())
+            if fps_string != self._last_fps_string:
+                self._last_fps_string = fps_string
+                _clip_x0 = 0
+                _clip_y1 = 0
+                _clip_x1 = 240
+                _clip_y1 = 24
+                octx.save()
+                octx.rgba(0, 0, 0, 0.5)
+                octx.compositing_mode = octx.COPY
+                octx.rectangle(
+                    _clip_x0 - 120,
+                    _clip_y0 - 120,
+                    _clip_x1 - _clip_x0 + 1,
+                    _clip_y1 - _clip_y0 + 1,
+                ).fill()
+                octx.restore()
+                octx.gray(1)
+                octx.font_size = 18
+                octx.font = "Bold"
+                octx.move_to(0, -103)
+                octx.text_align = octx.CENTER
+                octx.text(fps_string)
         else:
             _clip_x0 = 80
             _clip_y0 = 0
