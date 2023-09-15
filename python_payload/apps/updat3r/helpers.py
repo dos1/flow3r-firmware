@@ -1,4 +1,5 @@
 import os
+import sys_kernel
 
 
 def sd_card_plugged() -> bool:
@@ -11,5 +12,4 @@ def sd_card_plugged() -> bool:
 
 
 def is_sd_card_stock() -> bool:
-    # TODO: check if ~512mb
-    return True
+    return 500000000 < sys_kernel.total_sd_capacity() < 510000000

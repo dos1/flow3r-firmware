@@ -8,7 +8,7 @@ import urequests
 from st3m.ui.view import ViewManager
 import st3m.wifi
 
-# from .helpers import sd_card_plugged
+# from .helpers import sd_card_plugged, is_sd_card_stock
 
 
 def sd_card_plugged() -> bool:
@@ -18,6 +18,10 @@ def sd_card_plugged() -> bool:
     except OSError:
         # OSError: [Errno 19] ENODEV
         return False
+
+
+def is_sd_card_stock() -> bool:
+    return 500000000 < sys_kernel.total_sd_capacity() < 510000000
 
 
 class UpdaterApp(Application):
@@ -61,8 +65,11 @@ class UpdaterApp(Application):
 
         self._sd_present = sd_card_plugged()
         self._sd_failed = False
+        self._sd_stock = is_sd_card_stock()
 
-        if self._sd_present:
+        if self._sd_stock:
+            self._state_text = "stock SD detected!\nunfortunately, it can be unreliable :(\n\nswap it with another formatted\nMBR+FAT32 to use updat3r.\n\nsee git.flow3r.garden/flow3r\n/flow3r-hardware #3\nfor more info"
+        elif self._sd_present:
             self._state_text = "getting latest version..."
         else:
             self._state_text = "no SD card detected!\n\nif you have one in there\nturn off and on flow3r power (ha)\nthen try to reattempt\ndownloading the update"
@@ -71,13 +78,9 @@ class UpdaterApp(Application):
         super().on_exit()
 
     def download_file(self, url: str, path: str, block_size=40960) -> None:
-        # start by removing the file
         path_fd = None
 
         try:
-            if os.path.exists(path):
-                os.remove(path)
-
             path_fd = open(path, "wb")
         except OSError as e:
             if "EIO" in str(e):
@@ -98,10 +101,6 @@ class UpdaterApp(Application):
             req.close()
 
     def download_file_no_yield(self, url: str, path: str, block_size=10240) -> None:
-        # start by deleting the file
-        if os.path.exists(path):
-            os.delete(path)
-
         req = urequests.get(url)
         print("opened url")
         path_fd = open(path, "wb")
@@ -123,11 +122,11 @@ class UpdaterApp(Application):
         # TODO: version comparison
         # TODO: verify hash
 
-        if self._sd_failed:
-            self._state_text = "don't panic, but...\na weird SD bug happened D:\nturn off and on flow3r power (ha)\nthen try to reattempt\ndownloading the update\n\nyou got this."
+        if self._sd_stock or not self._sd_present:
             return
 
-        if not self._sd_present:
+        if self._sd_failed:
+            self._state_text = "don't panic, but...\na weird SD bug happened D:\nturn off and on flow3r power (ha)\nthen try to reattempt\ndownloading the update\n\nyou got this."
             return
 
         if self.latest_version is None and self.wlan_instance.isconnected():
