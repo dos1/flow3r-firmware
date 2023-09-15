@@ -213,8 +213,8 @@ void st3m_gfx_set_palette(uint8_t *pal_in, int count) {
 
 void st3m_gfx_set_default_mode(st3m_gfx_mode mode) {
     if (mode & st3m_gfx_unset) {
-        if (mode & st3m_gfx_force)
-            default_mode &= ~st3m_gfx_force;
+        if (mode & st3m_gfx_lock)
+            default_mode &= ~st3m_gfx_lock;
         else if (mode & st3m_gfx_4x)
             default_mode &= ~st3m_gfx_4x;
         else if (mode & st3m_gfx_osd)
@@ -245,18 +245,18 @@ void st3m_gfx_set_default_mode(st3m_gfx_mode mode) {
         default_mode |= st3m_gfx_osd;
     } else if (mode == st3m_gfx_low_latency) {
         default_mode |= st3m_gfx_low_latency;
-    } else if (mode == st3m_gfx_force) {
-        default_mode |= st3m_gfx_force;
+    } else if (mode == st3m_gfx_lock) {
+        default_mode |= st3m_gfx_lock;
     } else if (mode == st3m_gfx_direct_ctx) {
         default_mode |= st3m_gfx_direct_ctx;
     } else
         default_mode = mode;
 
-    if (default_mode & st3m_gfx_force) {
-        default_mode &= ~st3m_gfx_force;
+    if (default_mode & st3m_gfx_lock) {
+        default_mode &= ~st3m_gfx_lock;
         _st3m_gfx_mode = default_mode + 1;
         st3m_gfx_set_mode(st3m_gfx_default);
-        default_mode |= st3m_gfx_force;
+        default_mode |= st3m_gfx_lock;
     } else {
         _st3m_gfx_mode = default_mode + 1;
         st3m_gfx_set_mode(st3m_gfx_default);
@@ -311,7 +311,7 @@ static void st3m_gfx_init_palette(st3m_gfx_mode mode) {
 }
 
 st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode) {
-    if ((mode == _st3m_gfx_mode) || (0 != (default_mode & st3m_gfx_force))) {
+    if ((mode == _st3m_gfx_mode) || (0 != (default_mode & st3m_gfx_lock))) {
         st3m_gfx_init_palette(
             mode);  // we say it is a no-op but reset the palette
         return (mode ? mode : default_mode);

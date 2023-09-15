@@ -126,7 +126,7 @@ class App(Application):
         curmode = sys_display.get_mode()
         low_latency = (curmode & sys_display.low_latency) != 0
         direct_ctx = (curmode & sys_display.direct_ctx) != 0
-        lock = (curmode & sys_display.force) != 0
+        lock = (curmode & sys_display.lock) != 0
         osd = (curmode & sys_display.osd) != 0
         scale = 0
         if (curmode & sys_display.x4) == sys_display.x2:
@@ -194,7 +194,7 @@ class App(Application):
         mode += osd * sys_display.osd
         mode += low_latency * sys_display.low_latency
         mode += direct_ctx * sys_display.direct_ctx
-        mode += lock * sys_display.force
+        mode += lock * sys_display.lock
 
         if scale == 1:
             mode += sys_display.x2

@@ -17,7 +17,7 @@ typedef enum {
     // shallower pipeline, in the future might mean immediate mode
     st3m_gfx_low_latency = 512,
     st3m_gfx_unset = 1024,
-    st3m_gfx_force = 8192,
+    st3m_gfx_lock = 8192,
     st3m_gfx_2x = 2048,
     st3m_gfx_3x = 4096,
     st3m_gfx_4x = 6144,
