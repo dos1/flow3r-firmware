@@ -47,6 +47,7 @@ set(MICROPY_SOURCE_PORT
     ${MICROPY_PORT_DIR}/gccollect.c
     ${MICROPY_PORT_DIR}/mphalport.c
     ${MICROPY_PORT_DIR}/fatfs_port.c
+    ${MICROPY_PORT_DIR}/flow3r_statvfs.c
     ${MICROPY_PORT_DIR}/help.c
     ${MICROPY_PORT_DIR}/modutime.c
     ${MICROPY_PORT_DIR}/machine_pin.c
@@ -102,6 +103,7 @@ set(IDF_COMPONENTS
     esp_timer
     esp_netif
     esp_psram
+    fatfs
     freertos
     hal
     heap
@@ -115,6 +117,7 @@ set(IDF_COMPONENTS
     spi_flash
     ulp
     vfs
+    wear_levelling
     xtensa
 )
 

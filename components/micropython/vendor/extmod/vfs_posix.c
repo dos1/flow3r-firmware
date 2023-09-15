@@ -47,6 +47,8 @@
 #include <unistd.h>
 #include <dirent.h>
 
+void get_statvfs(char* drive, uint32_t *out);
+
 typedef struct _mp_obj_vfs_posix_t {
     mp_obj_base_t base;
     vstr_t root;
@@ -325,6 +327,39 @@ STATIC mp_obj_t vfs_posix_stat(mp_obj_t self_in, mp_obj_t path_in) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(vfs_posix_stat_obj, vfs_posix_stat);
 
+STATIC mp_obj_t vfs_posix_statvfs(mp_obj_t self_in, mp_obj_t path_in) {
+    mp_obj_vfs_posix_t *self = MP_OBJ_TO_PTR(self_in);
+    const char *path = vfs_posix_get_path_str(self, path_in);
+
+    char device_path[3];
+    if (strncmp(path, "/sd", 3) == 0) {
+        strcpy(device_path, "1:");
+    } else if (strncmp(path, "/flash", 6) == 0) {
+        strcpy(device_path, "0:");
+    } else {
+        mp_raise_OSError(2);
+        return mp_const_none;
+    }
+
+    uint32_t statvfs_array[10] = {0};
+    get_statvfs(device_path, statvfs_array);
+
+    // https://man7.org/linux/man-pages/man3/statvfs.3.htm
+    mp_obj_tuple_t *t = MP_OBJ_TO_PTR(mp_obj_new_tuple(10, NULL));
+    t->items[0] = MP_OBJ_NEW_SMALL_INT(0); // bsize
+    t->items[1] = MP_OBJ_NEW_SMALL_INT(statvfs_array[1]); // frsize
+    t->items[2] = MP_OBJ_NEW_SMALL_INT(0); // blocks
+    t->items[3] = MP_OBJ_NEW_SMALL_INT(statvfs_array[3]); // bfree
+    t->items[4] = MP_OBJ_NEW_SMALL_INT(statvfs_array[4]); // bavail
+    t->items[5] = MP_OBJ_NEW_SMALL_INT(0);
+    t->items[6] = MP_OBJ_NEW_SMALL_INT(0);
+    t->items[7] = MP_OBJ_NEW_SMALL_INT(0);
+    t->items[8] = MP_OBJ_NEW_SMALL_INT(0);
+    t->items[9] = MP_OBJ_NEW_SMALL_INT(255); // namemax
+    return MP_OBJ_FROM_PTR(t);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(vfs_posix_statvfs_obj, vfs_posix_statvfs);
+
 STATIC const mp_rom_map_elem_t vfs_posix_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_mount), MP_ROM_PTR(&vfs_posix_mount_obj) },
     { MP_ROM_QSTR(MP_QSTR_umount), MP_ROM_PTR(&vfs_posix_umount_obj) },
@@ -338,6 +373,7 @@ STATIC const mp_rom_map_elem_t vfs_posix_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_rename), MP_ROM_PTR(&vfs_posix_rename_obj) },
     { MP_ROM_QSTR(MP_QSTR_rmdir), MP_ROM_PTR(&vfs_posix_rmdir_obj) },
     { MP_ROM_QSTR(MP_QSTR_stat), MP_ROM_PTR(&vfs_posix_stat_obj) },
+    { MP_ROM_QSTR(MP_QSTR_statvfs), MP_ROM_PTR(&vfs_posix_statvfs_obj) },
 };
 STATIC MP_DEFINE_CONST_DICT(vfs_posix_locals_dict, vfs_posix_locals_dict_table);
 
