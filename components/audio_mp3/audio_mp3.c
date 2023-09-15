@@ -152,6 +152,12 @@ static void mp3_think(st3m_media *media, float ms_elapsed) {
 
     if (self->control.paused) return;
 
+    if (self->file) {
+        self->control.position = self->offset;
+        if (self->offset + 512 >= self->file_size)
+            self->control.position = self->file_size;
+    }
+
     if (!self->started) {
         self->started = 1;
         mp3_think(media, 100);
@@ -373,6 +379,6 @@ st3m_media *st3m_media_load_mp3(const char *path) {
         return NULL;
     }
     mp3dec_init(&self->mp3d);
-    self->control.duration = -1;
+    self->control.duration = self->file_size;
     return (st3m_media *)self;
 }
