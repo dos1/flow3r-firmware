@@ -166,7 +166,8 @@ class AppList(BaseView):
                 raise RuntimeError("vm is None")
 
             app = self.apps[self._sc.target_position()]
-            url = app["tarDownloadUrl"]
+            url = app["rawtarDownloadUrl"]
+            url = app["repoUrl"] + "/-/archive/main/" + app["repoUrl"].split("/")[-1] + "-main.tar"
             name = app["name"]
             author = app["author"]
             self.vm.push(

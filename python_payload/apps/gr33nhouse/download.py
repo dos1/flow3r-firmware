@@ -148,10 +148,8 @@ class DownloadView(BaseView):
 
             try:
                 gc.collect()
-                tar = gzip.decompress(self.response)
+                t = TarFile(fileobj=io.BytesIO(self.response))
                 self.response = None
-                gc.collect()
-                t = TarFile(fileobj=io.BytesIO(tar))
             except MemoryError:
                 gc.collect()
                 self.response = None
