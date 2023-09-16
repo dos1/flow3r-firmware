@@ -144,7 +144,6 @@ static void mp3_think(st3m_media *media, float ms_elapsed) {
     if (self->file && self->control.seek == 0) {
         rewind(self->file);
         self->offset = 0;
-        self->pos = 0;
         self->control.time = 0;
         self->control.position = 0;
         self->control.seek = -1;
