@@ -38,18 +38,77 @@ _all_kinds = [
     OverlayKind.Toast,
 ]
 
-_clip_x0 = 120
-_clip_x1 = 120
-_clip_y0 = 0
-_clip_y1 = 0
+
+class Region:
+    x0: int
+    y0: int
+    x1: int
+    y1: int
+
+    def __init__(self, *args):
+        if not args:
+            self.clear()
+        else:
+            self.set(*args)
+
+    def set(self, x0, y0, x1, y1):
+        self.x0 = x0
+        self.y0 = y0
+        self.x1 = x1
+        self.y1 = y1
+
+    def add(self, x0, y0, x1, y1):
+        self.x0 = min(self.x0, x0)
+        self.y0 = min(self.y0, y0)
+        self.x1 = max(self.x1, x1)
+        self.y1 = max(self.y1, y1)
+
+    def add_region(self, rect):
+        self.add(rect.x0, rect.y0, rect.x1, rect.y1)
+
+    def clear(self):
+        self.x0 = self.y0 = self.x1 = self.y1 = -120
+
+    def fill(self, ctx):
+        ctx.rectangle(self.x0, self.y0, self.x1 - self.x0, self.y1 - self.y0)
+        ctx.fill()
+
+    def is_empty(self):
+        return self.x1 == self.x0 or self.y1 == self.y0
+
+    def set_clip(self):
+        sys_display.overlay_clip(
+            self.x0 + 120, self.y0 + 120, self.x1 + 120, self.y1 + 120
+        )
+
+    def copy(self, rect):
+        self.x0 = rect.x0
+        self.x1 = rect.x1
+        self.y0 = rect.y0
+        self.y1 = rect.y1
+
+    def __eq__(self, rect):
+        return (
+            self.x0 == rect.x0
+            and self.x1 == rect.x1
+            and self.y0 == rect.y0
+            and self.y1 == rect.y1
+        )
+
+    def __repr__(self):
+        return f"({self.x0} x {self.y0} - {self.x1} x {self.y1})"
 
 
 class Overlay(Responder):
     """
-    An Overlay is a Responder with some kind of OverlayKind attached.g
+    An Overlay is a Responder with some kind of OverlayKind attached.
     """
 
     kind: OverlayKind
+
+    def needs_redraw(rect: Region) -> bool:
+        rect.add(-120, -120, 120, 120)
+        return True
 
 
 class Compositor(Responder):
@@ -67,7 +126,8 @@ class Compositor(Responder):
             OverlayKind.Toast: True,
         }
         self._last_fps_string = ""
-        self._frame_skip = 0
+        self._clip_rect = Region()
+        self._last_clip = Region()
 
     def _enabled_overlays(self) -> List[Responder]:
         res: List[Responder] = []
@@ -87,32 +147,31 @@ class Compositor(Responder):
             or settings.onoff_show_fps.value
         ):
             return
-        for overlay in self._enabled_overlays():
-            overlay.think(ins, delta_ms)
+        overlays = self._enabled_overlays()
+        for i in range(len(overlays)):
+            overlays[i].think(ins, delta_ms)
 
     def draw(self, ctx: Context) -> None:
-        global _clip_x0, _clip_y0, _clip_x1, _clip_y1
         self.main.draw(ctx)
         if (sys_display.get_mode() & sys_display.osd) == 0:
             return
+        overlays = self._enabled_overlays()
         if settings.onoff_show_fps.value:
             fps_string = "{0:.1f}".format(sys_display.fps())
-            if fps_string != self._last_fps_string and self._frame_skip <= 0:
+            if fps_string != self._last_fps_string:
                 octx = sys_display.ctx(sys_display.osd)
                 self._last_fps_string = fps_string
-                _clip_x0 = 0
-                _clip_y1 = 0
-                _clip_x1 = 240
-                _clip_y1 = 24
+                self._clip_rect.set(-120, -120, 120, -96)
+                self._last_clip.add_region(self._clip_rect)
+                if self._last_clip != self._clip_rect:
+                    octx.save()
+                    octx.compositing_mode = octx.CLEAR
+                    self._last_clip.fill(octx)
+                    octx.restore()
                 octx.save()
                 octx.rgba(0, 0, 0, 0.5)
                 octx.compositing_mode = octx.COPY
-                octx.rectangle(
-                    _clip_x0 - 120,
-                    _clip_y0 - 120,
-                    _clip_x1 - _clip_x0 + 1,
-                    _clip_y1 - _clip_y0 + 2,
-                ).fill()
+                self._clip_rect.fill(octx)
                 octx.restore()
                 octx.gray(1)
                 octx.font_size = 18
@@ -120,34 +179,32 @@ class Compositor(Responder):
                 octx.move_to(0, -103)
                 octx.text_align = octx.CENTER
                 octx.text(fps_string)
-                self._frame_skip = 5
                 sys_display.update(octx)
-                sys_display.overlay_clip(_clip_x0, _clip_y0, _clip_x1, _clip_y1)
-            else:
-                self._frame_skip -= 1
+                self._clip_rect.set_clip()
+                self._last_clip.copy(self._clip_rect)
         else:
-            if self._frame_skip <= 0:
-                overlays = self._enabled_overlays()
-                _clip_x0 = 80
-                _clip_y0 = 0
-                _clip_x1 = 160
-                _clip_y1 = 0
-
-                octx = sys_display.ctx(sys_display.osd)
-                octx.save()
-                octx.compositing_mode = octx.CLEAR
-                if len(overlays) == 1:
-                    octx.rectangle(-50, -120, 100, 150).fill()
-                else:
-                    octx.rectangle(-120, -120, 240, 240).fill()
-                octx.restore()
-                for overlay in overlays:
-                    overlay.draw(octx)
-                sys_display.update(octx)
-                sys_display.overlay_clip(_clip_x0, _clip_y0, _clip_x1, _clip_y1)
-                self._frame_skip = 2
-            else:
-                self._frame_skip -= 1
+            self._clip_rect.clear()
+            redraw = False
+            for i in range(len(overlays)):
+                redraw = overlays[i].needs_redraw(self._clip_rect) or redraw
+            if self._clip_rect.is_empty():
+                self._clip_rect.set_clip()
+                return
+            if self._last_clip != self._clip_rect:
+                redraw = True
+            if not redraw:
+                return
+            octx = sys_display.ctx(sys_display.osd)
+            octx.save()
+            octx.compositing_mode = octx.CLEAR
+            self._last_clip.add_region(self._clip_rect)
+            self._last_clip.fill(octx)
+            octx.restore()
+            for i in range(len(overlays)):
+                overlays[i].draw(octx)
+            sys_display.update(octx)
+            self._clip_rect.set_clip()
+            self._last_clip.copy(self._clip_rect)
 
     def add_overlay(self, ov: Overlay) -> None:
         """
@@ -235,6 +292,10 @@ class OverlayDebug(Overlay):
         ctx.gray(1).move_to(0, 86).text(self.text())
         ctx.restore()
 
+    def needs_redraw(self, rect: Region) -> bool:
+        rect.add(-120, 80, 120, 92)
+        return True
+
 
 class OverlayCaptouch(Overlay):
     kind = OverlayKind.Touch
@@ -273,16 +334,15 @@ class OverlayCaptouch(Overlay):
             dot.think(ins, delta_ms)
 
     def draw(self, ctx: Context) -> None:
-        global _clip_y1, _clip_x0, _clip_y0, _clip_y1
         ctx.rgb(1, 0, 1)
         for dot in self.dots:
             ctx.save()
             dot.draw(ctx)
             ctx.restore()
-        _clip_x0 = 0
-        _clip_x1 = 240
-        _clip_y0 = 0
-        _clip_y1 = 240
+
+    def needs_redraw(self, rect: Region) -> bool:
+        rect.add(0, 0, 240, 240)
+        return True
 
 
 class OverlayVolume(Overlay):
@@ -336,15 +396,13 @@ class OverlayVolume(Overlay):
 
         if self._showing is None:
             return
-        self._showing -= delta_ms / 2
+        self._showing -= delta_ms
         if self._showing < 0:
             self._showing = None
 
     def draw(self, ctx: Context) -> None:
-        global _clip_y1
         if self._showing is None:
             return
-        _clip_y1 = max(_clip_y1, 161)
 
         opacity = self._showing / 200
         opacity = min(opacity, 0.8)
@@ -393,6 +451,11 @@ class OverlayVolume(Overlay):
         ctx.round_rectangle(-30, 20, width, 10, 3)
         ctx.fill()
 
+    def needs_redraw(self, rect: Region) -> bool:
+        if self._showing:
+            rect.add(-40, -40, 40, 40)
+        return self._showing
+
 
 class Icon(Responder):
     """
@@ -403,10 +466,14 @@ class Icon(Responder):
     """
 
     WIDTH: int = 25
+    _changed: bool = True
 
     @abstractmethod
     def visible(self) -> bool:
         ...
+
+    def changed(self) -> bool:
+        return self._changed
 
 
 class USBIcon(Icon):
@@ -418,8 +485,15 @@ class USBIcon(Icon):
 
     WIDTH: int = 30
 
+    def __init__(self):
+        self._visible = sys_kernel.usb_connected()
+
     def visible(self) -> bool:
-        return sys_kernel.usb_connected()
+        visible = sys_kernel.usb_connected()
+        if self._visible != visible:
+            self._changed = True
+            self._visible = visible
+        return self._visible
 
     def draw(self, ctx: Context) -> None:
         ctx.gray(1.0)
@@ -435,6 +509,12 @@ class USBIcon(Icon):
     def think(self, ins: InputState, delta_ms: int) -> None:
         pass
 
+    def changed(self) -> bool:
+        if self._changed:
+            self._changed = False
+            return True
+        return False
+
 
 class WifiIcon(Icon):
     WIDTH: int = 30
@@ -442,6 +522,7 @@ class WifiIcon(Icon):
     def __init__(self) -> None:
         super().__init__()
         self._rssi: float = -120
+        self._changed = True
 
     def visible(self) -> bool:
         return st3m.wifi.enabled()
@@ -461,8 +542,13 @@ class WifiIcon(Icon):
         ctx.gray(1.0 if r > -95 else 0.2)
         ctx.arc(0, 65, 40, a, b, 0).stroke()
 
+        self._changed = False
+
     def think(self, ins: InputState, delta_ms: int) -> None:
-        self._rssi = st3m.wifi.rssi()
+        rssi = st3m.wifi.rssi()
+        if rssi != self._rssi:
+            self._rssi = rssi
+            self._changed = True
 
 
 class BatteryIcon(Icon):
@@ -472,6 +558,7 @@ class BatteryIcon(Icon):
         super().__init__()
         self._percent = 100.0
         self._charging = False
+        self._changed = False
 
     def visible(self) -> bool:
         return True
@@ -506,9 +593,17 @@ class BatteryIcon(Icon):
             ctx.line_to(40, 35 - 10)
             ctx.stroke()
 
+        self._changed = False
+
     def think(self, ins: InputState, delta_ms: int) -> None:
-        self._percent = approximate_battery_percentage(power.battery_voltage)
-        self._charging = power.battery_charging
+        percent = approximate_battery_percentage(power.battery_voltage)
+        charging = power.battery_charging
+        if percent != self._percent:
+            self._percent = percent
+            self._changed = True
+        if charging != self._charging:
+            self._charging = charging
+            self._changed = True
 
 
 class IconTray(Overlay):
@@ -528,22 +623,28 @@ class IconTray(Overlay):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.visible = [i for i in self.icons if i.visible()]
-        for v in self.visible:
-            v.think(ins, delta_ms)
+        for i in range(len(self.visible)):
+            self.visible[i].think(ins, delta_ms)
 
     def draw(self, ctx: Context) -> None:
-        global _clip_y1
-        if len(self.visible) < 1:
+        if not self.visible:
             return
-        _clip_y1 = max(_clip_y1, 32)
         width = 0
-        for icon in self.visible:
-            width += icon.WIDTH
+        for i in range(len(self.visible)):
+            width += self.visible[i].WIDTH
         x0 = width / -2 + self.visible[0].WIDTH / 2
-        for i, v in enumerate(self.visible):
+        for i in range(len(self.visible)):
             ctx.save()
             ctx.translate(x0, -100)
             ctx.scale(0.13, 0.13)
-            v.draw(ctx)
+            self.visible[i].draw(ctx)
             ctx.restore()
-            x0 = x0 + v.WIDTH
+            x0 = x0 + self.visible[i].WIDTH
+
+    def needs_redraw(self, rect: Region) -> bool:
+        if self.visible:
+            rect.add(-40, -120, 40, -88)
+            for i in range(len(self.visible)):
+                if self.visible[i].changed():
+                    return True
+        return False
