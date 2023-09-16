@@ -106,6 +106,8 @@ class Context:
     END = "end"
     MIDDLE = "middle"
     BEVEL = "bevel"
+    START = "start"
+    _font_size = 15
 
     def __init__(self, _ctx):
         self._ctx = _ctx
@@ -152,10 +154,11 @@ class Context:
 
     @property
     def font_size(self):
-        return None
+        return self._font_size
 
     @font_size.setter
     def font_size(self, v):
+        self._font_size = v
         self._emit(f"fontSize {v:.3f}")
 
     @property
@@ -301,6 +304,12 @@ class Context:
             f"gradientAddStop {pos:.3f} {red:.3f} {green:.3f} {blue:.3f} {alpha:.3f} "
         )
         return self
+
+    def clip(self):
+        return
+
+    def begin_path(self):
+        return
 
     def arc(self, x, y, radius, arc_from, arc_to, direction):
         self._emit(
