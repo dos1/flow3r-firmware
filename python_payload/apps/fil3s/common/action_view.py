@@ -13,11 +13,15 @@ class Action:
     icon: str
     label: str
     enabled: bool
+    progress: float
 
-    def __init__(self, icon: str, label: str, enabled: bool = True) -> None:
+    def __init__(
+        self, icon: str, label: str, enabled: bool = True, progress: float = 0.0
+    ) -> None:
         self.icon = icon
         self.label = label
         self.enabled = enabled
+        self.progress = progress
 
 
 class ActionView(BaseView):
@@ -66,7 +70,12 @@ class ActionView(BaseView):
 
             if action.enabled:
                 utils.draw_circle(
-                    ctx, theme.PRIMARY, self.action_x[i], self.action_y[i], 18
+                    ctx,
+                    theme.PRIMARY,
+                    self.action_x[i],
+                    self.action_y[i],
+                    18,
+                    action.progress,
                 )
             else:
                 utils.draw_circle(

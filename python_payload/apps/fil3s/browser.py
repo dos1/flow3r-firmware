@@ -20,6 +20,7 @@ class Browser(ActionView):
     up_enabled: bool = False
     prev_enabled: bool = False
     next_enabled: bool = False
+    delete_enabled: bool = True
     current_pos = 0
     current_entry: tuple[str, str]
 
@@ -30,6 +31,10 @@ class Browser(ActionView):
         update_path: Callable[[str], None],
     ) -> None:
         super().__init__()
+
+        self._delete_held_for = 0.0
+        self._delete_hold_time = 1.5
+        self._delete_require_release = False
 
         self.path = path
         self.navigate = navigate
@@ -51,6 +56,8 @@ class Browser(ActionView):
             if self.current_pos < len(self.dir_entries) - 1:
                 self.current_pos += 1
                 self._update_position()
+        elif index == 0:
+            self._delete()
 
     def draw(self, ctx: Context) -> None:
         utils.fill_screen(ctx, theme.BACKGROUND)
@@ -72,14 +79,23 @@ class Browser(ActionView):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
 
-        for i in range(0, 5):
+        # Handle delete petal being held down
+        if ins.captouch.petals[0].pressed:
+            if not self._delete_require_release:
+                self._delete_held_for += delta_ms / 1000
+                if self._delete_held_for > self._delete_hold_time:
+                    self._delete_held_for = self._delete_hold_time
+                    self._delete_require_release = True
+                    self._on_action(0)
+        else:
+            self._delete_held_for = 0.0
+            self._delete_require_release = False
+        self.actions[0].progress = self._delete_held_for / self._delete_hold_time
+
+        for i in range(1, 5):
             if self.input.captouch.petals[i * 2].whole.pressed:
                 self._on_action(i)
                 return
-
-    def _is_dir(self, path: str) -> bool:
-        st_mode = uos.stat(path)[0]  # Can fail with OSError
-        return stat.S_ISDIR(st_mode)
 
     def _get_dir_entry(
         self, names: list[str]
@@ -88,7 +104,7 @@ class Browser(ActionView):
             try:
                 if self.path + name == "/flash/sys/st3m":
                     yield (name, "\ue545")
-                elif self._is_dir(self.path + name):
+                elif utils.is_dir(self.path + name):
                     yield (name, "\ue2c7")
                 else:
                     yield (name, "\ue873")
@@ -121,7 +137,7 @@ class Browser(ActionView):
         old_path = self.path
         new_path = self.path + name
         try:
-            if self._is_dir(new_path):
+            if utils.is_dir(new_path):
                 self._change_path(new_path + "/")
             else:
                 self.update_path(self.path + name)
@@ -130,6 +146,24 @@ class Browser(ActionView):
             # TODO: Create error view
             print(f"Failed to open {new_path}: {e}")
             self._change_path(old_path)
+
+    def _delete(self) -> None:
+        name = self.dir_entries[self.current_pos][0]
+        path = self.path + name
+
+        try:
+            if utils.is_dir(path):
+                utils.rmdirs(path)
+            else:
+                os.remove(path)
+                print(f"deleted file: {path}")
+
+            # refresh dir listing
+            self.current_pos = max(self.current_pos - 1, 0)
+            self._scan_path()
+        except Exception as e:
+            # TODO: Create error view
+            print(f"Failed to delete {path}: {e}")
 
     def _up(self) -> None:
         if not self.up_enabled or len(self.path) <= 1:
@@ -144,7 +178,8 @@ class Browser(ActionView):
 
     def _update_actions(self) -> None:
         self.actions = [
-            Action(icon="\ue3e3", label="Menu", enabled=False),
+            # TODO: swap for a better icon
+            Action(icon="\ue3e3", label="Delete", enabled=self.delete_enabled),
             Action(icon="\ue409", label="Next", enabled=self.next_enabled),
             Action(icon="\ue876", label="Select"),
             Action(icon="\ue5c4", label="Back", enabled=self.up_enabled),
@@ -154,9 +189,18 @@ class Browser(ActionView):
     def _update_position(self) -> None:
         try:
             self.current_entry = self.dir_entries[self.current_pos]
-        except:
+        except Exception:
             self.current_entry = ("\ue002", "No files")
 
         self.prev_enabled = self.current_pos > 0
         self.next_enabled = self.current_pos < len(self.dir_entries) - 1
+        # disallow deleting st3m folder
+        name = self.dir_entries[self.current_pos][0]
+        self.delete_enabled = self.path + name not in [
+            "/flash",
+            "/flash/sys",
+            "/flash/sys/st3m",
+            "/sd",
+        ]
+
         self._update_actions()
