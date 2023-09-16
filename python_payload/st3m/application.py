@@ -409,22 +409,22 @@ class BundleManager:
                 log.error(f"Failed to bundle from {dirpath}: {e}")
                 continue
 
-            id_ = b.id
-            if id_ not in self.bundles:
-                self.bundles[id_] = b
+            bundle_name = b.name
+            if bundle_name not in self.bundles:
+                self.bundles[bundle_name] = b
                 continue
-            ex = self.bundles[id_]
+            ex = self.bundles[bundle_name]
 
             # Do we have a newer version?
             if b.version > ex.version:
-                self.bundles[id_] = b
+                self.bundles[bundle_name] = b
                 continue
             # Do we have a higher priority source?
             if self._source_trumps(b.source, ex.source):
-                self.bundles[id_] = b
+                self.bundles[bundle_name] = b
                 continue
             log.warning(
-                f"Ignoring {id_} at {b.source} as it already exists at {ex.source}"
+                f"Ignoring {bundle_name} at {b.source} as it already exists at {ex.source}"
             )
 
     def update(self) -> None:
