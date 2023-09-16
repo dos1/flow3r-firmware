@@ -43,9 +43,9 @@ class Browser(ActionView):
             if self.current_pos > 0:
                 self.current_pos -= 1
                 self._update_position()
-        if index == 3:
+        elif index == 3:
             self._up()
-        if index == 2:
+        elif index == 2:
             self._select()
         elif index == 1:
             if self.current_pos < len(self.dir_entries) - 1:
@@ -113,6 +113,7 @@ class Browser(ActionView):
             up_action.enabled = self.up_enabled
 
         self.update_path(self.path)
+        self._update_actions()
 
     def _select(self) -> None:
         name = self.dir_entries[self.current_pos][0]
