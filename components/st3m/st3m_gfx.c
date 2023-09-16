@@ -71,7 +71,9 @@ static Ctx *fb_RGB332_ctx = NULL;
 static Ctx *fb_RGBA8_ctx = NULL;
 static Ctx *fb_RGB8_ctx = NULL;
 
+#define ST3M_OSD_LOCK_TIMEOUT 50000  // ~5ms bit more due to overhead
 static int st3m_osd_lock = 0;
+static int st3m_osd_ctx_lock = 0;
 
 typedef struct {
     Ctx *user_ctx;
@@ -181,7 +183,11 @@ void st3m_gfx_start_frame(Ctx *ctx) {
 Ctx *st3m_gfx_ctx(st3m_gfx_mode mode) {
     Ctx *ctx = st3m_gfx_ctx_int(mode);
     if (mode == st3m_gfx_osd) {
-        st3m_osd_lock = 20000;
+        while (st3m_osd_ctx_lock > 0) {
+            st3m_osd_ctx_lock--;
+            usleep(1);
+        }
+        st3m_osd_lock = ST3M_OSD_LOCK_TIMEOUT;
     }
     st3m_gfx_start_frame(ctx);
     return ctx;
@@ -443,9 +449,11 @@ static void st3m_gfx_task(void *_arg) {
                     st3m_osd_lock--;
                     usleep(1);
                 }
+                st3m_osd_ctx_lock = ST3M_OSD_LOCK_TIMEOUT;
                 flow3r_bsp_display_send_fb_osd(
                     user_fb, bits, scale, osd_fb, drawlist->osd_x0,
                     drawlist->osd_y0, drawlist->osd_x1, drawlist->osd_y1);
+                st3m_osd_ctx_lock = 0;
             } else {
                 flow3r_bsp_display_send_fb_osd(user_fb, bits, scale, NULL, 0, 0,
                                                0, 0);
