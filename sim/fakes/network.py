@@ -1,6 +1,10 @@
 STA_IF = 1
 
 
+def hostname(hostname: str) -> None:
+    return
+
+
 class WLAN:
     def __init__(self, mode):
         pass

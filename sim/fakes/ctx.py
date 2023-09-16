@@ -100,6 +100,7 @@ class Context:
     LEFT = "left"
     RIGHT = "right"
     CENTER = "center"
+    HANGING = "hanging"
     CLEAR = "clear"
     END = "end"
     MIDDLE = "middle"
@@ -279,6 +280,9 @@ class Context:
 
     def text_width(self, text):
         return _wasm.ctx_text_width(self._ctx, text)
+
+    def clip(self):
+        return
 
     def get_font_name(self, i):
         return [
