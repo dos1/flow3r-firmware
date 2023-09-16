@@ -26,7 +26,7 @@
 #include "st3m_counter.h"
 #include "st3m_version.h"
 
-#define ST3M_GFX_DEFAULT_MODE (16 | st3m_gfx_osd | st3m_gfx_low_latency)
+#define ST3M_GFX_DEFAULT_MODE (16 | st3m_gfx_osd)
 
 static st3m_gfx_mode default_mode = ST3M_GFX_DEFAULT_MODE;
 
@@ -71,7 +71,7 @@ static Ctx *fb_RGB332_ctx = NULL;
 static Ctx *fb_RGBA8_ctx = NULL;
 static Ctx *fb_RGB8_ctx = NULL;
 
-pthread_mutex_t st3m_osd_mutex = PTHREAD_MUTEX_INITIALIZER;
+static int st3m_osd_lock = 0;
 
 typedef struct {
     Ctx *user_ctx;
@@ -181,7 +181,7 @@ void st3m_gfx_start_frame(Ctx *ctx) {
 Ctx *st3m_gfx_ctx(st3m_gfx_mode mode) {
     Ctx *ctx = st3m_gfx_ctx_int(mode);
     if (mode == st3m_gfx_osd) {
-        pthread_mutex_lock(&st3m_osd_mutex);
+        st3m_osd_lock = 20000;
     }
     st3m_gfx_start_frame(ctx);
     return ctx;
@@ -439,11 +439,13 @@ static void st3m_gfx_task(void *_arg) {
                             (drawlist->osd_y0 != drawlist->osd_y1))) {
             if (((set_mode & st3m_gfx_osd) &&
                  (drawlist->osd_y0 != drawlist->osd_y1))) {
-                pthread_mutex_lock(&st3m_osd_mutex);
+                while (st3m_osd_lock > 0) {
+                    st3m_osd_lock--;
+                    usleep(1);
+                }
                 flow3r_bsp_display_send_fb_osd(
                     user_fb, bits, scale, osd_fb, drawlist->osd_x0,
                     drawlist->osd_y0, drawlist->osd_x1, drawlist->osd_y1);
-                pthread_mutex_unlock(&st3m_osd_mutex);
             } else {
                 flow3r_bsp_display_send_fb_osd(user_fb, bits, scale, NULL, 0, 0,
                                                0, 0);
@@ -816,7 +818,7 @@ static Ctx *st3m_gfx_ctx_int(st3m_gfx_mode mode);
 void st3m_gfx_end_frame(Ctx *ctx) {
     ctx_restore(ctx);
     if (ctx == st3m_gfx_ctx_int(st3m_gfx_osd)) {
-        pthread_mutex_unlock(&st3m_osd_mutex);
+        st3m_osd_lock = 0;
         return;
     }
     st3m_gfx_pipe_put();
