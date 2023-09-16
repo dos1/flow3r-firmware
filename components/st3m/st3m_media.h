@@ -49,6 +49,9 @@ struct _st3m_media {
     // decoder should seek to this relative if not -1, and set it to -1
     float seek;
 
+    // audio volume
+    int volume;
+
     // if set to 1 playback is momentarily stopped but can be resumed,
     // this is toggled by st3m_media_play | st3m_media_pause
     int paused;
@@ -82,6 +85,10 @@ float st3m_media_get_position(void);
 void st3m_media_seek(float position);
 // seek a relative amount of seconds forward or with negative values back
 void st3m_media_seek_relative(float seconds_jump);
+// set audio volume (0.0 - 1.0)
+void st3m_media_set_volume(float volume);
+// get audio volume
+float st3m_media_get_volume(void);
 
 // get decoder specific string or NULL if not existing, free returned value
 //  common values:

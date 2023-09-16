@@ -18,10 +18,10 @@ static int16_t *audio_buffer = NULL;
 //       st3m_audio_player_function
 void bl00mbox_audio_render(int16_t *rx, int16_t *tx, uint16_t len);
 
-static inline int16_t mix_and_clip(int16_t a, int16_t b) {
-    if (a == 0) return b;
+static inline int16_t mix_and_clip(int16_t a, int16_t b, int16_t gain) {
+    if (a == 0 && gain == 4096) return b;
     int32_t val = a;
-    val += b;
+    val += (b * gain) >> 12;
     if (val > 32767) {
         val = 32767;
     } else if (val < -32767) {
@@ -38,7 +38,8 @@ void st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len) {
             (audio_media->audio_r + 1 - AUDIO_BUF_SIZE !=
              audio_media->audio_w)) {
             tx[i] = mix_and_clip(
-                tx[i], audio_media->audio_buffer[audio_media->audio_r++]);
+                tx[i], audio_media->audio_buffer[audio_media->audio_r++],
+                audio_media->volume);
             if (audio_media->audio_r >= AUDIO_BUF_SIZE)
                 audio_media->audio_r = 0;
         }
@@ -99,6 +100,16 @@ void st3m_media_seek(float position) {
 void st3m_media_seek_relative(float time) {
     if (!audio_media) return;
     st3m_media_seek((audio_media->position * audio_media->duration) + time);
+}
+
+void st3m_media_set_volume(float volume) {
+    if (!audio_media) return;
+    audio_media->volume = volume * 4096;
+}
+
+float st3m_media_get_volume(void) {
+    if (!audio_media) return 0;
+    return audio_media->volume / 4096.0;
 }
 
 void st3m_media_draw(Ctx *ctx) {
@@ -211,6 +222,7 @@ int st3m_media_load(const char *path) {
     audio_media->audio_buffer = audio_buffer;
     audio_media->audio_r = 0;
     audio_media->audio_w = 1;
+    audio_media->volume = 4096;
 
     return 1;
 }

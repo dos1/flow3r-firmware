@@ -77,6 +77,17 @@ STATIC mp_obj_t mp_seek_relative(mp_obj_t time) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_seek_relative_obj, mp_seek_relative);
 
+STATIC mp_obj_t mp_set_volume(mp_obj_t volume) {
+    st3m_media_set_volume(mp_obj_get_float(volume));
+    return 0;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_volume_obj, mp_set_volume);
+
+STATIC mp_obj_t mp_get_volume(void) {
+    return mp_obj_new_float(st3m_media_get_volume());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_volume_obj, mp_get_volume);
+
 STATIC mp_obj_t mp_set(mp_obj_t key, mp_obj_t value) {
     st3m_media_set(mp_obj_str_get_str(key), mp_obj_get_float(value));
     return 0;
@@ -108,6 +119,8 @@ STATIC const mp_rom_map_elem_t globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_get_time), MP_ROM_PTR(&mp_get_time_obj) },
     { MP_ROM_QSTR(MP_QSTR_seek), MP_ROM_PTR(&mp_seek_obj) },
     { MP_ROM_QSTR(MP_QSTR_seek_relative), MP_ROM_PTR(&mp_seek_relative_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_volume), MP_ROM_PTR(&mp_set_volume_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_volume), MP_ROM_PTR(&mp_get_volume_obj) },
     { MP_ROM_QSTR(MP_QSTR_set), MP_ROM_PTR(&mp_set_obj) },
     { MP_ROM_QSTR(MP_QSTR_get), MP_ROM_PTR(&mp_get_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_string), MP_ROM_PTR(&mp_get_string_obj) },
