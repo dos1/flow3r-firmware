@@ -178,8 +178,7 @@ class Browser(ActionView):
 
     def _update_actions(self) -> None:
         self.actions = [
-            # TODO: swap for a better icon
-            Action(icon="\ue3e3", label="Delete", enabled=self.delete_enabled),
+            Action(icon="\ue92b", label="Delete", enabled=self.delete_enabled),
             Action(icon="\ue409", label="Next", enabled=self.next_enabled),
             Action(icon="\ue876", label="Select"),
             Action(icon="\ue5c4", label="Back", enabled=self.up_enabled),
