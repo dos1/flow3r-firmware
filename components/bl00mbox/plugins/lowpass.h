@@ -3,12 +3,11 @@
 #include <radspa_helpers.h>
 
 typedef struct {
-    float in_history[3];
-    float in_coeff;
-    //int16_t in_coeff_shift;
-    float out_history[3];
-    float out_coeff[2];
-    //int16_t out_coeff_shift[2];
+    int32_t in_history[3];
+    int32_t in_coeff;
+    int32_t in_coeff_shift;
+    int32_t out_history[3];
+    int32_t out_coeff[2];
 
     int32_t prev_freq;
     int16_t prev_q;
