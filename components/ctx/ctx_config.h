@@ -31,6 +31,7 @@
 #define CTX_LIMIT_FORMATS                  1
 #define CTX_32BIT_SEGMENTS                 0
 #define CTX_RASTERIZER                     1
+#define CTX_RASTERIZER_AA                  5
 #define CTX_ENABLE_RGB565                  1
 #define CTX_ENABLE_RGB565_BYTESWAPPED      1
 #define CTX_COMPOSITING_GROUPS             0
