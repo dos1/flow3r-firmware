@@ -316,6 +316,8 @@ static void st3m_gfx_init_palette(st3m_gfx_mode mode) {
     }
 }
 
+static unsigned int st3m_clear_fbs = 0;
+
 st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode) {
     if ((mode == _st3m_gfx_mode) || (0 != (default_mode & st3m_gfx_lock))) {
         st3m_gfx_init_palette(
@@ -323,8 +325,7 @@ st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode) {
         return (mode ? mode : default_mode);
     }
 
-    memset(st3m_fb, 0, sizeof(st3m_fb));
-    memset(st3m_fb2, 0, sizeof(st3m_fb2));
+    st3m_clear_fbs = 1;
 
     if (mode == st3m_gfx_default)
         mode = default_mode;
@@ -438,7 +439,13 @@ static void st3m_gfx_task(void *_arg) {
             st3m_gfx_viewport_transform(fb_RGB8_ctx);
         }
 
-        if ((set_mode & st3m_gfx_direct_ctx) == 0)
+        if (st3m_clear_fbs) {
+            memset(st3m_fb, 0, sizeof(st3m_fb));
+            memset(st3m_fb2, 0, sizeof(st3m_fb2));
+            st3m_clear_fbs = 0;
+        }
+
+        if (((set_mode & st3m_gfx_direct_ctx) == 0))
             ctx_render_ctx(drawlist->user_ctx, user_target);
 
         if ((scale > 1) || ((set_mode & st3m_gfx_osd) &&
