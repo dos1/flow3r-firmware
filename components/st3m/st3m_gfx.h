@@ -12,49 +12,33 @@ typedef enum {
     // bitmask flag over base bpp to turn on OSD, only 16bpp for now will
     // become available for other bitdepths as grayscale rather than color
     // overlays.
-    st3m_gfx_direct_ctx = 128,
-    st3m_gfx_osd = 256,
+    st3m_gfx_direct_ctx = 1 << 7,
+    st3m_gfx_osd = 1 << 8,
     // shallower pipeline, in the future might mean immediate mode
-    st3m_gfx_low_latency = 512,
-    st3m_gfx_unset = 1024,
-    st3m_gfx_lock = 8192,
-    st3m_gfx_2x = 2048,
-    st3m_gfx_3x = 4096,
-    st3m_gfx_4x = 6144,
+    st3m_gfx_low_latency = 1 << 9,
+    st3m_gfx_unset = 1 << 10,
+    st3m_gfx_lock = 1 << 11,
+    st3m_gfx_2x = 1 << 12,
+    st3m_gfx_3x = 1 << 13,
+    st3m_gfx_4x = st3m_gfx_2x | st3m_gfx_3x,
     // 4 and 8bpp modes use the configured palette, the palette resides
     // in video ram and is lost upon mode change
     st3m_gfx_1bpp = 1,
     st3m_gfx_2bpp = 2,
     st3m_gfx_4bpp = 4,
-    // a flag for modes >4bpp requesting that ctx calls are direct, this is
-    // slower since micropython cannot run in parallell with rasterization.
     st3m_gfx_8bpp = 8,
-    st3m_gfx_8bpp_osd = 8 + st3m_gfx_osd,
     st3m_gfx_rgb332 = 9,
     st3m_gfx_sepia = 10,
     st3m_gfx_cool = 11,
     st3m_gfx_palette = 15,
-    st3m_gfx_8bpp_direct_ctx = 8 + st3m_gfx_direct_ctx,
-    st3m_gfx_8bpp_low_latency = 8 + st3m_gfx_low_latency,
-    st3m_gfx_8bpp_osd_low_latency = 8 + st3m_gfx_osd + st3m_gfx_low_latency,
     // 16bpp modes have the lowest blit overhead - no osd for now
     st3m_gfx_16bpp = 16,
-    st3m_gfx_16bpp_osd = 16 + st3m_gfx_osd,
-    st3m_gfx_16bpp_low_latency = 16 + st3m_gfx_low_latency,
-    st3m_gfx_16bpp_direct_ctx = 16 + st3m_gfx_direct_ctx,
-    st3m_gfx_16bpp_direct_ctx_osd = 16 + st3m_gfx_direct_ctx + st3m_gfx_osd,
     // for pixel poking 24bpp might be a little faster than 32bpp
     // for now there is no ctx drawing support in 24bpp mode.
     st3m_gfx_24bpp = 24,
-    st3m_gfx_24bpp_osd = 24 + st3m_gfx_osd,
-    st3m_gfx_24bpp_direct_ctx = 24 + st3m_gfx_direct_ctx,
-    st3m_gfx_24bpp_low_latency = 24 + st3m_gfx_low_latency,
-    st3m_gfx_32bpp = 32,
     // 32bpp modes - are faster at doing compositing, for solid text/fills
     // 16bpp is probably faster.
-    st3m_gfx_32bpp_osd = 32 + st3m_gfx_osd,
-    st3m_gfx_32bpp_low_latency = 32 + st3m_gfx_low_latency,
-    st3m_gfx_32bpp_direct_ctx = 32 + st3m_gfx_direct_ctx,
+    st3m_gfx_32bpp = 32,
 } st3m_gfx_mode;
 
 // sets the system graphics mode, this is the mode you get to
