@@ -78,30 +78,62 @@ We ship some noise-making apps by default:
 shoegaze
 ^^^^^^^^
 
-*TODO*
+Electric guitar simulator with fuzz and reverb. Tilt for wiggle stick. App button middle switches between render modes: Lo Fi has lower framerate, default has slower input response time. App button left turns delay on and off.
 
 Otamatone
 ^^^^^^^^^
 
 The highlighted blue petal makes noise.
 
-Simple Drums
+gay drums
+^^^^^^^^^^
+
+A simple step sequencer. Four groups of four steps, six tracks.
+
+Hold one of the four left petals to select one of the four groups of steps, then press one of the four right petals to toggle the state of the sequencer. You can press more on each side at the same time too to set entire groups!
+
+Use the top petal to set BPM (tap a rhythm) or long-press to start/stop. If gay drums is not stopped when exited it will continue playing in the background indefinitely, allowing you to play other instruments over a beat you made.
+
+Cycle through tracks by tapping the bottom petal. You can also go back with a long-press!
+
+Left/right on the app button sets the step length of the sequencer. If it's a single solid line, the sequencer will be reset each
+time when passing it. If it's two lines, they will alternate between being solid and missing a piece in the middle; if solid, the sequencer will
+be reset when passing it, if they're "open" they let the sequencer pass through once and switch to solid in the next pass. This is very useful for creating "early reset" type beats and hiding special moments in the last group or so :D.
+
+Your beat is saved when exiting gay drums! Make sure to wait until the menu screen appears before turning the power off though :D!
+
+harmonic demo
+^^^^^^^^^^^^^
+
+A chord organ! The top petals always play the 5 notes of the selected chord.
+
+Chord selection is done in 3 different mode, cycle through them with left/right on the app button:
+
+Mode 1 (default): Chord Switcher. harmonic demo starts in this screen. 5 chords are available to be picked with the bottom petals.
+
+Mode 2: Chord Root Shifter. In this mode the chord that was last selected in Chord Switcher Mode can be shifted up and down,
+either by octaves or by semitone steps as indicated by the labels.
+
+Mode 3: Chord Selector. In this mode the internal makeup of the chord that was last selected in Chord Switcher Mode can be modified.
+Petal 3 switches through basic triads, i.e. minor, major, diminished, augmented, sus2, sus4. Petal 7 and 9 set higher-order tensions
+to give chords more flavor. Petal 1 selects an alternate lower voicing with the 3rd in the bass.
+
+If you find yourself lost in the Chord Selector Mode, note that intervals from root are color coded on the screen, meaning you can just
+try out what setting changes which petal and feel out how what difference it makes in context of the others!
+
+Your chords are saved when exiting harmonic demo! Make sure to wait until the menu screen appears before turning the power off though :D!
+
+tiny sampler
 ^^^^^^^^^^^^
 
-A simple gay step sequencer. Four groups of four steps, six insturments.
+5-slot sampler! This allows you to record samples with the built-in microphone and replay and save them. There are 3 modes, cycle
+through them with left/right on the app button:
 
-Hold one of the four left petals to select one of the four groups of steps, then short-press one of the four right petals to toggle the state of the sequencer.
+Mode 1 (default): Sample and Play. Hold the bottom petals to record samples into their respective slots. Hold the corresponding top
+petals as indicated by the screen to replay them.
 
-Use the top petal to set BPM (tap a rhythm) or long-press to start/stop.
+Mode 2: Save and Load. Tap a bottom petal to save a sample into flash if recording is available in the slot. Tap a top petal to load
+the corresponding sample from flash if available there.
 
-Use the bottom petal to switch instruments.
-
-Melodic
-^^^^^^^
-
-Toy synthesizer. Bottom three petals select octave, Top 7 petals play a note from that octave.
-
-Harmonic
-^^^^^^^^
-
-Toy synthesizer. White petals select chord, pink petals play note.
+Mode 3: Pitch Shift. Tap a top petal to increase replay speed of the sample by a semitone, tap a bottom one to decrease it. You can also
+hold the petals to directly replay the results.
