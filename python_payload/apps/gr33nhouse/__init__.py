@@ -118,9 +118,15 @@ class Gr33nhouseApp(Application):
 
         self.background.think(ins, delta_ms)
 
-        if self.input.buttons.app.left.pressed:
+        if not self.is_active():
+            return
+
+        if self.input.buttons.app.left.pressed or self.input.buttons.app.left.repeated:
             self._sc.scroll_left()
-        elif self.input.buttons.app.right.pressed:
+        elif (
+            self.input.buttons.app.right.pressed
+            or self.input.buttons.app.right.repeated
+        ):
             self._sc.scroll_right()
         elif self.input.buttons.app.middle.pressed:
             pos = self._sc.target_position()
