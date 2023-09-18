@@ -260,6 +260,8 @@ static void mp3_think(st3m_media *media, float ms_elapsed) {
             }
 
             samples_needed -= (samples);
+
+            if (samples == 0) mp3_fetch_data(self);
         } while (samples_needed > 0);
     }
 }
