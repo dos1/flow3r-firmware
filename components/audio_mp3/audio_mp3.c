@@ -288,6 +288,7 @@ typedef struct {
 
 st3m_media *st3m_media_load_mp3(const char *path) {
     mp3_state *self = (mp3_state *)malloc(sizeof(mp3_state));
+    if (!self) return NULL;
     id3tag_t id3;
     memset(self, 0, sizeof(mp3_state));
     self->control.draw = mp3_draw;
@@ -314,7 +315,7 @@ st3m_media *st3m_media_load_mp3(const char *path) {
         self->socket = socket(PF_INET, SOCK_STREAM, 0);
         if (self->socket < 0) {
             free(hostname);
-            free(self);
+            mp3_destroy((st3m_media *)self);
             return NULL;
         }
         int flag = 1;
@@ -324,7 +325,7 @@ st3m_media *st3m_media_load_mp3(const char *path) {
         addr.sin_port = htons(port);
         host = gethostbyname(hostname);
         if (!host) {
-            free(self);
+            mp3_destroy((st3m_media *)self);
             free(hostname);
             return NULL;
         }
@@ -353,19 +354,39 @@ st3m_media *st3m_media_load_mp3(const char *path) {
             mp3dec_init(&self->mp3d);
             self->control.duration = -1;
             free(hostname);
+
+            if (!self->data) {
+                mp3_destroy((st3m_media *)self);
+                return NULL;
+            }
+
             self->in_buffering = 1;
             self->path = strdup(path);
             return (st3m_media *)self;
         }
         free(hostname);
 
-        free(self);
+        mp3_destroy((st3m_media *)self);
         return NULL;
     }
 
     self->file = fopen(path, "r");
+    if (!self->file) {
+        mp3_destroy((st3m_media *)self);
+        return NULL;
+    }
     fseek(self->file, 0, SEEK_END);
     self->file_size = ftell(self->file);
+
+    self->data = malloc(self->buffer_size);
+    if (!self->data) {
+        mp3_destroy((st3m_media *)self);
+        return NULL;
+    }
+    self->size = self->buffer_size;
+    mp3dec_init(&self->mp3d);
+    self->control.duration = self->file_size;
+
     fseek(self->file, self->file_size - 128, SEEK_SET);
     fread(&id3, 128, 1, self->file);
     if (id3.tag[0] == 'T' && id3.tag[1] == 'A' && id3.tag[2] == 'G') {
@@ -381,15 +402,12 @@ st3m_media *st3m_media_load_mp3(const char *path) {
         self->title = strdup(strrchr(path, '/') + 1);
     }
     self->path = strdup(path);
-    rewind(self->file);
-
-    self->data = malloc(self->buffer_size);
-    self->size = self->buffer_size;
-    if (!self->file) {
-        free(self);
+    if (!self->path) {
+        mp3_destroy((st3m_media *)self);
         return NULL;
     }
-    mp3dec_init(&self->mp3d);
-    self->control.duration = self->file_size;
+
+    rewind(self->file);
+
     return (st3m_media *)self;
 }
