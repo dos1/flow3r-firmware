@@ -52,10 +52,14 @@ int st3m_media_samples_queued(void) {
     return audio_media->audio_w - audio_media->audio_r;
 }
 
-void st3m_media_stop(void) {
+static void media_destroy(void) {
     if (audio_media && audio_media->destroy) audio_media->destroy(audio_media);
     audio_media = 0;
     st3m_audio_set_player_function(bl00mbox_audio_render);
+}
+
+void st3m_media_stop(void) {
+    media_destroy();
     if (audio_buffer) {
         free(audio_buffer);
         audio_buffer = NULL;
@@ -180,25 +184,25 @@ int st3m_media_load(const char *path) {
     struct stat statbuf;
 #if 1
     if (!strncmp(path, "http://", 7)) {
-        st3m_media_stop();
+        media_destroy();
         audio_media = st3m_media_load_mp3(path);
     } else if (stat(path, &statbuf)) {
-        st3m_media_stop();
+        media_destroy();
         audio_media = st3m_media_load_txt(path);
     } else if (strstr(path, ".mp3") == strrchr(path, '.')) {
-        st3m_media_stop();
+        media_destroy();
         audio_media = st3m_media_load_mp3(path);
     } else
 #endif
 #if 1
         if (strstr(path, ".mpg")) {
-        st3m_media_stop();
+        media_destroy();
         audio_media = st3m_media_load_mpg1(path);
     } else
 #endif
 #if 1
         if ((strstr(path, ".mod") == strrchr(path, '.'))) {
-        st3m_media_stop();
+        media_destroy();
         audio_media = st3m_media_load_mod(path);
     } else
 #endif
@@ -207,12 +211,11 @@ int st3m_media_load(const char *path) {
             (strstr(path, "/README") == strrchr(path, '/')) ||
             (strstr(path, ".toml") == strrchr(path, '.')) ||
             (strstr(path, ".py") == strrchr(path, '.'))) {
-        st3m_media_stop();
+        media_destroy();
         audio_media = st3m_media_load_txt(path);
     }
 
     if (!audio_media) {
-        st3m_media_stop();
         audio_media = st3m_media_load_txt(path);
     }
 
