@@ -185,11 +185,9 @@ static void mp3_think(st3m_media *media, float ms_elapsed) {
             samples =
                 mp3dec_decode_frame(&self->mp3d, self->data + self->pos,
                                     self->count - self->pos, rendered, &info);
+            // TODO: handle metadata (info.frame_bytes > samples)
             self->samplerate = info.hz;
             self->channels = info.channels;
-            if (info.frame_bytes > samples) {
-                printf("[[%s]]\n", self->data + self->pos);
-            }
             self->pos += info.frame_bytes;
             self->control.time += samples / (float)self->samplerate;
 
