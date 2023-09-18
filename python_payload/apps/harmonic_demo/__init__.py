@@ -2,6 +2,7 @@ import captouch
 import bl00mbox
 
 import leds
+import errno
 
 from st3m.goose import List
 from st3m.input import InputState
@@ -10,6 +11,7 @@ from st3m.ui.view import ViewManager
 from ctx import Context
 import cmath
 import math
+import json
 
 tai = math.tau * 1j
 
@@ -76,11 +78,11 @@ def interval_to_rgb(interval):
 
 
 class Chord:
-    _triades = ["diminished", "minor", "major", "augmented", "sus2", "sus4"]
+    _triads = ["diminished", "minor", "major", "augmented", "sus2", "sus4"]
 
     def __init__(self):
         self.root = 0
-        self.triade = "major"
+        self.triad = "major"
         self.seven = False
         self.nine = False
         self.j = False
@@ -91,15 +93,15 @@ class Chord:
         ret = tone_to_note_name(self.root)
         while ret[-1].isdigit() or ret[-1] == "-":
             ret = ret[:-1]
-        if self.triade == "augmented":
+        if self.triad == "augmented":
             ret += " aug. "
-        elif self.triade == "diminished":
+        elif self.triad == "diminished":
             ret += " dim. "
-        elif self.triade == "minor":
+        elif self.triad == "minor":
             ret += "-"
-        elif self.triade == "sus2":
+        elif self.triad == "sus2":
             ret += "sus2 "
-        elif self.triade == "sus4":
+        elif self.triad == "sus4":
             ret += "sus4 "
 
         if self.seven:
@@ -120,10 +122,10 @@ class Chord:
             ret = ret[:-1]
         return ret
 
-    def triade_incr(self):
-        i = Chord._triades.index(self.triade)
-        i = (i + 1) % len(Chord._triades)
-        self.triade = Chord._triades[i]
+    def triad_incr(self):
+        i = Chord._triads.index(self.triad)
+        i = (i + 1) % len(Chord._triads)
+        self.triad = Chord._triads[i]
 
     def voicing_incr(self):
         self.voicing = (self.voicing + 1) % self._num_voicings
@@ -156,27 +158,27 @@ class Chord:
         if self.voicing == 0:
             chord[0] = self.root
             # TRIADE
-            if self.triade == "augmented":
+            if self.triad == "augmented":
                 chord[1] = self.root + 4
                 chord[2] = self.root + 8
                 chord[4] = self.root + 16
-            elif self.triade == "minor":
+            elif self.triad == "minor":
                 chord[1] = self.root + 3
                 chord[2] = self.root + 7
                 chord[4] = self.root + 15
-            elif self.triade == "diminished":
+            elif self.triad == "diminished":
                 chord[1] = self.root + 3
                 chord[2] = self.root + 6
                 chord[4] = self.root + 15
-            elif self.triade == "sus2":
+            elif self.triad == "sus2":
                 chord[1] = self.root + 2
                 chord[2] = self.root + 7
                 chord[4] = self.root + 14
-            elif self.triade == "sus4":
+            elif self.triad == "sus4":
                 chord[1] = self.root + 5
                 chord[2] = self.root + 7
                 chord[4] = self.root + 17
-            else:  # self.triade == "major":
+            else:  # self.triad == "major":
                 chord[1] = self.root + 4
                 chord[2] = self.root + 7
                 chord[4] = self.root + 16
@@ -201,19 +203,19 @@ class Chord:
                     chord[4] = self.root + 12
         elif self.voicing == 1:
             # TRIADE
-            if self.triade == "augmented":
+            if self.triad == "augmented":
                 chord[0] = self.root + 4 - 12
                 chord[1] = self.root + 8 - 12
                 chord[4] = self.root + 16
-            elif self.triade == "minor":
+            elif self.triad == "minor":
                 chord[0] = self.root + 3 - 12
                 chord[1] = self.root + 7 - 12
                 chord[4] = self.root + 15
-            elif self.triade == "diminished":
+            elif self.triad == "diminished":
                 chord[0] = self.root + 3 - 12
                 chord[1] = self.root + 6 - 12
                 chord[4] = self.root + 15
-            else:  # self.triade == "major":
+            else:  # self.triad == "major":
                 chord[0] = self.root + 4 - 12
                 chord[1] = self.root + 7 - 12
                 chord[4] = self.root + 16
@@ -245,6 +247,10 @@ class Chord:
 class HarmonicApp(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
+        try:
+            self.bundle_path = app_ctx.bundle_path
+        except Exception:
+            self.bundle_path = "/flash/sys/apps/harmonic_demo"
 
         self.chord_index = 0
         self.chord = None
@@ -270,12 +276,69 @@ class HarmonicApp(Application):
         self.chords[2].seven = True
         self.chords[2].voicing = 1
 
-        self.chords[3].triade = "minor"
+        self.chords[3].triad = "minor"
         self.chords[3].nine = True
 
         self.chords[4].root = 3
         self.chords[4].j = True
         self.chords[4].seven = True
+
+    def _try_load_settings(self, path):
+        try:
+            with open(path, "r") as f:
+                return json.load(f)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise  # ignore file not found
+
+    def _try_write_default_settings(self, path: str, default_path: str) -> None:
+        with open(path, "w") as outfile, open(default_path, "r") as infile:
+            outfile.write(infile.read())
+
+    def _try_save_settings(self, path, settings):
+        try:
+            with open(path, "w+") as f:
+                f.write(json.dumps(settings))
+                f.close()
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise  # ignore file not found
+
+    def _save_settings(self):
+        default_path = self.bundle_path + "/harmonic_demo-default.json"
+        settings_path = "/flash/harmonic_demo.json"
+        settings = self._try_load_settings(default_path)
+        assert settings is not None, "failed to load default settings"
+
+        for i, chord in enumerate(settings["chords"]):
+            chord["triad"] = self.chords[i].triad
+            chord["j"] = self.chords[i].j
+            chord["seven"] = self.chords[i].seven
+            chord["nine"] = self.chords[i].nine
+            chord["root"] = self.chords[i].root
+            chord["voicing"] = self.chords[i].voicing
+        self._try_save_settings(settings_path, settings)
+
+    def _load_settings(self):
+        default_path = self.bundle_path + "/harmonic_demo-default.json"
+        settings_path = "/flash/harmonic_demo.json"
+
+        settings = self._try_load_settings(default_path)
+        assert settings is not None, "failed to load default settings"
+
+        user_settings = self._try_load_settings(settings_path)
+        if user_settings is None:
+            self._try_write_default_settings(settings_path, default_path)
+        else:
+            settings.update(user_settings)
+
+        for i, chord in enumerate(settings["chords"]):
+            self.chords[i].triad = chord["triad"]
+            self.chords[i].j = chord["j"]
+            self.chords[i].seven = chord["seven"]
+            self.chords[i].nine = chord["nine"]
+            self.chords[i].root = chord["root"]
+            self.chords[i].voicing = chord["voicing"]
 
     def _build_synth(self):
         if self.blm is None:
@@ -408,7 +471,7 @@ class HarmonicApp(Application):
                     else:
                         ctx.text("no7")
                 if bottom_petal == 3:
-                    ctx.text(chord.triade)
+                    ctx.text(chord.triad)
             ctx.move_to(0, 0)
             ctx.font_size = 35
             ctx.text(self.chords[self.chord_index].__repr__())
@@ -461,7 +524,7 @@ class HarmonicApp(Application):
                         elif j == 4:
                             self.chord.nine_incr()
                         elif j == 1:
-                            self.chord.triade_incr()
+                            self.chord.triad_incr()
                         elif j == 0:
                             self.chord.voicing_incr()
 
@@ -473,11 +536,13 @@ class HarmonicApp(Application):
         if self.blm is None:
             self._build_synth()
         self.blm.foreground = True
+        self._load_settings()
 
     def on_exit(self):
         if self.blm is not None:
             self.blm.free = True
         self.blm = None
+        self._save_settings()
 
 
 # For running with `mpremote run`:

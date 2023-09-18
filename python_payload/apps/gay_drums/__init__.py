@@ -8,6 +8,9 @@ from st3m.goose import Tuple, Iterator, Optional, Callable, List, Any, TYPE_CHEC
 from ctx import Context
 from st3m.ui.view import View, ViewManager
 
+import json
+import errno
+
 if TYPE_CHECKING:
     Number = float | int
     Color = Tuple[Number, Number, Number]
@@ -20,6 +23,10 @@ else:
 class GayDrums(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
+        try:
+            self.bundle_path = app_ctx.bundle_path
+        except Exception:
+            self.bundle_path = "/flash/sys/apps/harmonic_demo"
         self.blm = None
         self.num_samplers = 6
         self.seq = None
@@ -36,7 +43,7 @@ class GayDrums(Application):
         self.track = 1
         self.tap_tempo_press_counter = 0
         self.track_back_press_counter = 0
-        self.stopped = False
+        self.stopped = True
         self.tapping = False
         self.tap = {
             "sum_y": float(0),
@@ -73,6 +80,82 @@ class GayDrums(Application):
         self._bpm_saved = None
         self._steps_saved = None
         self._seq_table_saved = None
+        self._file_settings = None
+
+        self._load_settings()
+
+    def _try_load_settings(self, path):
+        try:
+            with open(path, "r") as f:
+                return json.load(f)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise  # ignore file not found
+
+    def _try_write_default_settings(self, path: str, default_path: str) -> None:
+        with open(path, "w") as outfile, open(default_path, "r") as infile:
+            outfile.write(infile.read())
+
+    def _try_save_settings(self, path, settings):
+        try:
+            with open(path, "w+") as f:
+                f.write(json.dumps(settings))
+                f.close()
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise  # ignore file not found
+
+    def _save_settings(self):
+        default_path = self.bundle_path + "/gay_drums-default.json"
+        settings_path = "/flash/gay_drums.json"
+        settings = self._try_load_settings(default_path)
+        assert settings is not None, "failed to load default settings"
+
+        file_difference = False
+        for i, beat in enumerate(settings["beats"]):
+            beat["bpm"] = self.bpm
+            beat["steps"] = self.steps
+            beat["sequencer_table"] = self.seq.plugins.seq.table
+
+            if self._file_settings is None:
+                file_difference = True
+            else:
+                file_beat = self._file_settings["beats"][i]
+                for i in beat:
+                    if beat.get(i) != file_beat.get(i):
+                        file_difference = True
+                        break
+        if file_difference:
+            self._try_save_settings(settings_path, settings)
+            self._file_settings = settings
+
+    def _load_settings(self):
+        default_path = self.bundle_path + "/gay_drums-default.json"
+        settings_path = "/flash/gay_drums.json"
+
+        settings = self._try_load_settings(default_path)
+        assert settings is not None, "failed to load default settings"
+
+        user_settings = self._try_load_settings(settings_path)
+
+        if user_settings is None:
+            self._try_write_default_settings(settings_path, default_path)
+            self._file_settings = settings
+            self.stopped = False
+        else:
+            settings.update(user_settings)
+            self._file_settings = user_settings
+            for i, beat in enumerate(settings["beats"]):
+                if self.blm is None:
+                    self._bpm_saved = beat["bpm"]
+                    self._steps_saved = beat["steps"]
+                    self._seq_table_saved = beat["sequencer_table"]
+                else:
+                    self.bpm = beat["bpm"]
+                    if not self.stopped:
+                        self.seq.signals.bpm.value = self.bpm
+                    self.steps = beat["steps"]
+                    self.seq.plugins.seq.table = beat["sequencer_table"]
 
     @property
     def steps(self):
@@ -101,7 +184,7 @@ class GayDrums(Application):
             steps = self._steps_saved
 
         self.steps = steps
-        self.seq.signals.bpm.value = bpm
+        self.seq.signals.bpm = bpm
         self.bpm = self.seq.signals.bpm.value
 
         if self._seq_table_saved is not None:
@@ -643,6 +726,7 @@ class GayDrums(Application):
         super().on_exit()
         self._bpm_saved = self.bpm
         self._steps_saved = self.steps
+        self._save_settings()
         self._seq_table_saved = self.seq.plugins.seq.table
         if self.tracks_are_empty() or self.stopped:
             self.blm.background_mute_override = False
