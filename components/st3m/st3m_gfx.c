@@ -147,6 +147,11 @@ static Ctx *st3m_gfx_ctx_int(st3m_gfx_mode mode) {
     if (set_mode & st3m_gfx_direct_ctx) switch (_st3m_gfx_bpp(set_mode)) {
             case 16:
                 return fb_RGB565_BS_ctx;
+                // incorrect but right rowstride for these modes
+            case 1:
+            case 2:
+            case 4:
+                // glitch in 332 and right for sepia/gray/etc
             case 8:
                 return fb_GRAY8_ctx;
             case 32:
@@ -271,6 +276,20 @@ void st3m_gfx_set_default_mode(st3m_gfx_mode mode) {
 
 static void st3m_gfx_init_palette(st3m_gfx_mode mode) {
     switch (mode & 0xf) {
+        case 1:
+            for (int i = 0; i < 2; i++) {
+                st3m_pal[i * 3 + 0] = i * 255;
+                st3m_pal[i * 3 + 1] = i * 255;
+                st3m_pal[i * 3 + 2] = i * 255;
+            }
+            break;
+        case 2:
+            for (int i = 0; i < 4; i++) {
+                st3m_pal[i * 3 + 0] = i * 63;
+                st3m_pal[i * 3 + 1] = i * 63;
+                st3m_pal[i * 3 + 2] = i * 63;
+            }
+            break;
         case 4: {  // ega palette
             int idx = 0;
             for (int i = 0; i < 2; i++)
@@ -406,8 +425,9 @@ static void st3m_gfx_task(void *_arg) {
         int bits = _st3m_gfx_bpp(set_mode);
 
         switch (bits) {
+            case 1:
+            case 2:
             case 4:
-                break;
             case 8:
             case 9:
                 if ((set_mode & 0xf) == 9)
