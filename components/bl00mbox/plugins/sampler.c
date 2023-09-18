@@ -48,6 +48,7 @@ void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_
     if(sample_len >= buffer_size) sample_len = buffer_size - 1;
     if(data->read_head_pos >= buffer_size) data->read_head_pos = buffer_size - 1;
     
+    bool buffer_all_zeroes = true;
     for(uint16_t i = 0; i < num_samples; i++){
         int16_t trigger = radspa_trigger_get(radspa_signal_get_value(trigger_sig, i, render_pass_id), &(data->trigger_prev));
         int16_t rec_trigger = radspa_trigger_get(radspa_signal_get_value(rec_trigger_sig, i, render_pass_id), &(data->rec_trigger_prev));
@@ -100,6 +101,7 @@ void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_
                 data->read_head_pos = sample_len;
             }
 
+
             if(data->read_head_pos < sample_len){
                 uint32_t sample_offset_pos = data->read_head_pos + sample_start;
                 if(sample_offset_pos >= sample_len) sample_offset_pos -= sample_len;
@@ -121,12 +123,16 @@ void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_
                     data->read_head_pos = (data->read_head_pos_long * 699) >> 25; // equiv to _/48000 (acc 0.008%)
                 }
             } else {
+                if(data->buffer_all_zeroes) continue;
                 //ret = (ret * 255)>>8; // avoid dc clicks with bad samples
                 ret = 0;
             }
+
+            if(ret) buffer_all_zeroes = false;
             radspa_signal_set_value(output_sig, i, ret);
         }
     }
+    data->buffer_all_zeroes = buffer_all_zeroes;
     buf32[READ_HEAD_POS/2] = data->read_head_pos;
     buf32[SAMPLE_START/2] = sample_start;
     buf32[SAMPLE_LEN/2] = sample_len;

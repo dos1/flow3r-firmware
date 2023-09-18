@@ -42,3 +42,4 @@ inline void radspa_signal_set_value(radspa_signal_t * sig, int16_t index, int16_
 
 // get signal struct from a signal index
 radspa_signal_t * radspa_signal_get_by_index(radspa_t * plugin, uint16_t signal_index);
+

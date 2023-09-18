@@ -106,6 +106,47 @@ typedef struct _radspa_t{
     int16_t * plugin_table;
 } radspa_t;
 
+
+/* SIGNAL HELPERS
+ */
+
+inline int16_t radspa_clip(int32_t a){
+    if(a > 32767){
+         return 32767;
+    } else if(a < -32767){
+         return -32767;
+    }
+    return a;
+}
+
+inline int16_t radspa_add_sat(int32_t a, int32_t b){ return radspa_clip(a+b); }
+inline int32_t radspa_mult_shift(int32_t a, int32_t b){ return radspa_clip((a*b)>>15); }
+inline int32_t radspa_gain(int32_t a, int32_t b){ return radspa_clip((a*b)>>12); }
+
+inline int16_t radspa_trigger_start(int16_t velocity, int16_t * hist){
+    int16_t ret = ((* hist) > 0) ? -velocity : velocity;
+    (* hist) = ret;
+    return ret;
+}
+
+inline int16_t radspa_trigger_stop(int16_t * hist){
+    (* hist) = 0;
+    return 0;
+}
+
+inline int16_t radspa_trigger_get(int16_t trigger_signal, int16_t * hist){
+    int16_t ret = 0;
+    if((!trigger_signal) && (* hist)){ //stop
+        ret = -1;
+    } else if(trigger_signal > 0 ){
+        if((* hist) <= 0) ret = trigger_signal;
+    } else if(trigger_signal < 0 ){
+        if((* hist) >= 0) ret = -trigger_signal;
+    }
+    (* hist) = trigger_signal;
+    return ret;
+}
+
 /* REQUIREMENTS
  * Hosts must provide implementations for the following functions:
  */
@@ -119,17 +160,5 @@ extern uint32_t radspa_sct_to_rel_freq(int16_t sct, int16_t undersample_pow);
 // Return 1 if the buffer wasn't rendered already, 0 otherwise.
 extern bool radspa_host_request_buffer_render(int16_t * buf);
 
-// limit a to -32767..32767
-extern int16_t radspa_clip(int32_t a);
-// saturating int16 addition
-extern int16_t radspa_add_sat(int32_t a, int32_t b);
-// (a*b)>>15
-extern int32_t radspa_mult_shift(int32_t a, int32_t b);
-// (a*b)>>12
-extern int32_t radspa_gain(int32_t a, int32_t b);
-
-extern int16_t radspa_trigger_start(int16_t velocity, int16_t * hist);
-extern int16_t radspa_trigger_stop(int16_t * hist);
-extern int16_t radspa_trigger_get(int16_t trigger_signal, int16_t * hist);
 
 extern int16_t radspa_random();

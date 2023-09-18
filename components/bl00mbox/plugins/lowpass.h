@@ -5,7 +5,6 @@
 typedef struct {
     int32_t in_history[3];
     int32_t in_coeff;
-    int32_t in_coeff_shift;
     int32_t out_history[3];
     int32_t out_coeff[2];
 

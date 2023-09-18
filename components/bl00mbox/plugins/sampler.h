@@ -13,6 +13,7 @@ typedef struct {
     int16_t volume;
     uint32_t pitch_shift_mult;
     bool rec_active;
+    bool buffer_all_zeroes;
 } sampler_data_t;
 
 extern radspa_descriptor_t sampler_desc;
