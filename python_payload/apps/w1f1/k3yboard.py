@@ -541,9 +541,9 @@ class KeyboardDemoApp(Application):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)  # Let Application do its thing
 
-        if self.input.buttons.app.middle.pressed:
+        if self.is_active() and self.input.buttons.app.middle.pressed:
             self.vm.push(KeyboardView(self._model))
 
 
 if __name__ == "__main__":
-    st3m.run.run_view(KeyboardDemoApp(ApplicationContext()))
+    st3m.run.run_app(KeyboardDemoApp)

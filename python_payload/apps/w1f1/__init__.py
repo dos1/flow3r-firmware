@@ -64,6 +64,14 @@ class WifiApp(Application):
         self._current_ssid = None
         self._current_psk = None
         # TODO: big error display
+        if self._waiting_for_password:
+            ssid = self._nearby_wlans[self._wlan_offset][0].decode()
+            psk = self._password_model.text
+            print(ssid, psk)
+            if psk:
+                self.connect_wifi(ssid, psk)
+            self._password_model = TextInputModel("")
+            self._waiting_for_password = False
 
     def draw(self, ctx: Context) -> None:
         ctx.text_align = ctx.CENTER
@@ -243,8 +251,12 @@ class WifiApp(Application):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
-        leds.set_all_rgb(0, 0, 0)
         self._scroll_pos += delta_ms / 1000
+
+        if not self.is_active():
+            return
+
+        leds.set_all_rgb(0, 0, 0)
 
         if self.input.buttons.app.left.pressed and self._wlan_offset > 0:
             self._wlan_offset -= 1
@@ -302,17 +314,6 @@ class WifiApp(Application):
                 self._waiting_for_password = True
                 self.vm.push(KeyboardView(self._password_model))
 
-        if self._waiting_for_password and (
-            not self.vm._history or not isinstance(self.vm._history[-1], WifiApp)
-        ):
-            ssid = self._nearby_wlans[self._wlan_offset][0].decode()
-            psk = self._password_model.text
-            print(ssid, psk)
-            if psk:
-                self.connect_wifi(ssid, psk)
-            self._password_model = TextInputModel("")
-            self._waiting_for_password = False
-
         if self._is_connecting:
             self._connection_timer -= delta_ms / 1000
             if self._iface.isconnected():
@@ -340,4 +341,4 @@ class WifiApp(Application):
 if __name__ == "__main__":
     import st3m.run
 
-    st3m.run.run_view(WifiApp(ApplicationContext()))
+    st3m.run.run_app(WifiApp)
