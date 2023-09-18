@@ -203,6 +203,11 @@ static void mp3_think(st3m_media *media, float ms_elapsed) {
                             rendered[i] / 2;
                         if (self->control.audio_w >= AUDIO_BUF_SIZE)
                             self->control.audio_w = 0;
+                        self->control.audio_buffer[self->control.audio_w++] =
+                            rendered[i] / 2;
+                        if (self->control.audio_w >= AUDIO_BUF_SIZE)
+                            self->control.audio_w = 0;
+
                         phase += fraction;
                         if (phase > 65536) {
                             phase -= 65536;
@@ -211,7 +216,6 @@ static void mp3_think(st3m_media *media, float ms_elapsed) {
                         }
                     }
                 else if (info.channels == 2) {
-                    int phase = 0;
                     for (int i = 0; i < samples; i++) {
                     again2:
                         self->control.audio_buffer[self->control.audio_w++] =
