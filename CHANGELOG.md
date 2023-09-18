@@ -11,16 +11,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added the `w1f1` app for managing wifi access to Settings, incorporates
   an in-progress cap-touch multi-tap keyboard (`k3yboard`).
 - Added the `Scalar` app in `Music` category for playing scales.
+- Added configuration of audio adjustments and startup dB level to `settings.json`.
 - Added configuration of wifi credentials + hostname via `settings.json`
 - Added support for apps to set wifi state automatically (configurable in
   settings: `Let apps change WiFi`)
 - Added task profiler which prints over serial (configurable in
   settings: `Debug: ftop`)
 - Added an error screen to the `Nick` app when `nick.json` is invalid.
-- Added `urequests` support in the simulator.
+- Added `urequests` and `uos` support in the simulator.
 - Added audio/video media framework, and `Wurzelitzer` app as a small jukebox
   frontend - currently supporting mp3, mpeg1 and protracker modules.
-- Added exporting of built firmwares as part of CI
+- Added exporting of built firmwares as part of CI.
+- Added basic implementation of `os.statvfs()` to fetch full/available
+  disk space on flash and SD.
+- Added `set_position` and `scroll_to` methods to `ScrollController`
 - graphics: sprite sheet support for `ctx.image()`
 - graphics: `ctx.parse()` for parsing SVG path data/ctx protocol.
 - graphics: raw frame-buffer access in 4,8,16,24 and 32bit graphics modes.
@@ -28,10 +32,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - graphics: allow a graphics state depth of up to 10 (`ctx.save()` `ctx.restore()`)
 
 ### Changed
+- Changed the st3m_tar logic to only update files on flash after an update
+  if they've been changed, greatly improving start times after an update.
+- Flashing flow3r through idf.py now automatically restarts it.
 - Switched the REPL/fatal/disk restart button to the OS shoulder button (right
   shoulder button, unless swapped in settings).
 - Improved performance of the `gr33nhouse` app list by not rendering hidden
   entries and scrolling ones too long to fit on screen.
+- Changed the audio adjustment logic, and added support for holding down the
+  shoulder to keep increasing/decreasing level.
 - Improved download reliability of the `gr33nhouse` app by adding chunked
   downloads, some `gc.collect()` calls and an error screen.
 - Settings are now automatically loaded and saved when entering and leaving
@@ -54,6 +63,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Split the `settings.py` file into two, creating `settings_menu.py` to hold
   UI-related code and allow `settings` to be used import loops without
   in many cases.
+- When running apps through REPL mode (with `mpremote` etc), multi-view apps
+  are now properly handled and don't restart whenever OS shoulder is pressed.
+- Added a delete button to `fil3s`/Files app to allow for deleting files,
+  folders and apps on-device.
+- A multitude of built-in apps now scroll names to fit the screen.
+- Apps are now sorted and deduplicated by display name, not by folder name.
 - Improved handedness in buttons.
 
 ### Fixed
