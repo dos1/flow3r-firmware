@@ -36,6 +36,10 @@ def set_hsv(ix, h, s, v):
     _sim.set_led_rgb(ix, r, g, b)
 
 
+def set_slew_rate(b: int):
+    pass  # Better a no-op than not implemented at all.
+
+
 def update():
     _sim.leds_update()
     _sim.render_gui_lazy()
