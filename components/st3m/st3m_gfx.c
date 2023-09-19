@@ -809,8 +809,9 @@ void st3m_gfx_init(void) {
     }
 
     // Start rasterization, scan-out
-    BaseType_t res = xTaskCreate(st3m_gfx_task, "graphics", 8192, NULL,
-                                 ESP_TASK_PRIO_MIN + 1, &graphics_task);
+    BaseType_t res =
+        xTaskCreatePinnedToCore(st3m_gfx_task, "graphics", 8192, NULL,
+                                ESP_TASK_PRIO_MIN + 1, &graphics_task, 0);
     assert(res == pdPASS);
 }
 static int last_descno = 0;
