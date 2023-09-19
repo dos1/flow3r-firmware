@@ -7,6 +7,7 @@ serialized ctx protocol as described in [1].
 """
 import os
 import math
+import sys
 
 import wasmer
 import wasmer_compiler_cranelift
@@ -270,6 +271,27 @@ class Context:
 
     def fill(self):
         self._emit(f"fill")
+        return self
+
+    def radial_gradient(self, x0, y0, r0, x1, y1, r1):
+        self._emit(
+            f"radialGradient {x0:.3f} {y0:.3f} {r0:.3f} {x1:.3f} {y1:.3f} {r1:.3f}")
+        return self
+
+    def add_stop(self, pos, red, green, blue, alpha):
+        if red > 1.0 or green > 1.0 or blue > 1.0:
+            red /= 255.0
+            green /= 255.0
+            blue /= 255.0
+        if alpha > 1.0:
+            # Should never happen, since alpha must be a float < 1.0, see line 711 in uctx.c
+            alpha = 1.0
+            print("alpha > 1.0, this is an error in the real uctx library.", file=sys.stderr)
+        if alpha < 0.0:
+            alpha = 0.0
+            print("alpha < 0.0, this is an error in the real uctx library.", file=sys.stderr)
+        self._emit(
+            f"gradientAddStop {pos:.3f} {red:.3f} {green:.3f} {blue:.3f} {alpha:.3f} ")
         return self
 
     def arc(self, x, y, radius, arc_from, arc_to, direction):
