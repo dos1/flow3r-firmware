@@ -275,7 +275,8 @@ class Context:
 
     def radial_gradient(self, x0, y0, r0, x1, y1, r1):
         self._emit(
-            f"radialGradient {x0:.3f} {y0:.3f} {r0:.3f} {x1:.3f} {y1:.3f} {r1:.3f}")
+            f"radialGradient {x0:.3f} {y0:.3f} {r0:.3f} {x1:.3f} {y1:.3f} {r1:.3f}"
+        )
         return self
 
     def add_stop(self, pos, red, green, blue, alpha):
@@ -286,12 +287,19 @@ class Context:
         if alpha > 1.0:
             # Should never happen, since alpha must be a float < 1.0, see line 711 in uctx.c
             alpha = 1.0
-            print("alpha > 1.0, this is an error in the real uctx library.", file=sys.stderr)
+            print(
+                "alpha > 1.0, this is an error in the real uctx library.",
+                file=sys.stderr,
+            )
         if alpha < 0.0:
             alpha = 0.0
-            print("alpha < 0.0, this is an error in the real uctx library.", file=sys.stderr)
+            print(
+                "alpha < 0.0, this is an error in the real uctx library.",
+                file=sys.stderr,
+            )
         self._emit(
-            f"gradientAddStop {pos:.3f} {red:.3f} {green:.3f} {blue:.3f} {alpha:.3f} ")
+            f"gradientAddStop {pos:.3f} {red:.3f} {green:.3f} {blue:.3f} {alpha:.3f} "
+        )
         return self
 
     def arc(self, x, y, radius, arc_from, arc_to, direction):
