@@ -152,9 +152,6 @@ class AppList(BaseView):
         self.background.think(ins, delta_ms)
         self._scroll_pos += delta_ms / 1000
 
-        if not self.is_active():
-            return
-
         if self.input.buttons.app.left.pressed or self.input.buttons.app.left.repeated:
             self._sc.scroll_left()
             self._scroll_pos = 0.0
