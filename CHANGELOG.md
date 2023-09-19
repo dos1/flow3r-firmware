@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added the `w1f1` app for managing wifi access to Settings, incorporates
   an in-progress cap-touch multi-tap keyboard (`k3yboard`).
 - Added the `Scalar` app in `Music` category for playing scales.
+- Added the 'Mandelbrot' app, which illustrates how one can do direct
+  framebuffer access and control 8bpp palettized modes from python.
 - Added configuration of audio adjustments and startup dB level to `settings.json`.
 - Added configuration of wifi credentials + hostname via `settings.json`
 - Added support for apps to set wifi state automatically (configurable in
@@ -27,9 +29,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added `set_position` and `scroll_to` methods to `ScrollController`
 - graphics: sprite sheet support for `ctx.image()`
 - graphics: `ctx.parse()` for parsing SVG path data/ctx protocol.
-- graphics: raw frame-buffer access in 4,8,16,24 and 32bit graphics modes.
+- graphics: 1,2,4,8,16,24 and 32bit graphics modes; ctx rendering support and
+  configuration of system graphics mode in 8,16 and 24.
+- graphics: palette setting in 1,2,4 and 8bpp graphics modes.
 - graphics: clipped overlay buffer
+- graphics: added 2x 3x and 4x pixel doubling.
 - graphics: allow a graphics state depth of up to 10 (`ctx.save()` `ctx.restore()`)
+- graphics: added low-latency; with shallower pipeline and direct graphics
+  modes.
+- graphics: slightly lower AA quality; for a 3x performance boost in the
+  worst-case rasterization path.
 
 ### Changed
 - Changed the st3m_tar logic to only update files on flash after an update
@@ -45,8 +54,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   downloads, some `gc.collect()` calls and an error screen.
 - Settings are now automatically loaded and saved when entering and leaving
   the settings page.
-- Moved the `Clouds` app to the `Badge` menu and updated it to use IMU data and
-  render in 32bpp graphics mode.
+- Moved the `Clouds` app to the `Badge` menu and updated it to use IMU data.
 - Added a more sane commandline interface to the simulator.
 - More stub functions for the simulator.
 - Improved performance of system menus by not rendering hidden entries.
@@ -56,10 +64,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved BPM tap accuracy in `gay drums`.
 - Some shell code rewritten to avoid the expensive calls `ctx.save_group()` and
   `ctx.restore_group()`.
-- overlay graphics is rendered in a separate pass, rate limited.
+- Overlay graphics gets rendered to a separate framebuffer, of which a clipped rectangle
+  is composited during scan-out. The python overlay code has been adapted to keep track
+  of which parts of overlay need refresh.
 - The entry section in `flow3r.toml` can now be omitted if the Application
   class is called `App`.
 - `ctx.image()` now supports clipping and drawing a part of the given image.
+- disabled support for compositing group API in ctx, where used global\_alpha on
+  its own did was responsible for it seeming to work.
 - Split the `settings.py` file into two, creating `settings_menu.py` to hold
   UI-related code and allow `settings` to be used import loops without
   in many cases.
@@ -78,10 +90,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed wrong petal ordering in the simulator.
 - Fixed simulator not exiting when closed.
 - Fixed `Comic Mono` missing in the simulator.
-- Fixed initialization orientation of display (which also fixed incorrect
-  transform of gradients)
+- Fixed initialization orientation of display and transform initialization for
+  ctx contexts, (this enables apply arbitrary transformations to images and
+gradients.)
 - Fixed cleanup at exit for firmware apps
 - Fixed sequencer bug in bl00mbox
+- Fixed reset of graphics subsystem upon entering REPL / using mpremote.
 =======
 
 
