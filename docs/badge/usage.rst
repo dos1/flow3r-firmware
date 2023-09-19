@@ -203,6 +203,7 @@ Menu for setting various system parameters.
 - ``Show FPS``: Displays FPS overlay.
 - ``Debug: ftop``: Prints a task cpu load and memory report every 5 seconds on the USB serial port.
 - ``Touch Overlay``: If a petal is pressed the positional output is displayed in an overlay.
+- ``Restore Defaults``: Restores default settings.
 
 A settings file with more options including headphone and speaker max/min volume and volume
 adjust step is on the flash filesystem at ``/settings.json``.

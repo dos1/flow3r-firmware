@@ -95,7 +95,8 @@ class UnaryTunable(Tunable):
         super().__init__()
         self.key = key
         self._name = name
-        self.value: Any = default
+        self._default = default
+        self.value: Any = self._default
 
     def name(self) -> str:
         return self._name
@@ -132,6 +133,8 @@ class UnaryTunable(Tunable):
         d = reduce(_get, path[:-1], d)
         if k in d:
             self.value = d[k]
+        else:
+            self.set_value(self._default)
 
 
 class OnOffTunable(UnaryTunable):
@@ -211,10 +214,10 @@ num_startup_volume_db = StringTunable(
     "Startup Volume dB", "system.audio.startup_volume_dB", -10
 )
 num_headphones_min_db = StringTunable(
-    "Min Headphone Volume dB", "system.audio.headphones_min_dB", -30
+    "Min Headphone Volume dB", "system.audio.headphones_min_dB", -45
 )
 num_speakers_min_db = StringTunable(
-    "Min Speakers Volume dB", "system.audio.speakers_min_dB", -30
+    "Min Speakers Volume dB", "system.audio.speakers_min_dB", -40
 )
 num_headphones_max_db = StringTunable(
     "Max Headphone Volume dB", "system.audio.headphones_max_dB", 3
@@ -258,6 +261,15 @@ def load_all() -> None:
         return
 
     log.info("Loaded settings from flash")
+    for setting in load_save_settings:
+        setting.load(data)
+
+
+def restore_defaults() -> None:
+    """
+    Restore default settings. Relies on save on exit.
+    """
+    data = {}
     for setting in load_save_settings:
         setting.load(data)
 

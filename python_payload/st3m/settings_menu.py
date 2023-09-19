@@ -11,7 +11,7 @@ from st3m.goose import (
     Union,
     TYPE_CHECKING,
 )
-from st3m.ui.menu import MenuItem, MenuItemBack
+from st3m.ui.menu import MenuItem, MenuItemBack, MenuItemAction
 from st3m.application import BundleMetadata, MenuItemAppLaunch
 from st3m.ui.elements.menus import SimpleMenu
 from st3m.ui.view import ViewManager
@@ -222,6 +222,7 @@ settings_menu_structure: "MenuStructure" = [
     onoff_debug_ftop,
     onoff_debug_touch,
     # onoff_debug,
+    MenuItemAction("Restore Defaults", restore_defaults),
 ]
 
 
