@@ -76,6 +76,7 @@ class Otamatone(Application):
     """
 
     PETAL_NO = 7
+    WAH_PETAL_NO = 3
 
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
@@ -96,11 +97,19 @@ class Otamatone(Application):
         self._dist = self._blm.new(bl00mbox.plugins._distortion)
         # Lowpass.
         self._lp = self._blm.new(bl00mbox.plugins.lowpass)
+        self._lp2 = self._blm.new(bl00mbox.plugins.lowpass)
+        # Mixer.
+        self._mixer = self._blm.new(bl00mbox.plugins.mixer, 2)
 
-        # Wire sawtooth -> distortion -> lowpass
-        self._osc.signals.output = self._dist.signals.input
-        self._dist.signals.output = self._lp.signals.input
-        self._lp.signals.output = self._blm.mixer
+        # Wire sawtooth -> distortion -> env -> lowpass
+        self._osc.plugins.osc.signals.output = self._dist.signals.input
+        self._osc.plugins.amp.signals.input = self._dist.signals.output
+        self._lp.signals.input = self._osc.signals.output
+        self._lp2.signals.input = self._osc.signals.output
+
+        self._lp.signals.output = self._mixer.signals.input0
+        self._lp2.signals.output = self._mixer.signals.input1
+        self._mixer.signals.output = self._blm.mixer
 
         # Closest thing to a waveform number for 'saw'.
         self._osc.signals.waveform = 20000
@@ -110,21 +119,34 @@ class Otamatone(Application):
         # Built custom square wave (low duty cycle)
         table_len = 129
         self._dist.table = [
-            32767 if i > (0.1 * table_len) else -32767 for i in range(table_len)
+            500 if i > (0.1 * table_len) else -5000 for i in range(table_len)
         ]
 
-        self._lp.signals.freq = 4000
+        self._set_wah(0.8)
+
+    def _set_wah(self, wah_ctrl):
+        self._lp.signals.reso = 1000 + 2500 * (1 - wah_ctrl)
+        self._lp.signals.freq = 1500 * (2 ** (2.5 * wah_ctrl))
+        self._lp.signals.gain.dB = 6 + 3 * (1 - wah_ctrl)
+        self._lp2.signals.reso = 1000 + 1000 * (1 - wah_ctrl)
+        self._lp2.signals.freq = 2800 * (2 ** (2 * wah_ctrl))
+        self._lp2.signals.gain.dB = 6 + 3 * (1 - wah_ctrl)
 
     def on_exit(self):
         super().on_exit()
         if self._blm is not None:
+            self._blm.clear()
             self._blm.free = True
         self._blm = None
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
+        for i in range(40):
+            leds.set_rgb(i, 0, 0, 0)
         for i in range(26, 30 + 1):
             leds.set_rgb(i, 62, 159, 229)
+        for i in range(10, 14 + 1):
+            leds.set_rgb(i, 62, 229, 159)
         leds.update()
         if self._blm is None:
             self._build_synth()
@@ -157,6 +179,15 @@ class Otamatone(Application):
             ctrl = 1
         ctrl *= -1
 
+        wah_petal = self.input.captouch.petals[self.WAH_PETAL_NO]
+        wah_pos = ins.captouch.petals[self.WAH_PETAL_NO].position
+        wah_ctrl = wah_pos[0] / 40000
+        if wah_ctrl < -1:
+            wah_ctrl = -1
+        if wah_ctrl > 1:
+            wah_ctrl = 1
+        wah_ctrl *= -1
+
         if petal.whole.down:
             if self._intensity < 1.0:
                 self._intensity += 0.1 * (delta_ms / 20)
@@ -166,6 +197,9 @@ class Otamatone(Application):
         if petal.whole.up:
             self._intensity = 0
             self._osc.signals.trigger.stop()
+
+        if wah_petal.whole.down:
+            self._set_wah(wah_ctrl)
 
         self._blob._yell = self._intensity * 0.8 + (ctrl + 1) * 0.1
 

@@ -88,12 +88,12 @@ We ship some noise-making apps by default:
 shoegaze
 ^^^^^^^^
 
-Electric guitar simulator with fuzz and reverb. Tilt for wiggle stick. App button middle switches between render modes: Lo Fi has lower framerate, default has slower input response time. App button left turns delay on and off.
+Electric guitar simulator with fuzz and reverb. Tilt for wiggle stick. App button middle switches between render modes: Lo Fi has lower framerate, default has slower input response time. App button left turns delay on and off. Top petals play notes in chord, bottom petals change chord.
 
 Otamatone
 ^^^^^^^^^
 
-The highlighted blue petal makes noise.
+The highlighted blue petal makes noise. The highlighted green petal modulates the a resonant lowpass filter.
 
 gay drums
 ^^^^^^^^^^
