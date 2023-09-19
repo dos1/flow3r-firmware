@@ -142,7 +142,7 @@ class Reactor:
         self._top.think(hr, delta)
 
         # Draw!
-        if self._ctx is None:
+        if self._ctx is None and sys_display.pipe_available():
             self._ctx = sys_display.ctx(0)
             if self._ctx is not None:
                 if self._last_ctx_get is not None:

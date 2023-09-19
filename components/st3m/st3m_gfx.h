@@ -88,6 +88,9 @@ void st3m_gfx_init(void);
 // Returns true if we right now cannot accept another frame
 uint8_t st3m_gfx_pipe_full(void);
 
+// Returns true if there's a free drawlist available to retrieve
+uint8_t st3m_gfx_pipe_available(void);
+
 // Flush any in-flight pipelined work, resetting the free ctx/framebuffer queues
 // to their initial state. This should be called if there has been any drawlist
 // ctx dropped (ie. drawctx_free_get was called but then drawctx_pipe_put

@@ -491,22 +491,26 @@ static void st3m_gfx_task(void *_arg) {
             st3m_clear_fbs = 0;
         }
 
-        if (((set_mode & st3m_gfx_direct_ctx) == 0))
+        int osd_x0 = drawlist->osd_x0, osd_x1 = drawlist->osd_x1,
+            osd_y0 = drawlist->osd_y0, osd_y1 = drawlist->osd_y1;
+
+        if ((set_mode & st3m_gfx_direct_ctx) == 0) {
             ctx_render_ctx(drawlist->user_ctx, user_target);
+            ctx_drawlist_clear(drawlist->user_ctx);
+            st3m_gfx_viewport_transform(drawlist->user_ctx);
+        }
+        xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
 
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-        if ((scale > 1) || ((set_mode & st3m_gfx_osd) &&
-                            (drawlist->osd_y0 != drawlist->osd_y1))) {
-            if (((set_mode & st3m_gfx_osd) &&
-                 (drawlist->osd_y0 != drawlist->osd_y1))) {
+        if ((scale > 1) || ((set_mode & st3m_gfx_osd) && (osd_y0 != osd_y1))) {
+            if (((set_mode & st3m_gfx_osd) && (osd_y0 != osd_y1))) {
                 while (st3m_osd_lock > 0) {
                     st3m_osd_lock--;
                     usleep(1);
                 }
                 st3m_osd_ctx_lock = ST3M_OSD_LOCK_TIMEOUT;
-                flow3r_bsp_display_send_fb_osd(
-                    user_fb, bits, scale, osd_fb, drawlist->osd_x0,
-                    drawlist->osd_y0, drawlist->osd_x1, drawlist->osd_y1);
+                flow3r_bsp_display_send_fb_osd(user_fb, bits, scale, osd_fb,
+                                               osd_x0, osd_y0, osd_x1, osd_y1);
                 st3m_osd_ctx_lock = 0;
             } else {
                 flow3r_bsp_display_send_fb_osd(user_fb, bits, scale, NULL, 0, 0,
@@ -519,12 +523,6 @@ static void st3m_gfx_task(void *_arg) {
         }
         fb_ready = 1;
 
-        if ((set_mode & st3m_gfx_direct_ctx) == 0) {
-            ctx_drawlist_clear(drawlist->user_ctx);
-            st3m_gfx_viewport_transform(drawlist->user_ctx);
-        }
-
-        xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
         st3m_counter_rate_sample(&rast_rate);
         float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
         smoothed_fps = smoothed_fps * 0.75 + 0.25 * rate;
@@ -896,8 +894,12 @@ void st3m_gfx_end_frame(Ctx *ctx) {
     st3m_gfx_pipe_put();
 }
 
+uint8_t st3m_gfx_pipe_available(void) {
+    return uxQueueMessagesWaiting(user_ctx_freeq) > _st3m_gfx_low_latency;
+}
+
 uint8_t st3m_gfx_pipe_full(void) {
-    return uxQueueMessagesWaiting(user_ctx_freeq) <= _st3m_gfx_low_latency;
+    return uxQueueSpacesAvailable(user_ctx_rastq) == 0;
 }
 
 void st3m_gfx_flush(int timeout_ms) {

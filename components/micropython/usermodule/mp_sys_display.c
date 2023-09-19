@@ -106,6 +106,14 @@ STATIC mp_obj_t mp_pipe_full(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_pipe_full_obj, mp_pipe_full);
 
+STATIC mp_obj_t mp_pipe_available(void) {
+    if (st3m_gfx_pipe_available()) {
+        return mp_const_true;
+    }
+    return mp_const_false;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_pipe_available_obj, mp_pipe_available);
+
 STATIC mp_obj_t mp_pipe_flush(void) {
     st3m_gfx_flush(1000);
     return mp_const_none;
@@ -115,6 +123,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_pipe_flush_obj, mp_pipe_flush);
 STATIC const mp_rom_map_elem_t mp_module_sys_display_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_sys_display) },
     { MP_ROM_QSTR(MP_QSTR_pipe_full), MP_ROM_PTR(&mp_pipe_full_obj) },
+    { MP_ROM_QSTR(MP_QSTR_pipe_available), MP_ROM_PTR(&mp_pipe_available_obj) },
     { MP_ROM_QSTR(MP_QSTR_pipe_flush), MP_ROM_PTR(&mp_pipe_flush_obj) },
     { MP_ROM_QSTR(MP_QSTR_update), MP_ROM_PTR(&mp_update_obj) },
     { MP_ROM_QSTR(MP_QSTR_fb), MP_ROM_PTR(&mp_fb_obj) },

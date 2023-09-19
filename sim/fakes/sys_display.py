@@ -5,6 +5,10 @@ def pipe_full():
     return False
 
 
+def pipe_available():
+    return True
+
+
 def overlay_clip(x0, y0, x1, y1):
     pass
 
