@@ -30,11 +30,11 @@ def note_name_to_tone(note_name):
     return (sct - 18367) / 200
 
 
-def bottom_petal_to_rgb(petal, soft=True):
+def bottom_petal_to_rgb(petal, soft=0):
     petal = int(petal) % 5
     ret = None
     if petal == 0:
-        ret = (1.0, 0, 0)
+        ret = (1.0, 0.5, 0)
     elif petal == 1:
         ret = (0, 1.0, 1.0)
     elif petal == 2:
@@ -43,8 +43,8 @@ def bottom_petal_to_rgb(petal, soft=True):
         ret = (1.0, 0, 1.0)
     elif petal == 4:
         ret = (0, 1.0, 0)
-    if soft:
-        return tuple([x / 2.0 + 0.5 for x in ret])
+    if soft > 0 and soft < 1:
+        return tuple([x * (1 - soft) + soft for x in ret])
     else:
         return ret
 
@@ -52,29 +52,29 @@ def bottom_petal_to_rgb(petal, soft=True):
 def interval_to_rgb(interval):
     interval = int(interval) % 12
     if interval == 0:  # octave: neutral, light green
-        return (0.5, 0.7, 0.5)
+        return (0.5, 1, 0.5)
     if interval == 1:  # flat 9th: spicy, purple
-        return (0.7, 0, 0.7)
+        return (1, 0, 1)
     if interval == 2:  # 9th: mellow, blue
-        return (0, 0, 0.7)
+        return (0, 0, 1)
     if interval == 3:  # minor 3rd: gritty warm, red
-        return (0.7, 0, 0)
+        return (1.0, 0, 0)
     if interval == 4:  # major 3rd: warm, orange
-        return (0.5, 0.5, 0)
+        return (1.0, 0.5, 0)
     if interval == 5:  # 4th: natural, green
-        return (0, 1.0, 0)
+        return (0, 0.9, 0.3)
     if interval == 6:  # tritone, neon yellow
-        return (0.8, 0.9, 0)
+        return (0.8, 1.0, 0)
     if interval == 7:  # 5th: reliable, teal
         return (0, 0.7, 0.9)
     if interval == 8:  # augmented 5th: loud, cyan
         return (0, 1.0, 1.0)
     if interval == 9:  # 13th: pink
-        return (1.0, 0.8, 0.7)
+        return (1.0, 0.6, 0.5)
     if interval == 10:  # 7th: generic, lime green
-        return (0.5, 0.9, 0.5)
+        return (0.0, 0.9, 0.3)
     if interval == 11:  # major 7th: peaceful, sky blue
-        return (0.7, 0.7, 0.9)
+        return (0.7, 0.7, 1.0)
 
 
 class Chord:
@@ -264,24 +264,7 @@ class HarmonicApp(Application):
         self._set_chord(3)
         self._num_modes = 3
 
-        self.chords[0].root = -4
-        self.chords[0].j = True
-        self.chords[0].nine = True
-
-        self.chords[1].root = 5
-        self.chords[1].nine = True
-        self.chords[1].voicing = 1
-
-        self.chords[2].root = 7
-        self.chords[2].seven = True
-        self.chords[2].voicing = 1
-
-        self.chords[3].triad = "minor"
-        self.chords[3].nine = True
-
-        self.chords[4].root = 3
-        self.chords[4].j = True
-        self.chords[4].seven = True
+        self._file_settings = None
 
     def _try_load_settings(self, path):
         try:
@@ -310,6 +293,11 @@ class HarmonicApp(Application):
         settings = self._try_load_settings(default_path)
         assert settings is not None, "failed to load default settings"
 
+        file_is_different = False
+        user_settings = self._try_load_settings(settings_path)
+        if user_settings is None:
+            file_is_different = True
+
         for i, chord in enumerate(settings["chords"]):
             chord["triad"] = self.chords[i].triad
             chord["j"] = self.chords[i].j
@@ -317,7 +305,20 @@ class HarmonicApp(Application):
             chord["nine"] = self.chords[i].nine
             chord["root"] = self.chords[i].root
             chord["voicing"] = self.chords[i].voicing
-        self._try_save_settings(settings_path, settings)
+            if not file_is_different:
+                user_chord = user_settings["chords"][i]
+                if self._file_settings is None:
+                    file_is_different = True
+                else:
+                    file_chord = self._file_settings["chords"][i]
+                    for i in chord:
+                        if chord.get(i) != file_chord.get(i):
+                            file_is_different = True
+                            break
+
+        if file_is_different:
+            self._try_save_settings(settings_path, settings)
+            self._file_settings = settings
 
     def _load_settings(self):
         default_path = self.bundle_path + "/harmonic_demo-default.json"
@@ -331,6 +332,7 @@ class HarmonicApp(Application):
             self._try_write_default_settings(settings_path, default_path)
         else:
             settings.update(user_settings)
+            self._file_settings = settings
 
         for i, chord in enumerate(settings["chords"]):
             self.chords[i].triad = chord["triad"]
@@ -371,7 +373,7 @@ class HarmonicApp(Application):
         hue = int(72 * (i + 0.5)) % 360
         if i != self.chord_index:
             self.chord_index = i
-            leds.set_all_rgb(*bottom_petal_to_rgb(self.chord_index, soft=False))
+            leds.set_all_rgb(*bottom_petal_to_rgb(self.chord_index, soft=0))
             leds.update()
             self.chord = self.chords[i]
 
@@ -409,26 +411,78 @@ class HarmonicApp(Application):
             ctx.text(note_name)
 
         if self.mode == 0:
+            ctx.save()
             ctx.font_size = 25
+            ctx.rotate(math.tau * (3 / 5 - 1 / 4))
+            pos = -105
+            ctx.text_align = ctx.LEFT
             for bottom_petal in range(5):
-                pos = 90 * cmath.exp(tai * (bottom_petal - 2) / 5)
                 chord = self.chords[bottom_petal]
-                ctx.rgb(*bottom_petal_to_rgb(bottom_petal))
-                if bottom_petal == self.chord_index:
-                    pos *= 0.5
-                    ctx.move_to(pos.imag, pos.real)
-                    ctx.font_size = 35
-                    ctx.text(self.chords[bottom_petal].__repr__())
+                ctx.move_to(0, 0)
+                if bottom_petal == 3:
+                    pos = -pos
+                    ctx.text_align = ctx.RIGHT
+                    ctx.rotate(-math.tau / 2)
+                ctx.rotate(-math.tau / 5)
+                if bottom_petal != self.chord_index:
+                    ctx.rgb(*bottom_petal_to_rgb(bottom_petal, soft=0.3))
+                    text = self.chords[bottom_petal].__repr__()
+                    shift = 1
+                    if len(text) > 8:
+                        shift += 0.05 * (len(text) - 8)
+                    if abs(pos * shift) > 120:
+                        ctx.font_size = 20
+                        shift = abs(120 / pos)
+                    ctx.move_to(pos * shift, 0)
+                    ctx.text(text)
                     ctx.font_size = 25
-                else:
-                    ctx.move_to(pos.imag, pos.real)
-                    ctx.text(self.chords[bottom_petal].__repr__())
+
+            ctx.restore()
+
+            ctx.save()
+            ctx.font_size = 35
+            ctx.rotate(math.tau * (3 / 5 - 1 / 4))
+            pos = -90
+            ctx.text_align = ctx.LEFT
+            for bottom_petal in range(5):
+                # lazy
+                chord = self.chords[bottom_petal]
+                ctx.move_to(0, 0)
+                if bottom_petal == 3:
+                    pos = -pos
+                    ctx.text_align = ctx.RIGHT
+                    ctx.rotate(-math.tau / 2)
+                ctx.rotate(-math.tau / 5)
+                if bottom_petal == self.chord_index:
+                    ctx.rgb(*bottom_petal_to_rgb(bottom_petal))
+                    text = self.chords[bottom_petal].__repr__()
+                    shift = 1
+                    if len(text) > 8:
+                        shift += 0.05 * (len(text) - 8)
+                    if abs(pos * shift) > 120:
+                        shift = abs(120 / pos)
+                        ctx.font_size = 30
+                    ctx.move_to(pos * shift, 0)
+                    ctx.text(text)
+                    ctx.font_size = 35
+
+            ctx.restore()
+
         if self.mode == 1:
             ctx.font_size = 25
-            ctx.rgb(*bottom_petal_to_rgb(self.chord_index))
+            ctx.rgb(*bottom_petal_to_rgb(self.chord_index, soft=0.15))
+            ctx.save()
+            ctx.rotate(math.tau * (3 / 5 - 1 / 4))
+            pos = -105
+            ctx.text_align = ctx.LEFT
             for bottom_petal in range(5):
-                pos = 90 * cmath.exp(tai * (bottom_petal - 2) / 5)
-                ctx.move_to(pos.imag, pos.real)
+                ctx.move_to(0, 0)
+                if bottom_petal == 3:
+                    ctx.text_align = ctx.RIGHT
+                    pos = -pos
+                    ctx.rotate(-math.tau / 2)
+                ctx.rotate(-math.tau / 5)
+                ctx.move_to(pos, 0)
                 if bottom_petal == 0:
                     ctx.text("oct+")
                 if bottom_petal == 4:
@@ -437,22 +491,30 @@ class HarmonicApp(Application):
                     ctx.text("tone-")
                 if bottom_petal == 1:
                     ctx.text("oct-")
+            ctx.restore()
             ctx.move_to(0, 0)
             ctx.font_size = 35
             ctx.text(tone_to_note_name(self.chords[self.chord_index].root))
 
         if self.mode == 2:
             ctx.font_size = 20
-            ctx.rgb(*bottom_petal_to_rgb(self.chord_index))
+            ctx.rgb(*bottom_petal_to_rgb(self.chord_index, soft=0.15))
             chord = self.chords[self.chord_index]
+            ctx.save()
+            ctx.rotate(math.tau * (3 / 5 - 1 / 4))
+            pos = -105
+            ctx.text_align = ctx.LEFT
             for bottom_petal in range(5):
-                pos = 90 * cmath.exp(tai * (bottom_petal - 2) / 5)
-                ctx.move_to(pos.imag, pos.real)
+                ctx.move_to(0, 0)
+                if bottom_petal == 3:
+                    ctx.text_align = ctx.RIGHT
+                    ctx.rotate(-math.tau / 2)
+                    pos = -pos
+                ctx.rotate(-math.tau / 5)
+                ctx.move_to(pos, 0)
                 if bottom_petal == 4:
-                    if chord.voicing == 0:
-                        ctx.text("std voice")
-                    else:
-                        ctx.text("alt voice")
+                    ctx.move_to(pos * 1.05, 0)
+                    ctx.text("voice " + str(chord.voicing))
                 if bottom_petal == 0:
                     if chord.nine == "#":
                         ctx.text("#9")
@@ -471,10 +533,21 @@ class HarmonicApp(Application):
                     else:
                         ctx.text("no7")
                 if bottom_petal == 3:
-                    ctx.text(chord.triad)
+                    if chord.triad == "diminished":
+                        ctx.text("dim.")
+                    elif chord.triad == "augmented":
+                        ctx.text("aug.")
+                    else:
+                        ctx.text(chord.triad)
+
+            ctx.restore()
             ctx.move_to(0, 0)
-            ctx.font_size = 35
-            ctx.text(self.chords[self.chord_index].__repr__())
+            text = self.chords[self.chord_index].__repr__()
+            if len(text) > 9:
+                ctx.font_size = 30
+            else:
+                ctx.font_size = 35
+            ctx.text(text)
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
@@ -545,8 +618,7 @@ class HarmonicApp(Application):
         self._save_settings()
 
 
-# For running with `mpremote run`:
 if __name__ == "__main__":
-    import st3m.run
+    from st3m.run import run_app
 
-    st3m.run.run_view(HarmonicApp(ApplicationContext()))
+    run_app(HarmonicApp, "/flash/sys/apps/harmonic_demo")

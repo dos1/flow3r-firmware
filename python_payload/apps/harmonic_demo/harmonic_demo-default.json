@@ -1,9 +1,9 @@
 {
 "chords": [
-    { "triad": "major", "root": 3, "j": true, "voicing": 0, "nine": false, "seven": true},
-    { "triad": "minor", "root": -1, "j": false, "voicing": 0, "nine": true, "seven": false},
-    { "triad": "major", "root": 7, "j": false, "voicing": 1, "nine": false, "seven": true},
+    { "triad": "major", "root": -4, "j": true, "voicing": 0, "nine": true, "seven": false},
     { "triad": "major", "root": 5, "j": false, "voicing": 1, "nine": true, "seven": false},
-    { "triad": "major", "root": -4, "j": true, "voicing": 0, "nine": true, "seven": false}
+    { "triad": "major", "root": 7, "j": false, "voicing": 1, "nine": false, "seven": true},
+    { "triad": "minor", "root": 0, "j": false, "voicing": 0, "nine": true, "seven": false},
+    { "triad": "major", "root": 3, "j": true, "voicing": 0, "nine": false, "seven": true}
 ]
 }
