@@ -6,13 +6,31 @@
 Welcome to flow3r's documentation!
 ==================================
 
+User manual
+-----------
+
+* :ref:`Assembly <assembly>`
+* :ref:`Power <usage_power>`
+* :ref:`Menu <usage_menu>`
+* :ref:`Audio <usage_audio>`
+* :ref:`Nick <usage_nick>`
+* :ref:`Music <usage_music>`
+* :ref:`Apps <usage_apps>`
+* :ref:`System <usage_system>`
+
 .. toctree::
    :maxdepth: 1
-   :caption: The badge:
+   :hidden:
+   :caption: User manual
 
-   badge/hardware_specs.rst
    badge/assembly.rst
    badge/usage.rst
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Programming guide
+
+   badge/hardware_specs.rst
    badge/programming.rst
    badge/firmware.rst
    badge/firmware-development.rst
@@ -23,7 +41,7 @@ Welcome to flow3r's documentation!
 
 .. toctree::
    :maxdepth: 1
-   :caption: API:
+   :caption: API
 
    api/audio.rst
    api/badgelink.rst
@@ -38,12 +56,12 @@ Welcome to flow3r's documentation!
 
 .. toctree::
    :maxdepth: 1
-   :caption: About:
+   :caption: About
 
    badge/license.rst
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

@@ -9,6 +9,8 @@ upwards
 .. image:: overview.svg
   :width: 700px
 
+.. _usage_power:
+
 Powering your Flow3r
 --------------------
 
@@ -20,6 +22,8 @@ right.
 
 You should then see the badge spring to life and display 'Starting...' on the screen.
 
+.. _usage_menu:
+
 Navigating the Menu
 -------------------
 
@@ -29,6 +33,8 @@ in the menu. Pressing it down selects a menu option.
 
 The OS shoulder button (right shoulder unless swapped in settings) can be
 pressed down to quickly return 'back', either in a menu or an app.
+
+.. _usage_audio:
 
 Dealing with Audio
 ------------------
@@ -40,6 +46,8 @@ for lowering the volume and right for making it louder.
 You can plug in a pair of headphones to the 3.5mm jack on the bottom-left petal.
 The built-in speakers will then turn off and audio will go out through the
 headphones. You can adjust their volume in the same way.
+
+.. _usage_nick:
 
 Showing your nick and pronouns
 ------------------------------
@@ -69,6 +77,8 @@ settings) to exit Disk Mode. Then, go to Badge |rarr| Nick to see your changes!
 
 If the ``nick.json`` file is unparseable or otherwise gets corrupted, it will be
 overwritten with the default contents on next nick app startup.
+
+.. _usage_music:
 
 Playing Music
 -------------
@@ -100,7 +110,7 @@ Left/right on the app button sets the step length of the sequencer. If it's a si
 time when passing it. If it's two lines, they will alternate between being solid and missing a piece in the middle; if solid, the sequencer will
 be reset when passing it, if they're "open" they let the sequencer pass through once and switch to solid in the next pass. This is very useful for creating "early reset" type beats and hiding special moments in the last group or so :D.
 
-Your beat is saved when exiting gay drums! Make sure to wait until the menu screen appears before turning the power off though :D!
+Your beat is saved in flash at ``/sys/gay_drums.json`` when exiting gay drums! Make sure to wait until the menu screen appears before turning the power off though :D!
 
 harmonic demo
 ^^^^^^^^^^^^^
@@ -118,7 +128,7 @@ Chord selection is done in 3 different mode, cycle through them with left/right 
 If you find yourself lost in ``Chord Selector``, note that intervals from root are color coded on the screen, meaning you can just
 try out what setting changes which petal and feel out how what difference it makes in context of the others!
 
-Your chords are saved when exiting harmonic demo! Make sure to wait until the menu screen appears before turning the power off though :D!
+Your chords are saved in flash at ``/sys/harmonic_demo.json`` when exiting harmonic demo! Make sure to wait until the menu screen appears before turning the power off though :D!
 
 tiny sampler
 ^^^^^^^^^^^^
@@ -133,6 +143,8 @@ through them with left/right on the app button:
 - Mode 3 ``Pitch Shift``: Tap a top petal to increase replay speed of the sample by a semitone, tap a bottom one to decrease it. You can also hold the petals to directly replay the results.
 
 Samples are saved in flash at ``/sys/samples/tiny_sample_*.wav``.
+
+.. _usage_apps:
 
 Applications
 ------------
@@ -174,6 +186,8 @@ Worms
 
 Touch petals for worms!
 
+.. _usage_system:
+
 System
 ------
 
@@ -190,12 +204,14 @@ Menu for setting various system parameters.
 - ``Debug: ftop``: Prints a task cpu load and memory report every 5 seconds on the USB serial port.
 - ``Touch Overlay``: If a petal is pressed the positional output is displayed in an overlay.
 
-A settings file with more options including headphone and speaker max/min volume and volume adjust step is on the flash filesystem at ``/settings.json``.
+A settings file with more options including headphone and speaker max/min volume and volume
+adjust step is on the flash filesystem at ``/settings.json``.
 
 Graphics Mode
 ^^^^^^^^^^^^^
 
-Various graphics settings. If ``lock`` is enabled applications can not override these, else they can set it to their individual preferences at runtime.
+Various graphics settings. If ``lock`` is enabled applications can not override these,
+else they can set it to their individual preferences at runtime.
 
 Get Apps
 ^^^^^^^^
@@ -211,6 +227,12 @@ Disk Mode (SD)
 ^^^^^^^^^^^^^^^^^
 
 Make the SD card filesystem accessible as a block device via USB. Reboots on exit.
+
+Yeet local changes
+^^^^^^^^^^^^^^^^^^
+
+Restores python payload to the state of the last firmware updatei and reboots. This excludes
+settings and files not present in the original payload.
 
 Reboot
 ^^^^^^
