@@ -88,7 +88,7 @@ We ship some noise-making apps by default:
 shoegaze
 ^^^^^^^^
 
-Electric guitar simulator with fuzz and reverb. Tilt for wiggle stick. App button middle switches between render modes: Lo Fi has lower framerate, default has slower input response time. App button left turns delay on and off. Top petals play notes in chord, bottom petals change chord.
+Electric guitar simulator with fuzz and reverb. Tilt for wiggle stick. Top petals play notes in chord, bottom petals change chord. App button left turns delay on and off, app button right checks for chords in the savefile of chord organ and toggles between them if found.
 
 Otamatone
 ^^^^^^^^^
@@ -112,8 +112,8 @@ be reset when passing it, if they're "open" they let the sequencer pass through 
 
 Your beat is saved in flash at ``/sys/gay_drums.json`` when exiting gay drums! Make sure to wait until the menu screen appears before turning the power off though :D!
 
-harmonic demo
-^^^^^^^^^^^^^
+chord organ
+^^^^^^^^^^^
 
 A chord organ! The top petals always play the 5 notes of the selected chord.
 
@@ -146,7 +146,7 @@ Samples are saved in flash at ``/sys/samples/tiny_sample_*.wav``.
 
 .. _usage_apps:
 
-Applications
+Apps
 ------------
 
 Audio passthrough

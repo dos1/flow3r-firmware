@@ -5,6 +5,7 @@ from st3m.input import InputState
 from ctx import Context
 
 import json
+import errno
 import math
 import captouch
 import bl00mbox
@@ -33,7 +34,7 @@ class ShoegazeApp(Application):
         self.blm: Optional[bl00mbox.Channel] = None
         self.chord_index = 0
         self.chord: List[int] = []
-        self._set_chord(3)
+        self._organ_chords = [None] * 5
         self._tilt_bias = 0.0
         self._detune_prev = 0.0
         self._git_string_tuning = [0] * 4
@@ -43,8 +44,8 @@ class ShoegazeApp(Application):
         self._rand_limit = 16
         self._rand_rot = 0.0
         self.delay_on = True
-        self.fuzz_on = True
-        self._lofi = False
+        self.organ_on = False
+        self._set_chord(3)
 
     def _build_synth(self) -> None:
         if self.blm is None:
@@ -95,51 +96,64 @@ class ShoegazeApp(Application):
 
         self.main_mixer.signals.gain = 2000
         self.main_lp.signals.reso = 2000
+
+        self.bass_lp.signals.gain = 32767
+        self.git_lp.signals.gain = 32767
+        self.main_lp.signals.freq = 2500
+        self.main_lp.signals.gain = 2000
+        self.git_mixer.signals.gain = 4000
+        self.main_lp.signals.input = self.main_fuzz.signals.output
         self._update_connections()
 
     def _update_connections(self) -> None:
         if self.blm is None:
             return
-        if self.fuzz_on:
-            self.bass_lp.signals.gain = 32767
-            self.git_lp.signals.gain = 32767
-            self.main_lp.signals.freq = 2500
-            self.main_lp.signals.gain = 2000
-            self.git_mixer.signals.gain = 4000
-            self.main_lp.signals.input = self.main_fuzz.signals.output
-            if self.delay_on:
-                self.git_delay.signals.input = self.git_fuzz.signals.output
-                self.main_mixer.signals.input0 = self.git_delay.signals.output
-            else:
-                self.main_mixer.signals.input0 = self.git_fuzz.signals.output
+        if self.delay_on:
+            self.git_delay.signals.input = self.git_fuzz.signals.output
+            self.main_mixer.signals.input0 = self.git_delay.signals.output
         else:
-            self.bass_lp.signals.gain = 2000
-            self.git_lp.signals.gain = 2000
-            self.main_lp.signals.freq = 6000
-            self.main_lp.signals.gain = 4000
-            self.git_mixer.signals.gain = 500
-            self.main_lp.signals.input = self.main_mixer.signals.output
-            if self.delay_on:
-                self.git_delay.signals.input = self.git_lp.signals.output
-                self.main_mixer.signals.input0 = self.git_delay.signals.output
-            else:
-                self.main_mixer.signals.input0 = self.git_lp.signals.output
+            self.main_mixer.signals.input0 = self.git_fuzz.signals.output
 
-    def fuzz_toggle(self) -> None:
-        self.fuzz_on = not self.fuzz_on
-        self._update_connections()
+    def _try_load_settings(self, path):
+        try:
+            with open(path, "r") as f:
+                return json.load(f)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise  # ignore file not found
+
+    def _load_settings(self):
+        settings_path = "/flash/harmonic_demo.json"
+
+        settings = self._try_load_settings(settings_path)
+        if settings is not None:
+            for i, chord in enumerate(settings["chords"]):
+                if i > 4:
+                    break
+                self._organ_chords[i] = chord["tones_readonly"]
+
+    def organ_toggle(self) -> None:
+        self.organ_on = not self.organ_on
+        if self.organ_on and self._organ_chords[0] is None:
+            self._load_settings()
+            if self._organ_chords[0] is None:
+                self.organ_on = False
+        self._set_chord(self.chord_index, force_update=True)
 
     def delay_toggle(self) -> None:
         self.delay_on = not self.delay_on
         self._update_connections()
 
-    def _set_chord(self, i: int) -> None:
+    def _set_chord(self, i: int, force_update=False) -> None:
         hue = int(54 * (i + 0.5)) % 360
-        if i != self.chord_index:
+        if i != self.chord_index or force_update:
             self.chord_index = i
             leds.set_all_hsv(hue, 1, 0.2)
             leds.update()
-            self.chord = chords[i]
+            if self.organ_on and self._organ_chords[i] is not None:
+                self.chord = self._organ_chords[i]
+            else:
+                self.chord = chords[i]
 
     def draw(self, ctx: Context) -> None:
         ctx.text_align = ctx.CENTER
@@ -159,38 +173,46 @@ class ShoegazeApp(Application):
         ctx.text("bass")
 
         rot = self._spinny  # + self._detune_prev
-        ctx.rgb(0, 0.5, 0.5)
         ctx.rotate(rot + self._rand_rot)
-        ctx.move_to(0, -10)
-        ctx.text("shoegazeshoegazeshoe")
-        ctx.move_to(0, 10)
-        ctx.text("gazeshoegazeshoegaze")
+        if self.organ_on:
+            ctx.rgb(0.5, 0, 0.6)
+            ctx.rotate(0.69)
+            ctx.move_to(0, -10)
+            ctx.text("chordorganchordorganchord")
+            ctx.move_to(0, 10)
+            ctx.text("organchordorganchordorgan")
+            ctx.rotate(4.20 + 0.69)
+        else:
+            ctx.rgb(0, 0.5, 0.5)
+            ctx.move_to(0, -10)
+            ctx.text("shoegazeshoegazeshoe")
+            ctx.move_to(0, 10)
+            ctx.text("gazeshoegazeshoegaze")
         ctx.rotate(-2.2 * (rot + self._rand_rot) - 0.5)
 
+        if self.organ_on:
+            rgb = (0.7, 0.7, 0)
+        else:
+            rgb = (0, 0.8, 0)
+
         ctx.move_to(40, 40)
+
         if self.delay_on:
-            ctx.rgb(0, 0.8, 0)
+            ctx.rgb(*rgb)
             ctx.text("delay ON!")
         else:
-            ctx.rgb(0, 0.6, 0)
+            ctx.rgb(*tuple([x * 0.75 for x in rgb]))
             ctx.text("delay off")
+            ctx.rgb(*rgb)
 
         ctx.rotate(0.2 + self._rand_rot)
-
         ctx.move_to(50, -50)
         detune = "detune: " + str(int(self._detune_prev * 100))
-        ctx.rgb(0, 0.8, 0)
+        ctx.rgb(*rgb)
         ctx.text(detune)
-
         ctx.rotate(-2.5 * (rot + 4 * self._rand_rot))
-
         ctx.move_to(-50, 50)
-        if self.fuzz_on:
-            ctx.rgb(0, 0.8, 0)
-            ctx.text("fuzz ON!")
-        else:
-            ctx.rgb(0, 0.6, 0)
-            ctx.text("fuzz off")
+        ctx.text("fuzz ON!")
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
@@ -208,10 +230,7 @@ class ShoegazeApp(Application):
         if buttons.app.right.pressed:
             self.delay_toggle()
         if buttons.app.left.pressed:
-            pass
-            # self.fuzz_toggle()
-        if buttons.app.middle.pressed:
-            self.lofi = not self.lofi
+            self.organ_toggle()
 
         for i in range(1, 10, 2):
             if petals[i].whole.pressed:
@@ -235,21 +254,8 @@ class ShoegazeApp(Application):
             self.bass_string.decay = 1000
             self.bass_string.signals.trigger.start()
 
-    @property
-    def lofi(self):
-        return self._lofi
-
-    @lofi.setter
-    def lofi(self, val):
-        self._lofi = bool(val)
-        if self._lofi:
-            sys_display.set_mode(2313)
-        else:
-            sys_display.set_mode(912)
-
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
-        self.lofi = self.lofi
         if self.blm is None:
             self._build_synth()
         self.blm.foreground = True

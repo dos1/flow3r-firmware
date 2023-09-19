@@ -305,6 +305,7 @@ class HarmonicApp(Application):
             chord["nine"] = self.chords[i].nine
             chord["root"] = self.chords[i].root
             chord["voicing"] = self.chords[i].voicing
+            chord["tones_readonly"] = self.chords[i].notes
             if not file_is_different:
                 user_chord = user_settings["chords"][i]
                 if self._file_settings is None:
