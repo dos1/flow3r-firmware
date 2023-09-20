@@ -45,7 +45,7 @@ class ShoegazeApp(Application):
         self._rand_rot = 0.0
         self.delay_on = True
         self.organ_on = False
-        self._set_chord(3)
+        self._set_chord(3, force_update=True)
 
     def _build_synth(self) -> None:
         if self.blm is None:
@@ -255,16 +255,18 @@ class ShoegazeApp(Application):
             self.bass_string.signals.trigger.start()
 
     def on_enter_done(self) -> None:
+        super().on_enter_done()
         if self.blm is None:
             self._build_synth()
         self.blm.foreground = True
+        self._set_chord(self.chord_index, force_update=True)
 
     def on_exit(self) -> None:
-        super().on_exit()
         if self.blm is not None:
             self.blm.clear()
             self.blm.free = True
         self.blm = None
+        super().on_exit()
 
 
 # For running with `mpremote run`:

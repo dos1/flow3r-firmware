@@ -78,14 +78,21 @@ class Application(BaseView):
         if fully_exiting and self._wifi_preference is not None:
             st3m.wifi._onoff_wifi_update()
         super().on_exit()
+        # set the default graphics mode, this is a no-op if
+        # it is already set
         if fully_exiting:
-            # set the default graphics mode, this is a no-op if
-            # it is already set
             sys_display.set_mode(0)
-            # read menu led config from flash and set it
-            led_patterns.set_menu_colors()
+        if fully_exiting:
             leds.set_slew_rate(10)
             leds.set_auto_update(1)
+            led_patterns.set_menu_colors()
+
+    def on_exit_done(self):
+        fully_exiting = self.vm.direction == ViewTransitionDirection.BACKWARD
+        if fully_exiting:
+            leds.set_slew_rate(10)
+            leds.set_auto_update(1)
+            led_patterns.set_menu_colors()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)

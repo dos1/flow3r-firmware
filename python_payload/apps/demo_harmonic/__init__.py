@@ -261,7 +261,7 @@ class HarmonicApp(Application):
         self.prev_captouch = [0] * 10
         self.fade = [0] * 5
         self.mode = 0
-        self._set_chord(3)
+        self._set_chord(3, force_update=True)
         self._num_modes = 3
 
         self._file_settings = None
@@ -370,9 +370,9 @@ class HarmonicApp(Application):
         self.lp.signals.reso = 2000
         self.lp.signals.gain.dB = +3
 
-    def _set_chord(self, i: int) -> None:
+    def _set_chord(self, i, force_update=False):
         hue = int(72 * (i + 0.5)) % 360
-        if i != self.chord_index:
+        if i != self.chord_index or force_update:
             self.chord_index = i
             leds.set_all_rgb(*bottom_petal_to_rgb(self.chord_index, soft=0))
             leds.update()
@@ -611,6 +611,7 @@ class HarmonicApp(Application):
             self._build_synth()
         self.blm.foreground = True
         self._load_settings()
+        self._set_chord(self.chord_index, force_update=True)
 
     def on_exit(self):
         if self.blm is not None:
