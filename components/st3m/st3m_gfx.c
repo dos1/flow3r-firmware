@@ -914,6 +914,13 @@ void st3m_gfx_flush(int timeout_ms) {
     // And drain again.
     xQueueReset(user_ctx_freeq);
 
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
+    _st3m_osd_x0 = 0;
+    _st3m_osd_y0 = 0;
+    _st3m_osd_x1 = 0;
+    _st3m_osd_y1 = 0;
+#endif
+
     for (int i = 0; i < N_DRAWLISTS; i++) {
         ctx_drawlist_clear(drawlists[i].user_ctx);
         st3m_gfx_viewport_transform(drawlists[i].user_ctx);
