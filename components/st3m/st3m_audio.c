@@ -334,7 +334,7 @@ static void _audio_player_task(void *data) {
             }
         } else {
             for (int i = 0; i < (FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2);
-                 i += 2) {
+                 i += 1) {
                 int32_t acc = buffer_tx[i];
 
                 acc = (acc * software_volume) >> 15;
