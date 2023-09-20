@@ -148,7 +148,8 @@ def run_main() -> None:
 
     captouch.calibration_request()
 
-    audio.set_volume_dB(settings.num_startup_volume_db.value)
+    audio.headphones_set_volume_dB(settings.num_headphones_startup_volume_db.value)
+    audio.speaker_set_volume_dB(settings.num_speaker_startup_volume_db.value)
     audio.headphones_set_minimum_volume_dB(settings.num_headphones_min_db.value)
     audio.speaker_set_minimum_volume_dB(settings.num_speakers_min_db.value)
     audio.headphones_set_maximum_volume_dB(settings.num_headphones_max_db.value)

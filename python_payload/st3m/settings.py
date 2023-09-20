@@ -210,8 +210,11 @@ str_hostname = StringTunable("Hostname", "system.hostname", "flow3r")
 num_volume_step_db = StringTunable(
     "Volume Change dB", "system.audio.volume_step_dB", 2.5
 )
-num_startup_volume_db = StringTunable(
-    "Startup Volume dB", "system.audio.startup_volume_dB", -10
+num_speaker_startup_volume_db = StringTunable(
+    "Speaker Startup Volume dB", "system.audio.speaker_startup_volume_dB", -10
+)
+num_headphones_startup_volume_db = StringTunable(
+    "Headphones Startup Volume dB", "system.audio.headphones_startup_volume_dB", -10
 )
 num_headphones_min_db = StringTunable(
     "Min Headphone Volume dB", "system.audio.headphones_min_dB", -45
@@ -240,7 +243,8 @@ load_save_settings: List[UnaryTunable] = [
     str_wifi_psk,
     str_hostname,
     num_volume_step_db,
-    num_startup_volume_db,
+    num_speaker_startup_volume_db,
+    num_headphones_startup_volume_db,
     num_headphones_min_db,
     num_speakers_min_db,
     num_headphones_max_db,

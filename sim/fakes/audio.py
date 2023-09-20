@@ -16,6 +16,14 @@ def get_volume_relative() -> float:
     return 0
 
 
+def headphones_set_volume_dB(v: float) -> None:
+    pass
+
+
+def speaker_set_volume_dB(v: float) -> None:
+    pass
+
+
 def headphones_set_minimum_volume_dB(v: float) -> None:
     pass
 
