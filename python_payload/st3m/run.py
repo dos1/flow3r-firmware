@@ -23,7 +23,7 @@ from st3m import settings_menu as settings, logging, processors, wifi
 from st3m import led_patterns
 import st3m.wifi
 
-import captouch, audio, leds, gc, sys_buttons, sys_display, sys_mode
+import captouch, audio, leds, gc, sys_buttons, sys_display, sys_mode, media
 import os
 
 import machine
@@ -77,6 +77,7 @@ class ApplicationMenu(SimpleMenu):
         sys_display.set_mode(0)
         leds.set_slew_rate(100)
         led_patterns.set_menu_colors()
+        media.stop()
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
