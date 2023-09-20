@@ -207,9 +207,20 @@ onoff_wifi_preference = OnOffTunable(
 str_wifi_ssid = StringTunable("WiFi SSID", "system.wifi.ssid", "Camp2023-open")
 str_wifi_psk = ObfuscatedStringTunable("WiFi Password", "system.wifi.psk", None)
 str_hostname = StringTunable("Hostname", "system.hostname", "flow3r")
+
 num_volume_step_db = StringTunable(
-    "Volume Change dB", "system.audio.volume_step_dB", 2.5
+    "Volume Change dB", "system.audio.volume_step_dB", 1.5
 )
+num_volume_repeat_step_db = StringTunable(
+    "Volume Repeat Change dB", "system.audio.volume_repeat_step_dB", 2.5
+)
+num_volume_repeat_wait_ms = StringTunable(
+    "Volume Repeat Wait Time ms", "system.audio.volume_repeat_wait_ms", 800
+)
+num_volume_repeat_ms = StringTunable(
+    "Volume Repeat Time ms", "system.audio.volume_repeat_ms", 300
+)
+
 num_speaker_startup_volume_db = StringTunable(
     "Speaker Startup Volume dB", "system.audio.speaker_startup_volume_dB", -10
 )
@@ -219,15 +230,22 @@ num_headphones_startup_volume_db = StringTunable(
 num_headphones_min_db = StringTunable(
     "Min Headphone Volume dB", "system.audio.headphones_min_dB", -45
 )
-num_speakers_min_db = StringTunable(
-    "Min Speakers Volume dB", "system.audio.speakers_min_dB", -40
+num_speaker_min_db = StringTunable(
+    "Min Speaker Volume dB", "system.audio.speakers_min_dB", -40
 )
 num_headphones_max_db = StringTunable(
     "Max Headphone Volume dB", "system.audio.headphones_max_dB", 3
 )
-num_speakers_max_db = StringTunable(
-    "Max Speakers Volume dB", "system.audio.speakers_max_dB", 14
+num_speaker_max_db = StringTunable(
+    "Max Speaker Volume dB", "system.audio.speakers_max_dB", 14
 )
+
+num_display_brightness = StringTunable(
+    "Display Brightness", "system.brightness.display", 100
+)
+num_leds_brightness = StringTunable("LED Brightness", "system.brightness.leds", 200)
+
+num_leds_speed = StringTunable("LED speed", "system.brightness.leds_speed", 255)
 
 # List of all settings to be loaded/saved
 load_save_settings: List[UnaryTunable] = [
@@ -243,12 +261,18 @@ load_save_settings: List[UnaryTunable] = [
     str_wifi_psk,
     str_hostname,
     num_volume_step_db,
+    num_volume_repeat_step_db,
+    num_volume_repeat_wait_ms,
+    num_volume_repeat_ms,
     num_speaker_startup_volume_db,
     num_headphones_startup_volume_db,
     num_headphones_min_db,
-    num_speakers_min_db,
+    num_speaker_min_db,
     num_headphones_max_db,
-    num_speakers_max_db,
+    num_speaker_max_db,
+    num_display_brightness,
+    num_leds_brightness,
+    num_leds_speed,
 ]
 
 

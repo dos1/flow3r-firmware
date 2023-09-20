@@ -214,6 +214,8 @@ if TYPE_CHECKING:
 # Main settings menu
 settings_menu_structure: "MenuStructure" = [
     MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/w1f1")),
+    MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/audio_config")),
+    MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/appearance")),
     onoff_wifi,
     onoff_wifi_preference,
     onoff_show_tray,

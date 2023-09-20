@@ -30,13 +30,42 @@ class AudioProcessor(Processor):
     def __init__(self) -> None:
         super().__init__()
         self.input = InputController()
+        self.repeat_wait_ms = 800
+        self.repeat_ms = 300
+        self._update_repeat()
+
+    def _update_repeat(self):
+        changed = False
+        if self.repeat_wait_ms != settings.num_volume_repeat_wait_ms.value:
+            changed = True
+        if self.repeat_ms != settings.num_volume_repeat_ms.value:
+            changed = True
+        if changed:
+            self.repeat_wait_ms = settings.num_volume_repeat_wait_ms.value
+            self.repeat_ms = settings.num_volume_repeat_ms.value
+            self.input.buttons.os.left.repeat_enable(
+                self.repeat_wait_ms, self.repeat_ms
+            )
+            self.input.buttons.os.right.repeat_enable(
+                self.repeat_wait_ms, self.repeat_ms
+            )
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.input.think(ins, delta_ms)
-        if self.input.buttons.os.left.pressed:
+        os_button = self.input.buttons.os
+        event = True
+        if os_button.left.pressed:
             audio.adjust_volume_dB(-settings.num_volume_step_db.value)
-        if self.input.buttons.os.right.pressed:
+        elif os_button.right.pressed:
             audio.adjust_volume_dB(settings.num_volume_step_db.value)
+        elif os_button.left.repeated:
+            audio.adjust_volume_dB(-settings.num_volume_repeat_step_db.value)
+        elif os_button.right.repeated:
+            audio.adjust_volume_dB(settings.num_volume_repeat_step_db.value)
+        else:
+            event = False
+        if event:
+            self._update_repeat()
 
 
 class ProcessorMidldeware(Responder):

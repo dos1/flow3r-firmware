@@ -25,3 +25,7 @@ osd = 256
 
 def ctx(foo):
     return _sim.get_ctx()
+
+
+def set_backlight(a):
+    pass

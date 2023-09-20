@@ -47,3 +47,7 @@ def update():
 
 def set_auto_update(b: int):
     pass
+
+
+def set_brightness(b: float):
+    pass

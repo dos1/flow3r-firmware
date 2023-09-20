@@ -67,8 +67,11 @@ class Application(BaseView):
             st3m.wifi.setup_wifi()
         elif self._wifi_preference is False:
             st3m.wifi.disable()
-        leds.set_auto_update(0)
-        leds.set_slew_rate(255)
+        leds.set_slew_rate(settings.num_leds_speed.value)
+        if 255 == settings.num_leds_speed.value:
+            leds.set_auto_update(0)
+        else:
+            leds.set_auto_update(1)
         super().on_enter(vm)
 
     def on_exit(self) -> None:

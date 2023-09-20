@@ -151,9 +151,16 @@ def run_main() -> None:
     audio.headphones_set_volume_dB(settings.num_headphones_startup_volume_db.value)
     audio.speaker_set_volume_dB(settings.num_speaker_startup_volume_db.value)
     audio.headphones_set_minimum_volume_dB(settings.num_headphones_min_db.value)
-    audio.speaker_set_minimum_volume_dB(settings.num_speakers_min_db.value)
+    audio.speaker_set_minimum_volume_dB(settings.num_speaker_min_db.value)
     audio.headphones_set_maximum_volume_dB(settings.num_headphones_max_db.value)
-    audio.speaker_set_maximum_volume_dB(settings.num_speakers_max_db.value)
+    audio.speaker_set_maximum_volume_dB(settings.num_speaker_max_db.value)
+    leds.set_brightness(settings.num_leds_brightness.value)
+    leds.set_slew_rate(settings.num_leds_speed.value)
+    if 255 == settings.num_leds_speed.value:
+        leds.set_auto_update(0)
+    else:
+        leds.set_auto_update(1)
+    sys_display.set_backlight(settings.num_display_brightness.value)
 
     leds.set_rgb(0, 255, 0, 0)
     leds.update()

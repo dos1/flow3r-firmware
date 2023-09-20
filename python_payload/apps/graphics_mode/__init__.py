@@ -18,6 +18,8 @@ class App(Application):
         self.angle = 0
         self.focused_widget = 2
         self.active = False
+        self.min_focus = 0
+        self.min_focus = 3
 
     def draw_widget(self, label):
         ctx = self.ctx
