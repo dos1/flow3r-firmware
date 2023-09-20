@@ -43,3 +43,7 @@ def set_slew_rate(b: int):
 def update():
     _sim.leds_update()
     _sim.render_gui_lazy()
+
+
+def set_auto_update(b: int):
+    pass

@@ -11,6 +11,8 @@ from st3m.goose import Optional, List, Dict
 from st3m.logging import Log
 from st3m import settings
 from ctx import Context
+from st3m import led_patterns
+import leds
 
 import toml
 import os
@@ -65,6 +67,8 @@ class Application(BaseView):
             st3m.wifi.setup_wifi()
         elif self._wifi_preference is False:
             st3m.wifi.disable()
+        leds.set_auto_update(0)
+        leds.set_slew_rate(255)
         super().on_enter(vm)
 
     def on_exit(self) -> None:
@@ -74,10 +78,14 @@ class Application(BaseView):
         if fully_exiting and self._wifi_preference is not None:
             st3m.wifi._onoff_wifi_update()
         super().on_exit()
-        # set the default graphics mode, this is a no-op if
-        # it is already set
         if fully_exiting:
+            # set the default graphics mode, this is a no-op if
+            # it is already set
             sys_display.set_mode(0)
+            # read menu led config from flash and set it
+            led_patterns.set_menu_colors()
+            leds.set_slew_rate(10)
+            leds.set_auto_update(1)
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)

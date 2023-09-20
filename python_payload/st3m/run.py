@@ -19,6 +19,7 @@ from st3m.application import (
 )
 from st3m.about import About
 from st3m import settings_menu as settings, logging, processors, wifi
+from st3m import led_patterns
 
 import captouch, audio, leds, gc, sys_buttons, sys_display, sys_mode
 import os
@@ -157,6 +158,12 @@ def run_main() -> None:
     leds.update()
     bundles = BundleManager()
     bundles.update()
+
+    leds.set_rgb(0, 0, 0, 0)
+    leds.update()
+    leds.set_slew_rate(2)
+    leds.set_auto_update(1)
+    led_patterns.set_menu_colors()
 
     try:
         network.hostname(

@@ -617,6 +617,7 @@ class HarmonicApp(Application):
             self.blm.free = True
         self.blm = None
         self._save_settings()
+        super().on_exit()
 
 
 if __name__ == "__main__":

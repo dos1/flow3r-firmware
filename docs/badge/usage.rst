@@ -171,6 +171,11 @@ IMU Demo
 
 Tilt to accelerate a circle with gravity.
 
+LED Painter
+^^^^^^^^^^^
+
+Use the petals to set a color and the application button to move and lift the brush to paint on the LEDs! On exit the LED data is stored in flash at ``/menu_leds.json``. This file sets the default LED color pattern for the main menus and is not specific to LED Painter, other applications may read and write to it.
+
 Scroll Demo
 ^^^^^^^^^^^
 
