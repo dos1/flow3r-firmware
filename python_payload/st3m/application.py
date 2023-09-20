@@ -2,7 +2,6 @@ from st3m.ui.view import (
     BaseView,
     ViewTransitionSwipeLeft,
     ViewManager,
-    ViewTransitionDirection,
 )
 from st3m.ui.menu import MenuItem
 from st3m.input import InputState
@@ -50,50 +49,20 @@ class ApplicationContext:
         return self._bundle_metadata
 
 
+def setup_for_app(app_ctx: Optional[ApplicationContext]) -> None:
+    if app_ctx and app_ctx.bundle_metadata and settings.onoff_wifi_preference.value:
+        wifi_preference = app_ctx.bundle_metadata["app"].get("wifi_preference")
+        if wifi_preference is True and not st3m.wifi.is_connected():
+            st3m.wifi.setup_wifi()
+        elif wifi_preference is False:
+            st3m.wifi.disable()
+    leds.set_slew_rate(settings.num_leds_speed.value)
+
+
 class Application(BaseView):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         self._app_ctx = app_ctx
-        if app_ctx and app_ctx.bundle_metadata and settings.onoff_wifi_preference.value:
-            self._wifi_preference = app_ctx.bundle_metadata["app"].get(
-                "wifi_preference"
-            )
-        else:
-            self._wifi_preference = None
         super().__init__()
-
-    def on_enter(self, vm: Optional[ViewManager]) -> None:
-        # Try to connect/disconnect from wifi if requested by app
-        if self._wifi_preference is True and not st3m.wifi.is_connected():
-            st3m.wifi.setup_wifi()
-        elif self._wifi_preference is False:
-            st3m.wifi.disable()
-        leds.set_slew_rate(settings.num_leds_speed.value)
-        super().on_enter(vm)
-
-    def on_exit(self) -> None:
-        fully_exiting = self.vm.direction == ViewTransitionDirection.BACKWARD
-        # If the app requested to change wifi state
-        # fall back to system defaults on exit
-        if fully_exiting and self._wifi_preference is not None:
-            st3m.wifi._onoff_wifi_update()
-        super().on_exit()
-        # set the default graphics mode, this is a no-op if
-        # it is already set
-        if fully_exiting:
-            sys_display.set_mode(0)
-        if fully_exiting:
-            leds.set_slew_rate(100)
-            led_patterns.set_menu_colors()
-
-    def on_exit_done(self):
-        fully_exiting = self.vm.direction == ViewTransitionDirection.BACKWARD
-        if fully_exiting:
-            leds.set_slew_rate(100)
-            led_patterns.set_menu_colors()
-            leds.update()
-
-    def think(self, ins: InputState, delta_ms: int) -> None:
-        super().think(ins, delta_ms)
 
 
 class BundleLoadException(BaseException):
@@ -149,7 +118,7 @@ class BundleMetadata:
     This data is used to discover bundles and load them as applications.
     """
 
-    __slots__ = ["path", "name", "menu", "_t", "version"]
+    __slots__ = ["path", "name", "menu", "_t", "version", "ctx"]
 
     def __init__(self, path: str) -> None:
         self.path = path.rstrip("/")
@@ -188,6 +157,8 @@ class BundleMetadata:
 
         self._t = t
 
+        self.ctx = ApplicationContext(self.path, self._t)
+
     @staticmethod
     def _sys_path_set(v: List[str]) -> None:
         # Can't just assign to sys.path in Micropython.
@@ -221,7 +192,7 @@ class BundleMetadata:
             log.info(f"Loaded {self.name} module: {m}")
             klass = getattr(m, class_entry)
             log.info(f"Loaded {self.name} class: {klass}")
-            inst = klass(ApplicationContext(self.path, self._t))
+            inst = klass(self.ctx)
             log.info(f"Instantiated {self.name} class: {inst}")
             return inst  # type: ignore
         except Exception as e:
@@ -350,6 +321,8 @@ class MenuItemAppLaunch(MenuItem):
                 vm.push(err)
                 return
         assert self._instance is not None
+
+        setup_for_app(self._bundle.ctx)
         vm.push(self._instance, ViewTransitionSwipeLeft())
 
     def label(self) -> str:

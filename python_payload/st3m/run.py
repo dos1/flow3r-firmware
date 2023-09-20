@@ -9,17 +9,19 @@ from st3m.ui.menu import (
     MenuItemLaunchPersistentView,
 )
 from st3m.ui.elements import overlays
-from st3m.ui.view import View, ViewManager, ViewTransitionBlend
+from st3m.ui.view import View, ViewManager, ViewTransitionBlend, ViewTransitionDirection
 from st3m.ui.elements.menus import SimpleMenu, SunMenu
 from st3m.application import (
     BundleManager,
     BundleMetadata,
     MenuItemAppLaunch,
     ApplicationContext,
+    setup_for_app,
 )
 from st3m.about import About
 from st3m import settings_menu as settings, logging, processors, wifi
 from st3m import led_patterns
+import st3m.wifi
 
 import captouch, audio, leds, gc, sys_buttons, sys_display, sys_mode
 import os
@@ -60,13 +62,40 @@ def run_responder(r: Responder) -> None:
     reactor.run()
 
 
+class ApplicationMenu(SimpleMenu):
+    def _restore_sys_defaults(self) -> None:
+        if (
+            not self.vm
+            or not self.is_active()
+            or self.vm.direction != ViewTransitionDirection.BACKWARD
+        ):
+            return
+        # fall back to system defaults on app exit
+        st3m.wifi._onoff_wifi_update()
+        # set the default graphics mode, this is a no-op if
+        # it is already set
+        sys_display.set_mode(0)
+        leds.set_slew_rate(100)
+        led_patterns.set_menu_colors()
+
+    def on_enter(self, vm: Optional[ViewManager]) -> None:
+        super().on_enter(vm)
+        self._restore_sys_defaults()
+
+    def on_enter_done(self):
+        # set the defaults again in case the app continued
+        # doing stuff during the transition
+        self._restore_sys_defaults()
+        leds.update()
+
+
 def _make_bundle_menu(mgr: BundleManager, kind: str) -> SimpleMenu:
     entries: List[MenuItem] = [MenuItemBack()]
     ids = sorted(mgr.bundles.keys())
     for id in ids:
         bundle = mgr.bundles[id]
         entries += bundle.menu_entries(kind)
-    return SimpleMenu(entries)
+    return ApplicationMenu(entries)
 
 
 def _make_compositor(reactor: Reactor, vm: ViewManager) -> overlays.Compositor:
@@ -134,7 +163,9 @@ def run_view(v: View, debug_vm=True) -> None:
 
 
 def run_app(klass, bundle_path=None):
-    run_view(klass(ApplicationContext(bundle_path)), debug_vm=True)
+    app_ctx = ApplicationContext(bundle_path)
+    setup_for_app(app_ctx)
+    run_view(klass(app_ctx), debug_vm=True)
 
 
 def _yeet_local_changes() -> None:
@@ -176,7 +207,7 @@ def run_main() -> None:
         log.error(f"Failed to set hostname {e}")
 
     menu_settings = settings.build_menu()
-    menu_system = SimpleMenu(
+    menu_system = ApplicationMenu(
         [
             MenuItemBack(),
             MenuItemForeground("Settings", menu_settings),
