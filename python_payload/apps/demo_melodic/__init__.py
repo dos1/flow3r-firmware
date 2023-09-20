@@ -131,7 +131,6 @@ class MelodicApp(Application):
         self.make_scale()
 
     def on_exit(self):
-        super().on_exit()
         if self.blm is not None:
             self.blm.free = True
         self.blm = None

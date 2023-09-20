@@ -15,7 +15,6 @@ class App(Application):
         self.yb = 1.0
 
     def on_enter_done(self):
-        super().on_enter_done()
         sys_display.set_mode(sys_display.cool | sys_display.x2)
 
     def draw(self, ctx: Context):

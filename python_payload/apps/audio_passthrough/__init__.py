@@ -97,7 +97,6 @@ class AudioPassthrough(Application):
         ctx.text("force line in/out")
 
     def on_exit(self) -> None:
-        super().on_exit()
         # Mic passthrough has a loopback risk
         if self._force_mode == "FORCE_MIC":
             self._force_mode = "FORCE_NONE"

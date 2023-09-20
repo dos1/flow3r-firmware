@@ -118,7 +118,6 @@ class LEDPainter(Application):
 
     def on_exit(self):
         self._save_settings()
-        super().on_exit()
 
     def draw(self, ctx: Context) -> None:
         ctx.font = ctx.get_font_name(1)

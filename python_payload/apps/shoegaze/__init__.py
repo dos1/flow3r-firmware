@@ -255,7 +255,6 @@ class ShoegazeApp(Application):
             self.bass_string.signals.trigger.start()
 
     def on_enter_done(self) -> None:
-        super().on_enter_done()
         if self.blm is None:
             self._build_synth()
         self.blm.foreground = True
@@ -266,7 +265,6 @@ class ShoegazeApp(Application):
             self.blm.clear()
             self.blm.free = True
         self.blm = None
-        super().on_exit()
 
 
 # For running with `mpremote run`:

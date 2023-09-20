@@ -725,7 +725,6 @@ class GayDrums(Application):
         self.ct_prev = None
 
     def on_enter_done(self) -> None:
-        super().on_enter_done()
         # schedule one more redraw so draw_track_step_marker draws the real state
         self._render_list += [(self.draw_background, None)]
 
@@ -744,7 +743,6 @@ class GayDrums(Application):
             self.load_iter = self.iterate_loading()
         else:
             self.blm.background_mute_override = True
-        super().on_exit_done()
 
 
 # For running with `mpremote run`:

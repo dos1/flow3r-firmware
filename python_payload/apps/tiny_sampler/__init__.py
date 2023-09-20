@@ -275,7 +275,6 @@ class TinySampler(Application):
             self._build_synth()
 
     def on_exit(self) -> None:
-        super().on_exit()
         for i in range(5):
             if self.is_recording[i]:
                 self.samplers[i].signals.rec_trigger.stop()

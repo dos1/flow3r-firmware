@@ -155,7 +155,6 @@ class WifiApp(Application):
             wlan_draw_offset += 20
 
     def on_exit(self) -> None:
-        super().on_exit()
         leds.set_all_rgb(0, 0, 0)
         leds.update()
 

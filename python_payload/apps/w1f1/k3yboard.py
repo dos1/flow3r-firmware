@@ -400,7 +400,6 @@ class KeyboardView(BaseView):
         super().on_enter(vm)
 
     def on_exit(self) -> None:
-        super().on_exit()
         self.reset_input_state()
 
     def draw(self, ctx: Context) -> None:

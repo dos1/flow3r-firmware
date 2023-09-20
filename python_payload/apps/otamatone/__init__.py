@@ -133,7 +133,6 @@ class Otamatone(Application):
         self._lp2.signals.gain.dB = 6 + 3 * (1 - wah_ctrl)
 
     def on_exit(self):
-        super().on_exit()
         if self._blm is not None:
             self._blm.clear()
             self._blm.free = True
