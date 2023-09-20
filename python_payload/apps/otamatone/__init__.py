@@ -204,6 +204,6 @@ class Otamatone(Application):
 
 
 if __name__ == "__main__":
-    from st3m.run import run_view
+    from st3m.run import run_app
 
-    run_view(Otamatone(ApplicationContext()))
+    run_app(Otamatone)

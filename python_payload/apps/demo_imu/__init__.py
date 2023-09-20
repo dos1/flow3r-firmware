@@ -43,4 +43,4 @@ class IMUDemo(Application):
 if __name__ == "__main__":
     import st3m.run
 
-    st3m.run.run_view(IMUDemo(ApplicationContext()))
+    st3m.run.run_app(IMUDemo)

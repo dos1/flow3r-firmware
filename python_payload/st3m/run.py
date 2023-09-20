@@ -243,4 +243,5 @@ __all__ = [
     "run_responder",
     "run_view",
     "run_main",
+    "run_app",
 ]

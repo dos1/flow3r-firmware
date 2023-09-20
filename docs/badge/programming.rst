@@ -577,7 +577,7 @@ Here is our previous code changed to use `Application` for the base of its main 
 
     if __name__ == '__main__':
         # Continue to make runnable via mpremote run.
-        st3m.run.run_view(MyDemo(ApplicationContext()))
+        st3m.run.run_app(MyDemo)
 
 Using `Application` also gives you access to the `ApplicationContext`, which for example
 gives you a way to find out the base path of your app, in `app_ctx.bundle_path` or its

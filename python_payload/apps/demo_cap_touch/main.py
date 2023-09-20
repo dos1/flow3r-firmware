@@ -86,4 +86,4 @@ class CapTouchDemo(Application):
 if __name__ == "__main__":
     import st3m.run
 
-    st3m.run.run_view(CapTouchDemo(ApplicationContext()))
+    st3m.run.run_app(CapTouchDemo)

@@ -76,4 +76,4 @@ class ScrollDemo(Application):
 if __name__ == "__main__":
     import st3m.run
 
-    st3m.run.run_view(ScrollDemo(ApplicationContext()))
+    st3m.run.run_app(ScrollDemo)
