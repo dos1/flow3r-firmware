@@ -92,7 +92,7 @@ class ApplicationMenu(SimpleMenu):
 
 def _make_bundle_menu(mgr: BundleManager, kind: str) -> SimpleMenu:
     entries: List[MenuItem] = [MenuItemBack()]
-    ids = sorted(mgr.bundles.keys())
+    ids = sorted(mgr.bundles.keys(), key=str.lower)
     for id in ids:
         bundle = mgr.bundles[id]
         entries += bundle.menu_entries(kind)
