@@ -150,6 +150,7 @@ class GayDrums(Application):
                         self.seq.signals.bpm.value = self.bpm
                     self.steps = beat["steps"]
                     self.seq.plugins.seq.table = beat["sequencer_table"]
+                    self._tracks_empty = self.tracks_are_empty()
 
     @property
     def steps(self):
@@ -183,6 +184,7 @@ class GayDrums(Application):
 
         if self._seq_table_saved is not None:
             self.seq.plugins.seq.table = self._seq_table_saved
+            self._tracks_empty = self.tracks_are_empty()
         if self.stopped:
             self.seq.signals.bpm = 0
             self.seq.signals.sync_in.start()
