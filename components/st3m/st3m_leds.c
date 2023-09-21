@@ -32,7 +32,7 @@ typedef struct {
     uint8_t brightness;
     uint8_t slew_rate;
     bool auto_update;
-    bool first_run;
+    uint8_t timer;
 
     st3m_leds_gamma_table_t gamma_red;
     st3m_leds_gamma_table_t gamma_green;
@@ -98,6 +98,8 @@ void st3m_leds_update_hardware() {
 
     if (state.auto_update) leds_update_target();
 
+    bool is_different = false;
+
     for (int i = 0; i < 40; i++) {
         st3m_rgb_t ret = state.target[i];
         st3m_leds_rgb_t c;
@@ -115,17 +117,22 @@ void st3m_leds_update_hardware() {
         ret.b = state.gamma_red.lut[c.b >> 8];
 
         if ((ret.r != state.ret_prev[i].r) || (ret.g != state.ret_prev[i].g) ||
-            (ret.b != state.ret_prev[i].b) || state.first_run) {
+            (ret.b != state.ret_prev[i].b)) {
             set_single_led(i, ret);
             state.ret_prev[i] = ret;
-            state.first_run = false;
+            is_different = true;
         }
     }
     UNLOCK;
 
-    esp_err_t ret = flow3r_bsp_leds_refresh(portMAX_DELAY);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "LED refresh failed: %s", esp_err_to_name(ret));
+    if (is_different || (state.timer > 10)) {
+        esp_err_t ret = flow3r_bsp_leds_refresh(portMAX_DELAY);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "LED refresh failed: %s", esp_err_to_name(ret));
+        }
+        state.timer = 0;
+    } else {
+        state.timer += 1;
     }
 }
 
@@ -214,7 +221,7 @@ void st3m_leds_init() {
     state.brightness = 69;
     state.slew_rate = 255;
     state.auto_update = false;
-    state.first_run = true;
+    state.timer = 255;
 
     for (uint16_t i = 0; i < 256; i++) {
         state.gamma_red.lut[i] = i;
