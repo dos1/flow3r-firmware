@@ -8,6 +8,7 @@ from utarfile import TarFile, DIRTYPE
 import io
 import os
 import gc
+import math
 from st3m.ui.view import BaseView
 from ctx import Context
 
@@ -36,6 +37,7 @@ class DownloadView(BaseView):
         self._url = url
         self.response = b""
         self._download_instance = None
+        self.download_percentage = 0
 
     def _get_app_folder(self, tar_size: int) -> Optional[str]:
         if sd_card_plugged():
@@ -51,10 +53,20 @@ class DownloadView(BaseView):
 
     def draw(self, ctx: Context) -> None:
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
+        ctx.rgb(*colours.WHITE)
+
+        # Arc strokes should be drawn before move_to for some reason to look nice
+        if self.download_percentage and self._state == 2:
+            ctx.save()
+            ctx.line_width = 3
+            ctx.rotate(270 * math.pi / 180)
+            ctx.arc(
+                0, 0, 117, math.tau * (1 - self.download_percentage), math.tau, 0
+            ).stroke()
+            ctx.restore()
 
         ctx.save()
         ctx.move_to(0, 0)
-        ctx.rgb(*colours.WHITE)
         ctx.font = "Camp Font 3"
         ctx.font_size = 24
         ctx.text_align = ctx.CENTER
@@ -91,15 +103,15 @@ class DownloadView(BaseView):
 
         ctx.restore()
 
-    def download_file(self, url: str, block_size=40960) -> List[bytes]:
+    def download_file(self, url: str, block_size=10240) -> List[bytes]:
         gc.collect()
         req = urequests.get(url)
-        yield
+        total_size = int(req.headers["Content-Length"])
 
         try:
             while True:
                 new_data = req.raw.read(block_size)
-                yield new_data
+                yield new_data, total_size
                 if len(new_data) < block_size:
                     break
         finally:
@@ -126,7 +138,8 @@ class DownloadView(BaseView):
                     return
                 else:
                     try:
-                        new_data = next(self._download_instance)
+                        new_data, total_size = next(self._download_instance)
+                        self.download_percentage = len(self.response) / total_size
                         if new_data:
                             self.response += new_data
                         return

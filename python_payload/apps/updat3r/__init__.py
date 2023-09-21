@@ -5,6 +5,7 @@ from st3m.utils import sd_card_plugged
 from ctx import Context
 import sys_kernel
 import urequests
+import math
 from st3m.ui.view import ViewManager
 import st3m.wifi
 
@@ -16,10 +17,19 @@ class UpdaterApp(Application):
     def draw(self, ctx: Context) -> None:
         ctx.text_align = ctx.CENTER
         ctx.text_baseline = ctx.MIDDLE
+        ctx.line_width = 3
         ctx.font = ctx.get_font_name(1)
 
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
+
         ctx.rgb(1, 1, 1)
+        if self.download_percentage:
+            ctx.save()
+            ctx.rotate(270 * math.pi / 180)
+            ctx.arc(
+                0, 0, 117, math.tau * (1 - self.download_percentage), math.tau, 0
+            ).stroke()
+            ctx.restore()
 
         ctx.font_size = 15
         ctx.move_to(0, -90)
@@ -52,6 +62,7 @@ class UpdaterApp(Application):
         self.download_instance = None
         self.filename = None
         self.use_dev_version = False
+        self.download_percentage = 0
 
         st3m.wifi.setup_wifi()
         self.wlan_instance = st3m.wifi.iface
@@ -79,12 +90,13 @@ class UpdaterApp(Application):
             return
 
         req = urequests.get(url)
+        total_size = int(req.headers["Content-Length"])
 
         try:
             while True:
                 new_data = req.raw.read(block_size)
                 path_fd.write(new_data)
-                yield path_fd.tell()
+                yield path_fd.tell(), total_size
                 if len(new_data) < block_size:
                     break
         finally:
@@ -155,12 +167,12 @@ class UpdaterApp(Application):
 
         if self.download_instance is not None:
             try:
-                download_state = next(self.download_instance)
-                self._state_text = (
-                    f"downloading...\nDON'T TURN OFF YOUR BADGE!\n\n{download_state}b"
-                )
+                download_state, total_size = next(self.download_instance)
+                self.download_percentage = download_state / total_size
+                self._state_text = f"downloading...\nDON'T TURN OFF YOUR BADGE!\n\n{download_state}/{total_size}b"
             except StopIteration:
                 self.download_instance = None
+                self.download_percentage = 0
                 self._state_text = f'downloaded to\n{self.filename}\n\nhold right shoulder when\nbooting then pick\n"Flash Firmware Image"\nto continue'
 
         if self.selected_version and self.input.buttons.app.middle.pressed:
