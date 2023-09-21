@@ -155,8 +155,8 @@ def run_view(v: View, debug_vm=True) -> None:
     """
     reactor = _make_reactor()
     vm = ViewManager(ViewTransitionBlend(), debug=debug_vm)
-    vm.push(v)
     sys_mode.mode_set(2)  # st3m_mode_kind_app
+    vm.push(v)
     compositor = _make_compositor(reactor, vm)
     top = processors.ProcessorMidldeware(compositor)
     reactor.set_top(top)
