@@ -612,6 +612,7 @@ class HarmonicApp(Application):
         self.blm.foreground = True
         self._load_settings()
         self._set_chord(self.chord_index, force_update=True)
+        leds.set_slew_rate(130)
 
     def on_exit(self):
         if self.blm is not None:

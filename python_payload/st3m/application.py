@@ -82,13 +82,13 @@ class Application(BaseView):
         if fully_exiting:
             sys_display.set_mode(0)
         if fully_exiting:
-            leds.set_slew_rate(90)
+            leds.set_slew_rate(100)
             led_patterns.set_menu_colors()
 
     def on_exit_done(self):
         fully_exiting = self.vm.direction == ViewTransitionDirection.BACKWARD
         if fully_exiting:
-            leds.set_slew_rate(40)
+            leds.set_slew_rate(100)
             led_patterns.set_menu_colors()
             leds.update()
 
