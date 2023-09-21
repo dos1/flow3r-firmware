@@ -23,10 +23,6 @@ else:
 class GayDrums(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
-        try:
-            self.bundle_path = app_ctx.bundle_path
-        except Exception:
-            self.bundle_path = "/flash/sys/apps/harmonic_demo"
         self.blm = None
         self.num_samplers = 6
         self.seq = None
@@ -104,7 +100,7 @@ class GayDrums(Application):
                 raise  # ignore file not found
 
     def _save_settings(self):
-        default_path = self.bundle_path + "/gay_drums-default.json"
+        default_path = self._app_ctx.bundle_path + "/gay_drums-default.json"
         settings_path = "/flash/gay_drums.json"
         settings = self._try_load_settings(default_path)
         assert settings is not None, "failed to load default settings"
@@ -128,7 +124,7 @@ class GayDrums(Application):
             self._file_settings = settings
 
     def _load_settings(self):
-        default_path = self.bundle_path + "/gay_drums-default.json"
+        default_path = self._app_ctx.bundle_path + "/gay_drums-default.json"
         settings_path = "/flash/gay_drums.json"
 
         settings = self._try_load_settings(default_path)
@@ -749,4 +745,4 @@ class GayDrums(Application):
 if __name__ == "__main__":
     import st3m.run
 
-    st3m.run.run_app(GayDrums)
+    st3m.run.run_app(GayDrums, "/flash/sys/apps/gay_drums")

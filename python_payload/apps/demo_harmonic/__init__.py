@@ -247,10 +247,6 @@ class Chord:
 class HarmonicApp(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
-        try:
-            self.bundle_path = app_ctx.bundle_path
-        except Exception:
-            self.bundle_path = "/flash/sys/apps/harmonic_demo"
 
         self.chord_index = 0
         self.chord = None
@@ -288,7 +284,7 @@ class HarmonicApp(Application):
                 raise  # ignore file not found
 
     def _save_settings(self):
-        default_path = self.bundle_path + "/harmonic_demo-default.json"
+        default_path = self._app_ctx.bundle_path + "/harmonic_demo-default.json"
         settings_path = "/flash/harmonic_demo.json"
         settings = self._try_load_settings(default_path)
         assert settings is not None, "failed to load default settings"
@@ -322,7 +318,7 @@ class HarmonicApp(Application):
             self._file_settings = settings
 
     def _load_settings(self):
-        default_path = self.bundle_path + "/harmonic_demo-default.json"
+        default_path = self._app_ctx.bundle_path + "/harmonic_demo-default.json"
         settings_path = "/flash/harmonic_demo.json"
 
         settings = self._try_load_settings(default_path)
@@ -624,4 +620,4 @@ class HarmonicApp(Application):
 if __name__ == "__main__":
     from st3m.run import run_app
 
-    run_app(HarmonicApp, "/flash/sys/apps/harmonic_demo")
+    run_app(HarmonicApp, "/flash/sys/apps/demo_harmonic")

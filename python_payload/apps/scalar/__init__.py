@@ -57,11 +57,6 @@ class ScalarApp(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
 
-        try:
-            self.bundle_path = app_ctx.bundle_path
-        except Exception:
-            self.bundle_path = "/flash/sys/apps/scalar"
-
         self._load_settings()
 
         self._ui_state = UI_PLAY
@@ -87,7 +82,7 @@ class ScalarApp(Application):
         self._update_leds()
 
     def _load_settings(self) -> None:
-        default_path = self.bundle_path + "/scalar-default.json"
+        default_path = self._app_ctx.bundle_path + "/scalar-default.json"
         settings_path = "/flash/scalar.json"
 
         settings = self._try_load_settings(default_path)
@@ -313,3 +308,9 @@ class ScalarApp(Application):
                 elif released:
                     self._synths[i].signals.trigger.stop()
         self._ui_cap_prev = cts
+
+
+if __name__ == "__main__":
+    from st3m.run import run_app
+
+    run_app(ScalarApp, "/flash/sys/apps/scalar")
