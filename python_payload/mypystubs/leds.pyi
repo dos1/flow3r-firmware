@@ -10,7 +10,6 @@ There are 8 LEDs per top petal, or 4 LEDs per petal.
 After you're ready setting up your blink, call update(), or enable autoupdates.
 """
 
-
 def set_slew_rate(b: int) -> None:
     """
     Set maximum change rate of channel brightness. Set to 255 to disable.
@@ -71,7 +70,6 @@ def update() -> None:
     buffer, effectively scheduling the LED state to be presented to the user.
     """
 
-
 def set_brightness(b: int) -> None:
     """
     Set global LED brightness, 0-255. Default 70.
@@ -95,4 +93,3 @@ def get_auto_update() -> bool:
     """
     Returns whether auto updates are on. See set_auto_update()
     """
-
