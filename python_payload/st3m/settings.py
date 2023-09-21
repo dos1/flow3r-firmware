@@ -20,7 +20,7 @@ from st3m.goose import (
     Optional,
     Callable,
 )
-from st3m.utils import reduce
+from st3m.utils import reduce, save_file_if_changed
 
 log = logging.Log(__name__, level=logging.INFO)
 
@@ -319,16 +319,20 @@ def save_all() -> None:
     Save all settings to flash.
     """
     res: Dict[str, Any] = {}
+    saved_settings = False
     for setting in load_save_settings:
         res = _update(res, setting.save())
     try:
-        with open(SETTINGS_JSON_FILE, "w") as f:
-            json.dump(res, f)
+        saved_settings = save_file_if_changed(SETTINGS_JSON_FILE, json.dumps(res))
     except Exception as e:
         log.warning("Could not save settings: " + str(e))
         return
 
-    log.info("Saved settings to flash")
+    log.info(
+        "Saved settings to flash"
+        if saved_settings
+        else "Skipped saving settings to flash as nothing changed"
+    )
 
 
 load_all()

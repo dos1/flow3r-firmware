@@ -3,6 +3,7 @@ from st3m.input import InputState
 from st3m.goose import Optional
 from st3m.ui.view import ViewManager
 from st3m.settings import SETTINGS_JSON_FILE
+from st3m.utils import save_file_if_changed
 from ctx import Context
 import network
 import leds
@@ -210,23 +211,19 @@ class WifiApp(Application):
         settings_json["system"]["wifi"]["ssid"] = ssid
         settings_json["system"]["wifi"]["psk"] = psk
 
-        with open(SETTINGS_JSON_FILE, "w") as f:
-            json.dump(settings_json, f)
+        save_file_if_changed(SETTINGS_JSON_FILE, json.dumps(settings_json))
 
     def add_wlan_to_config_json(self, ssid: str, psk: str) -> None:
         self._wifi_config["networks"][ssid] = {"psk": psk}
         self.save_config_json()
 
     def save_config_json(self) -> None:
-        with open(self.WIFI_CONFIG_FILE, "w") as f:
-            json.dump(self._wifi_config, f)
+        config_str = json.dumps(self._wifi_config)
+        save_file_if_changed(self.WIFI_CONFIG_FILE, config_str)
 
         if sd_card_plugged():
             try:
-                if os.path.exists(self.WIFI_CONFIG_FILE_SD):
-                    os.remove(self.WIFI_CONFIG_FILE_SD)
-
-                copy_across_devices(self.WIFI_CONFIG_FILE, self.WIFI_CONFIG_FILE_SD)
+                save_file_if_changed(self.WIFI_CONFIG_FILE_SD, config_str)
             except OSError as e:
                 print("SD issue:", str(e), ":(")
 

@@ -1,4 +1,5 @@
 import math
+import os
 
 try:
     import inspect
@@ -119,6 +120,21 @@ def get_function_args(fun: Any) -> list[str]:
         return inspect.getfullargspec(fun)[0]
     else:
         raise NotImplementedError("No implementation of getfullargspec found")
+
+
+def save_file_if_changed(filename: str, desired_contents: str) -> bool:
+    save = False
+    if not os.path.exists(filename):
+        save = True
+    else:
+        with open(filename, "r") as f:
+            save = f.read() != desired_contents
+
+    if save:
+        with open(filename, "w") as f:
+            f.write(desired_contents)
+
+    return save
 
 
 tau = math.pi * 2
