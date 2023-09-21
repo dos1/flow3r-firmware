@@ -10,6 +10,18 @@ There are 8 LEDs per top petal, or 4 LEDs per petal.
 After you're ready setting up your blink, call update(), or enable autoupdates.
 """
 
+def set_slew_rate(b: int) -> None:
+    """
+    Set maximum change rate of channel brightness. Set to 255 to disable.
+    Takes the edge off at around 200, mellows things at 150, gets slow at 100,
+    takes its time at 50, molasses at 0. Default 235.
+    """
+
+def get_slew_rate() -> int:
+    """
+    Get maximum change rate of brightness. See set_slew_rate()
+    """
+
 def set_rgb(i: int, r: float, g: float, b: float) -> None:
     """Set LED i to rgb value r, g, b
 
@@ -58,21 +70,16 @@ def update() -> None:
     buffer, effectively scheduling the LED state to be presented to the user.
     """
 
-def get_brightness() -> int:
-    """
-    Returns global LED brightness, 0-255. Default 69.
-    """
-
 def set_brightness(b: int) -> None:
     """
-    Set global LED brightness, 0-255. Default 69.
+    Set global LED brightness, 0-255. Default 70.
 
     Only affects the LEDs after update(), or if autoupdate is enabled.
     """
 
-def get_auto_update() -> bool:
+def get_brightness() -> int:
     """
-    Returns whether auto updates are on. See set_auto_update()
+    Returns global LED brightness, 0-255. Default 70.
     """
 
 def set_auto_update(on: bool) -> None:
@@ -82,13 +89,7 @@ def set_auto_update(on: bool) -> None:
     low slew rates.
     """
 
-def get_slew_rate() -> int:
+def get_auto_update() -> bool:
     """
-    Get maximum change rate of brightness. See set_slew_rate()
-    """
-
-def set_slew_rate(b: int) -> None:
-    """
-    Set maximum change rate of channel brightness. Set to 255 to disable.
-    Animations render to the LEDs at 50Hz.
+    Returns whether auto updates are on. See set_auto_update()
     """

@@ -26,22 +26,28 @@ typedef struct {
     uint16_t r;
     uint16_t g;
     uint16_t b;
-} st3m_leds_rgb_t;
+} st3m_u16_rgb_t;
+
+typedef struct {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} st3m_u8_rgb_t;
 
 typedef struct {
     uint8_t brightness;
     uint8_t slew_rate;
     bool auto_update;
-    bool first_run;
+    uint8_t timer;
 
     st3m_leds_gamma_table_t gamma_red;
     st3m_leds_gamma_table_t gamma_green;
     st3m_leds_gamma_table_t gamma_blue;
 
-    st3m_rgb_t target[40];
-    st3m_rgb_t target_buffer[40];
-    st3m_leds_rgb_t slew_output[40];
-    st3m_rgb_t ret_prev[40];
+    st3m_u8_rgb_t target[40];
+    st3m_u8_rgb_t target_buffer[40];
+    st3m_u16_rgb_t slew_output[40];
+    st3m_u8_rgb_t ret_prev[40];
 } st3m_leds_state_t;
 
 static st3m_leds_state_t state;
@@ -54,7 +60,7 @@ SemaphoreHandle_t mutex_incoming;
 #define LOCK_INCOMING xSemaphoreTake(mutex_incoming, portMAX_DELAY)
 #define UNLOCK_INCOMING xSemaphoreGive(mutex_incoming)
 
-static void set_single_led(uint8_t index, st3m_rgb_t c) {
+static void set_single_led(uint8_t index, st3m_u8_rgb_t c) {
     index = (index + 29) % 40;
     flow3r_bsp_leds_set_pixel(index, c.r, c.g, c.b);
 }
@@ -98,9 +104,11 @@ void st3m_leds_update_hardware() {
 
     if (state.auto_update) leds_update_target();
 
+    bool is_different = false;
+
     for (int i = 0; i < 40; i++) {
-        st3m_rgb_t ret = state.target[i];
-        st3m_leds_rgb_t c;
+        st3m_u8_rgb_t ret = state.target[i];
+        st3m_u16_rgb_t c;
         c.r = led_get_slew(state.slew_output[i].r, ret.r, state.slew_rate);
         c.g = led_get_slew(state.slew_output[i].g, ret.g, state.slew_rate);
         c.b = led_get_slew(state.slew_output[i].b, ret.b, state.slew_rate);
@@ -115,17 +123,22 @@ void st3m_leds_update_hardware() {
         ret.b = state.gamma_red.lut[c.b >> 8];
 
         if ((ret.r != state.ret_prev[i].r) || (ret.g != state.ret_prev[i].g) ||
-            (ret.b != state.ret_prev[i].b) || state.first_run) {
+            (ret.b != state.ret_prev[i].b)) {
             set_single_led(i, ret);
             state.ret_prev[i] = ret;
-            state.first_run = false;
+            is_different = true;
         }
     }
     UNLOCK;
 
-    esp_err_t ret = flow3r_bsp_leds_refresh(portMAX_DELAY);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "LED refresh failed: %s", esp_err_to_name(ret));
+    if (is_different || (state.timer > 10)) {
+        esp_err_t ret = flow3r_bsp_leds_refresh(portMAX_DELAY);
+        if (ret != ESP_OK) {
+            ESP_LOGE(TAG, "LED refresh failed: %s", esp_err_to_name(ret));
+        }
+        state.timer = 0;
+    } else {
+        state.timer += 1;
     }
 }
 
@@ -169,9 +182,8 @@ void st3m_leds_set_single_hsv(uint8_t index, float hue, float sat, float val) {
         .s = sat,
         .v = val,
     };
-    LOCK_INCOMING;
-    state.target_buffer[index] = st3m_hsv_to_rgb(hsv);
-    UNLOCK_INCOMING;
+    st3m_rgb_t rgb = st3m_hsv_to_rgb(hsv);
+    st3m_leds_set_single_rgb(index, rgb.r, rgb.g, rgb.b);
 }
 
 void st3m_leds_set_all_rgb(float red, float green, float blue) {
@@ -186,9 +198,15 @@ void st3m_leds_set_all_rgba(float red, float green, float blue, float alpha) {
     }
 }
 
-void st3m_leds_set_all_hsv(float h, float s, float v) {
+void st3m_leds_set_all_hsv(float hue, float sat, float val) {
+    st3m_hsv_t hsv = {
+        .h = hue * TAU360,
+        .s = sat,
+        .v = val,
+    };
+    st3m_rgb_t rgb = st3m_hsv_to_rgb(hsv);
     for (int i = 0; i < 40; i++) {
-        st3m_leds_set_single_hsv(i, h, s, v);
+        st3m_leds_set_single_rgb(i, rgb.r, rgb.g, rgb.b);
     }
 }
 
@@ -211,10 +229,10 @@ void st3m_leds_init() {
     assert(mutex_incoming != NULL);
 
     memset(&state, 0, sizeof(state));
-    state.brightness = 69;
-    state.slew_rate = 255;
+    state.brightness = 70;
+    state.slew_rate = 235;
     state.auto_update = false;
-    state.first_run = true;
+    state.timer = 255;
 
     for (uint16_t i = 0; i < 256; i++) {
         state.gamma_red.lut[i] = i;

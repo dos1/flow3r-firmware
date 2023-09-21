@@ -30,6 +30,7 @@ class App(Application):
         self.mid_x = 50
         self.led_accumulator_ms = 0
         self.blueish = False
+        self.half_time = 600
 
     def draw_widget(self, label):
         ctx = self.ctx
@@ -121,7 +122,7 @@ class App(Application):
 
         if self.active and self.widget_no == self.focused_widget:
             ctx.save()
-            ctx.rgba(colours.PUSH_RED, 1.0)
+            ctx.rgba(*colours.PUSH_RED, 1.0)
             ctx.rectangle(
                 ctx.x - 1,
                 ctx.y - self.font_size * 0.8,
@@ -185,6 +186,10 @@ class App(Application):
             tmp = 0
         elif tmp > 255:
             tmp = 255
+        if tmp < 120:
+            self.half_time = 600 + (120 - tmp) * (120 - tmp) / 2
+        else:
+            self.half_time = 600
         if tmp != settings.num_leds_speed.value:
             settings.num_leds_speed.set_value(tmp)
             leds.set_slew_rate(settings.num_leds_speed.value)
@@ -223,22 +228,21 @@ class App(Application):
         if self.input.buttons.app.middle.pressed:
             self.select_pressed = True
 
-        while self.led_accumulator_ms > 1000:
-            self.led_accumulator_ms = self.led_accumulator_ms % 1000
-            self.leds_toggle()
+        while self.led_accumulator_ms > self.half_time:
+            self.led_accumulator_ms = self.led_accumulator_ms % self.half_time
+            self.leds_shift_hue(0.8)
 
-    def leds_toggle(self):
-        self.blueish = not self.blueish
-        if self.blueish:
-            leds.set_all_rgb(0, 127, 255)
-        else:
-            leds.set_all_rgb(127, 0, 255)
+    def leds_shift_hue(self, val):
+        for i in range(40):
+            rgb = leds.get_rgb(i)
+            h, s, v = colours.rgb_to_hsv(*rgb)
+            h += val
+            leds.set_rgb(i, *colours.hsv_to_rgb(h, s, v))
         leds.update()
 
     def on_enter(self, vm):
         super().on_enter(vm)
         settings.load_all()
-        self.leds_toggle()
 
     def on_exit(self):
         settings.save_all()
