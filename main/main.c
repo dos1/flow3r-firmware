@@ -77,13 +77,10 @@ void _init_core1(void *unused) {
         nvs_flash_init();
     }
 
-    // Let the main startup code know that core1 init is done. Then sleep
-    // forever. What a waste of stack space.
+    // Let the main startup code know that core1 init is done.
     bool done = true;
     xQueueSend(_core1_init_done_q, &done, portMAX_DELAY);
-    for (;;) {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-    }
+    vTaskDelete(NULL);
 }
 
 // Called by micropython via MICROPY_BOARD_STARTUP.
