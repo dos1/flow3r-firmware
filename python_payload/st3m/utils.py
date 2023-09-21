@@ -137,4 +137,13 @@ def save_file_if_changed(filename: str, desired_contents: str) -> bool:
     return save
 
 
+def sd_card_plugged() -> bool:
+    try:
+        os.listdir("/sd")
+        return True
+    except OSError:
+        # OSError: [Errno 19] ENODEV
+        return False
+
+
 tau = math.pi * 2

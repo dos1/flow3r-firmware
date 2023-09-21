@@ -3,7 +3,7 @@ from st3m.input import InputState
 from st3m.goose import Optional
 from st3m.ui.view import ViewManager
 from st3m.settings import SETTINGS_JSON_FILE
-from st3m.utils import save_file_if_changed
+from st3m.utils import save_file_if_changed, sd_card_plugged
 from ctx import Context
 import network
 import leds
@@ -12,7 +12,6 @@ import json
 import math
 from .k3yboard import TextInputModel, KeyboardView
 from .helpers import (
-    sd_card_plugged,
     set_direction_leds,
     copy_across_devices,
     mark_unknown_characters,

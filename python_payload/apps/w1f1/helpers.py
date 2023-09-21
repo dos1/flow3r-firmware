@@ -1,14 +1,4 @@
-import os
 import leds
-
-
-def sd_card_plugged() -> bool:
-    try:
-        os.listdir("/sd")
-        return True
-    except OSError:
-        # OSError: [Errno 19] ENODEV
-        return False
 
 
 def copy_across_devices(src: str, dst: str):

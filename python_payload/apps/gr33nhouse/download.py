@@ -1,6 +1,7 @@
 from st3m.input import InputState
 from st3m.goose import Optional, List
 from st3m.ui import colours
+from st3m.utils import sd_card_plugged
 import urequests
 import gzip
 from utarfile import TarFile, DIRTYPE
@@ -35,6 +36,18 @@ class DownloadView(BaseView):
         self._url = url
         self.response = b""
         self._download_instance = None
+
+    def _get_app_folder(self, tar_size: int) -> Optional[str]:
+        if sd_card_plugged():
+            sd_statvfs = os.statvfs("/sd")
+            if tar_size < sd_statvfs[1] * sd_statvfs[3]:
+                return "/sd/apps/"
+
+        flash_statvfs = os.statvfs("/flash")
+        if tar_size < flash_statvfs[1] * flash_statvfs[3]:
+            return "/flash/apps/"
+
+        return None
 
     def draw(self, ctx: Context) -> None:
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
@@ -157,23 +170,31 @@ class DownloadView(BaseView):
                 self._state = 6
                 return
 
+            app_folder = self._get_app_folder(len(tar))
+            if not app_folder:
+                gc.collect()
+                self.response = None
+                self.error_message = f"Not Enough Space\nSD/flash lack:\n{len(tar)}b"
+                self._state = 6
+                return
+
+            if not os.path.exists(app_folder):
+                print(f"making {app_folder}")
+                os.mkdir(app_folder)
+
             for i in t:
                 print(i.name)
 
-                if not os.path.exists("/flash/apps/"):
-                    print("making /flash/apps/")
-                    os.mkdir("/flash/apps/")
-
                 if i.type == DIRTYPE:
                     print("dirtype")
-                    dirname = "/flash/apps/" + i.name
+                    dirname = app_folder + i.name
                     if not os.path.exists(dirname):
                         print("making", dirname)
                         os.mkdir(dirname)
                     else:
                         print("dir", dirname, "exists")
                 else:
-                    filename = "/flash/apps/" + i.name
+                    filename = app_folder + i.name
                     print("writing to", filename)
                     f = t.extractfile(i)
                     with open(filename, "wb") as of:
