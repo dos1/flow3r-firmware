@@ -30,6 +30,7 @@ typedef struct {
     uint8_t brightness;
     uint8_t slew_rate;
     bool auto_update;
+    bool first_run;
 
     st3m_leds_gamma_table_t gamma_red;
     st3m_leds_gamma_table_t gamma_green;
@@ -38,6 +39,7 @@ typedef struct {
     st3m_rgb_t target[40];
     st3m_rgb_t target_buffer[40];
     st3m_leds_rgb_t slew_output[40];
+    st3m_rgb_t ret_prev[40];
 } st3m_leds_state_t;
 
 static st3m_leds_state_t state;
@@ -110,7 +112,12 @@ void st3m_leds_update_hardware() {
         ret.g = state.gamma_red.lut[c.g >> 8];
         ret.b = state.gamma_red.lut[c.b >> 8];
 
-        set_single_led(i, ret);
+        if ((ret.r != state.ret_prev[i].r) || (ret.g != state.ret_prev[i].g) ||
+            (ret.b != state.ret_prev[i].b) || state.first_run) {
+            set_single_led(i, ret);
+            state.ret_prev[i] = ret;
+            state.first_run = false;
+        }
     }
     UNLOCK;
 
@@ -205,6 +212,7 @@ void st3m_leds_init() {
     state.brightness = 69;
     state.slew_rate = 255;
     state.auto_update = false;
+    state.first_run = true;
 
     for (uint16_t i = 0; i < 256; i++) {
         state.gamma_red.lut[i] = i;
