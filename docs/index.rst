@@ -24,6 +24,7 @@ User manual
    :caption: User manual
 
    badge/assembly.rst
+   badge/mods.rst
    badge/usage.rst
 
 .. toctree::
