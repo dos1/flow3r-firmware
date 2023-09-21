@@ -49,6 +49,7 @@ User manual
    api/captouch.rst
    api/ctx.rst
    api/leds.rst
+   api/colours.rst
    api/uos.rst
    api/sys_buttons.rst
    api/sys_display.rst

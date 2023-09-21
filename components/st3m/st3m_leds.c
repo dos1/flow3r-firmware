@@ -14,6 +14,8 @@
 #include "flow3r_bsp.h"
 #include "st3m_colors.h"
 
+#define TAU360 0.017453292519943295
+
 static const char *TAG = "st3m-leds";
 
 typedef struct {
@@ -163,7 +165,7 @@ void st3m_leds_get_single_rgb(uint8_t index, float *red, float *green,
 
 void st3m_leds_set_single_hsv(uint8_t index, float hue, float sat, float val) {
     st3m_hsv_t hsv = {
-        .h = hue,
+        .h = hue * TAU360,
         .s = sat,
         .v = val,
     };

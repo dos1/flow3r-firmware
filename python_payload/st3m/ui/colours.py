@@ -1,3 +1,5 @@
+from sys_colors import hsv_to_rgb, rgb_to_hsv
+
 # Define a few RGB (0.0 to 1.0) colours
 BLACK = (0.0, 0.0, 0.0)
 RED = (1.0, 0.0, 0.0)

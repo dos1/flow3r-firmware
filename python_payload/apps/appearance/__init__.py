@@ -3,6 +3,7 @@ import math, random, sys_display
 from st3m import settings
 import leds
 import sys_display
+from st3m.ui import colours
 
 
 class App(Application):
@@ -50,7 +51,7 @@ class App(Application):
         if self.widget_no == self.focused_widget and not self.active:
             ctx.rectangle(-130, int(self.y - self.font_size * 0.8), 260, self.font_size)
             ctx.line_width = 2.0
-            ctx.rgba(0.8, 0.6, 0.1, 1.0)
+            ctx.rgba(*colours.PUSH_RED, 1.0)
             ctx.stroke()
         ctx.gray(1)
         ctx.move_to(self.mid_x, self.y)
@@ -80,7 +81,7 @@ class App(Application):
         for a in range(len(choices)):
             if a == no and self.active and self.widget_no == self.focused_widget:
                 ctx.save()
-                ctx.rgba(0.8, 0.6, 0.1, 1.0)
+                ctx.rgba(*colours.PUSH_RED, 1.0)
                 ctx.rectangle(
                     ctx.x - 1,
                     ctx.y - self.font_size * 0.8,
@@ -120,7 +121,7 @@ class App(Application):
 
         if self.active and self.widget_no == self.focused_widget:
             ctx.save()
-            ctx.rgba(0.8, 0.6, 0.1, 1.0)
+            ctx.rgba(colours.PUSH_RED, 1.0)
             ctx.rectangle(
                 ctx.x - 1,
                 ctx.y - self.font_size * 0.8,
