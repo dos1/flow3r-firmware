@@ -130,7 +130,8 @@ class ShoegazeApp(Application):
             for i, chord in enumerate(settings["chords"]):
                 if i > 4:
                     break
-                self._organ_chords[i] = chord["tones_readonly"]
+                if "tones_readonly" in chord:
+                    self._organ_chords[i] = chord["tones_readonly"]
 
     def organ_toggle(self) -> None:
         self.organ_on = not self.organ_on
