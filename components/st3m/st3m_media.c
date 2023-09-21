@@ -5,12 +5,18 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 #include "esp_log.h"
+#include "esp_task.h"
+#include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 #ifdef CONFIG_FLOW3R_CTX_FLAVOUR_FULL
 static st3m_media *audio_media = NULL;
+static TaskHandle_t media_task;
+static bool media_pending_destroy = false;
 
 static int16_t *audio_buffer = NULL;
 
@@ -52,17 +58,32 @@ int st3m_media_samples_queued(void) {
     return audio_media->audio_w - audio_media->audio_r;
 }
 
-static void media_destroy(void) {
-    if (audio_media && audio_media->destroy) audio_media->destroy(audio_media);
+static void st3m_media_task(void *_arg) {
+    (void)_arg;
+    TickType_t waketime = xTaskGetTickCount();
+    while (!media_pending_destroy) {
+        TickType_t lastwake = waketime;
+        vTaskDelayUntil(&waketime, 20 / portTICK_PERIOD_MS);
+        if (audio_media->think)
+            audio_media->think(audio_media,
+                               (waketime - lastwake) * portTICK_PERIOD_MS);
+    }
+    if (audio_media->destroy) audio_media->destroy(audio_media);
     audio_media = 0;
     st3m_audio_set_player_function(bl00mbox_audio_render);
-}
-
-void st3m_media_stop(void) {
-    media_destroy();
     if (audio_buffer) {
         free(audio_buffer);
         audio_buffer = NULL;
+    }
+    media_pending_destroy = false;
+    vTaskDelete(NULL);
+}
+
+void st3m_media_stop(void) {
+    if (!audio_media) return;
+    media_pending_destroy = true;
+    while (media_pending_destroy) {
+        vTaskDelay(10);
     }
 }
 
@@ -120,9 +141,7 @@ void st3m_media_draw(Ctx *ctx) {
     if (audio_media && audio_media->draw) audio_media->draw(audio_media, ctx);
 }
 
-void st3m_media_think(float ms) {
-    if (audio_media && audio_media->think) audio_media->think(audio_media, ms);
-}
+void st3m_media_think(float ms) { (void)ms; }
 
 char *st3m_media_get_string(const char *key) {
     if (!audio_media) return NULL;
@@ -184,25 +203,25 @@ int st3m_media_load(const char *path) {
     struct stat statbuf;
 #if 1
     if (!strncmp(path, "http://", 7)) {
-        media_destroy();
+        st3m_media_stop();
         audio_media = st3m_media_load_mp3(path);
     } else if (stat(path, &statbuf)) {
-        media_destroy();
+        st3m_media_stop();
         audio_media = st3m_media_load_txt(path);
     } else if (strstr(path, ".mp3") == strrchr(path, '.')) {
-        media_destroy();
+        st3m_media_stop();
         audio_media = st3m_media_load_mp3(path);
     } else
 #endif
 #if 1
         if (strstr(path, ".mpg")) {
-        media_destroy();
+        st3m_media_stop();
         audio_media = st3m_media_load_mpg1(path);
     } else
 #endif
 #if 1
         if ((strstr(path, ".mod") == strrchr(path, '.'))) {
-        media_destroy();
+        st3m_media_stop();
         audio_media = st3m_media_load_mod(path);
     } else
 #endif
@@ -211,7 +230,7 @@ int st3m_media_load(const char *path) {
             (strstr(path, "/README") == strrchr(path, '/')) ||
             (strstr(path, ".toml") == strrchr(path, '.')) ||
             (strstr(path, ".py") == strrchr(path, '.'))) {
-        media_destroy();
+        st3m_media_stop();
         audio_media = st3m_media_load_txt(path);
     }
 
@@ -227,7 +246,11 @@ int st3m_media_load(const char *path) {
     audio_media->audio_w = 1;
     audio_media->volume = 4096;
 
-    return 1;
+    BaseType_t res =
+        xTaskCreatePinnedToCore(st3m_media_task, "media", 16384, NULL,
+                                ESP_TASK_PRIO_MIN + 3, &media_task, 1);
+
+    return res == pdPASS;
 }
 
 typedef struct {
