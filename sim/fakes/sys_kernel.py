@@ -35,3 +35,7 @@ def i2c_scan():
 
 def battery_charging():
     return True
+
+
+def firmware_version():
+    return "1.2.0"
