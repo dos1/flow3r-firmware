@@ -58,7 +58,11 @@ static void set_single_led(uint8_t index, st3m_rgb_t c) {
 static uint16_t led_get_slew(uint16_t old, uint16_t new, uint16_t slew) {
     new = new << 8;
     if (slew == 255) return new;
+    int16_t bonus = ((int16_t)slew) - 225;
     slew = 30 + (slew << 2) + ((slew * slew) >> 3);
+    if (bonus > 0) {
+        slew += 62 * bonus * bonus;
+    }
 
     if (new > old + slew) {
         return old + slew;

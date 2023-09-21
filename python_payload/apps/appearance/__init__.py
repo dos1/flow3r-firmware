@@ -169,17 +169,17 @@ class App(Application):
         self.draw_bg()
 
         tmp = self.draw_number(
-            "led brightness", 8, int(settings.num_leds_brightness.value)
+            "led brightness", 5, int(settings.num_leds_brightness.value)
         )
-        if tmp < 7:
-            tmp = 7
+        if tmp < 5:
+            tmp = 5
         elif tmp > 255:
             tmp = 255
         if tmp != settings.num_leds_brightness.value:
             settings.num_leds_brightness.set_value(tmp)
             leds.set_brightness(settings.num_leds_brightness.value)
 
-        tmp = self.draw_number("led speed", 7, int(settings.num_leds_speed.value))
+        tmp = self.draw_number("led speed", 5, int(settings.num_leds_speed.value))
         if tmp < 0:
             tmp = 0
         elif tmp > 255:
@@ -190,7 +190,7 @@ class App(Application):
 
         tmp = self.draw_number(
             "display brightness",
-            10,
+            5,
             int(settings.num_display_brightness.value),
             unit="%",
         )
@@ -222,8 +222,8 @@ class App(Application):
         if self.input.buttons.app.middle.pressed:
             self.select_pressed = True
 
-        while self.led_accumulator_ms > 2000:
-            self.led_accumulator_ms = self.led_accumulator_ms % 2000
+        while self.led_accumulator_ms > 1000:
+            self.led_accumulator_ms = self.led_accumulator_ms % 1000
             self.leds_toggle()
 
     def leds_toggle(self):

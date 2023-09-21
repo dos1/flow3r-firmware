@@ -148,7 +148,7 @@ class ShoegazeApp(Application):
         hue = int(54 * (i + 0.5)) % 360
         if i != self.chord_index or force_update:
             self.chord_index = i
-            leds.set_all_hsv(hue, 1, 0.2)
+            leds.set_all_hsv(hue, 1, 0.7)
             leds.update()
             if self.organ_on and self._organ_chords[i] is not None:
                 self.chord = self._organ_chords[i]
