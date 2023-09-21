@@ -41,8 +41,10 @@ EXT_RAM_BSS_ATTR uint8_t st3m_pal[256 * 3];
 EXT_RAM_BSS_ATTR static uint16_t
     st3m_fb[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT];
 #endif
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
 EXT_RAM_BSS_ATTR static uint8_t
     st3m_fb2[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 4];
+#endif
 
 // Get a free drawlist ctx to draw into.
 //
@@ -64,9 +66,10 @@ static const char *TAG = "st3m-gfx";
 static st3m_gfx_mode _st3m_gfx_mode = st3m_gfx_default + 1;
 
 // each frame buffer has an associated rasterizer context
+static Ctx *fb_RGB565_BS_ctx = NULL;
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
 static Ctx *fb_GRAY8_ctx = NULL;
 static Ctx *fb_GRAYA8_ctx = NULL;
-static Ctx *fb_RGB565_BS_ctx = NULL;
 static Ctx *fb_RGB332_ctx = NULL;
 static Ctx *fb_RGBA8_ctx = NULL;
 static Ctx *fb_RGB8_ctx = NULL;
@@ -74,6 +77,7 @@ static Ctx *fb_RGB8_ctx = NULL;
 #define ST3M_OSD_LOCK_TIMEOUT 50000  // ~5ms bit more due to overhead
 static int st3m_osd_lock = 0;
 static int st3m_osd_ctx_lock = 0;
+#endif
 
 typedef struct {
     Ctx *user_ctx;
@@ -85,11 +89,13 @@ typedef struct {
 } st3m_gfx_drawlist;
 static st3m_gfx_drawlist drawlists[N_DRAWLISTS];
 
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
 static int _st3m_osd_y1 =
     0;  // the corner coordinates of the part of osd that needs to
 static int _st3m_osd_x1 = 0;  // be composited - more might be composited
 static int _st3m_osd_y0 = 0;
 static int _st3m_osd_x0 = 0;
+#endif
 
 static float smoothed_fps = 0.0f;
 
@@ -137,17 +143,20 @@ int st3m_gfx_bpp(st3m_gfx_mode mode) { return _st3m_gfx_bpp(mode); }
 
 static Ctx *st3m_gfx_ctx_int(st3m_gfx_mode mode) {
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
     if (mode == st3m_gfx_osd) {
         if ((_st3m_gfx_bpp(set_mode) == 16) || (st3m_gfx_bpp(set_mode) == 8))
             return fb_RGBA8_ctx;
         return fb_GRAYA8_ctx;
     }
+#endif
     Ctx *ctx = st3m_gfx_drawctx_free_get(1000);
 
     if (set_mode & st3m_gfx_direct_ctx) switch (_st3m_gfx_bpp(set_mode)) {
             case 16:
                 return fb_RGB565_BS_ctx;
                 // incorrect but right rowstride for these modes
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
             case 1:
             case 2:
             case 4:
@@ -158,6 +167,7 @@ static Ctx *st3m_gfx_ctx_int(st3m_gfx_mode mode) {
                 return fb_RGBA8_ctx;
             case 24:
                 return fb_RGB8_ctx;
+#endif
         }
 
     if (!ctx) {
@@ -187,6 +197,7 @@ void st3m_gfx_start_frame(Ctx *ctx) {
 
 Ctx *st3m_gfx_ctx(st3m_gfx_mode mode) {
     Ctx *ctx = st3m_gfx_ctx_int(mode);
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
     if (mode == st3m_gfx_osd) {
         while (st3m_osd_ctx_lock > 0) {
             st3m_osd_ctx_lock--;
@@ -194,6 +205,7 @@ Ctx *st3m_gfx_ctx(st3m_gfx_mode mode) {
         }
         st3m_osd_lock = ST3M_OSD_LOCK_TIMEOUT;
     }
+#endif
     st3m_gfx_start_frame(ctx);
     return ctx;
 }
@@ -379,8 +391,12 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride) {
         if (width) *width = FLOW3R_BSP_DISPLAY_WIDTH;
         if (height) *height = FLOW3R_BSP_DISPLAY_HEIGHT;
         if (bpp <= 16) return (uint8_t *)st3m_fb;
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
         return st3m_fb2;
-    } else if (mode == st3m_gfx_osd) {
+#endif
+    }
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
+    else if (mode == st3m_gfx_osd) {
         if (stride) *stride = FLOW3R_BSP_DISPLAY_WIDTH * bpp / 8;
         if (width) *width = FLOW3R_BSP_DISPLAY_WIDTH;
         if (height) *height = FLOW3R_BSP_DISPLAY_HEIGHT;
@@ -394,6 +410,9 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride) {
     if (height) *height = FLOW3R_BSP_DISPLAY_HEIGHT / scale;
     if (bpp <= 16) return (uint8_t *)st3m_fb;
     return st3m_fb2;
+#else
+    return st3m_fb;
+#endif
 }
 
 static int fb_ready = 1;  // ugly synch hack
@@ -411,19 +430,23 @@ static void st3m_gfx_task(void *_arg) {
 
         ctx_set_textureclock(fb_RGB565_BS_ctx,
                              ctx_textureclock(fb_RGB565_BS_ctx) + 1);
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
         ctx_set_textureclock(fb_RGBA8_ctx, ctx_textureclock(fb_RGB565_BS_ctx));
         ctx_set_textureclock(fb_RGB332_ctx, ctx_textureclock(fb_RGB565_BS_ctx));
         ctx_set_textureclock(fb_RGB8_ctx, ctx_textureclock(fb_RGB565_BS_ctx));
         ctx_set_textureclock(fb_GRAY8_ctx, ctx_textureclock(fb_RGB565_BS_ctx));
         ctx_set_textureclock(fb_GRAYA8_ctx, ctx_textureclock(fb_RGB565_BS_ctx));
-
+#endif
         st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
 
         Ctx *user_target = fb_RGB565_BS_ctx;
         void *user_fb = st3m_fb;
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
         void *osd_fb = st3m_fb2;
+#endif
         int bits = _st3m_gfx_bpp(set_mode);
 
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
         switch (bits) {
             case 1:
             case 2:
@@ -458,16 +481,20 @@ static void st3m_gfx_task(void *_arg) {
             st3m_gfx_viewport_transform(fb_RGBA8_ctx);
             st3m_gfx_viewport_transform(fb_RGB8_ctx);
         }
+#endif
 
         if (st3m_clear_fbs) {
             memset(st3m_fb, 0, sizeof(st3m_fb));
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
             memset(st3m_fb2, 0, sizeof(st3m_fb2));
+#endif
             st3m_clear_fbs = 0;
         }
 
         if (((set_mode & st3m_gfx_direct_ctx) == 0))
             ctx_render_ctx(drawlist->user_ctx, user_target);
 
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
         if ((scale > 1) || ((set_mode & st3m_gfx_osd) &&
                             (drawlist->osd_y0 != drawlist->osd_y1))) {
             if (((set_mode & st3m_gfx_osd) &&
@@ -485,7 +512,9 @@ static void st3m_gfx_task(void *_arg) {
                 flow3r_bsp_display_send_fb_osd(user_fb, bits, scale, NULL, 0, 0,
                                                0, 0);
             }
-        } else {
+        } else
+#endif
+        {
             flow3r_bsp_display_send_fb(user_fb, bits);
         }
         fb_ready = 1;
@@ -755,6 +784,12 @@ void st3m_gfx_init(void) {
     assert(user_ctx_rastq != NULL);
 
     // Setup rasterizers for frame buffer formats
+    fb_RGB565_BS_ctx = ctx_new_for_framebuffer(
+        st3m_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
+        FLOW3R_BSP_DISPLAY_WIDTH * 2, CTX_FORMAT_RGB565_BYTESWAPPED);
+    assert(fb_RGB565_BS_ctx != NULL);
+    st3m_gfx_viewport_transform(fb_RGB565_BS_ctx);
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
     fb_GRAY8_ctx = ctx_new_for_framebuffer(
         st3m_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
         FLOW3R_BSP_DISPLAY_WIDTH, CTX_FORMAT_GRAY8);
@@ -764,9 +799,6 @@ void st3m_gfx_init(void) {
     fb_GRAYA8_ctx = ctx_new_for_framebuffer(
         st3m_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
         FLOW3R_BSP_DISPLAY_WIDTH * 2, CTX_FORMAT_GRAYA8);
-    fb_RGB565_BS_ctx = ctx_new_for_framebuffer(
-        st3m_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
-        FLOW3R_BSP_DISPLAY_WIDTH * 2, CTX_FORMAT_RGB565_BYTESWAPPED);
     fb_RGBA8_ctx = ctx_new_for_framebuffer(
         st3m_fb2, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
         FLOW3R_BSP_DISPLAY_WIDTH * 4, CTX_FORMAT_RGBA8);
@@ -775,14 +807,12 @@ void st3m_gfx_init(void) {
         FLOW3R_BSP_DISPLAY_WIDTH * 3, CTX_FORMAT_RGB8);
     assert(fb_GRAY8_ctx != NULL);
     assert(fb_GRAYA8_ctx != NULL);
-    assert(fb_RGB565_BS_ctx != NULL);
     assert(fb_RGBA8_ctx != NULL);
     assert(fb_RGB8_ctx != NULL);
     assert(fb_RGB332_ctx != NULL);
 
     st3m_gfx_viewport_transform(fb_GRAY8_ctx);
     st3m_gfx_viewport_transform(fb_GRAYA8_ctx);
-    st3m_gfx_viewport_transform(fb_RGB565_BS_ctx);
     st3m_gfx_viewport_transform(fb_RGBA8_ctx);
     st3m_gfx_viewport_transform(fb_RGB8_ctx);
 
@@ -794,6 +824,7 @@ void st3m_gfx_init(void) {
     ctx_set_texture_cache(fb_RGB8_ctx, fb_RGB565_BS_ctx);
     ctx_set_texture_source(fb_GRAY8_ctx, fb_RGB565_BS_ctx);
     ctx_set_texture_cache(fb_GRAY8_ctx, fb_RGB565_BS_ctx);
+#endif
 
     // Setup user_ctx descriptor.
     for (int i = 0; i < N_DRAWLISTS; i++) {
@@ -820,11 +851,12 @@ static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
     if (res != pdTRUE) return NULL;
 
     st3m_gfx_drawlist *drawlist = &drawlists[last_descno];
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
     drawlist->osd_x0 = _st3m_osd_x0;
     drawlist->osd_y0 = _st3m_osd_y0;
     drawlist->osd_x1 = _st3m_osd_x1;
     drawlist->osd_y1 = _st3m_osd_y1;
-
+#endif
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
 
     if (set_mode & st3m_gfx_direct_ctx) {
@@ -834,12 +866,14 @@ static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
             case 16:
                 st3m_gfx_viewport_transform(fb_RGB565_BS_ctx);
                 return fb_RGB565_BS_ctx;
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
             case 8:
                 st3m_gfx_viewport_transform(fb_GRAY8_ctx);
                 return fb_GRAY8_ctx;
             case 24:
                 st3m_gfx_viewport_transform(fb_RGB8_ctx);
                 return fb_RGB8_ctx;
+#endif
         }
     }
 
@@ -853,10 +887,12 @@ static void st3m_gfx_pipe_put(void) {
 static Ctx *st3m_gfx_ctx_int(st3m_gfx_mode mode);
 void st3m_gfx_end_frame(Ctx *ctx) {
     ctx_restore(ctx);
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
     if (ctx == st3m_gfx_ctx_int(st3m_gfx_osd)) {
         st3m_osd_lock = 0;
         return;
     }
+#endif
     st3m_gfx_pipe_put();
 }
 
@@ -887,6 +923,7 @@ void st3m_gfx_flush(int timeout_ms) {
     ESP_LOGW(TAG, "Pipeline flush/reset done.");
 }
 
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
 void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1) {
     if (y1 < 0) y1 = 0;
     if (y1 > FLOW3R_BSP_DISPLAY_HEIGHT) y1 = FLOW3R_BSP_DISPLAY_HEIGHT;
@@ -918,3 +955,4 @@ void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1) {
     _st3m_osd_x1 = drawlist->osd_x1;
     _st3m_osd_y1 = drawlist->osd_y1;
 }
+#endif
