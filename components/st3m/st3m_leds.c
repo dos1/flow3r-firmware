@@ -21,6 +21,12 @@ typedef struct {
 } st3m_leds_gamma_table_t;
 
 typedef struct {
+    uint16_t r;
+    uint16_t g;
+    uint16_t b;
+} st3m_leds_rgb_t;
+
+typedef struct {
     uint8_t brightness;
     uint8_t slew_rate;
     bool auto_update;
@@ -31,7 +37,7 @@ typedef struct {
 
     st3m_rgb_t target[40];
     st3m_rgb_t target_buffer[40];
-    st3m_rgb_t hardware_value[40];
+    st3m_leds_rgb_t slew_output[40];
 } st3m_leds_state_t;
 
 static st3m_leds_state_t state;
@@ -49,7 +55,11 @@ static void set_single_led(uint8_t index, st3m_rgb_t c) {
     flow3r_bsp_leds_set_pixel(index, c.r, c.g, c.b);
 }
 
-uint8_t led_get_slew(int16_t old, int16_t new, int16_t slew) {
+static uint16_t led_get_slew(uint16_t old, uint16_t new, uint16_t slew) {
+    new = new << 8;
+    if (slew == 255) return new;
+    slew = 30 + (slew << 2) + ((slew * slew) >> 3);
+
     if (new > old + slew) {
         return old + slew;
     } else if (new > old) {
@@ -81,21 +91,22 @@ void st3m_leds_update_hardware() {
     if (state.auto_update) leds_update_target();
 
     for (int i = 0; i < 40; i++) {
-        st3m_rgb_t c = state.target[i];
-        c.r = c.r * state.brightness / 255;
-        c.g = c.g * state.brightness / 255;
-        c.b = c.b * state.brightness / 255;
+        st3m_rgb_t ret = state.target[i];
+        st3m_leds_rgb_t c;
+        c.r = led_get_slew(state.slew_output[i].r, ret.r, state.slew_rate);
+        c.g = led_get_slew(state.slew_output[i].g, ret.g, state.slew_rate);
+        c.b = led_get_slew(state.slew_output[i].b, ret.b, state.slew_rate);
+        state.slew_output[i] = c;
 
-        c.r = state.gamma_red.lut[c.r];
-        c.g = state.gamma_red.lut[c.g];
-        c.b = state.gamma_red.lut[c.b];
+        c.r = ((uint32_t)c.r * state.brightness) >> 8;
+        c.g = ((uint32_t)c.g * state.brightness) >> 8;
+        c.b = ((uint32_t)c.b * state.brightness) >> 8;
 
-        c.r = led_get_slew(state.hardware_value[i].r, c.r, state.slew_rate);
-        c.g = led_get_slew(state.hardware_value[i].g, c.g, state.slew_rate);
-        c.b = led_get_slew(state.hardware_value[i].b, c.b, state.slew_rate);
-        state.hardware_value[i] = c;
+        ret.r = state.gamma_red.lut[c.r >> 8];
+        ret.g = state.gamma_red.lut[c.g >> 8];
+        ret.b = state.gamma_red.lut[c.b >> 8];
 
-        set_single_led(i, c);
+        set_single_led(i, ret);
     }
     UNLOCK;
 
@@ -103,6 +114,18 @@ void st3m_leds_update_hardware() {
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "LED refresh failed: %s", esp_err_to_name(ret));
     }
+}
+
+void st3m_leds_set_single_rgba(uint8_t index, float red, float green,
+                               float blue, float alpha) {
+    float r, g, b;
+    st3m_leds_get_single_rgb(index, &r, &g, &b);
+
+    float nalpha = 1 - alpha;
+    r = alpha * red + nalpha * r;
+    g = alpha * green + nalpha * g;
+    b = alpha * blue + nalpha * blue;
+    st3m_leds_set_single_rgb(index, r, g, b);
 }
 
 void st3m_leds_set_single_rgb(uint8_t index, float red, float green,
@@ -115,6 +138,15 @@ void st3m_leds_set_single_rgb(uint8_t index, float red, float green,
     state.target_buffer[index].r = (uint8_t)(red * 255);
     state.target_buffer[index].g = (uint8_t)(green * 255);
     state.target_buffer[index].b = (uint8_t)(blue * 255);
+    UNLOCK_INCOMING;
+}
+
+void st3m_leds_get_single_rgb(uint8_t index, float *red, float *green,
+                              float *blue) {
+    LOCK_INCOMING;
+    *red = ((float)state.target_buffer[index].r) / 255;
+    *green = ((float)state.target_buffer[index].g) / 255;
+    *blue = ((float)state.target_buffer[index].b) / 255;
     UNLOCK_INCOMING;
 }
 
@@ -135,6 +167,12 @@ void st3m_leds_set_all_rgb(float red, float green, float blue) {
     }
 }
 
+void st3m_leds_set_all_rgba(float red, float green, float blue, float alpha) {
+    for (int i = 0; i < 40; i++) {
+        st3m_leds_set_single_rgba(i, red, green, blue, alpha);
+    }
+}
+
 void st3m_leds_set_all_hsv(float h, float s, float v) {
     for (int i = 0; i < 40; i++) {
         st3m_leds_set_single_hsv(i, h, s, v);
@@ -148,7 +186,7 @@ static void _leds_task(void *_data) {
 
     TickType_t last_wake = xTaskGetTickCount();
     while (true) {
-        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(100));  // 10 Hz
+        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(20));  // 50 Hz
         st3m_leds_update_hardware();
     }
 }

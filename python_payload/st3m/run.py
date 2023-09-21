@@ -155,11 +155,6 @@ def run_main() -> None:
     audio.headphones_set_maximum_volume_dB(settings.num_headphones_max_db.value)
     audio.speaker_set_maximum_volume_dB(settings.num_speaker_max_db.value)
     leds.set_brightness(settings.num_leds_brightness.value)
-    leds.set_slew_rate(settings.num_leds_speed.value)
-    if 255 == settings.num_leds_speed.value:
-        leds.set_auto_update(0)
-    else:
-        leds.set_auto_update(1)
     sys_display.set_backlight(settings.num_display_brightness.value)
 
     leds.set_rgb(0, 255, 0, 0)
@@ -169,9 +164,9 @@ def run_main() -> None:
 
     leds.set_rgb(0, 0, 0, 0)
     leds.update()
-    leds.set_slew_rate(2)
-    leds.set_auto_update(1)
     led_patterns.set_menu_colors()
+    leds.set_slew_rate(20)
+    leds.update()
 
     try:
         network.hostname(

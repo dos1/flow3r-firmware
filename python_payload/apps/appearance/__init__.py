@@ -180,21 +180,13 @@ class App(Application):
             leds.set_brightness(settings.num_leds_brightness.value)
 
         tmp = self.draw_number("led speed", 7, int(settings.num_leds_speed.value))
-        if tmp > settings.num_leds_speed.value:
-            tmp = settings.num_leds_speed.value * 2
-        elif tmp < settings.num_leds_speed.value:
-            tmp = (settings.num_leds_speed.value + 1) // 2
-        if tmp < 1:
-            tmp = 1
+        if tmp < 0:
+            tmp = 0
         elif tmp > 255:
             tmp = 255
         if tmp != settings.num_leds_speed.value:
             settings.num_leds_speed.set_value(tmp)
             leds.set_slew_rate(settings.num_leds_speed.value)
-            if 255 == settings.num_leds_speed.value:
-                leds.set_auto_update(0)
-            else:
-                leds.set_auto_update(1)
 
         tmp = self.draw_number(
             "display brightness",
@@ -230,8 +222,8 @@ class App(Application):
         if self.input.buttons.app.middle.pressed:
             self.select_pressed = True
 
-        while self.led_accumulator_ms > 500:
-            self.led_accumulator_ms = self.led_accumulator_ms % 500
+        while self.led_accumulator_ms > 2000:
+            self.led_accumulator_ms = self.led_accumulator_ms % 2000
             self.leds_toggle()
 
     def leds_toggle(self):

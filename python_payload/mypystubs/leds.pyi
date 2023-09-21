@@ -1,3 +1,5 @@
+from typing import Tuple
+
 """
 Leds API.
 
@@ -8,22 +10,19 @@ There are 8 LEDs per top petal, or 4 LEDs per petal.
 After you're ready setting up your blink, call update(), or enable autoupdates.
 """
 
-def set_rgb(ix: int, r: float, g: float, b: float) -> None:
-    """Set LED `ix` to rgb value r, g, b
+def set_rgb(i: int, r: float, g: float, b: float) -> None:
+    """Set LED i to rgb value r, g, b
 
-    :param ix: LED index, from 0 to 39
+    :param i: LED index, from 0 to 39
     :param r: Red value, from 0.0 to 1.0
     :param g: Green value, from 0.0 to 1.0
     :param b: Blue value, from 0.0 to 1.0
     """
 
-def set_hsv(ix: int, hue: float, sat: float, val: float) -> None:
-    """Set LED `ix` to hsv value hue, sat, val
+def get_rgb(i: int) -> Tuple[float, float, float]:
+    """Get rgb tuple of LED i
 
-    :param ix: LED index, from 0 to 39
-    :param hue: Hue, from 0 to 360
-    :param sat: Saturation, from 0.0 to 1.0
-    :param val: Value, from 0.0 to 1.0
+    :param i: LED index, from 0 to 39
     """
 
 def set_all_rgb(r: float, g: float, b: float) -> None:
@@ -34,12 +33,23 @@ def set_all_rgb(r: float, g: float, b: float) -> None:
     :param b: Blue value, from 0.0 to 1.0
     """
 
-def set_all_hsv(h: float, s: float, v: float) -> None:
-    """Set all LEDs to hsv value hue, sat, val
+def set_rgba(ix: int, r: float, g: float, b: float, a: float) -> None:
+    """Set LED i to rgb alpha value r, g, b, a
 
-    :param hue: Hue, from 0 to 360
-    :param sat: Saturation, from 0.0 to 1.0
-    :param val: Value, from 0.0 to 1.0
+    :param ix: LED index, from 0 to 39
+    :param r: Red value, from 0.0 to 1.0
+    :param g: Green value, from 0.0 to 1.0
+    :param b: Blue value, from 0.0 to 1.0
+    :param a: Alpha value, from 0.0 to 1.0
+    """
+
+def set_all_rgba(r: float, g: float, b: float, a: float) -> None:
+    """Set all LEDs to rgb alpha value r, g, b, a
+
+    :param r: Red value, from 0.0 to 1.0
+    :param g: Green value, from 0.0 to 1.0
+    :param b: Blue value, from 0.0 to 1.0
+    :param a: Alpha value, from 0.0 to 1.0
     """
 
 def update() -> None:
@@ -72,12 +82,6 @@ def set_auto_update(on: bool) -> None:
     low slew rates.
     """
 
-def set_gamma(r: float, g: float, b: float) -> None:
-    """
-    Bend the rgb curves with an exponent each. (1,1,1) is default, (2,2,2) works
-    well too If someone wants to do color calibration, this is ur friend
-    """
-
 def get_slew_rate() -> int:
     """
     Get maximum change rate of brightness. See set_slew_rate()
@@ -85,6 +89,6 @@ def get_slew_rate() -> int:
 
 def set_slew_rate(b: int) -> None:
     """
-    Set maximum change rate of brightness. Set to 1-3 for fade effects, set
-    to 255 to disable. Currently clocks at 10Hz.
+    Set maximum change rate of channel brightness. Set to 255 to disable.
+    Animations render to the LEDs at 50Hz.
     """

@@ -243,7 +243,7 @@ num_speaker_max_db = StringTunable(
 num_display_brightness = StringTunable(
     "Display Brightness", "system.brightness.display", 100
 )
-num_leds_brightness = StringTunable("LED Brightness", "system.brightness.leds", 200)
+num_leds_brightness = StringTunable("LED Brightness", "system.brightness.leds", 69)
 
 num_leds_speed = StringTunable("LED speed", "system.brightness.leds_speed", 255)
 

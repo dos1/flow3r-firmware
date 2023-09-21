@@ -25,9 +25,14 @@ void st3m_leds_init();
 // autoupdates.
 void st3m_leds_set_single_rgb(uint8_t index, float red, float green,
                               float blue);
+void st3m_leds_set_single_rgba(uint8_t index, float red, float green,
+                               float blue, float alpha);
 void st3m_leds_set_single_hsv(uint8_t index, float hue, float sat, float value);
 void st3m_leds_set_all_rgb(float red, float green, float blue);
+void st3m_leds_set_all_rgba(float red, float green, float blue, float alpha);
 void st3m_leds_set_all_hsv(float hue, float sat, float value);
+void st3m_leds_get_single_rgb(uint8_t index, float* red, float* green,
+                              float* blue);
 
 // Set/get global LED brightness, 0-255. Default 69.
 //
@@ -36,9 +41,12 @@ void st3m_leds_set_brightness(uint8_t brightness);
 uint8_t st3m_leds_get_brightness();
 
 // Set/get maximum change rate of brightness. Set to 1-3 for fade effects, set
-// to 255 to disable. Currently clocks at 10Hz.
+// to 255 to disable. Currently clocks at 50Hz.
 void st3m_leds_set_slew_rate(uint8_t slew_rate);
 uint8_t st3m_leds_get_slew_rate();
+
+void st3m_leds_set_max_slew_rate(uint8_t slew_rate);
+uint8_t st3m_leds_get_max_slew_rate();
 
 // Update LEDs. Ie., copy the LED state from the first buffer into the second
 // buffer, effectively scheduling the LED state to be presented to the user.

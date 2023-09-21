@@ -70,6 +70,19 @@ STATIC mp_obj_t mp_led_set_rgb(size_t n_args, const mp_obj_t *args) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_led_set_rgb_obj, 4, 4,
                                            mp_led_set_rgb);
 
+STATIC mp_obj_t mp_led_set_rgba(size_t n_args, const mp_obj_t *args) {
+    uint8_t index = mp_obj_get_int(args[0]);
+    float red = mp_obj_get_float(args[1]);
+    float green = mp_obj_get_float(args[2]);
+    float blue = mp_obj_get_float(args[3]);
+    float alpha = mp_obj_get_float(args[4]);
+
+    st3m_leds_set_single_rgba(index, red, green, blue, alpha);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_led_set_rgba_obj, 5, 5,
+                                           mp_led_set_rgba);
+
 STATIC mp_obj_t mp_led_set_hsv(size_t n_args, const mp_obj_t *args) {
     uint8_t index = mp_obj_get_int(args[0]);
     float hue = mp_obj_get_float(args[1]);
@@ -90,6 +103,17 @@ STATIC mp_obj_t mp_led_set_all_rgb(mp_obj_t r, mp_obj_t g, mp_obj_t b) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_led_set_all_rgb_obj, mp_led_set_all_rgb);
 
+STATIC mp_obj_t mp_led_set_all_rgba(size_t n_args, const mp_obj_t *args) {
+    float red = mp_obj_get_float(args[0]);
+    float green = mp_obj_get_float(args[1]);
+    float blue = mp_obj_get_float(args[2]);
+    float alpha = mp_obj_get_float(args[3]);
+    st3m_leds_set_all_rgba(red, green, blue, alpha);
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_led_set_all_rgba_obj, 4, 4,
+                                           mp_led_set_all_rgba);
+
 STATIC mp_obj_t mp_led_set_all_hsv(mp_obj_t h, mp_obj_t s, mp_obj_t v) {
     float hue = mp_obj_get_float(h);
     float sat = mp_obj_get_float(s);
@@ -98,6 +122,19 @@ STATIC mp_obj_t mp_led_set_all_hsv(mp_obj_t h, mp_obj_t s, mp_obj_t v) {
     return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_led_set_all_hsv_obj, mp_led_set_all_hsv);
+
+STATIC mp_obj_t mp_led_get_rgb(mp_obj_t led_index) {
+    uint8_t index = mp_obj_get_int(led_index);
+    float red;
+    float green;
+    float blue;
+
+    st3m_leds_get_single_rgb(index, &red, &green, &blue);
+    mp_obj_t items[] = { mp_obj_new_float(red), mp_obj_new_float(green),
+                         mp_obj_new_float(blue) };
+    return mp_obj_new_tuple(3, items);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_led_get_rgb_obj, mp_led_get_rgb);
 
 STATIC mp_obj_t mp_leds_update() {
     st3m_leds_update();
@@ -108,9 +145,12 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_leds_update_obj, mp_leds_update);
 STATIC const mp_rom_map_elem_t mp_module_leds_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_leds) },
     { MP_ROM_QSTR(MP_QSTR_set_rgb), MP_ROM_PTR(&mp_led_set_rgb_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_rgba), MP_ROM_PTR(&mp_led_set_rgba_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_hsv), MP_ROM_PTR(&mp_led_set_hsv_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_all_rgb), MP_ROM_PTR(&mp_led_set_all_rgb_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_all_rgba), MP_ROM_PTR(&mp_led_set_all_rgba_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_all_hsv), MP_ROM_PTR(&mp_led_set_all_hsv_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_rgb), MP_ROM_PTR(&mp_led_get_rgb_obj) },
     { MP_ROM_QSTR(MP_QSTR_update), MP_ROM_PTR(&mp_leds_update_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_brightness),
       MP_ROM_PTR(&mp_leds_get_brightness_obj) },

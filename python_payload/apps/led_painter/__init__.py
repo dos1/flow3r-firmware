@@ -114,6 +114,7 @@ class LEDPainter(Application):
     def on_enter(self, vm):
         super().on_enter(vm)
         self._load_settings()
+        leds.set_slew_rate(255)
 
     def on_exit(self):
         self._save_settings()

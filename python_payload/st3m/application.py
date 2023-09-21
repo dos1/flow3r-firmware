@@ -68,10 +68,6 @@ class Application(BaseView):
         elif self._wifi_preference is False:
             st3m.wifi.disable()
         leds.set_slew_rate(settings.num_leds_speed.value)
-        if 255 == settings.num_leds_speed.value:
-            leds.set_auto_update(0)
-        else:
-            leds.set_auto_update(1)
         super().on_enter(vm)
 
     def on_exit(self) -> None:
@@ -86,16 +82,15 @@ class Application(BaseView):
         if fully_exiting:
             sys_display.set_mode(0)
         if fully_exiting:
-            leds.set_slew_rate(10)
-            leds.set_auto_update(1)
+            leds.set_slew_rate(90)
             led_patterns.set_menu_colors()
 
     def on_exit_done(self):
         fully_exiting = self.vm.direction == ViewTransitionDirection.BACKWARD
         if fully_exiting:
-            leds.set_slew_rate(10)
-            leds.set_auto_update(1)
+            leds.set_slew_rate(40)
             led_patterns.set_menu_colors()
+            leds.update()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
