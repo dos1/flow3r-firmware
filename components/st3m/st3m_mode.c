@@ -13,6 +13,7 @@
 #include "st3m_fs_sd.h"
 #include "st3m_gfx.h"
 #include "st3m_io.h"
+#include "st3m_media.h"
 #include "st3m_usb.h"
 
 static const char *TAG = "st3m-mode";
@@ -89,6 +90,8 @@ void st3m_mode_set(st3m_mode_kind_t kind, const char *message) {
 
     _mode.kind = kind;
     _mode.shown = false;
+
+    st3m_media_stop();
 
     if (kind == st3m_mode_kind_disk_flash) {
         _diskmode_flash();
