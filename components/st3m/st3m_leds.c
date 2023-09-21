@@ -229,8 +229,8 @@ void st3m_leds_init() {
     assert(mutex_incoming != NULL);
 
     memset(&state, 0, sizeof(state));
-    state.brightness = 69;
-    state.slew_rate = 255;
+    state.brightness = 70;
+    state.slew_rate = 235;
     state.auto_update = false;
     state.timer = 255;
 

@@ -121,7 +121,7 @@ class App(Application):
 
         if self.active and self.widget_no == self.focused_widget:
             ctx.save()
-            ctx.rgba(colours.PUSH_RED, 1.0)
+            ctx.rgba(*colours.PUSH_RED, 1.0)
             ctx.rectangle(
                 ctx.x - 1,
                 ctx.y - self.font_size * 0.8,
