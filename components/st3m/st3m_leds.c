@@ -26,7 +26,13 @@ typedef struct {
     uint16_t r;
     uint16_t g;
     uint16_t b;
-} st3m_leds_rgb_t;
+} st3m_u16_rgb_t;
+
+typedef struct {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} st3m_u8_rgb_t;
 
 typedef struct {
     uint8_t brightness;
@@ -38,10 +44,10 @@ typedef struct {
     st3m_leds_gamma_table_t gamma_green;
     st3m_leds_gamma_table_t gamma_blue;
 
-    st3m_rgb_t target[40];
-    st3m_rgb_t target_buffer[40];
-    st3m_leds_rgb_t slew_output[40];
-    st3m_rgb_t ret_prev[40];
+    st3m_u8_rgb_t target[40];
+    st3m_u8_rgb_t target_buffer[40];
+    st3m_u16_rgb_t slew_output[40];
+    st3m_u8_rgb_t ret_prev[40];
 } st3m_leds_state_t;
 
 static st3m_leds_state_t state;
@@ -54,7 +60,7 @@ SemaphoreHandle_t mutex_incoming;
 #define LOCK_INCOMING xSemaphoreTake(mutex_incoming, portMAX_DELAY)
 #define UNLOCK_INCOMING xSemaphoreGive(mutex_incoming)
 
-static void set_single_led(uint8_t index, st3m_rgb_t c) {
+static void set_single_led(uint8_t index, st3m_u8_rgb_t c) {
     index = (index + 29) % 40;
     flow3r_bsp_leds_set_pixel(index, c.r, c.g, c.b);
 }
@@ -101,8 +107,8 @@ void st3m_leds_update_hardware() {
     bool is_different = false;
 
     for (int i = 0; i < 40; i++) {
-        st3m_rgb_t ret = state.target[i];
-        st3m_leds_rgb_t c;
+        st3m_u8_rgb_t ret = state.target[i];
+        st3m_u16_rgb_t c;
         c.r = led_get_slew(state.slew_output[i].r, ret.r, state.slew_rate);
         c.g = led_get_slew(state.slew_output[i].g, ret.g, state.slew_rate);
         c.b = led_get_slew(state.slew_output[i].b, ret.b, state.slew_rate);
@@ -176,9 +182,8 @@ void st3m_leds_set_single_hsv(uint8_t index, float hue, float sat, float val) {
         .s = sat,
         .v = val,
     };
-    LOCK_INCOMING;
-    state.target_buffer[index] = st3m_hsv_to_rgb(hsv);
-    UNLOCK_INCOMING;
+    st3m_rgb_t rgb = st3m_hsv_to_rgb(hsv);
+    st3m_leds_set_single_rgb(index, rgb.r, rgb.g, rgb.b);
 }
 
 void st3m_leds_set_all_rgb(float red, float green, float blue) {
@@ -193,9 +198,15 @@ void st3m_leds_set_all_rgba(float red, float green, float blue, float alpha) {
     }
 }
 
-void st3m_leds_set_all_hsv(float h, float s, float v) {
+void st3m_leds_set_all_hsv(float hue, float sat, float val) {
+    st3m_hsv_t hsv = {
+        .h = hue * TAU360,
+        .s = sat,
+        .v = val,
+    };
+    st3m_rgb_t rgb = st3m_hsv_to_rgb(hsv);
     for (int i = 0; i < 40; i++) {
-        st3m_leds_set_single_hsv(i, h, s, v);
+        st3m_leds_set_single_rgb(i, rgb.r, rgb.g, rgb.b);
     }
 }
 
