@@ -78,7 +78,7 @@ class SpaceScreen(Screen):
         flash_free = flash_statvfs[1] * flash_statvfs[3]
         flash_total = flash_statvfs[1] * flash_statvfs[2]
         self.flash_used_percentage = (
-            (100 - ((flash_free / flash_total) * 100)) if flash_free == 0 else 0
+            (100 - ((flash_free / flash_total) * 100)) if flash_free != 0 else 0
         )
 
         self.sd_plugged = sd_card_plugged()
@@ -91,7 +91,7 @@ class SpaceScreen(Screen):
             sd_free = sd_statvfs[1] * sd_statvfs[3]
             sd_total = sd_statvfs[1] * sd_statvfs[2]
             self.sd_used_percentage = (
-                (100 - ((sd_free / sd_total) * 100)) if sd_free == 0 else 0
+                (100 - ((sd_free / sd_total) * 100)) if sd_free != 0 else 0
             )
 
         self.flash_text = f"{self._get_pretty_size(flash_total - flash_free)}/{self._get_pretty_size(flash_total)}"
@@ -142,7 +142,7 @@ class SpaceScreen(Screen):
             self.flash_used_percentage,
         )
         ctx.font_size = 15
-        ctx.move_to(0, -5)
+        ctx.move_to(0, -15)
         ctx.text(self.flash_text)
 
         # SD
