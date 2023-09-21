@@ -9,13 +9,13 @@
 
 #include <string.h>
 
-#include <pthread.h>
 #include "esp_log.h"
 #include "esp_system.h"
 #include "esp_task.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
+#include "freertos/semphr.h"
 
 // clang-format off
 #include "ctx_config.h"
@@ -74,10 +74,11 @@ static Ctx *fb_RGB332_ctx = NULL;
 static Ctx *fb_RGBA8_ctx = NULL;
 static Ctx *fb_RGB8_ctx = NULL;
 
-#define ST3M_OSD_LOCK_TIMEOUT 50000  // ~5ms bit more due to overhead
-static int st3m_osd_lock = 0;
-static int st3m_osd_ctx_lock = 0;
+#define ST3M_OSD_LOCK_TIMEOUT 500
+SemaphoreHandle_t st3m_osd_lock;
 #endif
+
+SemaphoreHandle_t st3m_fb_lock;
 
 typedef struct {
     Ctx *user_ctx;
@@ -199,11 +200,8 @@ Ctx *st3m_gfx_ctx(st3m_gfx_mode mode) {
     Ctx *ctx = st3m_gfx_ctx_int(mode);
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
     if (mode == st3m_gfx_osd) {
-        while (st3m_osd_ctx_lock > 0) {
-            st3m_osd_ctx_lock--;
-            usleep(1);
-        }
-        st3m_osd_lock = ST3M_OSD_LOCK_TIMEOUT;
+        xSemaphoreTake(st3m_osd_lock,
+                       ST3M_OSD_LOCK_TIMEOUT / portTICK_PERIOD_MS);
     }
 #endif
     st3m_gfx_start_frame(ctx);
@@ -415,7 +413,6 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride) {
 #endif
 }
 
-static int fb_ready = 1;  // ugly synch hack
 static void st3m_gfx_task(void *_arg) {
     (void)_arg;
     st3m_gfx_set_mode(st3m_gfx_default);
@@ -426,7 +423,8 @@ static void st3m_gfx_task(void *_arg) {
         xQueueReceiveNotifyStarved(user_ctx_rastq, &desc_no,
                                    "rast task starved (user_ctx)!");
         st3m_gfx_drawlist *drawlist = &drawlists[desc_no];
-        fb_ready = 0;
+
+        xSemaphoreTake(st3m_fb_lock, portMAX_DELAY);
 
         ctx_set_textureclock(fb_RGB565_BS_ctx,
                              ctx_textureclock(fb_RGB565_BS_ctx) + 1);
@@ -504,14 +502,11 @@ static void st3m_gfx_task(void *_arg) {
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
         if ((scale > 1) || ((set_mode & st3m_gfx_osd) && (osd_y0 != osd_y1))) {
             if (((set_mode & st3m_gfx_osd) && (osd_y0 != osd_y1))) {
-                while (st3m_osd_lock > 0) {
-                    st3m_osd_lock--;
-                    usleep(1);
-                }
-                st3m_osd_ctx_lock = ST3M_OSD_LOCK_TIMEOUT;
+                xSemaphoreTake(st3m_osd_lock,
+                               ST3M_OSD_LOCK_TIMEOUT / portTICK_PERIOD_MS);
                 flow3r_bsp_display_send_fb_osd(user_fb, bits, scale, osd_fb,
                                                osd_x0, osd_y0, osd_x1, osd_y1);
-                st3m_osd_ctx_lock = 0;
+                xSemaphoreGive(st3m_osd_lock);
             } else {
                 flow3r_bsp_display_send_fb_osd(user_fb, bits, scale, NULL, 0, 0,
                                                0, 0);
@@ -521,7 +516,7 @@ static void st3m_gfx_task(void *_arg) {
         {
             flow3r_bsp_display_send_fb(user_fb, bits);
         }
-        fb_ready = 1;
+        xSemaphoreGive(st3m_fb_lock);
 
         st3m_counter_rate_sample(&rast_rate);
         float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
@@ -781,6 +776,11 @@ void st3m_gfx_init(void) {
     user_ctx_rastq = xQueueCreate(1, sizeof(int));
     assert(user_ctx_rastq != NULL);
 
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
+    st3m_osd_lock = xSemaphoreCreateMutex();
+#endif
+    st3m_fb_lock = xSemaphoreCreateMutex();
+
     // Setup rasterizers for frame buffer formats
     fb_RGB565_BS_ctx = ctx_new_for_framebuffer(
         st3m_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
@@ -858,7 +858,7 @@ static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
 
     if (set_mode & st3m_gfx_direct_ctx) {
-        while (!fb_ready) usleep(1);
+        while (!uxSemaphoreGetCount(st3m_fb_lock)) vTaskDelay(0);
 
         switch (_st3m_gfx_bpp(set_mode)) {
             case 16:
@@ -887,7 +887,7 @@ void st3m_gfx_end_frame(Ctx *ctx) {
     ctx_restore(ctx);
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
     if (ctx == st3m_gfx_ctx_int(st3m_gfx_osd)) {
-        st3m_osd_lock = 0;
+        xSemaphoreGive(st3m_osd_lock);
         return;
     }
 #endif
