@@ -1,0 +1,13 @@
+[app]
+name = "Check for Updates"
+menu = "Hidden"
+wifi_preference = true
+
+[entry]
+class = "UpdaterApp"
+
+[metadata]
+author = "ave"
+license = "LGPL-3.0-only"
+url = "https://git.flow3r.garden/flow3r/flow3r-firmware"
+version = 1
