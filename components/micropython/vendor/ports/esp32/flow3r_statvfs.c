@@ -13,6 +13,7 @@ void get_statvfs(char* drive, uint32_t *out) {
     uint32_t sector_size = fs->ssize;
 
     out[1] = fs->ssize;  // frsize, mapped to sector size
+    out[2] = tot_sect;  // blocks, mapped to total sectors
     out[3] = fre_sect;  // bfree, mapped to free sectors
-    out[4] = tot_sect;  // bavail, mapped to total sectors
+    out[4] = fre_sect;  // bavail, mapped to free sectors
 }

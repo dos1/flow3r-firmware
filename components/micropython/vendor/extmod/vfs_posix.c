@@ -348,7 +348,7 @@ STATIC mp_obj_t vfs_posix_statvfs(mp_obj_t self_in, mp_obj_t path_in) {
     mp_obj_tuple_t *t = MP_OBJ_TO_PTR(mp_obj_new_tuple(10, NULL));
     t->items[0] = MP_OBJ_NEW_SMALL_INT(0); // bsize
     t->items[1] = MP_OBJ_NEW_SMALL_INT(statvfs_array[1]); // frsize
-    t->items[2] = MP_OBJ_NEW_SMALL_INT(0); // blocks
+    t->items[2] = MP_OBJ_NEW_SMALL_INT(statvfs_array[2]); // blocks
     t->items[3] = MP_OBJ_NEW_SMALL_INT(statvfs_array[3]); // bfree
     t->items[4] = MP_OBJ_NEW_SMALL_INT(statvfs_array[4]); // bavail
     t->items[5] = MP_OBJ_NEW_SMALL_INT(0);
