@@ -1,9 +1,10 @@
 from ctx import Context
 from st3m import InputState, Responder
 from st3m.ui.view import BaseView, ViewTransitionSwipeRight
-from st3m.utils import tau
+from st3m.utils import tau, sd_card_plugged
 from st3m.goose import List, Optional
 import math
+import os
 
 
 class Screen(Responder):
@@ -21,6 +22,7 @@ class Screen(Responder):
     def draw(self, ctx: Context) -> None:
         ctx.font = self.FONT
         ctx.font_size = self.FONT_SIZE
+        ctx.text_baseline = ctx.MIDDLE
 
         y = self.START_Y
         for line in self.text:
@@ -66,6 +68,106 @@ class IntroScreen(Screen):
         super().draw(ctx)
 
 
+class SpaceScreen(Screen):
+    """
+    Card which shows Flash and SD storage space.
+    """
+
+    def __init__(self) -> None:
+        flash_statvfs = os.statvfs("/flash")
+        flash_free = flash_statvfs[1] * flash_statvfs[3]
+        flash_total = flash_statvfs[1] * flash_statvfs[2]
+        self.flash_used_percentage = (
+            (100 - ((flash_free / flash_total) * 100)) if flash_free == 0 else 0
+        )
+
+        self.sd_plugged = sd_card_plugged()
+        if not self.sd_plugged:
+            sd_free = 0
+            sd_total = 0
+            self.sd_used_percentage = 0
+        else:
+            sd_statvfs = os.statvfs("/sd")
+            sd_free = sd_statvfs[1] * sd_statvfs[3]
+            sd_total = sd_statvfs[1] * sd_statvfs[2]
+            self.sd_used_percentage = (
+                (100 - ((sd_free / sd_total) * 100)) if sd_free == 0 else 0
+            )
+
+        self.flash_text = f"{self._get_pretty_size(flash_total - flash_free)}/{self._get_pretty_size(flash_total)}"
+        self.sd_text = f"{self._get_pretty_size(sd_total - sd_free)}/{self._get_pretty_size(sd_total)}"
+
+    def _draw_bar(self, ctx, x, y, width, height, color):
+        ctx.save()
+        ctx.arc(x, y + (height / 2), height / 2, 0, math.tau, 0)
+        ctx.rectangle(x, y, width, height)
+        ctx.arc(x + width, y + (height / 2), height / 2, 0, math.tau, 0)
+        ctx.rgb(*color)
+        ctx.fill()
+        ctx.restore()
+
+    def _draw_percentage_bar(
+        self, ctx, x, y, width, height, bg_color, fg_color, percentage
+    ):
+        self._draw_bar(ctx, x, y, width, height, bg_color)
+        self._draw_bar(ctx, x, y, (width / 100) * percentage, height, fg_color)
+
+    def _get_pretty_size(self, byte_count: int) -> str:
+        MiB = 1024 * 1024
+        GiB = MiB * 1024
+
+        # if over 2GiB, return GiB numbers, else return MiB
+        if byte_count > (2 * GiB):
+            return "{:.2f}GiB".format(byte_count / GiB)
+        else:
+            return "{:.2f}MiB".format(byte_count / MiB)
+
+    def draw(self, ctx: Context) -> None:
+        ctx.text_align = ctx.MIDDLE
+        ctx.font = "Arimo Regular"
+        ctx.font_size = 25
+
+        # Flash
+        ctx.move_to(0, -45)
+        ctx.text("Flash")
+
+        self._draw_percentage_bar(
+            ctx,
+            -65,
+            -40,
+            130,
+            10,
+            (0, 0, 0),
+            (1, 1, 1),
+            self.flash_used_percentage,
+        )
+        ctx.font_size = 15
+        ctx.move_to(0, -5)
+        ctx.text(self.flash_text)
+
+        # SD
+        ctx.font_size = 25
+        ctx.move_to(0, 25)
+        if self.sd_plugged:
+            ctx.text("SD Card")
+        else:
+            ctx.text("No SD Detected")
+
+        self._draw_percentage_bar(
+            ctx,
+            -65,
+            30,
+            130,
+            10,
+            (0, 0, 0),
+            (1, 1, 1),
+            self.sd_used_percentage,
+        )
+        ctx.font_size = 15
+        ctx.move_to(0, 55)
+        ctx.text(self.sd_text)
+
+
 class About(BaseView):
     """
     A pseudo-app (applet?) which displays an about screen for the badge.
@@ -75,6 +177,7 @@ class About(BaseView):
         self.ts = 0.0
         self.screens: List[Screen] = [
             IntroScreen(),
+            SpaceScreen(),
             HeroScreen(
                 [
                     "flow3r.garden",

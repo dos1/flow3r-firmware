@@ -10,7 +10,6 @@ void get_statvfs(char* drive, uint32_t *out) {
     }
     uint32_t fre_sect = (fre_clust * fs->csize);
     uint32_t tot_sect = (fs->n_fatent - 2) * fs->csize;
-    uint32_t sector_size = fs->ssize;
 
     out[1] = fs->ssize;  // frsize, mapped to sector size
     out[2] = tot_sect;  // blocks, mapped to total sectors
