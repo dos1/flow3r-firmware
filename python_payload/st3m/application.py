@@ -10,7 +10,7 @@ from st3m.goose import Optional, List, Dict
 from st3m.logging import Log
 from st3m import settings
 from ctx import Context
-from st3m import led_patterns
+from st3m.ui import led_patterns
 import leds
 
 import toml

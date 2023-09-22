@@ -3,7 +3,7 @@ import math, random, sys_display
 from st3m import settings
 import leds
 import sys_display
-from st3m.ui import colours
+from st3m.ui import colours, led_patterns
 
 
 class App(Application):
@@ -22,12 +22,12 @@ class App(Application):
         self.angle = 0
         self.focused_widget = 1
         self.active = False
-        self.num_widgets = 4
+        self.num_widgets = 5
         self.overhang = -20
         self.line_height = 24
         self.input.buttons.app.left.repeat_enable(800, 300)
         self.input.buttons.app.right.repeat_enable(800, 300)
-        self.mid_x = 50
+        self.mid_x = 42
         self.led_accumulator_ms = 0
         self.blueish = False
         self.half_time = 600
@@ -107,6 +107,19 @@ class App(Application):
                 ctx.text(choices[a] + " ")
         return no
 
+    def draw_boolean(self, label, value, on_str="on", off_str="off"):
+        ctx = self.ctx
+        self.draw_widget(label)
+        if self.widget_no == self.focused_widget and self.active:
+            value = not value
+            self.active = False
+
+        if value:
+            ctx.text(on_str)
+        else:
+            ctx.text(off_str)
+        return value
+
     def draw_number(self, label, step_size, no, unit=""):
         ctx = self.ctx
         self.draw_widget(label)
@@ -171,30 +184,6 @@ class App(Application):
         self.draw_bg()
 
         tmp = self.draw_number(
-            "led brightness", 5, int(settings.num_leds_brightness.value)
-        )
-        if tmp < 5:
-            tmp = 5
-        elif tmp > 255:
-            tmp = 255
-        if tmp != settings.num_leds_brightness.value:
-            settings.num_leds_brightness.set_value(tmp)
-            leds.set_brightness(settings.num_leds_brightness.value)
-
-        tmp = self.draw_number("led speed", 5, int(settings.num_leds_speed.value))
-        if tmp < 0:
-            tmp = 0
-        elif tmp > 255:
-            tmp = 255
-        if tmp < 120:
-            self.half_time = 600 + (120 - tmp) * (120 - tmp) / 2
-        else:
-            self.half_time = 600
-        if tmp != settings.num_leds_speed.value:
-            settings.num_leds_speed.set_value(tmp)
-            leds.set_slew_rate(settings.num_leds_speed.value)
-
-        tmp = self.draw_number(
             "display brightness",
             5,
             int(settings.num_display_brightness.value),
@@ -207,6 +196,38 @@ class App(Application):
         if tmp != settings.num_display_brightness.value:
             settings.num_display_brightness.set_value(tmp)
             sys_display.set_backlight(settings.num_display_brightness.value)
+
+        tmp = self.draw_number(
+            "LED brightness", 5, int(settings.num_leds_brightness.value)
+        )
+        if tmp < 5:
+            tmp = 5
+        elif tmp > 255:
+            tmp = 255
+        if tmp != settings.num_leds_brightness.value:
+            settings.num_leds_brightness.set_value(tmp)
+            leds.set_brightness(settings.num_leds_brightness.value)
+
+        tmp = self.draw_number("LED speed", 5, int(settings.num_leds_speed.value))
+        if tmp < 0:
+            tmp = 0
+        elif tmp > 255:
+            tmp = 255
+        if tmp < 120:
+            self.half_time = 600 + (120 - tmp) * (120 - tmp) / 2
+        else:
+            self.half_time = 600
+        if tmp != settings.num_leds_speed.value:
+            settings.num_leds_speed.set_value(tmp)
+            leds.set_slew_rate(settings.num_leds_speed.value)
+
+        tmp = self.draw_boolean(
+            "menu LEDs", settings.onoff_leds_random_menu.value, "random", "user"
+        )
+        if tmp != settings.onoff_leds_random_menu.value:
+            settings.onoff_leds_random_menu.set_value(tmp)
+            led_patterns.pretty_pattern()
+            leds.update()
 
         self.delta_ms = 0
         self.select_pressed = False
@@ -230,15 +251,7 @@ class App(Application):
 
         while self.led_accumulator_ms > self.half_time:
             self.led_accumulator_ms = self.led_accumulator_ms % self.half_time
-            self.leds_shift_hue(0.8)
-
-    def leds_shift_hue(self, val):
-        for i in range(40):
-            rgb = leds.get_rgb(i)
-            h, s, v = colours.rgb_to_hsv(*rgb)
-            h += val
-            leds.set_rgb(i, *colours.hsv_to_rgb(h, s, v))
-        leds.update()
+            led_patterns.shift_all_hsv(h=0.8)
 
     def on_enter(self, vm):
         super().on_enter(vm)

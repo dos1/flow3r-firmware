@@ -20,7 +20,7 @@ from st3m.application import (
 )
 from st3m.about import About
 from st3m import settings_menu as settings, logging, processors, wifi
-from st3m import led_patterns
+from st3m.ui import led_patterns
 import st3m.wifi
 
 import captouch, audio, leds, gc, sys_buttons, sys_display, sys_mode, media

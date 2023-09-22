@@ -13,6 +13,10 @@ def set_rgb(ix, r, g, b):
     _sim.set_led_rgb(ix, r, g, b)
 
 
+def get_rgb(ix):
+    return 0, 0, 0
+
+
 def set_all_rgb(r, g, b):
     for i in range(40):
         set_rgb(i, r, g, b)

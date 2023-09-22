@@ -241,11 +241,16 @@ num_speaker_max_db = StringTunable(
 )
 
 num_display_brightness = StringTunable(
-    "Display Brightness", "system.brightness.display", 100
+    "Display Brightness", "system.appearance.display_brightness", 100
 )
-num_leds_brightness = StringTunable("LED Brightness", "system.brightness.leds", 70)
+num_leds_brightness = StringTunable(
+    "LED Brightness", "system.appearance.leds_brightness", 70
+)
 
-num_leds_speed = StringTunable("LED speed", "system.brightness.leds_speed", 235)
+num_leds_speed = StringTunable("LED Speed", "system.appearance.leds_speed", 235)
+onoff_leds_random_menu = OnOffTunable(
+    "Random Menu LEDs", "system.appearance.leds_random_menu", False
+)
 
 # List of all settings to be loaded/saved
 load_save_settings: List[UnaryTunable] = [
@@ -273,6 +278,7 @@ load_save_settings: List[UnaryTunable] = [
     num_display_brightness,
     num_leds_brightness,
     num_leds_speed,
+    onoff_leds_random_menu,
 ]
 
 
