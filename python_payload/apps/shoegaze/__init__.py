@@ -49,6 +49,7 @@ class ShoegazeApp(Application):
         self.hue_change = False
         self.hue = 0
         self._set_chord(3, force_update=True)
+        self.think_cycle = 0
 
     def _build_synth(self) -> None:
         if self.blm is None:
@@ -262,11 +263,19 @@ class ShoegazeApp(Application):
             leds.set_all_rgb(*colours.hsv_to_rgb(self.hue, 1, 0.7))
             leds.update()
             self.hue_change = False
-        elif leds.get_steady():
-            leds.set_slew_rate(min(self.max_slew_rate, 50))
-            led_patterns.pretty_pattern()
-            leds.set_all_rgba(*colours.hsv_to_rgb(self.hue, 1, 0.7), 0.75)
-            leds.update()
+
+        if leds.get_steady():
+            if self.think_cycle == 0:
+                tmp = random.random()
+                leds.set_slew_rate(int(min(self.max_slew_rate, 20 + 30 * tmp * tmp)))
+                self.think_cycle += 1
+            elif self.think_cycle == 1:
+                led_patterns.pretty_pattern()
+                self.think_cycle += 1
+            else:
+                leds.set_all_rgba(*colours.hsv_to_rgb(self.hue, 1, 0.7), 0.75)
+                leds.update()
+                self.think_cycle = 0
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         if self.blm is None:

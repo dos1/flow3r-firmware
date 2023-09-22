@@ -249,7 +249,7 @@ num_leds_brightness = StringTunable(
 
 num_leds_speed = StringTunable("LED Speed", "system.appearance.leds_speed", 235)
 onoff_leds_random_menu = OnOffTunable(
-    "Random Menu LEDs", "system.appearance.leds_random_menu", False
+    "Random Menu LEDs", "system.appearance.leds_random_menu", True
 )
 
 # List of all settings to be loaded/saved

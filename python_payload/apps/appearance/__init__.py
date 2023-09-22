@@ -221,7 +221,7 @@ class App(Application):
         )
         if tmp != settings.onoff_leds_random_menu.value:
             settings.onoff_leds_random_menu.set_value(tmp)
-            led_patterns.pretty_pattern()
+            led_patterns.set_menu_colors()
             leds.update()
 
         self.delta_ms = 0

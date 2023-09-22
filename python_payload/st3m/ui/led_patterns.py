@@ -44,7 +44,7 @@ def set_menu_colors():
         with open(path, "r") as f:
             settings = json.load(f)
     except OSError:
-        pretty_pattern()
+        leds.set_all_rgb(0, 0, 0)
         return
     for i in range(40):
         col = settings["leds"][i]
