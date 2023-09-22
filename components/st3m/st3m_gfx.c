@@ -256,12 +256,6 @@ void st3m_gfx_set_default_mode(st3m_gfx_mode mode) {
     } else if (mode == st3m_gfx_4x) {
         default_mode &= ~st3m_gfx_4x;
         default_mode |= st3m_gfx_4x;
-    } else if (mode == st3m_gfx_2x + st3m_gfx_low_latency) {
-        default_mode |= st3m_gfx_2x;
-        default_mode |= st3m_gfx_low_latency;
-    } else if (mode == st3m_gfx_osd + st3m_gfx_low_latency) {
-        default_mode |= st3m_gfx_osd;
-        default_mode |= st3m_gfx_low_latency;
     } else if (mode == st3m_gfx_osd) {
         default_mode |= st3m_gfx_osd;
     } else if (mode == st3m_gfx_low_latency) {
