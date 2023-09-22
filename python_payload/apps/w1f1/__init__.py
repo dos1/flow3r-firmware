@@ -4,6 +4,7 @@ from st3m.goose import Optional
 from st3m.ui.view import ViewManager
 from st3m.settings import SETTINGS_JSON_FILE
 from st3m.utils import save_file_if_changed, sd_card_plugged
+import st3m.wifi
 from ctx import Context
 import network
 import leds
@@ -60,7 +61,11 @@ class WifiApp(Application):
         super().on_enter(vm)
         self._connection_timer = 10
         self._scan_timer = 0
-        self._iface = network.WLAN(network.STA_IF)
+        if st3m.wifi.iface:
+            self._iface = st3m.wifi.iface
+        else:
+            self._iface = network.WLAN(network.STA_IF)
+            st3m.wifi.iface = self._iface
         self._current_ssid = None
         self._current_psk = None
         # TODO: big error display
