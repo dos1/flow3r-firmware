@@ -17,6 +17,10 @@ def get_rgb(ix):
     return 0, 0, 0
 
 
+def get_steady():
+    return False
+
+
 def set_all_rgb(r, g, b):
     for i in range(40):
         set_rgb(i, r, g, b)

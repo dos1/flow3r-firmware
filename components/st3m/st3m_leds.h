@@ -44,9 +44,7 @@ uint8_t st3m_leds_get_brightness();
 // to 255 to disable. Currently clocks at 50Hz.
 void st3m_leds_set_slew_rate(uint8_t slew_rate);
 uint8_t st3m_leds_get_slew_rate();
-
-void st3m_leds_set_max_slew_rate(uint8_t slew_rate);
-uint8_t st3m_leds_get_max_slew_rate();
+bool st3m_leds_get_steady();
 
 // Update LEDs. Ie., copy the LED state from the first buffer into the second
 // buffer, effectively scheduling the LED state to be presented to the user.

@@ -3,6 +3,7 @@ from st3m.goose import Dict, Any, List, Optional
 from st3m.ui.view import View, ViewManager
 from st3m.input import InputState
 from ctx import Context
+from st3m.ui import colours, led_patterns
 
 import json
 import errno
@@ -45,6 +46,8 @@ class ShoegazeApp(Application):
         self._rand_rot = 0.0
         self.delay_on = True
         self.organ_on = False
+        self.hue_change = False
+        self.hue = 0
         self._set_chord(3, force_update=True)
 
     def _build_synth(self) -> None:
@@ -146,11 +149,10 @@ class ShoegazeApp(Application):
         self._update_connections()
 
     def _set_chord(self, i: int, force_update=False) -> None:
-        hue = int(54 * (i + 0.5)) % 360
         if i != self.chord_index or force_update:
+            self.hue = (54 * (i + 0.5)) * math.tau / 360
             self.chord_index = i
-            leds.set_all_hsv(hue, 1, 0.7)
-            leds.update()
+            self.hue_change = True
             if self.organ_on and self._organ_chords[i] is not None:
                 self.chord = self._organ_chords[i]
             else:
@@ -255,10 +257,22 @@ class ShoegazeApp(Application):
             self.bass_string.decay = 1000
             self.bass_string.signals.trigger.start()
 
+        if self.hue_change:
+            leds.set_slew_rate(min(self.max_slew_rate, 200))
+            leds.set_all_rgb(*colours.hsv_to_rgb(self.hue, 1, 0.7))
+            leds.update()
+            self.hue_change = False
+        elif leds.get_steady():
+            leds.set_slew_rate(min(self.max_slew_rate, 50))
+            led_patterns.pretty_pattern()
+            leds.set_all_rgba(*colours.hsv_to_rgb(self.hue, 1, 0.7), 0.75)
+            leds.update()
+
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         if self.blm is None:
             self._build_synth()
         self.blm.foreground = True
+        self.max_slew_rate = leds.get_slew_rate()
         self._set_chord(self.chord_index, force_update=True)
 
     def on_exit(self) -> None:

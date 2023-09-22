@@ -22,6 +22,16 @@ def get_slew_rate() -> int:
     Get maximum change rate of brightness. See set_slew_rate()
     """
 
+def get_steady() -> bool:
+    """
+    Returns true if the LED engine is certain that there is no further color change
+    until user input occurs, meaning that the last animation has finished and there
+    is no unprocessed data is queued up. The LED task consumes data at 50Hz.
+
+    If you use this function to time next animation frames be sure to set a maximum
+    rate so that users with a high slew rate setting will not get strobelighted!
+    """
+
 def set_rgb(i: int, r: float, g: float, b: float) -> None:
     """Set LED i to rgb value r, g, b
 

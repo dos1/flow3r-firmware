@@ -38,6 +38,7 @@ typedef struct {
     uint8_t brightness;
     uint8_t slew_rate;
     bool auto_update;
+    bool is_steady;
     uint8_t timer;
 
     st3m_leds_gamma_table_t gamma_red;
@@ -67,7 +68,7 @@ static void set_single_led(uint8_t index, st3m_u8_rgb_t c) {
 
 static uint16_t led_get_slew(uint16_t old, uint16_t new, uint16_t slew) {
     new = new << 8;
-    if (slew == 255) return new;
+    if (slew == 255 || (old == new)) return new;
     int16_t bonus = ((int16_t)slew) - 225;
     slew = 30 + (slew << 2) + ((slew * slew) >> 3);
     if (bonus > 0) {
@@ -105,13 +106,17 @@ void st3m_leds_update_hardware() {
     if (state.auto_update) leds_update_target();
 
     bool is_different = false;
+    bool is_steady = true;
 
     for (int i = 0; i < 40; i++) {
         st3m_u8_rgb_t ret = state.target[i];
         st3m_u16_rgb_t c;
-        c.r = led_get_slew(state.slew_output[i].r, ret.r, state.slew_rate);
-        c.g = led_get_slew(state.slew_output[i].g, ret.g, state.slew_rate);
-        c.b = led_get_slew(state.slew_output[i].b, ret.b, state.slew_rate);
+        st3m_u16_rgb_t prev = state.slew_output[i];
+        c.r = led_get_slew(prev.r, ret.r, state.slew_rate);
+        c.g = led_get_slew(prev.g, ret.g, state.slew_rate);
+        c.b = led_get_slew(prev.b, ret.b, state.slew_rate);
+        if ((prev.r != c.r) || (prev.g != c.g) || (prev.b != c.b))
+            is_steady = false;
         state.slew_output[i] = c;
 
         c.r = ((uint32_t)c.r * state.brightness) >> 8;
@@ -129,6 +134,7 @@ void st3m_leds_update_hardware() {
             is_different = true;
         }
     }
+    state.is_steady = is_steady;
     UNLOCK;
 
     if (is_different || (state.timer > 10)) {
@@ -164,6 +170,7 @@ void st3m_leds_set_single_rgb(uint8_t index, float red, float green,
     state.target_buffer[index].r = (uint8_t)(red * 255);
     state.target_buffer[index].g = (uint8_t)(green * 255);
     state.target_buffer[index].b = (uint8_t)(blue * 255);
+    state.is_steady = false;
     UNLOCK_INCOMING;
 }
 
@@ -273,6 +280,13 @@ void st3m_leds_set_slew_rate(uint8_t s) {
 uint8_t st3m_leds_get_slew_rate() {
     LOCK;
     uint8_t res = state.slew_rate;
+    UNLOCK;
+    return res;
+}
+
+bool st3m_leds_get_steady() {
+    LOCK;
+    uint8_t res = state.is_steady;
     UNLOCK;
     return res;
 }

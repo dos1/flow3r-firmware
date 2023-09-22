@@ -30,7 +30,6 @@ class App(Application):
         self.mid_x = 42
         self.led_accumulator_ms = 0
         self.blueish = False
-        self.half_time = 600
 
     def draw_widget(self, label):
         ctx = self.ctx
@@ -213,10 +212,6 @@ class App(Application):
             tmp = 0
         elif tmp > 255:
             tmp = 255
-        if tmp < 120:
-            self.half_time = 600 + (120 - tmp) * (120 - tmp) / 2
-        else:
-            self.half_time = 600
         if tmp != settings.num_leds_speed.value:
             settings.num_leds_speed.set_value(tmp)
             leds.set_slew_rate(settings.num_leds_speed.value)
@@ -237,8 +232,7 @@ class App(Application):
     def think(self, ins, delta_ms):
         super().think(ins, delta_ms)
         self.delta_ms += delta_ms
-        if self.focused_widget == 2:
-            self.led_accumulator_ms += delta_ms
+
         if (
             self.input.buttons.app.right.pressed
             or self.input.buttons.app.right.repeated
@@ -249,9 +243,13 @@ class App(Application):
         if self.input.buttons.app.middle.pressed:
             self.select_pressed = True
 
-        while self.led_accumulator_ms > self.half_time:
-            self.led_accumulator_ms = self.led_accumulator_ms % self.half_time
+        if self.focused_widget == 3 and leds.get_steady():
+            self.led_accumulator_ms += delta_ms
+
+        if self.led_accumulator_ms > 1000:
+            self.led_accumulator_ms = 0
             led_patterns.shift_all_hsv(h=0.8)
+            leds.update()
 
     def on_enter(self, vm):
         super().on_enter(vm)

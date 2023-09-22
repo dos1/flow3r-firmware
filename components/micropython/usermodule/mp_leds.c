@@ -58,6 +58,11 @@ STATIC mp_obj_t mp_leds_get_slew_rate() {
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_leds_get_slew_rate_obj,
                                  mp_leds_get_slew_rate);
 
+STATIC mp_obj_t mp_leds_get_steady() {
+    return mp_obj_new_bool(st3m_leds_get_steady());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_leds_get_steady_obj, mp_leds_get_steady);
+
 STATIC mp_obj_t mp_led_set_rgb(size_t n_args, const mp_obj_t *args) {
     uint8_t index = mp_obj_get_int(args[0]);
     float red = mp_obj_get_float(args[1]);
@@ -165,6 +170,7 @@ STATIC const mp_rom_map_elem_t mp_module_leds_globals_table[] = {
       MP_ROM_PTR(&mp_leds_get_slew_rate_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_slew_rate),
       MP_ROM_PTR(&mp_leds_set_slew_rate_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_steady), MP_ROM_PTR(&mp_leds_get_steady_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_leds_globals,

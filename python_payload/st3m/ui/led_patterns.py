@@ -15,6 +15,19 @@ def _clip(val):
     return val
 
 
+def _hue_blend(h1, h2, n):
+    """
+    mixes two hues together while accounting for overflow.
+    n in range [0..1] blends between [h1..h2]
+    """
+    if abs(h2 - h1) < (math.tau / 2):
+        return h2 * n + h1 * (1 - n)
+    elif h2 > h1:
+        return h2 * n + (h1 + math.tau) * (1 - n)
+    else:
+        return (h2 + math.tau) * n + h1 * (1 - n)
+
+
 def set_menu_colors():
     """
     set all LEDs to the configured menu colors if provided in
@@ -65,12 +78,7 @@ def pretty_pattern():
             hsv_old = colours.rgb_to_hsv(*leds.get_rgb(g))
             hsv_mixed = [0.0, 0.0, 0.0]
             k = (i - 39) / 8
-            if abs(hsv[0] - hsv_old[0]) < math.tau / 2:
-                hsv_mixed[0] = hsv_old[0] * k + hsv[0] * (1 - k)
-            elif hsv[0] > hsv_old[0]:
-                hsv_mixed[0] = (hsv_old[0] + math.tau) * k + hsv[0] * (1 - k)
-            else:
-                hsv_mixed[0] = hsv_old[0] * k + (hsv[0] + math.tau) * (1 - k)
+            hsv_mixed[0] = _hue_blend(hsv[0], hsv_old[0], k)
 
             for h in range(1, 3):
                 hsv_mixed[h] = hsv_old[h] * k + hsv[h] * (1 - k)
