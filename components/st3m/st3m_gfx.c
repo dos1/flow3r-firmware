@@ -58,7 +58,7 @@ static void st3m_gfx_pipe_put(void);
 
 static const char *TAG = "st3m-gfx";
 
-#define N_DRAWLISTS 3
+#define N_DRAWLISTS 2
 
 // we keep the OSD buffer the same size as the main framebuffer,
 // allowing us to do different combos of which buffer is osd and not
