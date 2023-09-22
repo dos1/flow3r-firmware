@@ -38,6 +38,10 @@ void st3m_scope_init(void);
 // Write a sound sample to the scope.
 void st3m_scope_write(int16_t value);
 
+// Retrieve scope's data buffer. Remains valid until the next
+// st3m_scope_get_buffer_x or st3m_scope_draw call. Returns buffer's length.
+size_t st3m_scope_get_buffer_x(int16_t **buf);
+
 // Draw the scope at bounding box -120/-120 +120/+120.
 //
 // The user is responsible for clearing background and setting a color.

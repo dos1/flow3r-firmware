@@ -78,13 +78,25 @@ void st3m_scope_write(int16_t value) {
     scope.prev_value = value;
 }
 
-void st3m_scope_draw(Ctx *ctx) {
+size_t st3m_scope_get_buffer_x(int16_t **buf) {
     if (scope.write_buffer == NULL) {
-        return;
+        return 0;
     }
 
     scope.read_buffer = Atomic_SwapPointers_p32(
         (void *volatile *)&scope.exchange_buffer, scope.read_buffer);
+
+    if (buf) {
+        *buf = scope.read_buffer;
+    }
+
+    return scope.buffer_size;
+}
+
+void st3m_scope_draw(Ctx *ctx) {
+    if (st3m_scope_get_buffer_x(NULL) == 0) {
+        return;
+    }
 
     // How much to divide the values persisted in the buffer to scale to
     // -120+120.

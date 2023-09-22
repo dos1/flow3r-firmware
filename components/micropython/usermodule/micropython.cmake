@@ -19,6 +19,7 @@ target_sources(usermod_badge23 INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/mp_media.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_sys_mode.c
     ${CMAKE_CURRENT_LIST_DIR}/mp_sys_colors.c
+    ${CMAKE_CURRENT_LIST_DIR}/mp_sys_scope.c
 )
 
 target_include_directories(usermod_badge23 INTERFACE
