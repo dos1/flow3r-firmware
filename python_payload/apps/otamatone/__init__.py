@@ -17,6 +17,7 @@ from ctx import Context
 class Blob(Responder):
     def __init__(self) -> None:
         self._yell = 0.0
+        self._wah = 0.0
         self._blink = False
         self._blinking: Optional[int] = None
 
@@ -38,6 +39,7 @@ class Blob(Responder):
             v = 0
 
         v /= 1.5
+        v *= 0.66 + 0.33 * self._wah
         if v < 0.1:
             v = 0.1
 
@@ -131,6 +133,7 @@ class Otamatone(Application):
         self._lp2.signals.reso = 1000 + 1000 * (1 - wah_ctrl)
         self._lp2.signals.freq = 2800 * (2 ** (2 * wah_ctrl))
         self._lp2.signals.gain.dB = 6 + 3 * (1 - wah_ctrl)
+        self._wah = wah_ctrl
 
     def on_exit(self):
         if self._blm is not None:
@@ -164,10 +167,11 @@ class Otamatone(Application):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
-        if self._blm is None:
-            return  # weird bug, for some reason think gets called after on_exit?
         self._ts += delta_ms
         self._blob.think(ins, delta_ms)
+
+        if not self.is_active():
+            return
 
         petal = self.input.captouch.petals[self.PETAL_NO]
         pos = ins.captouch.petals[self.PETAL_NO].position
@@ -201,6 +205,7 @@ class Otamatone(Application):
             self._set_wah(wah_ctrl)
 
         self._blob._yell = self._intensity * 0.8 + (ctrl + 1) * 0.1
+        self._blob._wah = self._blob._wah * 0.8 + self._wah * 0.2
 
 
 if __name__ == "__main__":
