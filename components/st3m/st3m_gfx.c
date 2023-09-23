@@ -189,7 +189,6 @@ void st3m_gfx_viewport_transform(Ctx *ctx) {
 void st3m_gfx_start_frame(Ctx *ctx) {
     int scale = st3m_gfx_scale();
     ctx_save(ctx);
-    st3m_gfx_viewport_transform(ctx);
     if (scale > 1) {
         ctx_rectangle(ctx, -120, -120, 240, 240);
         ctx_clip(ctx);
@@ -489,7 +488,6 @@ static void st3m_gfx_task(void *_arg) {
         if ((set_mode & st3m_gfx_direct_ctx) == 0) {
             ctx_render_ctx(drawlist->user_ctx, user_target);
             ctx_drawlist_clear(drawlist->user_ctx);
-            st3m_gfx_viewport_transform(drawlist->user_ctx);
         }
         xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
 
