@@ -68,6 +68,7 @@ class App(Application):
             if a == no and self.active and self.widget_no == self.focused_widget:
                 ctx.save()
                 ctx.rgba(0.8, 0.6, 0.1, 1.0)
+                ctx.line_width = 2.0
                 ctx.rectangle(
                     ctx.x - 1,
                     ctx.y - self.font_size * 0.8,
@@ -156,6 +157,14 @@ class App(Application):
             bpp = 1
         elif bpp == 24:
             bpp = 2
+        elif bpp == 32:
+            bpp = 3
+        elif bpp == 1:
+            bpp = 4
+        elif bpp == 2:
+            bpp = 5
+        elif bpp == 4:
+            bpp = 6
         else:
             bpp = 0
 
@@ -165,7 +174,7 @@ class App(Application):
         self.draw_widget("mode")
         ctx.text(str(curmode))
 
-        bpp = self.draw_choice("bpp", ["8", "16", "24"], bpp)
+        bpp = self.draw_choice("bpp", ["8", "16", "24", "32", "1", "2", "4"], bpp)
         if bpp > 0:
             palette = 0
         palette = self.draw_choice("palette", ["RGB", "gray", "sepia", "cool"], palette)
@@ -192,6 +201,14 @@ class App(Application):
             mode = 16
         elif bpp == 2:
             mode = 24
+        elif bpp == 3:
+            mode = 32
+        elif bpp == 4:
+            mode = 1
+        elif bpp == 5:
+            mode = 2
+        elif bpp == 6:
+            mode = 4
 
         mode += osd * sys_display.osd
         mode += low_latency * sys_display.low_latency
