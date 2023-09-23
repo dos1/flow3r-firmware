@@ -1,4 +1,4 @@
-/* ctx git commit: 45c40dcc */
+/* ctx git commit: f7eb3a6e */
 /* 
  * ctx.h is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2528,6 +2528,16 @@ void ctx_gstate_unprotect (Ctx *ctx);
 /* set the logical clock used for the texture eviction policy */
 void ctx_set_textureclock (Ctx *ctx, int frame);
 int  ctx_textureclock (Ctx *ctx);
+
+void
+ctx_rasterizer_reinit (Ctx *ctx,
+                       void *fb,
+                       int x0,
+                       int y0,
+                       int width,
+                       int height,
+                       int stride,
+                       CtxPixelFormat pixel_format);
 
 #ifdef __cplusplus
 }
@@ -10693,6 +10703,7 @@ typedef struct _CtxGlyphEntry CtxGlyphEntry;
 struct _Ctx
 {
   CtxBackend       *backend;
+  CtxState          state;        /**/
   CtxDrawlist       drawlist;
   int               transformation;
   int               width;
@@ -10701,7 +10712,6 @@ struct _Ctx
   Ctx              *texture_cache;
   CtxList          *deferred;
   CtxList          *eid_db;
-  CtxState          state;        /**/
   int               frame; /* used for texture lifetime */
   uint32_t          bail;
   CtxBackend       *backend_pushed;
@@ -11759,14 +11769,13 @@ ctx_edgelist_add_single (CtxDrawlist *drawlist, CtxEntry *entry)
 
 #endif
 
-#if CTX_COMPOSITE_O3
+
 #ifndef __clang__
+#if CTX_COMPOSITE_O3
 #pragma GCC push_options
 #pragma GCC optimize("O3")
 #endif
-#endif
 #if CTX_COMPOSITE_O2
-#ifndef __clang__
 #pragma GCC push_options
 #pragma GCC optimize("O2")
 #endif
@@ -19082,17 +19091,12 @@ CtxPixelFormatInfo CTX_SIMD_SUFFIX(ctx_pixel_formats)[]=
   }
 };
 
-
-
-
 #endif // CTX_COMPOSITE
 
-#if CTX_COMPOSITE_O3
 #ifndef __clang__
+#if CTX_COMPOSITE_O3
 #pragma GCC pop_options
 #endif
-#endif
-#ifndef __clang__
 #if CTX_COMPOSITE_O2
 #pragma GCC pop_options
 #endif
@@ -23843,6 +23847,49 @@ ctx_rasterizer_init (CtxRasterizer *rasterizer, Ctx *ctx, Ctx *texture_source, C
   return rasterizer;
 }
 
+void
+ctx_rasterizer_reinit (Ctx *ctx,
+                       void *fb,
+                       int x,
+                       int y,
+                       int width,
+                       int height,
+                       int stride,
+                       CtxPixelFormat pixel_format)
+{
+  CtxBackend *backend = ctx_get_backend (ctx);
+  CtxRasterizer *rasterizer = (CtxRasterizer*)backend;
+  if (!backend) return;
+#if 0
+  // this is a more proper reinit than the below, which should be a lot faster..
+  ctx_rasterizer_init (rasterizer, ctx, rasterizer->texture_source, &ctx->state, fb, x, y, width, height, stride, pixel_format, CTX_ANTIALIAS_DEFAULT);
+#else
+
+  ctx_state_init (rasterizer->state);
+  rasterizer->buf         = fb;
+  rasterizer->blit_x      = x;
+  rasterizer->blit_y      = y;
+  rasterizer->blit_width  = width;
+  rasterizer->blit_height = height;
+  rasterizer->state->gstate.clip_min_x  = x;
+  rasterizer->state->gstate.clip_min_y  = y;
+  rasterizer->state->gstate.clip_max_x  = x + width - 1;
+  rasterizer->state->gstate.clip_max_y  = y + height - 1;
+  rasterizer->blit_stride = stride;
+  rasterizer->scan_min    = 5000;
+  rasterizer->scan_max    = -5000;
+  rasterizer->gradient_cache_valid = 0;
+
+  if (pixel_format == CTX_FORMAT_BGRA8)
+  {
+    pixel_format = CTX_FORMAT_RGBA8;
+    rasterizer->swap_red_green = 1;
+  }
+
+  rasterizer->format = ctx_pixel_format_info (pixel_format);
+#endif
+}
+
 Ctx *
 ctx_new_for_buffer (CtxBuffer *buffer)
 {
@@ -23855,6 +23902,7 @@ ctx_new_for_buffer (CtxBuffer *buffer)
                                           CTX_ANTIALIAS_DEFAULT));
   return ctx;
 }
+
 
 Ctx *
 ctx_new_for_framebuffer (void *data, int width, int height,
@@ -45850,12 +45898,10 @@ void ctx_tiled_render_fun (void **data)
             }
 #endif
             int swap_red_green = rasterizer->swap_red_green;
-            ctx_rasterizer_init (rasterizer,
-                                 host, tiled->backend.ctx, &host->state,
+            ctx_rasterizer_reinit (host,
                                  &tiled->pixels[tiled->width * 4 * y0 + x0 * 4],
                                  0, 0, width, height,
-                                 tiled->width*4, CTX_FORMAT_BGRA8,
-                                 tiled->antialias);
+                                 tiled->width*4, CTX_FORMAT_BGRA8);
             ((CtxRasterizer*)(host->backend))->swap_red_green = swap_red_green;
             if (sdl_icc_length)
               ctx_colorspace (host, CTX_COLOR_SPACE_DEVICE_RGB, sdl_icc, sdl_icc_length);
@@ -54633,7 +54679,7 @@ ctx_state_init (CtxState *state)
   state->ink_max_x              = -8192;
   state->ink_max_y              = -8192;
   _ctx_matrix_identity (&state->gstate.transform);
-#if CTX_CM
+#if CTX_ENABLE_CM
 #if CTX_BABL
   //ctx_colorspace_babl (state, CTX_COLOR_SPACE_USER_RGB,   babl_space ("sRGB"));
   //ctx_colorspace_babl (state, CTX_COLOR_SPACE_DEVICE_RGB, babl_space ("ACEScg"));
