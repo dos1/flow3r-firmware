@@ -66,13 +66,9 @@ static const char *TAG = "st3m-gfx";
 static st3m_gfx_mode _st3m_gfx_mode = st3m_gfx_default + 1;
 
 // each frame buffer has an associated rasterizer context
-static Ctx *fb_RGB565_BS_ctx = NULL;
+static Ctx *fb_ctx = NULL;
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-static Ctx *fb_GRAY8_ctx = NULL;
-static Ctx *fb_GRAYA8_ctx = NULL;
-static Ctx *fb_RGB332_ctx = NULL;
-static Ctx *fb_RGBA8_ctx = NULL;
-static Ctx *fb_RGB8_ctx = NULL;
+static Ctx *osd_ctx = NULL;
 
 #define ST3M_OSD_LOCK_TIMEOUT 500
 SemaphoreHandle_t st3m_osd_lock;
@@ -147,33 +143,15 @@ static Ctx *st3m_gfx_ctx_int(st3m_gfx_mode mode) {
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
     if (mode == st3m_gfx_osd) {
         if ((_st3m_gfx_bpp(set_mode) == 16) || (st3m_gfx_bpp(set_mode) == 8))
-            return fb_RGBA8_ctx;
-        return fb_GRAYA8_ctx;
+            return osd_ctx;
+        return osd_ctx;
     }
 #endif
     Ctx *ctx = st3m_gfx_drawctx_free_get(1000);
 
-    if (set_mode & st3m_gfx_direct_ctx) switch (_st3m_gfx_bpp(set_mode)) {
-            case 16:
-                return fb_RGB565_BS_ctx;
-                // incorrect but right rowstride for these modes
-#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-            case 1:
-            case 2:
-            case 4:
-                // glitch in 332 and right for sepia/gray/etc
-            case 8:
-                return fb_GRAY8_ctx;
-            case 32:
-                return fb_RGBA8_ctx;
-            case 24:
-                return fb_RGB8_ctx;
-#endif
-        }
+    if (set_mode & st3m_gfx_direct_ctx) return fb_ctx;
 
-    if (!ctx) {
-        return NULL;
-    }
+    if (!ctx) return NULL;
     return ctx;
 }
 
@@ -338,16 +316,12 @@ static void st3m_gfx_init_palette(st3m_gfx_mode mode) {
     }
 }
 
-static unsigned int st3m_clear_fbs = 0;
-
 st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode) {
     if ((mode == _st3m_gfx_mode) || (0 != (default_mode & st3m_gfx_lock))) {
         st3m_gfx_init_palette(
             mode);  // we say it is a no-op but reset the palette
         return (mode ? mode : default_mode);
     }
-
-    st3m_clear_fbs = 1;
 
     if (mode == st3m_gfx_default)
         mode = default_mode;
@@ -410,83 +384,109 @@ static void st3m_gfx_task(void *_arg) {
     (void)_arg;
     st3m_gfx_set_mode(st3m_gfx_default);
 
+    int bits = 0;
+    st3m_gfx_mode prev_set_mode = ST3M_GFX_DEFAULT_MODE - 1;
+    void *user_fb = st3m_fb;
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
+    void *osd_fb = st3m_fb2;
+#endif
+
     while (true) {
         int desc_no = 0;
 
+        st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
+        ctx_set_textureclock(fb_ctx, ctx_textureclock(fb_ctx) + 1);
         xQueueReceiveNotifyStarved(user_ctx_rastq, &desc_no,
                                    "rast task starved (user_ctx)!");
         st3m_gfx_drawlist *drawlist = &drawlists[desc_no];
 
         xSemaphoreTake(st3m_fb_lock, portMAX_DELAY);
 
-        ctx_set_textureclock(fb_RGB565_BS_ctx,
-                             ctx_textureclock(fb_RGB565_BS_ctx) + 1);
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-        ctx_set_textureclock(fb_RGBA8_ctx, ctx_textureclock(fb_RGB565_BS_ctx));
-        ctx_set_textureclock(fb_RGB332_ctx, ctx_textureclock(fb_RGB565_BS_ctx));
-        ctx_set_textureclock(fb_RGB8_ctx, ctx_textureclock(fb_RGB565_BS_ctx));
-        ctx_set_textureclock(fb_GRAY8_ctx, ctx_textureclock(fb_RGB565_BS_ctx));
-        ctx_set_textureclock(fb_GRAYA8_ctx, ctx_textureclock(fb_RGB565_BS_ctx));
-#endif
-        st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
-
-        Ctx *user_target = fb_RGB565_BS_ctx;
-        void *user_fb = st3m_fb;
-#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-        void *osd_fb = st3m_fb2;
-#endif
-        int bits = _st3m_gfx_bpp(set_mode);
-
-#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-        switch (bits) {
-            case 1:
-            case 2:
-            case 4:
-            case 8:
-            case 9:
-                if ((set_mode & 0xf) == 9)
-                    user_target = fb_RGB332_ctx;
-                else
-                    user_target = fb_GRAY8_ctx;
-                break;
-            case 24:
-                user_target = fb_RGB8_ctx;
-                user_fb = st3m_fb2;
-                osd_fb = st3m_fb;
-                break;
-            case 32:
-                user_target = fb_RGBA8_ctx;
-                user_fb = st3m_fb2;
-                osd_fb = st3m_fb;
-                break;
-        }
-        if ((set_mode & 0xf) == st3m_gfx_rgb332) bits = 9;
-
+        ctx_set_textureclock(osd_ctx, ctx_textureclock(fb_ctx));
         int scale = st3m_gfx_scale();
-        static int prev_scale = -1;
-        if (prev_scale != scale) {
-            st3m_gfx_viewport_transform(fb_GRAY8_ctx);
-            st3m_gfx_viewport_transform(fb_GRAYA8_ctx);
-            st3m_gfx_viewport_transform(fb_RGB565_BS_ctx);
-            st3m_gfx_viewport_transform(fb_RGB332_ctx);
-            st3m_gfx_viewport_transform(fb_RGBA8_ctx);
-            st3m_gfx_viewport_transform(fb_RGB8_ctx);
-        }
-#endif
+        if (prev_set_mode != set_mode) {
+            bits = _st3m_gfx_bpp(set_mode);
+            prev_set_mode = set_mode;
+            switch (bits) {
+                case 1:
+                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
+                                          240 / 8, CTX_FORMAT_GRAY1);
+                    ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
+                                          240 * 4, CTX_FORMAT_RGBA8);
+                    user_fb = st3m_fb;
+                    osd_fb = st3m_fb2;
+                    break;
+                case 2:
+                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
+                                          240 / 4, CTX_FORMAT_GRAY2);
+                    ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
+                                          240 * 4, CTX_FORMAT_RGBA8);
+                    user_fb = st3m_fb;
+                    osd_fb = st3m_fb2;
+                    break;
+                case 4:
 
-        if (st3m_clear_fbs) {
+                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
+                                          240 / 2, CTX_FORMAT_GRAY4);
+                    ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
+                                          240 * 4, CTX_FORMAT_RGBA8);
+                    user_fb = st3m_fb;
+                    osd_fb = st3m_fb2;
+                    break;
+                case 8:
+                case 9:
+                    if ((set_mode & 0xf) == 9)
+                        ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
+                                              240, CTX_FORMAT_RGB332);
+                    else
+                        ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
+                                              240, CTX_FORMAT_GRAY8);
+                    ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
+                                          240 * 4, CTX_FORMAT_RGBA8);
+                    user_fb = st3m_fb;
+                    osd_fb = st3m_fb2;
+                    break;
+                case 16:
+                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
+                                          240 * 2,
+                                          CTX_FORMAT_RGB565_BYTESWAPPED);
+                    ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
+                                          240 * 4, CTX_FORMAT_RGBA8);
+                    user_fb = st3m_fb;
+                    osd_fb = st3m_fb2;
+                    break;
+                case 24:
+                    ctx_rasterizer_reinit(fb_ctx, st3m_fb2, 0, 0, 240, 240,
+                                          240 * 3, CTX_FORMAT_RGB8);
+                    ctx_rasterizer_reinit(osd_ctx, st3m_fb, 0, 0, 240, 240,
+                                          240 * 2, CTX_FORMAT_GRAYA8);
+                    user_fb = st3m_fb2;
+                    osd_fb = st3m_fb;
+                    break;
+                case 32:
+                    ctx_rasterizer_reinit(fb_ctx, st3m_fb2, 0, 0, 240, 240,
+                                          240 * 4, CTX_FORMAT_RGBA8);
+                    ctx_rasterizer_reinit(osd_ctx, st3m_fb, 0, 0, 240, 240,
+                                          240 * 2, CTX_FORMAT_GRAYA8);
+                    user_fb = st3m_fb2;
+                    osd_fb = st3m_fb;
+                    break;
+            }
+            st3m_gfx_viewport_transform(fb_ctx);
+            st3m_gfx_viewport_transform(osd_ctx);
+
             memset(st3m_fb, 0, sizeof(st3m_fb));
-#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
             memset(st3m_fb2, 0, sizeof(st3m_fb2));
-#endif
-            st3m_clear_fbs = 0;
+            if ((set_mode & 0xf) == st3m_gfx_rgb332) bits = 9;
         }
+#endif
 
         int osd_x0 = drawlist->osd_x0, osd_x1 = drawlist->osd_x1,
             osd_y0 = drawlist->osd_y0, osd_y1 = drawlist->osd_y1;
 
         if ((set_mode & st3m_gfx_direct_ctx) == 0) {
-            ctx_render_ctx(drawlist->user_ctx, user_target);
+            ctx_render_ctx(drawlist->user_ctx, fb_ctx);
             ctx_drawlist_clear(drawlist->user_ctx);
         }
         xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
@@ -774,46 +774,21 @@ void st3m_gfx_init(void) {
     st3m_fb_lock = xSemaphoreCreateMutex();
 
     // Setup rasterizers for frame buffer formats
-    fb_RGB565_BS_ctx = ctx_new_for_framebuffer(
+    fb_ctx = ctx_new_for_framebuffer(
         st3m_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
         FLOW3R_BSP_DISPLAY_WIDTH * 2, CTX_FORMAT_RGB565_BYTESWAPPED);
-    assert(fb_RGB565_BS_ctx != NULL);
-    st3m_gfx_viewport_transform(fb_RGB565_BS_ctx);
+    assert(fb_ctx != NULL);
+    st3m_gfx_viewport_transform(fb_ctx);
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-    fb_GRAY8_ctx = ctx_new_for_framebuffer(
-        st3m_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
-        FLOW3R_BSP_DISPLAY_WIDTH, CTX_FORMAT_GRAY8);
-    fb_RGB332_ctx = ctx_new_for_framebuffer(
-        st3m_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
-        FLOW3R_BSP_DISPLAY_WIDTH, CTX_FORMAT_RGB332);
-    fb_GRAYA8_ctx = ctx_new_for_framebuffer(
-        st3m_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
-        FLOW3R_BSP_DISPLAY_WIDTH * 2, CTX_FORMAT_GRAYA8);
-    fb_RGBA8_ctx = ctx_new_for_framebuffer(
+    osd_ctx = ctx_new_for_framebuffer(
         st3m_fb2, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
         FLOW3R_BSP_DISPLAY_WIDTH * 4, CTX_FORMAT_RGBA8);
-    fb_RGB8_ctx = ctx_new_for_framebuffer(
-        st3m_fb2, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
-        FLOW3R_BSP_DISPLAY_WIDTH * 3, CTX_FORMAT_RGB8);
-    assert(fb_GRAY8_ctx != NULL);
-    assert(fb_GRAYA8_ctx != NULL);
-    assert(fb_RGBA8_ctx != NULL);
-    assert(fb_RGB8_ctx != NULL);
-    assert(fb_RGB332_ctx != NULL);
+    assert(osd_ctx != NULL);
 
-    st3m_gfx_viewport_transform(fb_GRAY8_ctx);
-    st3m_gfx_viewport_transform(fb_GRAYA8_ctx);
-    st3m_gfx_viewport_transform(fb_RGBA8_ctx);
-    st3m_gfx_viewport_transform(fb_RGB8_ctx);
+    st3m_gfx_viewport_transform(osd_ctx);
 
-    ctx_set_texture_source(fb_RGB332_ctx, fb_RGB565_BS_ctx);
-    ctx_set_texture_cache(fb_RGB332_ctx, fb_RGB565_BS_ctx);
-    ctx_set_texture_source(fb_RGBA8_ctx, fb_RGB565_BS_ctx);
-    ctx_set_texture_cache(fb_RGBA8_ctx, fb_RGB565_BS_ctx);
-    ctx_set_texture_source(fb_RGB8_ctx, fb_RGB565_BS_ctx);
-    ctx_set_texture_cache(fb_RGB8_ctx, fb_RGB565_BS_ctx);
-    ctx_set_texture_source(fb_GRAY8_ctx, fb_RGB565_BS_ctx);
-    ctx_set_texture_cache(fb_GRAY8_ctx, fb_RGB565_BS_ctx);
+    ctx_set_texture_source(osd_ctx, fb_ctx);
+    ctx_set_texture_cache(osd_ctx, fb_ctx);
 #endif
 
     // Setup user_ctx descriptor.
@@ -821,7 +796,7 @@ void st3m_gfx_init(void) {
         drawlists[i].user_ctx = ctx_new_drawlist(FLOW3R_BSP_DISPLAY_WIDTH,
                                                  FLOW3R_BSP_DISPLAY_HEIGHT);
         assert(drawlists[i].user_ctx != NULL);
-        ctx_set_texture_cache(drawlists[i].user_ctx, fb_RGB565_BS_ctx);
+        ctx_set_texture_cache(drawlists[i].user_ctx, fb_ctx);
 
         st3m_gfx_viewport_transform(drawlists[i].user_ctx);
 
@@ -852,19 +827,8 @@ static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
     if (set_mode & st3m_gfx_direct_ctx) {
         while (!uxSemaphoreGetCount(st3m_fb_lock)) vTaskDelay(0);
 
-        switch (_st3m_gfx_bpp(set_mode)) {
-            case 16:
-                st3m_gfx_viewport_transform(fb_RGB565_BS_ctx);
-                return fb_RGB565_BS_ctx;
-#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-            case 8:
-                st3m_gfx_viewport_transform(fb_GRAY8_ctx);
-                return fb_GRAY8_ctx;
-            case 24:
-                st3m_gfx_viewport_transform(fb_RGB8_ctx);
-                return fb_RGB8_ctx;
-#endif
-        }
+        st3m_gfx_viewport_transform(fb_ctx);
+        return fb_ctx;
     }
 
     return drawlist->user_ctx;
