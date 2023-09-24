@@ -30,6 +30,7 @@ class ScrollController(st3m.Responder):
         "_target_position",
         "_current_position",
         "_velocity",
+        "_delta",
     )
 
     def __init__(self) -> None:
@@ -37,6 +38,7 @@ class ScrollController(st3m.Responder):
         self._target_position = 0
         self._current_position = 0.0
         self._velocity: float = 0.0
+        self._delta = 0
 
     def set_item_count(self, count: int) -> None:
         """
@@ -96,7 +98,12 @@ class ScrollController(st3m.Responder):
             self._velocity = 0
             return
 
-        self._physics_step(min(delta_ms, 100) / 1000.0)
+        step = 20
+
+        self._delta += delta_ms
+        while self._delta >= step:
+            self._physics_step(step / 1000.0)
+            self._delta -= step
 
     def draw(self, ctx: Context) -> None:
         pass
