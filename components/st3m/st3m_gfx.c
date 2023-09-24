@@ -376,7 +376,7 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride) {
     if (bpp <= 16) return (uint8_t *)st3m_fb;
     return st3m_fb2;
 #else
-    return st3m_fb;
+    return (uint8_t *)st3m_fb;
 #endif
 }
 
@@ -404,6 +404,7 @@ static void st3m_gfx_task(void *_arg) {
 
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
         ctx_set_textureclock(osd_ctx, ctx_textureclock(fb_ctx));
+#endif
         int scale = st3m_gfx_scale();
         if (prev_set_mode != set_mode) {
             bits = _st3m_gfx_bpp(set_mode);
@@ -412,27 +413,33 @@ static void st3m_gfx_task(void *_arg) {
                 case 1:
                     ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
                                           240 / 8, CTX_FORMAT_GRAY1);
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
                     ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
                                           240 * 4, CTX_FORMAT_RGBA8);
-                    user_fb = st3m_fb;
                     osd_fb = st3m_fb2;
+#endif
+                    user_fb = st3m_fb;
                     break;
                 case 2:
                     ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
                                           240 / 4, CTX_FORMAT_GRAY2);
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
                     ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
                                           240 * 4, CTX_FORMAT_RGBA8);
-                    user_fb = st3m_fb;
                     osd_fb = st3m_fb2;
+#endif
+                    user_fb = st3m_fb;
                     break;
                 case 4:
 
                     ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
                                           240 / 2, CTX_FORMAT_GRAY4);
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
                     ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
                                           240 * 4, CTX_FORMAT_RGBA8);
-                    user_fb = st3m_fb;
                     osd_fb = st3m_fb2;
+#endif
+                    user_fb = st3m_fb;
                     break;
                 case 8:
                 case 9:
@@ -442,45 +449,52 @@ static void st3m_gfx_task(void *_arg) {
                     else
                         ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
                                               240, CTX_FORMAT_GRAY8);
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
                     ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
                                           240 * 4, CTX_FORMAT_RGBA8);
-                    user_fb = st3m_fb;
                     osd_fb = st3m_fb2;
+#endif
+                    user_fb = st3m_fb;
                     break;
                 case 16:
                     ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
                                           240 * 2,
                                           CTX_FORMAT_RGB565_BYTESWAPPED);
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
                     ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
                                           240 * 4, CTX_FORMAT_RGBA8);
-                    user_fb = st3m_fb;
                     osd_fb = st3m_fb2;
+#endif
+                    user_fb = st3m_fb;
                     break;
+
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
                 case 24:
                     ctx_rasterizer_reinit(fb_ctx, st3m_fb2, 0, 0, 240, 240,
                                           240 * 3, CTX_FORMAT_RGB8);
                     ctx_rasterizer_reinit(osd_ctx, st3m_fb, 0, 0, 240, 240,
                                           240 * 2, CTX_FORMAT_GRAYA8);
-                    user_fb = st3m_fb2;
                     osd_fb = st3m_fb;
+                    user_fb = st3m_fb2;
                     break;
                 case 32:
                     ctx_rasterizer_reinit(fb_ctx, st3m_fb2, 0, 0, 240, 240,
                                           240 * 4, CTX_FORMAT_RGBA8);
                     ctx_rasterizer_reinit(osd_ctx, st3m_fb, 0, 0, 240, 240,
                                           240 * 2, CTX_FORMAT_GRAYA8);
-                    user_fb = st3m_fb2;
                     osd_fb = st3m_fb;
+                    user_fb = st3m_fb2;
                     break;
+#endif
             }
             st3m_gfx_viewport_transform(fb_ctx);
-            st3m_gfx_viewport_transform(osd_ctx);
-
             memset(st3m_fb, 0, sizeof(st3m_fb));
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
+            st3m_gfx_viewport_transform(osd_ctx);
             memset(st3m_fb2, 0, sizeof(st3m_fb2));
             if ((set_mode & 0xf) == st3m_gfx_rgb332) bits = 9;
-        }
 #endif
+        }
 
         int osd_x0 = drawlist->osd_x0, osd_x1 = drawlist->osd_x1,
             osd_y0 = drawlist->osd_y0, osd_y1 = drawlist->osd_y1;
