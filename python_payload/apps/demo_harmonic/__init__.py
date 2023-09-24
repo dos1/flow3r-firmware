@@ -12,6 +12,9 @@ from ctx import Context
 import cmath
 import math
 import json
+import random
+
+from st3m.ui import colours
 
 tai = math.tau * 1j
 
@@ -88,6 +91,7 @@ class Chord:
         self.j = False
         self.voicing = 0
         self._num_voicings = 2
+        self.max_slew_rate = 0
 
     def __repr__(self):
         ret = tone_to_note_name(self.root)
@@ -367,12 +371,11 @@ class HarmonicApp(Application):
         self.lp.signals.gain.dB = +3
 
     def _set_chord(self, i, force_update=False):
-        hue = int(72 * (i + 0.5)) % 360
         if i != self.chord_index or force_update:
             self.chord_index = i
-            leds.set_all_rgb(*bottom_petal_to_rgb(self.chord_index, soft=0))
-            leds.update()
             self.chord = self.chords[i]
+            self.leds_rgb = bottom_petal_to_rgb(self.chord_index, soft=0)
+            self.hue_change = True
 
     def draw(self, ctx: Context) -> None:
         if self.blm is None:
@@ -559,9 +562,11 @@ class HarmonicApp(Application):
 
         cp = captouch.read()
 
+        modulate_leds = False
         for i in range(0, 10, 2):
             j = (10 - i) % 10
             if cp.petals[j].pressed:
+                modulate_leds = True
                 if not self.cp_prev.petals[j].pressed:
                     self.synths[i // 2].signals.pitch.tone = self.chord.notes[i // 2]
                     self.synths[i // 2].signals.trigger.start()
@@ -598,6 +603,23 @@ class HarmonicApp(Application):
                         elif j == 0:
                             self.chord.voicing_incr()
 
+        if self.hue_change:
+            leds.set_slew_rate(min(self.max_slew_rate, 200))
+            leds.set_all_rgb(*self.leds_rgb)
+            self.hue_change = False
+            leds.update()
+        elif modulate_leds:
+            leds.set_slew_rate(min(self.max_slew_rate, 135))
+            h, s, v = colours.rgb_to_hsv(*self.leds_rgb)
+            led_index = int(random.random() * 39)
+            hue = h + 2 * (random.random() - 0.5)
+            leds.set_rgb(led_index, *colours.hsv_to_rgb(hue, s, v))
+            leds.update()
+        else:
+            leds.set_slew_rate(min(self.max_slew_rate, 135))
+            leds.set_all_rgb(*self.leds_rgb)
+            leds.update()
+
         self.cp_prev = cp
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
@@ -607,7 +629,8 @@ class HarmonicApp(Application):
             self._build_synth()
         self.blm.foreground = True
         self._load_settings()
-        leds.set_slew_rate(min(leds.get_slew_rate(), 130))
+        self.max_slew_rate = leds.get_slew_rate()
+        leds.set_slew_rate(min(self.max_slew_rate, 130))
         self._set_chord(self.chord_index, force_update=True)
 
     def on_exit(self):

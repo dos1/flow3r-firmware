@@ -18,6 +18,7 @@ st3m_rgb_t st3m_hsv_to_rgb(st3m_hsv_t hsv) {
         hsv.h *= NTAU * 6;
 
         i = (int16_t)truncf(hsv.h);
+        if (hsv.h < 0) i--;
         f = hsv.h - i;
 
         p = hsv.v * (1.0 - hsv.s);
@@ -99,12 +100,13 @@ st3m_hsv_t st3m_rgb_to_hsv(st3m_rgb_t rgb) {
         return hsv;
     }
 
-    if (max == rgb.r)
+    if ((max == rgb.r) && ((max != rgb.b) || (max == rgb.g))) {
         hsv.h = (TAU / 6) * (rgb.g - rgb.b) / (max - min);
-    else if (max == rgb.g)
+    } else if (max == rgb.g) {
         hsv.h = (TAU / 3) + (TAU / 6) * (rgb.b - rgb.r) / (max - min);
-    else
+    } else {
         hsv.h = (TAU * 2 / 3) + (TAU / 6) * (rgb.r - rgb.g) / (max - min);
+    }
 
     return hsv;
 }

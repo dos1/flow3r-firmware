@@ -3,7 +3,7 @@ from st3m.goose import Dict, Any, List, Optional
 from st3m.ui.view import View, ViewManager
 from st3m.input import InputState
 from ctx import Context
-from st3m.ui import colours, led_patterns
+from st3m.ui import colours
 
 import json
 import errno
@@ -46,10 +46,8 @@ class ShoegazeApp(Application):
         self._rand_rot = 0.0
         self.delay_on = True
         self.organ_on = False
-        self.hue_change = False
         self.hue = 0
         self._set_chord(3, force_update=True)
-        self.think_cycle = 0
 
     def _build_synth(self) -> None:
         if self.blm is None:
@@ -153,9 +151,10 @@ class ShoegazeApp(Application):
         if i != self.chord_index or force_update:
             self.hue = (54 * (i + 0.5)) * math.tau / 360
             self.chord_index = i
-            self.hue_change = True
             if self.organ_on and self._organ_chords[i] is not None:
-                self.chord = self._organ_chords[i]
+                tmp = self._organ_chords[i]
+                tmp[0] -= 12
+                self.chord = tmp
             else:
                 self.chord = chords[i]
 
@@ -258,28 +257,12 @@ class ShoegazeApp(Application):
             self.bass_string.decay = 1000
             self.bass_string.signals.trigger.start()
 
-        if self.hue_change:
-            leds.set_slew_rate(min(self.max_slew_rate, 200))
-            leds.set_all_rgb(*colours.hsv_to_rgb(self.hue, 1, 0.7))
-            leds.update()
-            self.hue_change = False
-
-        if leds.get_steady():
-            if self.think_cycle == 0:
-                tmp = random.random()
-                leds.set_slew_rate(int(min(self.max_slew_rate, 20 + 30 * tmp * tmp)))
-                self.think_cycle += 1
-            elif self.think_cycle == 1:
-                led_patterns.pretty_pattern()
-                self.think_cycle += 1
-            else:
-                leds.set_all_rgba(*colours.hsv_to_rgb(self.hue, 1, 0.7), 0.75)
-                leds.update()
-                self.think_cycle = 0
+        leds.set_all_rgb(*colours.hsv_to_rgb(self.hue + self._rand_rot * 1.2, 1, 0.7))
+        leds.update()
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
-        self.max_slew_rate = leds.get_slew_rate()
+        leds.set_slew_rate(min(leds.get_slew_rate(), 200))
         self._set_chord(self.chord_index, force_update=True)
 
     def on_enter_done(self) -> None:
