@@ -24,6 +24,10 @@ static inline void _pad_feed(st3m_petal_pad_state_t *pad, uint16_t data,
     ringbuffer_write(&pad->rb, data);
     int32_t thres = top ? 8000 : 12000;
     pad->pressed = data > thres;
+
+    if (pad->press_event == pad->press_event_new)
+        pad->press_event_new = pad->pressed;
+
     if (pad->pressed) {
         pad->pressure = data - thres;
     } else {
@@ -35,6 +39,8 @@ static inline void _petal_process(st3m_petal_state_t *petal, bool top) {
     if (top) {
         petal->pressed =
             petal->base.pressed || petal->ccw.pressed || petal->cw.pressed;
+        petal->press_event = petal->base.press_event ||
+                             petal->ccw.press_event || petal->cw.press_event;
         petal->pressure =
             (petal->base.pressure + petal->ccw.pressure + petal->cw.pressure) /
             3;
@@ -48,6 +54,7 @@ static inline void _petal_process(st3m_petal_state_t *petal, bool top) {
 #endif
     } else {
         petal->pressed = petal->base.pressed || petal->tip.pressed;
+        petal->press_event = petal->base.press_event || petal->tip.press_event;
         petal->pressure = (petal->base.pressure + petal->tip.pressure) / 2;
         int32_t base = ringbuffer_avg(&petal->base.rb);
         int32_t tip = ringbuffer_avg(&petal->tip.rb);
@@ -108,6 +115,33 @@ bool st3m_captouch_calibrating(void) {
 void st3m_captouch_request_calibration(void) {
     xSemaphoreTake(_mu, portMAX_DELAY);
     _request_calibration = true;
+    xSemaphoreGive(_mu);
+}
+
+static void _refresh_petal_events(uint8_t petal_ix) {
+    bool top = (petal_ix % 2) == 0;
+    st3m_petal_state_t *pt = &(_state.petals[petal_ix]);
+    if (top) {
+        pt->cw.press_event = pt->cw.press_event_new;
+        pt->ccw.press_event = pt->ccw.press_event_new;
+        pt->base.press_event = pt->base.press_event_new;
+    } else {
+        pt->tip.press_event = pt->tip.press_event_new;
+        pt->base.press_event = pt->base.press_event_new;
+    }
+}
+
+void st3m_captouch_refresh_petal_events(uint8_t petal_ix) {
+    xSemaphoreTake(_mu, portMAX_DELAY);
+    _refresh_petal_events(petal_ix);
+    xSemaphoreGive(_mu);
+}
+
+void st3m_captouch_refresh_all_events() {
+    xSemaphoreTake(_mu, portMAX_DELAY);
+    for (uint8_t i = 0; i < 10; i++) {
+        _refresh_petal_events(i);
+    }
     xSemaphoreGive(_mu);
 }
 

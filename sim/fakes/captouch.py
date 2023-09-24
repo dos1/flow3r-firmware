@@ -96,3 +96,7 @@ def calibration_active() -> bool:
 
 def calibration_request() -> None:
     return
+
+
+def refresh_events() -> None:
+    return

@@ -7,6 +7,7 @@ from ctx import Context
 import time
 import sys_display
 import sys_kernel
+import captouch
 
 
 class Responder(ABCBase):
@@ -135,6 +136,10 @@ class Reactor:
         self._last_tick = start
 
         self._ts += delta
+
+        # temp band aid against input dropping, will be cleaned up in
+        # upcoming input api refactor
+        captouch.refresh_events()
 
         hr = InputState.gather()
 

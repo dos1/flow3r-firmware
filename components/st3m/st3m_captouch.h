@@ -71,6 +71,8 @@ typedef struct {
     // Whether the pad is currently being touched. Calculated from ringbuffer
     // data.
     bool pressed;
+    bool press_event;
+    bool press_event_new;
     // How strongly the pad is currently being pressed, in arbitrary units.
     uint16_t pressure;
 } st3m_petal_pad_state_t;
@@ -92,6 +94,9 @@ typedef struct {
     // Whether the petal is currently being touched. Calculated from individual
     // pad data.
     bool pressed;
+
+    // Whether a press has been seen on the petal since the last clear_*_event
+    bool press_event;
 
     // How strongly the petal is currently being pressed, in arbitrary units.
     uint16_t pressure;
@@ -115,3 +120,5 @@ bool st3m_captouch_calibrating(void);
 void st3m_captouch_request_calibration(void);
 void st3m_captouch_get_all(st3m_captouch_state_t *dest);
 void st3m_captouch_get_petal(st3m_petal_state_t *dest, uint8_t petal_ix);
+void st3m_captouch_refresh_petal_events(uint8_t petal_ix);
+void st3m_captouch_refresh_all_events();

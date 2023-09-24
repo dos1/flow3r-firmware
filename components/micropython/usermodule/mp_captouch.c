@@ -57,22 +57,22 @@ STATIC void mp_captouch_petal_pads_state_attr(mp_obj_t self_in, qstr attr,
     if (top) {
         switch (attr) {
             case MP_QSTR_base:
-                dest[0] = mp_obj_new_bool(state->base.pressed);
+                dest[0] = mp_obj_new_bool(state->base.press_event);
                 break;
             case MP_QSTR_cw:
-                dest[0] = mp_obj_new_bool(state->cw.pressed);
+                dest[0] = mp_obj_new_bool(state->cw.press_event);
                 break;
             case MP_QSTR_ccw:
-                dest[0] = mp_obj_new_bool(state->ccw.pressed);
+                dest[0] = mp_obj_new_bool(state->ccw.press_event);
                 break;
         }
     } else {
         switch (attr) {
             case MP_QSTR_tip:
-                dest[0] = mp_obj_new_bool(state->tip.pressed);
+                dest[0] = mp_obj_new_bool(state->tip.press_event);
                 break;
             case MP_QSTR_base:
-                dest[0] = mp_obj_new_bool(state->base.pressed);
+                dest[0] = mp_obj_new_bool(state->base.press_event);
                 break;
         }
     }
@@ -98,7 +98,7 @@ STATIC void mp_captouch_petal_state_attr(mp_obj_t self_in, qstr attr,
             dest[0] = mp_obj_new_bool(!top);
             break;
         case MP_QSTR_pressed:
-            dest[0] = mp_obj_new_bool(state->pressed);
+            dest[0] = mp_obj_new_bool(state->press_event);
             break;
         case MP_QSTR_pressure:
             dest[0] = mp_obj_new_int(state->pressure);
@@ -173,8 +173,18 @@ STATIC mp_obj_t mp_captouch_read(void) {
 
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_captouch_read_obj, mp_captouch_read);
 
+STATIC mp_obj_t mp_captouch_refresh_events(void) {
+    st3m_captouch_refresh_all_events();
+    return mp_const_none;
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_captouch_refresh_events_obj,
+                                 mp_captouch_refresh_events);
+
 STATIC const mp_rom_map_elem_t globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&mp_captouch_read_obj) },
+    { MP_ROM_QSTR(MP_QSTR_refresh_events),
+      MP_ROM_PTR(&mp_captouch_refresh_events_obj) },
     { MP_ROM_QSTR(MP_QSTR_calibration_active),
       MP_ROM_PTR(&mp_captouch_calibration_active_obj) },
     { MP_ROM_QSTR(MP_QSTR_calibration_request),
