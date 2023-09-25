@@ -261,7 +261,7 @@ class SpeakerMenu(Submenu):
             settings.num_speaker_max_db.set_value(audio.speaker_get_maximum_volume_dB())
 
         tmp = self.draw_boolean(
-            "equalizer", settings.onoff_speaker_eq_on.value, "off", "soft"
+            "equalizer", settings.onoff_speaker_eq_on.value, "soft", "off"
         )
         if settings.onoff_speaker_eq_on.value != tmp:
             audio.speaker_set_eq_on(tmp)
