@@ -71,8 +71,11 @@ typedef struct {
     // Whether the pad is currently being touched. Calculated from ringbuffer
     // data.
     bool pressed;
+
+    bool pressed_prev;
     bool press_event;
     bool press_event_new;
+    bool fresh;
     // How strongly the pad is currently being pressed, in arbitrary units.
     uint16_t pressure;
 } st3m_petal_pad_state_t;

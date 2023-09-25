@@ -23,10 +23,14 @@ static inline void _pad_feed(st3m_petal_pad_state_t *pad, uint16_t data,
                              bool top) {
     ringbuffer_write(&pad->rb, data);
     int32_t thres = top ? 8000 : 12000;
+    thres = pad->pressed_prev ? thres - 1000 : thres;  // some hysteresis
     pad->pressed = data > thres;
+    pad->pressed_prev = pad->pressed;
 
-    if (pad->press_event == pad->press_event_new)
+    if ((!pad->press_event_new) || pad->fresh) {
         pad->press_event_new = pad->pressed;
+        pad->fresh = false;
+    }
 
     if (pad->pressed) {
         pad->pressure = data - thres;
@@ -124,10 +128,15 @@ static void _refresh_petal_events(uint8_t petal_ix) {
         pt->base.press_event = pt->base.press_event_new;
         pt->press_event =
             pt->base.press_event || pt->ccw.press_event || pt->cw.press_event;
+        pt->cw.fresh = true;
+        pt->ccw.fresh = true;
+        pt->base.fresh = true;
     } else {
         pt->tip.press_event = pt->tip.press_event_new;
         pt->base.press_event = pt->base.press_event_new;
         pt->press_event = pt->tip.press_event || pt->base.press_event;
+        pt->tip.fresh = true;
+        pt->base.fresh = true;
     }
 }
 
