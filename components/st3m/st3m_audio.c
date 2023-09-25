@@ -186,7 +186,7 @@ typedef struct {
 
     // Denormalized setting data that can be read back by user.
     st3m_audio_input_source_t source;
-    uint8_t headset_gain;
+    int8_t headset_gain;
 
     uint8_t speaker_eq_on;
 
@@ -421,12 +421,11 @@ GETTER(bool, audio_speaker_get_eq_on, state.speaker_eq_on)
 
 // Locked global API functions.
 
-uint8_t st3m_audio_headset_set_gain_dB(uint8_t gain_dB) {
-    flow3r_bsp_audio_headset_set_gain_dB(gain_dB);
+void st3m_audio_headset_set_gain_dB(int8_t gain_dB) {
+    gain_dB = flow3r_bsp_audio_headset_set_gain_dB(gain_dB);
     LOCK;
     state.headset_gain = gain_dB;
     UNLOCK;
-    return gain_dB;
 }
 
 void st3m_audio_input_set_source(st3m_audio_input_source_t source) {

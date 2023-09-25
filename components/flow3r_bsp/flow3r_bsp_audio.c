@@ -45,8 +45,8 @@ float flow3r_bsp_audio_speaker_set_volume(bool mute, float dB) {
     return flow3r_bsp_max98091_speaker_set_volume(mute, dB);
 }
 
-void flow3r_bsp_audio_headset_set_gain_dB(uint8_t gain_dB) {
-    flow3r_bsp_max98091_headset_set_gain_dB(gain_dB);
+int8_t flow3r_bsp_audio_headset_set_gain_dB(int8_t gain_dB) {
+    return flow3r_bsp_max98091_headset_set_gain_dB(gain_dB);
 }
 
 void flow3r_bsp_audio_read_jacksense(flow3r_bsp_audio_jacksense_state_t *st) {

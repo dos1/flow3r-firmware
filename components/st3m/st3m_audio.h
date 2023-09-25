@@ -163,7 +163,7 @@ st3m_audio_input_source_t st3m_audio_input_get_source(void);
 /* Hardware preamp gain, 0dB-50dB. TODO: figure out if int/float inconsistency
  * is a good thing here compared to all other _dB functions.
  */
-uint8_t st3m_audio_headset_set_gain_dB(uint8_t gain_dB);
+void st3m_audio_headset_set_gain_dB(int8_t gain_dB);
 uint8_t st3m_audio_headset_get_gain_dB(void);
 
 /* You can route whatever source is selected with st3m_audio_input_set_source to

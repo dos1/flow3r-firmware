@@ -265,20 +265,23 @@ void flow3r_bsp_max98091_input_set_source(
     }
 }
 
-void flow3r_bsp_max98091_headset_set_gain_dB(uint8_t gain_dB) {
+int8_t flow3r_bsp_max98091_headset_set_gain_dB(int8_t gain_dB) {
     if (gain_dB > 50) gain_dB = 50;
+    if (gain_dB < 0) gain_dB = 0;
+    uint8_t g = gain_dB;
 
     uint8_t pa1en = 0b01;
-    if (gain_dB > 30) {
-        gain_dB -= 30;
+    if (g > 30) {
+        g -= 30;
         pa1en = 0b11;
-    } else if (gain_dB > 20) {
-        gain_dB -= 20;
+    } else if (g > 20) {
+        g -= 20;
         pa1en = 0b10;
     }
     max98091_check(MAX98091_MIC1_INPUT_LEVEL,
-                   MAX98091_BITS(MIC1_INPUT_LEVEL_PGAM1, 0x14 - gain_dB) |
+                   MAX98091_BITS(MIC1_INPUT_LEVEL_PGAM1, 0x14 - g) |
                        MAX98091_BITS(MIC1_INPUT_LEVEL_PA1EN, pa1en));
+    return gain_dB;
 }
 
 void flow3r_bsp_max98091_read_jacksense(

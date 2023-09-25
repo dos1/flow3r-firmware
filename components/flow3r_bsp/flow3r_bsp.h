@@ -74,7 +74,7 @@ float flow3r_bsp_audio_speaker_set_volume(bool mute, float dB);
 //
 // TODO: figure out if int/float inconsistency is a good thing here compared to
 // all other _dB functions.
-void flow3r_bsp_audio_headset_set_gain_dB(uint8_t gain_dB);
+int8_t flow3r_bsp_audio_headset_set_gain_dB(int8_t gain_dB);
 
 typedef struct {
     bool headphones;
