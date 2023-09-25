@@ -40,6 +40,10 @@ def speaker_set_maximum_volume_dB(v: float) -> None:
     pass
 
 
+def speaker_set_eq_on(enable: bool) -> None:
+    pass
+
+
 def adjust_volume_dB(v) -> float:
     global _volume
     _volume += v

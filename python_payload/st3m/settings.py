@@ -231,14 +231,16 @@ num_headphones_min_db = StringTunable(
     "Min Headphone Volume dB", "system.audio.headphones_min_dB", -45
 )
 num_speaker_min_db = StringTunable(
-    "Min Speaker Volume dB", "system.audio.speakers_min_dB", -40
+    "Min Speaker Volume dB", "system.audio.speaker_min_dB", -40
 )
 num_headphones_max_db = StringTunable(
     "Max Headphone Volume dB", "system.audio.headphones_max_dB", 3
 )
 num_speaker_max_db = StringTunable(
-    "Max Speaker Volume dB", "system.audio.speakers_max_dB", 14
+    "Max Speaker Volume dB", "system.audio.speaker_max_dB", 14
 )
+
+onoff_speaker_eq_on = StringTunable("Speaker EQ On", "system.audio.speaker_eq_on", True)
 
 num_display_brightness = StringTunable(
     "Display Brightness", "system.appearance.display_brightness", 100
@@ -275,6 +277,7 @@ load_save_settings: List[UnaryTunable] = [
     num_speaker_min_db,
     num_headphones_max_db,
     num_speaker_max_db,
+    onoff_speaker_eq_on,
     num_display_brightness,
     num_leds_brightness,
     num_leds_speed,

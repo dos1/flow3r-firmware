@@ -21,7 +21,7 @@ class App(Application):
         self.angle = 0
         self.focused_widget = 1
         self.active = False
-        self.num_widgets = 11
+        self.num_widgets = 12
         self.overhang = -70
         self.line_height = 24
         self.input.buttons.app.left.repeat_enable(800, 300)
@@ -130,6 +130,19 @@ class App(Application):
         else:
             ctx.text(str(no)[:4] + unit)
         return ret
+
+    def draw_boolean(self, label, value, on_str="on", off_str="off"):
+        ctx = self.ctx
+        self.draw_widget(label)
+        if self.widget_no == self.focused_widget and self.active:
+            value = not value
+            self.active = False
+
+        if value:
+            ctx.text(on_str)
+        else:
+            ctx.text(off_str)
+        return value
 
     def draw_bg(self):
         ctx = self.ctx
@@ -263,6 +276,11 @@ class App(Application):
         if settings.num_speaker_max_db.value != tmp:
             audio.speaker_set_maximum_volume_dB(tmp)
             settings.num_speaker_max_db.set_value(audio.speaker_get_maximum_volume_dB())
+
+        tmp = self.draw_boolean("speaker eq", settings.onoff_speaker_eq_on.value)
+        if settings.onoff_speaker_eq_on.value != tmp:
+            audio.speaker_set_eq_on(tmp)
+            settings.onoff_speaker_eq_on.set_value(tmp)
 
         self.delta_ms = 0
         self.select_pressed = False
