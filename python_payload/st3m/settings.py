@@ -242,6 +242,10 @@ num_speaker_max_db = StringTunable(
 
 onoff_speaker_eq_on = StringTunable("Speaker EQ On", "system.audio.speaker_eq_on", True)
 
+num_headset_gain_db = StringTunable(
+    "Headset Mic Gain dB", "system.audio.headset_gain_dB", 10
+)
+
 num_display_brightness = StringTunable(
     "Display Brightness", "system.appearance.display_brightness", 100
 )
@@ -278,6 +282,7 @@ load_save_settings: List[UnaryTunable] = [
     num_headphones_max_db,
     num_speaker_max_db,
     onoff_speaker_eq_on,
+    num_headset_gain_db,
     num_display_brightness,
     num_leds_brightness,
     num_leds_speed,

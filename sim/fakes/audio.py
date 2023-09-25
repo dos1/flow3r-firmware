@@ -69,3 +69,11 @@ def set_mute(v: bool) -> None:
 def get_mute() -> bool:
     global _muted
     return _muted
+
+
+def headset_set_gain_dB(v: float) -> None:
+    pass
+
+
+def headset_get_gain_dB() -> float:
+    return 10
