@@ -11,6 +11,69 @@
 
 static const char *TAG = "flow3r-bsp-max98091";
 
+/* values generated with
+ * https://www.earlevel.com/main/2021/09/02/biquad-calculator-v3/ note: a and b
+ * are flipped in this calculator. a0 must be 1.0
+ */
+
+static flow3r_bsp_max98091_biquad_t speaker_eq[7] = {
+    // soft bass cut below 250Hz. The speakers can't go much
+    // lower so you just burn power and add unnecessary distortion
+    // at high volumes. q = 0.71 for a mild resonance around cutoff.
+    { .is_active = true,
+      .gain = 1,
+      .a1 = -1.953907993635898,
+      .a2 = 0.9549547008658794,
+      .b0 = 0.9772156736254444,
+      .b1 = -1.9544313472508887,
+      .b2 = 0.9772156736254444 },
+    // bass boost test, 300Hz q = 2 resonant low pass, doesn't do much
+    { .is_active = false,
+      .gain = 0.5,
+      .a1 = -1.9790339454615058,
+      .a2 = 0.9805608861277517,
+      .b0 = 0.9898987078973144,
+      .b1 = -1.9797974157946288,
+      .b2 = 0.9898987078973144 },
+    // first order high shelf at 1.4KHz/-4.5dB to mellow out
+    { .is_active = true,
+      .gain = 1.,
+      .a1 = -0.8962133020718939,
+      .a2 = 0.,
+      .b0 = 0.6166445890142367,
+      .b1 = -0.5128578910861306,
+      .b2 = 0. },
+    // 2nd order high shelf at 9kHz/-9dB to remove fizz
+    { .is_active = true,
+      .gain = 1.,
+      .a1 = -0.49825909435330995,
+      .a2 = 0.,
+      .b0 = 0.6263246182012638,
+      .b1 = -0.12458371255457386,
+      .b2 = 0. },
+    { .is_active = false,
+      .gain = 1.,
+      .a1 = 0.,
+      .a2 = 0.,
+      .b0 = 0.,
+      .b1 = 0.,
+      .b2 = 0. },
+    { .is_active = false,
+      .gain = 1.,
+      .a1 = 0.,
+      .a2 = 0.,
+      .b0 = 0.,
+      .b1 = 0.,
+      .b2 = 0. },
+    { .is_active = false,
+      .gain = 1.,
+      .a1 = 0.,
+      .a2 = 0.,
+      .b0 = 0.,
+      .b1 = 0.,
+      .b2 = 0. }
+};
+
 static uint8_t max98091_read(const uint8_t reg) {
     const uint8_t tx[] = { reg };
     uint8_t rx[1];
@@ -42,12 +105,68 @@ static esp_err_t max98091_check(const uint8_t reg, const uint8_t data) {
         case MAX98091_LINE_TO_ADC:
             return ESP_OK;
     }
+
+    // EQ registers are write only
+    if ((reg >= 0x46) && (reg <= 0xAE)) return ESP_OK;
+
     uint8_t readback = max98091_read(reg);
     if (readback != data) {
         ESP_LOGE(TAG, "Write of %02X failed: wanted %02x, got %02x", reg, data,
                  readback);
     }
     return ESP_OK;
+}
+
+void flow3r_bsp_max98091_set_speaker_eq(bool enable) {
+    if (!enable) {
+        max98091_check(0x41, 0);
+        return;
+    }
+    uint8_t reg = 0x46;
+    for (uint8_t i = 0; i < 7; i++) {
+        flow3r_bsp_max98091_biquad_t *bq = &(speaker_eq[i]);
+        float a1 = 0;
+        float a2 = 0;
+        float b0 = 1;
+        float b1 = 0;
+        float b2 = 0;
+        if (bq->is_active && enable) {
+            a1 = bq->a1;
+            a2 = bq->a2;
+            b0 = bq->b0 * bq->gain;
+            b1 = bq->b1 * bq->gain;
+            b2 = bq->b2 * bq->gain;
+        }
+        for (uint8_t j = 0; j < 5; j++) {
+            uint32_t data;
+            switch (j) {
+                case 0:
+                    data = b0 * (1UL << 20);
+                    break;
+                case 1:
+                    data = b1 * (1UL << 20);
+                    break;
+                case 2:
+                    data = b2 * (1UL << 20);
+                    break;
+                case 3:
+                    data = a1 * (1UL << 20);
+                    break;
+                case 4:
+                    data = a2 * (1UL << 20);
+                    break;
+            }
+            for (uint8_t k = 0; k < 3; k++) {
+                uint8_t shift = 16 - (k * 8);
+                if ((reg >= 0x46) && (reg <= 0xAE)) {
+                    // ^tiny safety net
+                    max98091_check(reg, (data >> shift) & 0xFF);
+                }
+                reg++;
+            }
+        }
+    }
+    max98091_check(0x41, 1);
 }
 
 void flow3r_bsp_max98091_register_poke(uint8_t reg, uint8_t data) {
@@ -100,12 +219,12 @@ void flow3r_bsp_max98091_speaker_line_in_set_hardware_thru(bool enable) {
         onboard_mic_set_power(false);
     }
 
-    // TODO(q3k): left/right DAC seem to have been swapped before, double-check.
-    // Line A -> Left Speaker
+    // The badge speakers are not stereo so we don't care about channel
+    // assignment here Line A -> Speaker 1
     max98091_check(MAX98091_LEFT_SPK_MIXER,
                    MAX98091_BOOL(LEFT_SPK_MIXER_LINE_A, enable) |
                        MAX98091_ON(LEFT_SPK_MIXER_LEFT_DAC));
-    // Line B -> Right Speaker
+    // Line B -> Speaker 2
     max98091_check(MAX98091_RIGHT_SPK_MIXER,
                    MAX98091_BOOL(RIGHT_SPK_MIXER_LINE_B, enable) |
                        MAX98091_ON(RIGHT_SPK_MIXER_RIGHT_DAC));

@@ -174,6 +174,12 @@ float st3m_audio_input_thru_get_volume_dB(void);
 void st3m_audio_input_thru_set_mute(bool mute);
 bool st3m_audio_input_thru_get_mute(void);
 
+/* Activate a EQ preset when speakers are enabled, or don't :D
+ */
+
+void st3m_audio_speaker_set_eq_on(bool enable);
+bool st3m_audio_speaker_get_eq_on(void);
+
 /*
 HEADPHONE PORT POLICY
 

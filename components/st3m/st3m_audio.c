@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "flow3r_bsp.h"
+#include "flow3r_bsp_max98091.h"
 
 #include "esp_log.h"
 #include "freertos/FreeRTOS.h"
@@ -187,6 +188,8 @@ typedef struct {
     st3m_audio_input_source_t source;
     uint8_t headset_gain;
 
+    uint8_t speaker_eq_on;
+
     // Software-based audio pipe settings.
     int32_t input_thru_vol;
     int32_t input_thru_vol_int;
@@ -246,16 +249,21 @@ static bool _headphones_connected(void) {
 static void _update_jacksense() {
     flow3r_bsp_audio_jacksense_state_t st;
     flow3r_bsp_audio_read_jacksense(&st);
+    static bool _speaker_eq_on_prev = false;
 
     // Update volume to trigger mutes if needed. But only do that if the
     // jacks actually changed.
     LOCK;
-    if (memcmp(&state.jacksense, &st,
-               sizeof(flow3r_bsp_audio_jacksense_state_t)) != 0) {
+    if ((memcmp(&state.jacksense, &st,
+                sizeof(flow3r_bsp_audio_jacksense_state_t)) != 0) ||
+        (_speaker_eq_on_prev != state.speaker_eq_on)) {
         memcpy(&state.jacksense, &st,
                sizeof(flow3r_bsp_audio_jacksense_state_t));
         _output_apply(&state.speaker);
         _output_apply(&state.headphones);
+        bool _speaker_eq = (!_headphones_connected()) && state.speaker_eq_on;
+        flow3r_bsp_max98091_set_speaker_eq(_speaker_eq);
+        _speaker_eq_on_prev = state.speaker_eq_on;
     }
     UNLOCK;
 }
@@ -274,14 +282,16 @@ void st3m_audio_init(void) {
     flow3r_bsp_audio_init();
 
     st3m_audio_input_thru_set_volume_dB(-20);
+    state.speaker_eq_on = true;
     _update_jacksense();
     _output_apply(&state.speaker);
     _output_apply(&state.headphones);
+    bool _speaker_eq = (!_headphones_connected()) && state.speaker_eq_on;
+    flow3r_bsp_max98091_set_speaker_eq(_speaker_eq);
 
     xTaskCreate(&_audio_player_task, "audio", 10000, NULL,
                 configMAX_PRIORITIES - 1, NULL);
-    xTaskCreate(&_jacksense_update_task, "jacksense", 2048, NULL,
-                configMAX_PRIORITIES - 2, NULL);
+    xTaskCreate(&_jacksense_update_task, "jacksense", 2048, NULL, 8, NULL);
     ESP_LOGI(TAG, "Audio task started");
 }
 
@@ -360,7 +370,7 @@ static void _jacksense_update_task(void *data) {
 
     TickType_t last_wake = xTaskGetTickCount();
     while (1) {
-        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(100));  // 10 Hz
+        vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(50));  // 20 Hz
         _update_jacksense();
     }
 }
@@ -406,6 +416,7 @@ GETTER(st3m_audio_input_source_t, audio_input_get_source, state.source)
 GETTER(uint8_t, audio_headset_get_gain_dB, state.headset_gain)
 GETTER(float, audio_input_thru_get_volume_dB, state.input_thru_vol)
 GETTER(bool, audio_input_thru_get_mute, state.input_thru_mute)
+GETTER(bool, audio_speaker_get_eq_on, state.speaker_eq_on)
 #undef GETTER
 
 // Locked global API functions.
@@ -439,6 +450,12 @@ void st3m_audio_input_set_source(st3m_audio_input_source_t source) {
     }
     LOCK;
     state.source = source;
+    UNLOCK;
+}
+
+void st3m_audio_speaker_set_eq_on(bool enabled) {
+    LOCK;
+    state.speaker_eq_on = enabled;
     UNLOCK;
 }
 
