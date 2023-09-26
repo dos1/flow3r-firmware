@@ -114,7 +114,8 @@ float st3m_media_get_position(void) {
 
 float st3m_media_get_time(void) {
     if (!audio_media) return 0;
-    return audio_media->time;
+    if (audio_media->time <= 0) return audio_media->time;
+    return audio_media->time - st3m_media_samples_queued() / 48000.0 / 2.0;
 }
 
 void st3m_media_seek(float position) {
