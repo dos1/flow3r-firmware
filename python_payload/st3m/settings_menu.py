@@ -216,6 +216,7 @@ settings_menu_structure: "MenuStructure" = [
     MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/w1f1")),
     MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/audio_config")),
     MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/appearance")),
+    MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/graphics_mode")),
     onoff_wifi,
     onoff_wifi_preference,
     onoff_show_tray,

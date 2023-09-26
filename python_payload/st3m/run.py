@@ -211,13 +211,12 @@ def run_main() -> None:
     menu_system = ApplicationMenu(
         [
             MenuItemBack(),
+            MenuItemLaunchPersistentView("About", About),
             MenuItemForeground("Settings", menu_settings),
-            MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/graphics_mode")),
             MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/gr33nhouse")),
             MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/updat3r")),
             MenuItemAction("Disk Mode (Flash)", machine.disk_mode_flash),
             MenuItemAction("Disk Mode (SD)", machine.disk_mode_sd),
-            MenuItemLaunchPersistentView("About", About),
             MenuItemAction("Yeet Local Changes", _yeet_local_changes),
             MenuItemAction("Reboot", machine.reset),
         ],
