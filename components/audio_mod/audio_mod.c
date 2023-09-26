@@ -53,11 +53,13 @@ static void mod_draw(st3m_media *media, Ctx *ctx) {
 }
 
 static void mod_think(st3m_media *media, float ms_elapsed) {
+    mod_state *self = (void *)media;
+    if (self->control.paused) return;
+
     int samples_needed = (ms_elapsed / 1000.0) * 48000;
     if (samples_needed > 1000) samples_needed = 1000;
 
     float rendered[samples_needed * 2];
-    mod_state *self = (void *)media;
     int rend = pocketmod_render(&self->pocketmod, rendered, sizeof(rendered));
     for (int i = 0; i < rend / 4; i++) {
         self->control.audio_buffer[self->control.audio_w++] =
