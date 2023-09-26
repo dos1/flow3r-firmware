@@ -22,26 +22,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added an error screen to the `Nick` app when `nick.json` is invalid.
 - Added `urequests` and `uos` support in the simulator.
 - Added audio/video media framework, and `Wurzelitzer` app as a small jukebox
-  frontend - currently supporting mp3, mpeg1 and protracker modules.
+  frontend - currently supporting mp3 audio, mpeg1 video and protracker
+  .mod files.
 - Added exporting of built firmwares as part of CI.
 - Added basic implementation of `os.statvfs()` to fetch full/available
   disk space on flash and SD.
 - Added `set_position` and `scroll_to` methods to `ScrollController`
 - graphics: sprite sheet support for `ctx.image()`
-- graphics: `ctx.parse()` for parsing SVG path data/ctx protocol.
-- graphics: 1,2,4,8,16,24 and 32bit graphics modes; ctx rendering support and
-  configuration of system graphics mode in 8,16 and 24.
+- graphics: `ctx.parse()` for parsing SVG-path-data/ctx-protocol.
+- graphics: 1,2,4,8,16,24 and 32 bits-per-pixel graphics modes.
+- graphics: direct framebuffer access.
 - graphics: palette setting in 1,2,4 and 8bpp graphics modes.
-- graphics: clipped overlay buffer
-- graphics: added 2x 3x and 4x pixel doubling.
+- graphics: flags for 2x 3x and 4x pixel doubling, low-latency and direct-ctx modes.
+- graphics: clipped and composited overlay buffer
 - graphics: allow a graphics state depth of up to 10 (`ctx.save()` `ctx.restore()`)
-- graphics: added low-latency; with shallower pipeline and direct graphics
-  modes.
-- graphics: slightly lower AA quality; for a 3x performance boost in the
-  worst-case rasterization path.
 
 ### Changed
-- Changed the st3m_tar logic to only update files on flash after an update
+- Changed the st3m\_tar logic to only update files on flash after an update
   if they've been changed, greatly improving start times after an update.
 - Flashing flow3r through idf.py now automatically restarts it.
 - Switched the REPL/fatal/disk restart button to the OS shoulder button (right
@@ -60,16 +57,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Improved performance of system menus by not rendering hidden entries.
 - Added visualization of state, instead of an audio scope in UI of `harmonic
   demo` and `melodic demo`.
-- The system provided scope is now rendered stroked rather than filled.
+- The system provided scope is now always stroked.
 - Improved BPM tap accuracy in `gay drums`.
 - Some shell code rewritten to avoid the expensive calls `ctx.save_group()` and
   `ctx.restore_group()`.
 - Overlay graphics gets rendered to a separate framebuffer, of which a clipped rectangle
   is composited during scan-out. The python overlay code has been adapted to keep track
   of which parts of overlay need refresh.
+- Slightly lower AA quality; for a 3x performance boost in the
+  worst-case scanline rasterization code path.
 - The entry section in `flow3r.toml` can now be omitted if the Application
   class is called `App`.
-- `ctx.image()` now supports clipping and drawing a part of the given image.
 - disabled support for compositing group API in ctx, where used global\_alpha on
   its own did was responsible for it seeming to work.
 - Split the `settings.py` file into two, creating `settings_menu.py` to hold
@@ -91,12 +89,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed simulator not exiting when closed.
 - Fixed `Comic Mono` missing in the simulator.
 - Fixed initialization orientation of display and transform initialization for
-  ctx contexts, (this enables apply arbitrary transformations to images and
-gradients.)
+  ctx contexts, (this enables arbitrary transformations to images and gradients.)
 - Fixed cleanup at exit for firmware apps
 - Fixed sequencer bug in bl00mbox
 - Fixed reset of graphics subsystem upon entering REPL / using mpremote.
-=======
 
 
 ## [1.2.0] - 2023-08-18
@@ -137,7 +133,7 @@ gradients.)
 
 ### Changed
 - `ctx.get_font_name()` now raises an exception for unknown fonts.
-- Raised umber of concurrent textures to 32.
+- Raised max concurrent texture limit to 32.
 
 ### Fixed
 - Fixed PNG without alpha and JPEG support by enabling `CTX_FORMAT_RGB8`.
