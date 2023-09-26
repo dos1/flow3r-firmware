@@ -177,6 +177,10 @@ class ViewManager(Responder):
         self._incoming: Optional[View] = None
         self._outgoing: Optional[View] = None
 
+        self._pending: Optional[View] = None
+        self._pending_vt: Optional[ViewTransition] = None
+        self._pending_direction: Optional[ViewTransitionDirection] = None
+
         self._debug = debug
 
         # Transition time.
@@ -194,6 +198,9 @@ class ViewManager(Responder):
         self._fully_drawn = 0
 
     def _end_transition(self) -> None:
+        if not self._transitioning:
+            return
+
         self._transitioning = False
 
         if self._incoming is not None:
@@ -201,6 +208,25 @@ class ViewManager(Responder):
         if self._outgoing is not None:
             self._outgoing.on_exit_done()
             self._outgoing = None
+
+    def _perform_pending(self):
+        if not self._pending:
+            return
+        self._end_transition()
+        self._transitioning = True
+        self._transition = 0.0
+        self._first_think = True
+        self._fully_drawn = 0
+        self._direction = self._pending_direction
+        self._overriden_vt = self._pending_vt
+        self._outgoing = self._incoming
+        self._incoming = self._pending
+        self._pending = None
+        if self._outgoing is not None:
+            self._outgoing.on_exit()
+        self._incoming.on_enter(self)
+        if self._outgoing is None:
+            self._end_transition()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self._input.think(ins, delta_ms)
@@ -228,6 +254,8 @@ class ViewManager(Responder):
         if self._incoming is not None:
             self._incoming.think(ins, delta_ms)
 
+        self._perform_pending()
+
     def draw(self, ctx: Context) -> None:
         if self._transitioning:
             if self._transition >= 1.0:
@@ -250,7 +278,7 @@ class ViewManager(Responder):
     def replace(
         self,
         r: View,
-        overide_vt: Optional[ViewTransition] = None,
+        override_vt: Optional[ViewTransition] = None,
         direction: ViewTransitionDirection = ViewTransitionDirection.NONE,
     ) -> None:
         """
@@ -259,22 +287,10 @@ class ViewManager(Responder):
 
         The new view will _not_ be added to history!
         """
-        if self._transitioning:
-            self._end_transition()
-        self._transitioning = True
-        self._transition = 0.0
-        self._direction = direction
-        self._first_think = True
-        self._fully_drawn = 0
-
-        self._outgoing = self._incoming
-        if self._outgoing is not None:
-            self._outgoing.on_exit()
-        self._incoming = r
-        self._incoming.on_enter(self)
-        self._overriden_vt = overide_vt
-        if self._outgoing is None:
-            self._end_transition()
+        self._pending = r
+        self._pending_vt = override_vt
+        self._pending_direction = direction
+        self._end_transition()
 
     def push(self, r: View, override_vt: Optional[ViewTransition] = None) -> None:
         """
@@ -282,7 +298,9 @@ class ViewManager(Responder):
         override_vt will be used instead of the default ViewTransition
         animation.
         """
-        if self._incoming is not None:
+        if self._pending is not None:
+            self._history.append(self._pending)
+        elif self._incoming is not None:
             self._history.append(self._incoming)
 
         self.replace(r, override_vt, ViewTransitionDirection.FORWARD)
@@ -314,14 +332,14 @@ class ViewManager(Responder):
         """
         Returns true if the passed view is currently the active one.
         """
-        return self._incoming == view
+        return (self._incoming == view and not self._pending) or self._pending == view
 
     @property
     def transitioning(self) -> bool:
         """
         Returns true if a transition is in progress.
         """
-        return self._transitioning
+        return self._transitioning or self._pending
 
     @property
     def direction(self) -> ViewTransitionDirection:
