@@ -63,7 +63,7 @@ static void mod_think(st3m_media *media, float ms_elapsed) {
     int rend = pocketmod_render(&self->pocketmod, rendered, sizeof(rendered));
     for (int i = 0; i < rend / 4; i++) {
         self->control.audio_buffer[self->control.audio_w++] =
-            rendered[i] * 20000;
+            rendered[i] * 32767;
         if (self->control.audio_w >= AUDIO_BUF_SIZE) self->control.audio_w = 0;
     }
 
