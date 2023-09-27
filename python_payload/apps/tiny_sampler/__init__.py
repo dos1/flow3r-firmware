@@ -50,6 +50,11 @@ class TinySampler(Application):
                 direction = 1
             else:
                 direction = -1
+        elif val == 0:
+            if self.mode > 3:
+                direction = 1
+            else:
+                direction = -1
         elif val > self.mode:
             direction = 1
         else:
@@ -62,6 +67,7 @@ class TinySampler(Application):
     def _build_synth(self):
         if self.blm is None:
             self.blm = bl00mbox.Channel("tiny sampler")
+        self.blm.volume = 32768
         self.samplers: List[bl00mbox.patches._Patch | Any] = [None] * 5
         self.line_in = self.blm.new(bl00mbox.plugins.bl00mbox_line_in)
         for i in range(5):
@@ -117,35 +123,35 @@ class TinySampler(Application):
             if not self.has_data[i]:
                 ctx.rgb(0.4, 0.4, 0.4)
             elif self.is_playing[i] and audio.input_thru_get_mute():
-                ctx.rgb(0.2, 0.2, 0.9)
+                ctx.rgb(0.2, 0.9, 0.2)
             else:
                 ctx.rgb(0.8, 0.8, 0.8)
+
             ctx.move_to(0, -dist)
             ctx.rel_line_to(0, -8)
             ctx.rel_line_to(11, 8)
             ctx.rel_line_to(-11, 8)
             ctx.rel_line_to(0, -8)
             ctx.fill()
-            ctx.move_to(0, 12 - dist)
-            ctx.rel_line_to(11, 0)
-            ctx.stroke()
-            ctx.move_to(0, 0)
 
             ctx.rotate(6.28 / 10)
 
             if not self.has_data[i]:
                 ctx.rgb(0.4, 0.4, 0.4)
             elif self.is_playing[i] and not audio.input_thru_get_mute():
-                ctx.rgb(0.2, 0.9, 0.2)
+                ctx.rgb(0.2, 0.2, 0.9)
             else:
                 ctx.rgb(0.8, 0.8, 0.8)
-
             ctx.move_to(-7, -dist)
             ctx.rel_line_to(0, -8)
             ctx.rel_line_to(11, 8)
             ctx.rel_line_to(-11, 8)
             ctx.rel_line_to(0, -8)
             ctx.fill()
+            ctx.move_to(-7, 12 - dist)
+            ctx.rel_line_to(11, 0)
+            ctx.stroke()
+            ctx.move_to(0, 0)
 
             ctx.move_to(0, 0)
             ctx.rotate(6.28 / 10)
@@ -313,19 +319,25 @@ class TinySampler(Application):
                     if self.press_event[i * 2]:
                         self.samplers[i].signals.trigger.start()
                         self.is_playing[i] = True
+                        audio.input_thru_set_mute(True)
                     if self.release_event[i * 2]:
                         self.samplers[i].signals.trigger.stop()
                         self.is_playing[i] = False
+                        audio.input_thru_set_mute(False)
             for i in range(5):
                 if self.press_event[i * 2 + 1]:
                     if not self.is_recording[i]:
                         self.samplers[i].signals.rec_trigger.start()
                         self.is_recording[i] = True
+                        if self.mode == 0:
+                            audio.input_thru_set_mute(True)
                 if self.release_event[i * 2 + 1]:
                     if self.is_recording[i]:
                         self.samplers[i].signals.rec_trigger.stop()
                         self.is_recording[i] = False
                         self.has_data[i] = True
+                        if self.mode == 0:
+                            audio.input_thru_set_mute(False)
         if self.mode == 3 or release_all:
             for i in range(5):
                 if self.press_event[i * 2]:
@@ -387,6 +399,8 @@ class TinySampler(Application):
         super().on_enter(vm)
         self.orig_source = audio.input_engine_get_source()
         self.orig_thru_mute = audio.input_thru_get_mute()
+        self._mode = self._num_modes - 1
+        self.mode = 0
         if self.blm is None:
             self._build_synth()
 
