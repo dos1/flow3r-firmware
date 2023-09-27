@@ -228,8 +228,8 @@ esp_err_t flow3r_bsp_gc9a01_cmd_sync(flow3r_bsp_gc9a01_t *gc9a01, uint8_t cmd) {
  * mode for higher speed. The overhead of interrupt transactions is more than
  * just waiting for the transaction to complete.
  */
-esp_err_t flow3r_bsp_gc9a01_data_sync(flow3r_bsp_gc9a01_t *gc9a01,
-                                      const uint8_t *data, int len) {
+static esp_err_t flow3r_bsp_gc9a01_data_sync(flow3r_bsp_gc9a01_t *gc9a01,
+                                             const uint8_t *data, int len) {
     if (len == 0) {
         return ESP_OK;
     }
@@ -269,8 +269,8 @@ esp_err_t flow3r_bsp_gc9a01_data_sync(flow3r_bsp_gc9a01_t *gc9a01,
     return ESP_OK;
 }
 
-esp_err_t flow3r_bsp_gc9a01_data_byte_sync(flow3r_bsp_gc9a01_t *gc9a01,
-                                           const uint8_t data) {
+static esp_err_t flow3r_bsp_gc9a01_data_byte_sync(flow3r_bsp_gc9a01_t *gc9a01,
+                                                  const uint8_t data) {
     return flow3r_bsp_gc9a01_data_sync(gc9a01, &data, 1);
 }
 
@@ -622,8 +622,8 @@ static inline uint16_t ctx_565_pack(uint8_t red, uint8_t green, uint8_t blue,
 extern uint8_t st3m_pal[256 * 3];
 EXT_RAM_BSS_ATTR static uint16_t st3m_pal16[256];
 
-static inline void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
-                                        int pix_count) {
+static void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
+                                 int pix_count) {
     int scale = blit->scale;
     const uint8_t *fb = blit->fb;
     const uint8_t *osd_fb = blit->osd_fb;
@@ -632,8 +632,42 @@ static inline void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
     unsigned int o = 0;
 
     if (scale > 1) {
-        /* XXX : this code has room for optimization */
-        if (osd_fb && (start_off < blit->osd_y1 * 240)) switch (blit->bits) {
+        /* XXX : this code has room for optimization, in particular
+                 when memcpy of preceding scanlines should be used instead
+                 of recomputing the scanline
+         */
+        if (osd_fb && (start_off < blit->osd_y1 * 240)) {
+            switch (blit->bits) {
+                case 1:
+                    for (unsigned int i = start_off; i < end_off; i++) {
+                        int x = i % 240;
+                        int y = i / 240;
+                        int j = ((y / scale) * 240) + x / scale;
+                        // TODO: add OSD
+                        temp_blit[o++] =
+                            blit->pal_16[(fb[j / 8] >> ((j & 7))) & 0x1];
+                    }
+                    break;
+                case 2:
+                    for (unsigned int i = start_off; i < end_off; i++) {
+                        // TODO: add OSD
+                        int x = i % 240;
+                        int y = i / 240;
+                        int j = ((y / scale) * 240) + x / scale;
+                        temp_blit[o++] =
+                            blit->pal_16[(fb[j / 4] >> ((j & 3) * 2)) & 0x3];
+                    }
+                    break;
+                case 4:
+                    for (unsigned int i = start_off; i < end_off; i++) {
+                        // TODO: add OSD
+                        int x = i % 240;
+                        int y = i / 240;
+                        int j = ((y / scale) * 240) + x / scale;
+                        temp_blit[o++] =
+                            blit->pal_16[(fb[j / 2] >> ((j & 1) * 4)) & 0xf];
+                    }
+                    break;
                 case 8:
                 case 9:
                     for (unsigned int i = start_off; i < end_off; i++) {
@@ -708,8 +742,35 @@ static inline void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
                     }
                     break;
             }
-        else {
+        } else {
             switch (blit->bits) {
+                case 1:
+                    for (unsigned int i = start_off; i < end_off; i++) {
+                        int x = i % 240;
+                        int y = i / 240;
+                        int j = ((y / scale) * 240) + x / scale;
+                        temp_blit[o++] =
+                            blit->pal_16[(fb[j / 8] >> ((j & 7))) & 0x1];
+                    }
+                    break;
+                case 2:
+                    for (unsigned int i = start_off; i < end_off; i++) {
+                        int x = i % 240;
+                        int y = i / 240;
+                        int j = ((y / scale) * 240) + x / scale;
+                        temp_blit[o++] =
+                            blit->pal_16[(fb[j / 4] >> ((j & 3) * 2)) & 0x3];
+                    }
+                    break;
+                case 4:
+                    for (unsigned int i = start_off; i < end_off; i++) {
+                        int x = i % 240;
+                        int y = i / 240;
+                        int j = ((y / scale) * 240) + x / scale;
+                        temp_blit[o++] =
+                            blit->pal_16[(fb[j / 2] >> ((j & 1) * 4)) & 0xf];
+                    }
+                    break;
                 case 16:
                     for (unsigned int i = start_off; i < end_off; i++) {
                         int x = i % 240;
@@ -746,24 +807,25 @@ static inline void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
                     }
                     break;
             }
-            // blit->osd_fb = NULL;
-            // blit->fb += ((end_off*blit->bits)/8);
         }
     }
 
-    else {  // not scaled
+    else {  // 1x scale
         if (osd_fb && (start_off < blit->osd_y1 * 240)) switch (blit->bits) {
                 case 1:
+                    // TODO: OSD
                     for (unsigned int i = start_off; i < end_off; i++)
                         temp_blit[o++] =
                             blit->pal_16[(fb[i / 8] >> ((i & 7))) & 0x1];
                     break;
                 case 2:
+                    // TODO: OSD
                     for (unsigned int i = start_off; i < end_off; i++)
                         temp_blit[o++] =
                             blit->pal_16[(fb[i / 4] >> ((i & 3) * 2)) & 0x3];
                     break;
                 case 4:
+                    // TODO: OSD
                     for (unsigned int i = start_off; i < end_off; i++) {
                         temp_blit[o++] =
                             blit->pal_16[(fb[i / 2] >> ((i & 1) * 4)) & 0xf];
@@ -774,7 +836,7 @@ static inline void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
                         temp_blit[o++] = blit->pal_16[U8_LERP(
                             fb[i], osd_fb[i * 4 + 1], osd_fb[i * 4 + 3])];
                     break;
-                case 9:
+                case 9:  // RGB332
                     for (unsigned int i = start_off; i < end_off; i++) {
                         int idx = fb[i];
                         uint8_t r = (((idx >> 5) & 7) * 255) / 7;
@@ -832,9 +894,16 @@ static inline void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
             }
         else {
             switch (blit->bits) {
+#if 1
                 case 16:
                     blit->spi_tx.tx_buffer = &blit->fb[start_off * 2];
                     break;
+#else
+                case 16:
+                    for (unsigned int i = start_off; i < end_off; i++)
+                        temp_blit[o++] = ((uint16_t *)fb)[i];
+                    break;
+#endif
                 case 1:
                     for (unsigned int i = start_off; i < end_off; i++)
                         temp_blit[o++] =
@@ -867,21 +936,18 @@ static inline void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
                             fb[i * 4 + 0], fb[i * 4 + 1], fb[i * 4 + 2], 1);
                     break;
             }
-            // blit->osd_fb = NULL;
-            // blit->fb += ((end_off*blit->bits)/8);
         }
     }
     blit->off += pix_count;
 }
 
-static inline esp_err_t flow3r_bsp_gc9a01_blit_next(flow3r_bsp_gc9a01_blit_t *blit) {
+static inline esp_err_t flow3r_bsp_gc9a01_blit_next(
+    flow3r_bsp_gc9a01_blit_t *blit) {
     size_t size = blit->left;
     if (size > SPI_MAX_DMA_LEN) {
         size = SPI_MAX_DMA_LEN;
     }
     unsigned int pix_count = size / 2;
-    int bits = blit->bits;
-    if (bits == 9) bits = 8;
 
     blit->gc9a01_tx.gc9a01 = blit->gc9a01;
     blit->gc9a01_tx.dc = 1;
@@ -890,12 +956,9 @@ static inline esp_err_t flow3r_bsp_gc9a01_blit_next(flow3r_bsp_gc9a01_blit_t *bl
     // transaction.
     memset(&blit->spi_tx, 0, sizeof(spi_transaction_t));
     blit->spi_tx.length = pix_count * 16;
-
     blit->spi_tx.tx_buffer = temp_blit;
-    flow3r_bsp_prep_blit(blit, pix_count);
-
     blit->spi_tx.user = &blit->gc9a01_tx;
-
+    flow3r_bsp_prep_blit(blit, pix_count);
     blit->left -= size;
 
     esp_err_t res =
@@ -949,8 +1012,6 @@ static esp_err_t flow3r_bsp_gc9a01_blit_wait_done(
     spi_transaction_t *tx_done;
     esp_err_t ret =
         spi_device_get_trans_result(blit->gc9a01->spi, &tx_done, ticks_to_wait);
-    // TODO(q3k): validate that tx_done corresponds to the spi_transaction_tx in
-    // bilt. If not, this means we got some sequencing failure to deal with.
     return ret;
 }
 
