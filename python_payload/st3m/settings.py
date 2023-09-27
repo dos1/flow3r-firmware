@@ -241,9 +241,29 @@ num_speaker_max_db = StringTunable(
 )
 
 onoff_speaker_eq_on = StringTunable("Speaker EQ On", "system.audio.speaker_eq_on", True)
+onoff_headset_mic_allowed = StringTunable(
+    "Headset Mic Allowed", "system.audio.headset_mic_allowed", True
+)
+onoff_onboard_mic_allowed = StringTunable(
+    "Onboard Mic Allowed", "system.audio.onboard_mic_allowed", True
+)
+onoff_line_in_allowed = StringTunable(
+    "Line In Allowed", "system.audio.line_in_allowed", True
+)
+onoff_onboard_mic_to_speaker_allowed = StringTunable(
+    "Onboard Mic To Speaker Allowed",
+    "system.audio.onboard_mic_to_speaker_allowed",
+    False,
+)
 
-num_headset_gain_db = StringTunable(
-    "Headset Mic Gain dB", "system.audio.headset_gain_dB", 10
+num_headset_mic_gain_db = StringTunable(
+    "Headset Mic Gain dB", "system.audio.headset_mic_gain_dB", 0
+)
+num_onboard_mic_gain_db = StringTunable(
+    "Onboard Mic Gain dB", "system.audio.onboard_mic_gain_dB", 0
+)
+num_line_in_gain_db = StringTunable(
+    "Line In Gain dB", "system.audio.line_in_gain_dB", 0
 )
 
 num_display_brightness = StringTunable(
@@ -282,7 +302,13 @@ load_save_settings: List[UnaryTunable] = [
     num_headphones_max_db,
     num_speaker_max_db,
     onoff_speaker_eq_on,
-    num_headset_gain_db,
+    onoff_headset_mic_allowed,
+    onoff_onboard_mic_allowed,
+    onoff_line_in_allowed,
+    onoff_onboard_mic_to_speaker_allowed,
+    num_headset_mic_gain_db,
+    num_onboard_mic_gain_db,
+    num_line_in_gain_db,
     num_display_brightness,
     num_leds_brightness,
     num_leds_speed,

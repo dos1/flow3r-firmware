@@ -3,9 +3,11 @@
 ``audio`` module
 ================
 
-Many of these functions are available in three variants: headphone volume,
-speaker volume, and volume. If :code:`headphones_are_connected()` returns 1
-the "headphone" variant is chosen, else the "speaker" variant is chosen.
+The audio module provides the backbone for handling basic audio bookkeeping such as volume and signal routing.
+Actual sound is created by the engines, i.e. bl00mbox and media player at the moment.
+
+Jack Detection
+--------------
 
 .. py:function:: headset_is_connected() -> bool
 
@@ -21,6 +23,132 @@ the "headphone" variant is chosen, else the "speaker" variant is chosen.
 
    Returns 1 if the line-in jack was connected at the last call
    of audio_update_jacksense.
+
+Input Sources
+-------------
+
+.. note::
+    The onboard digital mic turns on an LED on the top board if it receives
+    a clock signal which is considered a good proxy for its capability of reading
+    data. Access to the onboard mic can be disabled entirely in the audio config
+    menu.
+
+The codec can receive data from the line in jack, the headset mic pin in the headphone jack, or the
+internal microphone. We distinguish between two use cases: 1) sending the signal to the audio engines
+to be mangled with, and 2) directly mix it to the output with a variable volume level. We provide two
+different APIs for each use case.
+
+Sources may or may not be available; for line in and the headset mic they might simply not be plugged in,
+but also users can configure in the settings which inputs are available in the first place. To handle this
+uncertainity gracefully, instead of momentarily trying (and potentially failing) to set up a connection
+you set a desired target and the backend will attempt to connect to it continuously until the target is reset
+to none. The target states are not cleared when exiting applications, if you don't intend to also configure
+the source for other applications please reset them to whatever state you found them in like so:
+
+.. code-block:: python
+
+    on_enter(self, vm):
+        # save original target
+        self.orig_engine_target_source = audio.input_engine_get_target_source()
+        # switch to your preferred one
+        audio.input_engine_set_target_source(audio.INPUT_SOURCE_AUTO)
+
+    on_exit(self):
+        # restore original target
+        audio.input_engine_set_source(self.orig_engine_target_source)
+
+Since the codec can only send data from one source at a time. in case of a disagreement between the engine
+source and the thru source, the engine source wins and the through source is temporarily set to none.
+For thru to follow the engine source if available and not none use ``audio.input_thru_set_source(audio.INPUT_SOURCE_AUTO)``.
+
+The available sources for both engine and thru are slightly different: The engine only looks for permissions
+and hardware state, while thru can not access the onboard mic if playback is happening through the speakers.
+This is set up to prevent accidential feedback loops. However the user can give permission to acces this mode
+in the user config.
+
+
+.. py:data:: INPUT_SOURCE_NONE
+
+    No source, datastream suspended.
+    
+.. py:data:: INPUT_SOURCE_LINE_IN
+
+    Stream data from line in if available.
+
+.. py:data:: INPUT_SOURCE_HEADSET_MIC
+
+    Stream data from headset mic if available and allowed.
+
+.. py:data:: INPUT_SOURCE_ONBOARD_MIC
+
+    Stream data from onboard mic if allowed.
+
+.. py:data:: INPUT_SOURCE_AUTO
+
+    Stream data from available input, line in is preferred to headset mic is preferred to onboard mic.
+    For ``input_thru_source`` matching ``input_engine_source`` is preferred to line in.
+
+.. py:function:: input_engine_set_source(source : int) -> int
+
+    Set up a continuous connection query for routing the given source to the input for the audio engines.
+    Check for success with ``input_engine_get_source()`` and clean up by passing ``INPUT_SOURCE_NONE``
+
+.. py:function:: input_engine_get_target_source() -> int
+
+    Returns target source last set with input_engine_set_source.
+
+.. py:function:: input_engine_get_source() -> int
+
+    Returns source currently connected to the audio engines.
+
+.. py:function:: input_engine_get_source_avail(source : int) -> bool
+
+    Returns true if it is currently possible to connect the audio engines to a given source.
+    If given ``INPUT_SOURCE_AUTO`` returns true if any source can be connected to the engines.
+
+.. py:function:: input_thru_set_source(source : int) -> int
+
+    Set up a continuous connection query for routing the given source to the output mixer of the codec.
+    Check for success with ``input_thru_get_source()`` and clean up by passing ``INPUT_SOURCE_NONE``
+
+.. py:function:: input_thru_get_target_source() -> int
+
+    Returns target source last set with input_thru_set_source.
+
+.. py:function:: input_thru_get_source() -> int
+
+    Returns the source currently mixed directly to output.
+
+.. py:function:: input_get_source() -> int
+
+    Returns the source the codec is connected to at the moment.
+
+.. py:function:: input_thru_get_source_avail(source : int) -> bool
+
+    Returns true if it is currently possible to a given source to thru.
+    If given ``INPUT_SOURCE_AUTO`` returns true if any source can be connected to thru.
+
+.. py:function:: input_thru_set_volume_dB(vol_dB : float)
+.. py:function:: input_thru_get_volume_dB() -> float
+.. py:function:: input_thru_set_mute(mute : bool)
+.. py:function:: input_thru_get_mute() -> bool
+
+    Volume and mute control for input_thru. Please don't use this as a replacement for terminating
+    a connection, ``input_thru_set_source(audio.INPUT_SOURCE_NONE)`` instead!
+
+.. py:function:: input_line_in_get_allowed(mute : bool)
+.. py:function:: input_headset_mic_get_allowed(mute : bool)
+.. py:function:: input_onboard_mic_get_allowed(mute : bool)
+.. py:function:: input_onboard_mic_to_speaker_get_allowed(mute : bool)
+
+    Returns if the user has forbidden access to the resource.
+
+OS development
+--------------
+
+Many of these functions are available in three variants: headphone volume,
+speaker volume, and volume. If :code:`headphones_are_connected()` returns 1
+the "headphone" variant is chosen, else the "speaker" variant is chosen.
 
 .. py:function:: headphones_detection_override(enable : bool)
 
@@ -102,49 +230,19 @@ the "headphone" variant is chosen, else the "speaker" variant is chosen.
    :code:`audio_{headphones_/speaker_/}set_{maximum/minimum}_volume_` and 0 if
    in a fake mute condition.
 
-.. py:function:: headphones_line_in_set_hardware_thru(enable : bool)
-.. py:function:: speaker_line_in_set_hardware_thru(enable : bool)
-.. py:function:: line_in_set_hardware_thru(enable : bool)
+.. py:function:: headset_mic_set_gain_dB(gain_dB : float)
+.. py:function:: headset_mic_get_gain_dB() -> float
+.. py:function:: onboard_mic_set_gain_dB(gain_dB : float)
+.. py:function:: onboard_mic_get_gain_dB() -> float
+.. py:function:: line_in_set_gain_dB(gain_dB : float)
+.. py:function:: line_in_get_gain_dB() -> float
 
-   These route whatever is on the line in port directly to the headphones or
-   speaker respectively (enable = 1), or don't (enable = 0). Is affected by mute
-   and coarse hardware volume settings, however software fine volume is not
-   applied.
-
-   Good for testing, might deprecate later, idk~
-
-.. py:function:: input_set_source(source : int)
-.. py:function:: input_get_source() -> int
-
-   The codec can transmit audio data from different sources. This function
-   enables one or no source as provided by the ``INPUT_SOURCE_*`` constants.
-
-   Note: The onboard digital mic turns on an LED on the top board if it receives
-   a clock signal which is considered a good proxy for its capability of reading
-   data.
-
-.. py:data:: INPUT_SOURCE_NONE
-.. py:data:: INPUT_SOURCE_LINE_IN
-.. py:data:: INPUT_SOURCE_HEADSET_MIC
-.. py:data:: INPUT_SOURCE_ONBOARD_MIC
-
-.. py:function:: headset_set_gain_dB(gain_dB : int)
-.. py:function:: headset_get_gain_dB() -> int
-
-   Hardware preamp gain, 0dB-50dB. TODO: figure out if int/float inconsistency
-   is a good thing here compared to all other _dB functions.
-
-.. py:function:: input_thru_set_volume_dB(vol_dB : float)
-.. py:function:: input_thru_get_volume_dB() -> float
-.. py:function:: input_thru_set_mute(mute : bool)
-.. py:function:: input_thru_get_mute() -> bool
-
-   You can route whatever source is selected with input_set_source() to
-   the audio output. Use these to control volume and mute.
+   Set and get gain for the respective input channels.
 
 .. py:function:: codec_i2c_write(reg : int, data : int)
 
-   Write audio codec register. Obviously very unsafe. Have fun.
+   Write audio codec register. Obviously very unsafe. Do not use in applications that you
+   distribute to users. This can fry your speakers with DC>
 
 
 Headphone port policy

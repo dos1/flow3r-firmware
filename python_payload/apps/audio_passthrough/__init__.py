@@ -8,14 +8,14 @@ import math
 
 
 # Assume this is an enum
-ForceModes = ["AUTO", "FORCE_LINE_IN", "FORCE_LINE_OUT", "FORCE_MIC", "FORCE_NONE"]
+ForceModes = ["AUTO", "FORCE_LINE_IN", "FORCE_LINE_OUT", "FORCE_MIC"]
 
 
 STATE_TEXT: dict[int, str] = {
-    audio.INPUT_SOURCE_HEADSET_MIC: "using headset mic (line out)",
-    audio.INPUT_SOURCE_LINE_IN: "using line in",
-    audio.INPUT_SOURCE_ONBOARD_MIC: "using onboard mic",
-    audio.INPUT_SOURCE_NONE: "plug cable to line in/out",
+    audio.INPUT_SOURCE_AUTO: "auto",
+    audio.INPUT_SOURCE_HEADSET_MIC: "headset mic",
+    audio.INPUT_SOURCE_LINE_IN: "line in",
+    audio.INPUT_SOURCE_ONBOARD_MIC: "onboard mic",
 }
 
 
@@ -25,6 +25,9 @@ class AudioPassthrough(Application):
         self._button_0_pressed = False
         self._button_5_pressed = False
         self._force_mode: str = "AUTO"
+        self._mute = True
+        self._source = None
+        self.target_source = audio.INPUT_SOURCE_AUTO
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
@@ -53,36 +56,42 @@ class AudioPassthrough(Application):
         ctx.font_size = 25
         ctx.move_to(0, 0)
         ctx.save()
-        if audio.input_thru_get_mute():
+        if self._mute:
             # 0xff4500, red
             ctx.rgb(1, 0.41, 0)
         else:
             # 0x3cb043, green
             ctx.rgb(0.24, 0.69, 0.26)
-        ctx.text("passthrough off" if audio.input_thru_get_mute() else "passthrough on")
+        ctx.text("passthrough off" if self._mute else "passthrough on")
         ctx.restore()
 
         # bottom text
         ctx.move_to(0, 25)
         ctx.save()
         ctx.font_size = 15
-        ctx.text(STATE_TEXT.get(audio.input_get_source(), ""))
-
-        # have red text when sleep mode isn't auto
-        if self._force_mode != "AUTO":
-            # 0xff4500, red
-            ctx.rgb(1, 0.41, 0)
+        ctx.text(STATE_TEXT.get(self.target_source, ""))
 
         ctx.move_to(0, 40)
-        ctx.text("(auto)" if self._force_mode == "AUTO" else "(forced)")
-
-        # mic has a loopback risk so has precautions
-        # so we warn users about it to not confuse them
-        if self._force_mode == "FORCE_MIC":
-            ctx.move_to(0, 55)
-            ctx.text("headphones only")
-            ctx.move_to(0, 70)
-            ctx.text("will not persist app exit")
+        if self.source_connected:
+            # 0x3cb043, green
+            ctx.rgb(0.24, 0.69, 0.26)
+        else:
+            # 0xff4500, red
+            ctx.rgb(1, 0.41, 0)
+        if self._mute:
+            ctx.text("standby")
+        elif self._force_mode == "AUTO":
+            src = audio.input_thru_get_source()
+            if src != audio.INPUT_SOURCE_NONE:
+                ctx.text("connected to")
+                ctx.move_to(0, 56)
+                ctx.text(STATE_TEXT.get(src, ""))
+            else:
+                ctx.text("waiting...")
+        elif self._force_mode == "FORCE_MIC":
+            ctx.text("connected" if self.source_connected else "(headphones only)")
+        else:
+            ctx.text("connected" if self.source_connected else "waiting...")
         ctx.restore()
 
         # bottom button
@@ -94,48 +103,58 @@ class AudioPassthrough(Application):
         ctx.restore()
 
         ctx.move_to(0, 90)
-        ctx.text("force line in/out")
+        ctx.text("next source")
 
-    def on_exit(self) -> None:
-        # Mic passthrough has a loopback risk
-        if self._force_mode == "FORCE_MIC":
-            self._force_mode = "FORCE_NONE"
-            audio.input_set_source(audio.INPUT_SOURCE_NONE)
-            audio.input_thru_set_mute(True)
+    @property
+    def source_connected(self):
+        if self.source != audio.INPUT_SOURCE_NONE:
+            return self.source == audio.input_thru_get_source()
+        else:
+            return False
+
+    @property
+    def source(self):
+        if self._source is None:
+            self._source = audio.input_thru_get_source()
+        return self._source
+
+    @source.setter
+    def source(self, source):
+        audio.input_thru_set_source(source)
+        self._source = audio.input_thru_get_source()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
 
-        headset_connected = audio.headset_is_connected()
-        if self._force_mode == "FORCE_MIC":
-            audio.input_set_source(audio.INPUT_SOURCE_ONBOARD_MIC)
-        elif (
-            audio.line_in_is_connected() and self._force_mode == "AUTO"
-        ) or self._force_mode == "FORCE_LINE_IN":
-            audio.input_set_source(audio.INPUT_SOURCE_LINE_IN)
-        elif headset_connected or self._force_mode == "FORCE_LINE_OUT":
-            audio.input_set_source(audio.INPUT_SOURCE_HEADSET_MIC)
-        else:
-            audio.input_set_source(audio.INPUT_SOURCE_NONE)
-
         if ins.captouch.petals[0].pressed:
             if not self._button_0_pressed:
                 self._button_0_pressed = True
-                audio.input_thru_set_mute(not audio.input_thru_get_mute())
+                self._mute = not self._mute
         else:
             self._button_0_pressed = False
 
         if ins.captouch.petals[5].pressed:
             if not self._button_5_pressed:
                 self._button_5_pressed = True
-                self._force_mode = ForceModes[ForceModes.index(self._force_mode) + 1]
-                if ForceModes.index(self._force_mode) >= ForceModes.index("FORCE_NONE"):
-                    self._force_mode = "AUTO"
+                index = ForceModes.index(self._force_mode)
+                index = (index + 1) % 4
+                self._force_mode = ForceModes[index]
+
         else:
             self._button_5_pressed = False
 
-        if self._force_mode == "FORCE_MIC" and not audio.headphones_are_connected():
-            self._force_mode = "AUTO"
+        if self._mute:
+            self.source = audio.INPUT_SOURCE_NONE
+        else:
+            if self._force_mode == "FORCE_MIC":
+                self.target_source = audio.INPUT_SOURCE_ONBOARD_MIC
+            elif self._force_mode == "AUTO":
+                self.target_source = audio.INPUT_SOURCE_AUTO
+            elif self._force_mode == "FORCE_LINE_IN":
+                self.target_source = audio.INPUT_SOURCE_LINE_IN
+            elif self._force_mode == "FORCE_LINE_OUT":
+                self.target_source = audio.INPUT_SOURCE_HEADSET_MIC
+            self.source = self.target_source
 
 
 # For running with `mpremote run`:

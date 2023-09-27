@@ -195,22 +195,22 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_volume_relative_obj,
                                  mp_get_volume_relative);
 
 STATIC mp_obj_t mp_headphones_line_in_set_hardware_thru(mp_obj_t enable) {
-    st3m_audio_headphones_line_in_set_hardware_thru(mp_obj_get_int(enable));
     return mp_const_none;
+    // st3m_audio_headphones_line_in_set_hardware_thru(mp_obj_get_int(enable));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_headphones_line_in_set_hardware_thru_obj,
                                  mp_headphones_line_in_set_hardware_thru);
 
 STATIC mp_obj_t mp_speaker_line_in_set_hardware_thru(mp_obj_t enable) {
-    st3m_audio_speaker_line_in_set_hardware_thru(mp_obj_get_int(enable));
     return mp_const_none;
+    // st3m_audio_speaker_line_in_set_hardware_thru(mp_obj_get_int(enable));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_speaker_line_in_set_hardware_thru_obj,
                                  mp_speaker_line_in_set_hardware_thru);
 
 STATIC mp_obj_t mp_line_in_set_hardware_thru(mp_obj_t enable) {
-    st3m_audio_line_in_set_hardware_thru(mp_obj_get_int(enable));
     return mp_const_none;
+    // st3m_audio_line_in_set_hardware_thru(mp_obj_get_int(enable));
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_line_in_set_hardware_thru_obj,
                                  mp_line_in_set_hardware_thru);
@@ -219,29 +219,111 @@ STATIC mp_obj_t mp_line_in_is_connected() {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_line_in_is_connected_obj,
                                  mp_line_in_is_connected);
-STATIC mp_obj_t mp_input_set_source(mp_obj_t source) {
-    st3m_audio_input_set_source(mp_obj_get_int(source));
+
+// <INPUT SETUP>
+
+// engine
+STATIC mp_obj_t mp_input_engine_set_source(mp_obj_t source) {
+    st3m_audio_input_engine_set_source(mp_obj_get_int(source));
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_input_set_source_obj, mp_input_set_source);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_input_engine_set_source_obj,
+                                 mp_input_engine_set_source);
 
+STATIC mp_obj_t mp_input_engine_get_source(void) {
+    return mp_obj_new_int(st3m_audio_input_engine_get_source());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_input_engine_get_source_obj,
+                                 mp_input_engine_get_source);
+
+STATIC mp_obj_t mp_input_engine_get_target_source(void) {
+    return mp_obj_new_int(st3m_audio_input_engine_get_target_source());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_input_engine_get_target_source_obj,
+                                 mp_input_engine_get_target_source);
+
+STATIC mp_obj_t mp_input_engine_get_source_avail(mp_obj_t source) {
+    return mp_obj_new_int(
+        st3m_audio_input_engine_get_source_avail(mp_obj_get_int(source)));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_input_engine_get_source_avail_obj,
+                                 mp_input_engine_get_source_avail);
+
+// thru
+STATIC mp_obj_t mp_input_thru_set_source(mp_obj_t source) {
+    st3m_audio_input_thru_set_source(mp_obj_get_int(source));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_input_thru_set_source_obj,
+                                 mp_input_thru_set_source);
+
+STATIC mp_obj_t mp_input_thru_get_source(void) {
+    return mp_obj_new_int(st3m_audio_input_thru_get_source());
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_input_thru_get_source_obj,
+                                 mp_input_thru_get_source);
+
+STATIC mp_obj_t mp_input_thru_get_target_source(void) {
+    return mp_obj_new_int(st3m_audio_input_thru_get_target_source());
+}
+
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_input_thru_get_target_source_obj,
+                                 mp_input_thru_get_target_source);
+
+STATIC mp_obj_t mp_input_thru_get_source_avail(mp_obj_t source) {
+    return mp_obj_new_int(
+        st3m_audio_input_thru_get_source_avail(mp_obj_get_int(source)));
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_input_thru_get_source_avail_obj,
+                                 mp_input_thru_get_source_avail);
+
+// actual source
 STATIC mp_obj_t mp_input_get_source(void) {
     return mp_obj_new_int(st3m_audio_input_get_source());
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_input_get_source_obj, mp_input_get_source);
 
-STATIC mp_obj_t mp_headset_set_gain_dB(mp_obj_t gain_dB) {
-    st3m_audio_headset_set_gain_dB(mp_obj_get_int(gain_dB));
-    return mp_const_none;
+// gain
+STATIC mp_obj_t mp_headset_mic_set_gain_dB(mp_obj_t gain_dB) {
+    float ret = st3m_audio_headset_mic_set_gain_dB(mp_obj_get_float(gain_dB));
+    return mp_obj_new_float(ret);
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_headset_set_gain_dB_obj,
-                                 mp_headset_set_gain_dB);
 
-STATIC mp_obj_t mp_headset_get_gain_dB(void) {
-    return mp_obj_new_int(st3m_audio_headset_get_gain_dB());
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_headset_mic_set_gain_dB_obj,
+                                 mp_headset_mic_set_gain_dB);
+
+STATIC mp_obj_t mp_headset_mic_get_gain_dB(void) {
+    return mp_obj_new_float(st3m_audio_headset_mic_get_gain_dB());
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_headset_get_gain_dB_obj,
-                                 mp_headset_get_gain_dB);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_headset_mic_get_gain_dB_obj,
+                                 mp_headset_mic_get_gain_dB);
+
+STATIC mp_obj_t mp_onboard_mic_set_gain_dB(mp_obj_t gain_dB) {
+    float ret = st3m_audio_onboard_mic_set_gain_dB(mp_obj_get_float(gain_dB));
+    return mp_obj_new_float(ret);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_onboard_mic_set_gain_dB_obj,
+                                 mp_onboard_mic_set_gain_dB);
+
+STATIC mp_obj_t mp_onboard_mic_get_gain_dB(void) {
+    return mp_obj_new_float(st3m_audio_onboard_mic_get_gain_dB());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_onboard_mic_get_gain_dB_obj,
+                                 mp_onboard_mic_get_gain_dB);
+
+STATIC mp_obj_t mp_line_in_set_gain_dB(mp_obj_t gain_dB) {
+    float ret = st3m_audio_line_in_set_gain_dB(mp_obj_get_float(gain_dB));
+    return mp_obj_new_float(ret);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_line_in_set_gain_dB_obj,
+                                 mp_line_in_set_gain_dB);
+
+STATIC mp_obj_t mp_line_in_get_gain_dB(void) {
+    return mp_obj_new_float(st3m_audio_line_in_get_gain_dB());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_line_in_get_gain_dB_obj,
+                                 mp_line_in_get_gain_dB);
 
 STATIC mp_obj_t mp_input_thru_set_volume_dB(mp_obj_t vol_dB) {
     return mp_obj_new_float(
@@ -269,6 +351,8 @@ STATIC mp_obj_t mp_input_thru_get_mute() {
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_input_thru_get_mute_obj,
                                  mp_input_thru_get_mute);
 
+// eq
+
 STATIC mp_obj_t mp_speaker_get_eq_on() {
     return mp_obj_new_int(st3m_audio_speaker_get_eq_on());
 }
@@ -281,6 +365,61 @@ STATIC mp_obj_t mp_speaker_set_eq_on(mp_obj_t eq_on) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_speaker_set_eq_on_obj,
                                  mp_speaker_set_eq_on);
+
+// permissions
+
+STATIC mp_obj_t mp_headset_mic_set_allowed(mp_obj_t allowed) {
+    st3m_audio_headset_mic_set_allowed(mp_obj_get_int(allowed));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_headset_mic_set_allowed_obj,
+                                 mp_headset_mic_set_allowed);
+
+STATIC mp_obj_t mp_headset_mic_get_allowed() {
+    return mp_obj_new_int(st3m_audio_headset_mic_get_allowed());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_headset_mic_get_allowed_obj,
+                                 mp_headset_mic_get_allowed);
+
+STATIC mp_obj_t mp_onboard_mic_set_allowed(mp_obj_t allowed) {
+    st3m_audio_onboard_mic_set_allowed(mp_obj_get_int(allowed));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_onboard_mic_set_allowed_obj,
+                                 mp_onboard_mic_set_allowed);
+
+STATIC mp_obj_t mp_onboard_mic_get_allowed() {
+    return mp_obj_new_int(st3m_audio_onboard_mic_get_allowed());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_onboard_mic_get_allowed_obj,
+                                 mp_onboard_mic_get_allowed);
+
+STATIC mp_obj_t mp_line_in_set_allowed(mp_obj_t allowed) {
+    st3m_audio_line_in_set_allowed(mp_obj_get_int(allowed));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_line_in_set_allowed_obj,
+                                 mp_line_in_set_allowed);
+
+STATIC mp_obj_t mp_line_in_get_allowed() {
+    return mp_obj_new_int(st3m_audio_line_in_get_allowed());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_line_in_get_allowed_obj,
+                                 mp_line_in_get_allowed);
+
+STATIC mp_obj_t mp_onboard_mic_to_speaker_set_allowed(mp_obj_t allowed) {
+    st3m_audio_onboard_mic_to_speaker_set_allowed(mp_obj_get_int(allowed));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_onboard_mic_to_speaker_set_allowed_obj,
+                                 mp_onboard_mic_to_speaker_set_allowed);
+
+STATIC mp_obj_t mp_onboard_mic_to_speaker_get_allowed() {
+    return mp_obj_new_int(st3m_audio_onboard_mic_to_speaker_get_allowed());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_onboard_mic_to_speaker_get_allowed_obj,
+                                 mp_onboard_mic_to_speaker_get_allowed);
+// </INPUT SETUP>
 
 STATIC mp_obj_t mp_codec_i2c_write(mp_obj_t reg_in, mp_obj_t data_in) {
 #if defined(CONFIG_FLOW3R_HW_GEN_P3) || defined(CONFIG_FLOW3R_HW_GEN_P4) || \
@@ -372,15 +511,44 @@ STATIC const mp_rom_map_elem_t mp_module_audio_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_line_in_is_connected),
       MP_ROM_PTR(&mp_line_in_is_connected_obj) },
 
-    { MP_ROM_QSTR(MP_QSTR_input_set_source),
-      MP_ROM_PTR(&mp_input_set_source_obj) },
+    { MP_ROM_QSTR(MP_QSTR_input_engine_set_source),
+      MP_ROM_PTR(&mp_input_engine_set_source_obj) },
+    { MP_ROM_QSTR(MP_QSTR_input_engine_get_source),
+      MP_ROM_PTR(&mp_input_engine_get_source_obj) },
+    { MP_ROM_QSTR(MP_QSTR_input_engine_get_target_source),
+      MP_ROM_PTR(&mp_input_engine_get_target_source_obj) },
+    { MP_ROM_QSTR(MP_QSTR_input_engine_get_source_avail),
+      MP_ROM_PTR(&mp_input_engine_get_source_avail_obj) },
+
+    { MP_ROM_QSTR(MP_QSTR_input_thru_set_source),
+      MP_ROM_PTR(&mp_input_thru_set_source_obj) },
+    { MP_ROM_QSTR(MP_QSTR_input_thru_get_source),
+      MP_ROM_PTR(&mp_input_thru_get_source_obj) },
+    { MP_ROM_QSTR(MP_QSTR_input_thru_get_target_source),
+      MP_ROM_PTR(&mp_input_thru_get_target_source_obj) },
+    { MP_ROM_QSTR(MP_QSTR_input_thru_get_source_avail),
+      MP_ROM_PTR(&mp_input_thru_get_source_avail_obj) },
+
     { MP_ROM_QSTR(MP_QSTR_input_get_source),
       MP_ROM_PTR(&mp_input_get_source_obj) },
+    // TODO: DEPRECATE
+    { MP_ROM_QSTR(MP_QSTR_input_set_source),
+      MP_ROM_PTR(&mp_input_engine_set_source_obj) },
 
-    { MP_ROM_QSTR(MP_QSTR_headset_set_gain_dB),
-      MP_ROM_PTR(&mp_headset_set_gain_dB_obj) },
-    { MP_ROM_QSTR(MP_QSTR_headset_get_gain_dB),
-      MP_ROM_PTR(&mp_headset_get_gain_dB_obj) },
+    { MP_ROM_QSTR(MP_QSTR_headset_mic_set_gain_dB),
+      MP_ROM_PTR(&mp_headset_mic_set_gain_dB_obj) },
+    { MP_ROM_QSTR(MP_QSTR_headset_mic_get_gain_dB),
+      MP_ROM_PTR(&mp_headset_mic_get_gain_dB_obj) },
+
+    { MP_ROM_QSTR(MP_QSTR_onboard_mic_set_gain_dB),
+      MP_ROM_PTR(&mp_onboard_mic_set_gain_dB_obj) },
+    { MP_ROM_QSTR(MP_QSTR_onboard_mic_get_gain_dB),
+      MP_ROM_PTR(&mp_onboard_mic_get_gain_dB_obj) },
+
+    { MP_ROM_QSTR(MP_QSTR_line_in_set_gain_dB),
+      MP_ROM_PTR(&mp_line_in_set_gain_dB_obj) },
+    { MP_ROM_QSTR(MP_QSTR_line_in_get_gain_dB),
+      MP_ROM_PTR(&mp_line_in_get_gain_dB_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_input_thru_set_volume_dB),
       MP_ROM_PTR(&mp_input_thru_set_volume_dB_obj) },
@@ -402,11 +570,30 @@ STATIC const mp_rom_map_elem_t mp_module_audio_globals_table[] = {
       MP_ROM_INT(st3m_audio_input_source_headset_mic) },
     { MP_ROM_QSTR(MP_QSTR_INPUT_SOURCE_ONBOARD_MIC),
       MP_ROM_INT(st3m_audio_input_source_onboard_mic) },
+    { MP_ROM_QSTR(MP_QSTR_INPUT_SOURCE_AUTO),
+      MP_ROM_INT(st3m_audio_input_source_auto) },
 
     { MP_ROM_QSTR(MP_QSTR_speaker_get_eq_on),
       MP_ROM_PTR(&mp_speaker_get_eq_on_obj) },
     { MP_ROM_QSTR(MP_QSTR_speaker_set_eq_on),
       MP_ROM_PTR(&mp_speaker_set_eq_on_obj) },
+
+    { MP_ROM_QSTR(MP_QSTR_headset_mic_get_allowed),
+      MP_ROM_PTR(&mp_headset_mic_get_allowed_obj) },
+    { MP_ROM_QSTR(MP_QSTR_headset_mic_set_allowed),
+      MP_ROM_PTR(&mp_headset_mic_set_allowed_obj) },
+    { MP_ROM_QSTR(MP_QSTR_onboard_mic_get_allowed),
+      MP_ROM_PTR(&mp_onboard_mic_get_allowed_obj) },
+    { MP_ROM_QSTR(MP_QSTR_onboard_mic_set_allowed),
+      MP_ROM_PTR(&mp_onboard_mic_set_allowed_obj) },
+    { MP_ROM_QSTR(MP_QSTR_line_in_get_allowed),
+      MP_ROM_PTR(&mp_line_in_get_allowed_obj) },
+    { MP_ROM_QSTR(MP_QSTR_line_in_set_allowed),
+      MP_ROM_PTR(&mp_line_in_set_allowed_obj) },
+    { MP_ROM_QSTR(MP_QSTR_onboard_mic_to_speaker_get_allowed),
+      MP_ROM_PTR(&mp_onboard_mic_to_speaker_get_allowed_obj) },
+    { MP_ROM_QSTR(MP_QSTR_onboard_mic_to_speaker_set_allowed),
+      MP_ROM_PTR(&mp_onboard_mic_to_speaker_set_allowed_obj) },
 };
 
 STATIC MP_DEFINE_CONST_DICT(mp_module_audio_globals,

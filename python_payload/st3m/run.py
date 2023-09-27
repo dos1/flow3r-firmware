@@ -186,6 +186,18 @@ def run_main() -> None:
     audio.speaker_set_minimum_volume_dB(settings.num_speaker_min_db.value)
     audio.headphones_set_maximum_volume_dB(settings.num_headphones_max_db.value)
     audio.speaker_set_maximum_volume_dB(settings.num_speaker_max_db.value)
+
+    audio.headset_mic_set_gain_dB(settings.num_headset_mic_gain_db.value)
+    audio.onboard_mic_set_gain_dB(settings.num_onboard_mic_gain_db.value)
+    audio.line_in_set_gain_dB(settings.num_line_in_gain_db.value)
+
+    audio.headset_mic_set_allowed(settings.onoff_headset_mic_allowed.value)
+    audio.onboard_mic_set_allowed(settings.onoff_onboard_mic_allowed.value)
+    audio.line_in_set_allowed(settings.onoff_line_in_allowed.value)
+    audio.onboard_mic_to_speaker_set_allowed(
+        settings.onoff_onboard_mic_to_speaker_allowed.value
+    )
+
     leds.set_brightness(settings.num_leds_brightness.value)
     sys_display.set_backlight(settings.num_display_brightness.value)
 

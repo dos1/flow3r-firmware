@@ -10,7 +10,10 @@ typedef enum {
     // Headset microphone on left jack.
     st3m_audio_input_source_headset_mic = 2,
     // Onboard microphone (enabled red LED).
-    st3m_audio_input_source_onboard_mic = 3
+    st3m_audio_input_source_onboard_mic = 3,
+    // auto switching depending on availability
+    // line in preferred to headset mic preferred to onboard mic.
+    st3m_audio_input_source_auto = 4
 } st3m_audio_input_source_t;
 
 typedef void (*st3m_audio_player_function_t)(int16_t* tx, int16_t* rx,
@@ -151,20 +154,31 @@ void st3m_audio_line_in_set_hardware_thru(bool enable);
  * Note: The onboard digital mic turns on an LED on the top board if it receives
  * a clock signal which is considered a good proxy for its capability of reading
  * data.
- *
- * TODO: check if sources are available
  */
-void st3m_audio_input_set_source(st3m_audio_input_source_t source);
+void st3m_audio_input_engine_set_source(st3m_audio_input_source_t source);
+st3m_audio_input_source_t st3m_audio_input_engine_get_source(void);
+st3m_audio_input_source_t st3m_audio_input_engine_get_target_source(void);
 
-/* Returns the currently selected input source.
- */
+void st3m_audio_input_thru_set_source(st3m_audio_input_source_t source);
+st3m_audio_input_source_t st3m_audio_input_thru_get_source(void);
+st3m_audio_input_source_t st3m_audio_input_thru_get_target_source(void);
+
 st3m_audio_input_source_t st3m_audio_input_get_source(void);
 
-/* Hardware preamp gain, 0dB-50dB. TODO: figure out if int/float inconsistency
- * is a good thing here compared to all other _dB functions.
+/* Gain of headset mic source
  */
-void st3m_audio_headset_set_gain_dB(int8_t gain_dB);
-uint8_t st3m_audio_headset_get_gain_dB(void);
+float st3m_audio_headset_mic_set_gain_dB(float gain_dB);
+float st3m_audio_headset_mic_get_gain_dB(void);
+
+/* Gain of onboard mic source
+ */
+float st3m_audio_onboard_mic_set_gain_dB(float gain_dB);
+float st3m_audio_onboard_mic_get_gain_dB(void);
+
+/* Gain of line in source
+ */
+float st3m_audio_line_in_set_gain_dB(float gain_dB);
+float st3m_audio_line_in_get_gain_dB(void);
 
 /* You can route whatever source is selected with st3m_audio_input_set_source to
  * the audio output. Use these to control volume and mute.
@@ -179,6 +193,21 @@ bool st3m_audio_input_thru_get_mute(void);
 
 void st3m_audio_speaker_set_eq_on(bool enable);
 bool st3m_audio_speaker_get_eq_on(void);
+
+void st3m_audio_headset_mic_set_allowed(bool allowed);
+bool st3m_audio_headset_mic_get_allowed(void);
+
+void st3m_audio_onboard_mic_set_allowed(bool allowed);
+bool st3m_audio_onboard_mic_get_allowed(void);
+
+void st3m_audio_line_in_set_allowed(bool allowed);
+bool st3m_audio_line_in_get_allowed(void);
+
+void st3m_audio_onboard_mic_to_speaker_set_allowed(bool allowed);
+bool st3m_audio_onboard_mic_to_speaker_get_allowed(void);
+
+bool st3m_audio_input_engine_get_source_avail(st3m_audio_input_source_t source);
+bool st3m_audio_input_thru_get_source_avail(st3m_audio_input_source_t source);
 
 /*
 HEADPHONE PORT POLICY

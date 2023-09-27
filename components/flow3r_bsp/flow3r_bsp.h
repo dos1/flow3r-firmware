@@ -51,7 +51,10 @@ typedef enum {
     // Headset microphone on left jack.
     flow3r_bsp_audio_input_source_headset_mic = 2,
     // Onboard microphone (enabled red LED).
-    flow3r_bsp_audio_input_source_onboard_mic = 3
+    flow3r_bsp_audio_input_source_onboard_mic = 3,
+    // auto switching depending on availability
+    // line in preferred to headset mic preferred to onboard mic.
+    flow3r_bsp_audio_input_source_auto = 4
 } flow3r_bsp_audio_input_source_t;
 
 // Initialize the audio subsystem of the badge, including the codec and I2S data

@@ -34,7 +34,6 @@ class TinySampler(Application):
             self.blm = bl00mbox.Channel("tiny sampler")
         self.samplers: List[bl00mbox.patches._Patch | Any] = [None] * 5
         self.line_in = self.blm.new(bl00mbox.plugins.bl00mbox_line_in)
-        self.line_in.signals.gain = 32000
         for i in range(5):
             self.samplers[i] = self.blm.new(bl00mbox.patches.sampler, 1000)
             self.samplers[i].signals.output = self.blm.mixer
@@ -208,6 +207,20 @@ class TinySampler(Application):
                 elif not ct.petals[i].pressed and self.ct_prev.petals[i].pressed:
                     self.release_event[i] = True
 
+        if self.mode == 0:
+            if self.orig_source == audio.INPUT_SOURCE_NONE:
+                if audio.input_engine_get_source_avail(audio.INPUT_SOURCE_ONBOARD_MIC):
+                    audio.input_engine_set_source(audio.INPUT_SOURCE_ONBOARD_MIC)
+                else:
+                    audio.input_engine_set_source(audio.INPUT_SOURCE_AUTO)
+            else:
+                if audio.input_engine_get_source_avail(self.orig_source):
+                    audio.input_engine_set_source(audio.self.orig_source)
+                else:
+                    audio.input_engine_set_source(audio.INPUT_SOURCE_AUTO)
+        else:
+            audio.input_engine_set_source(audio.INPUT_SOURCE_NONE)
+
         if self.mode == 0 or release_all:
             for i in range(5):
                 if not self.is_recording[i]:
@@ -268,18 +281,18 @@ class TinySampler(Application):
         self.ct_prev = ct
 
     def on_enter(self, vm) -> None:
-        self.mode = 0
         super().on_enter(vm)
-        audio.input_set_source(audio.INPUT_SOURCE_ONBOARD_MIC)
+        self.mode = 0
+        self.orig_source = audio.input_engine_get_source()
         if self.blm is None:
             self._build_synth()
 
     def on_exit(self) -> None:
+        audio.input_engine_set_source(self.orig_source)
         for i in range(5):
             if self.is_recording[i]:
                 self.samplers[i].signals.rec_trigger.stop()
                 self.is_recording[i] = False
-        audio.input_set_source(audio.INPUT_SOURCE_NONE)
         if self.blm is not None:
             self.blm.clear()
             self.blm.free = True

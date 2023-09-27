@@ -71,9 +71,57 @@ def get_mute() -> bool:
     return _muted
 
 
-def headset_set_gain_dB(v: float) -> None:
+def headset_mic_set_gain_dB(v: float) -> None:
     pass
 
 
-def headset_get_gain_dB() -> float:
+def headset_mic_get_gain_dB() -> float:
     return 10
+
+
+def onboard_mic_set_gain_dB(v: float) -> None:
+    pass
+
+
+def onboard_mic_get_gain_dB() -> float:
+    return 10
+
+
+def line_in_set_gain_dB(v: float) -> None:
+    pass
+
+
+def line_in_get_gain_dB() -> float:
+    return 10
+
+
+def headset_mic_set_allowed(v: bool) -> None:
+    pass
+
+
+def onboard_mic_set_allowed(v: bool) -> None:
+    pass
+
+
+def line_in_set_allowed(v: bool) -> None:
+    pass
+
+
+def onboard_mic_to_speaker_set_allowed(v: bool) -> None:
+    pass
+
+
+def headget_mic_get_allowed() -> bool:
+    return True
+
+
+def onboard_mic_get_allowed() -> bool:
+    return True
+
+
+def line_in_get_allowed() -> bool:
+    return True
+
+
+def onboard_mic_to_speaker_get_allowed() -> bool:
+    return False

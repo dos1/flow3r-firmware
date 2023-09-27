@@ -13,49 +13,69 @@ class Drawable:
         self.y = 0
         self.font_size = 20
         self.active = False
-        # override these w ur own val :3
-        self.focused_widget = 2
         self.mid_x = 30
         self.num_widgets = 2
         self.overhang = -70
         self.line_height = 24
         self.ctx = None
         self.press = press
+        self.focus_pos_limit_min = -60
+        self.focus_pos_limit_max = 60
+        self.focus_pos_limit_first = -60
+        self.focus_pos_limit_last = 80
+        self.first_widget_pos = 0
+        self.last_widget_pos = 0
+        self.focus_widget_pos_min = 0
+        self.focus_widget_pos_max = 0
+        self._focus_widget = 2
+        self._focus_widget_prev = 1
 
-    def draw_heading(self, label):
+    @property
+    def focus_widget(self):
+        return self._focus_widget
+
+    @property
+    def focus_widget_prev(self):
+        return self._focus_widget_prev
+
+    @focus_widget.setter
+    def focus_widget(self, val):
+        if val < 2:
+            val = 2
+        if val > self.num_widgets - 1:
+            val = self.num_widgets - 1
+        self._focus_widget_prev = self._focus_widget
+        self._focus_widget = val
+
+    @property
+    def at_first_widget(self):
+        return self.focus_widget <= 2
+
+    @property
+    def at_last_widget(self):
+        return self.focus_widget >= (self.num_widgets - 1)
+
+    def draw_heading(self, label, col=(0.8, 0.8, 0.8), embiggen=6, margin=2):
         ctx = self.ctx
         if ctx is None:
             return
         self.widget_no += 1
-        if not self.active:
-            if self.press.select_pressed and self.focused_widget > 0:
-                self.active = True
-                self.press.select_pressed = False
-            elif self.press.left_pressed:
-                self.focused_widget -= 1
-                if self.focused_widget < 2:
-                    self.focused_widget = 2
-                self.press.left_pressed = False
-            elif self.press.right_pressed:
-                self.focused_widget += 1
-                if self.focused_widget > self.num_widgets - 1:
-                    self.focused_widget = self.num_widgets - 1
-                self.press.right_pressed = False
-        if self.widget_no == self.focused_widget and not self.active:
-            ctx.rectangle(-130, int(self.y - self.font_size * 0.8), 260, self.font_size)
-            ctx.line_width = 2.0
-            ctx.rgba(*colours.GO_GREEN, 1.0)
-            ctx.stroke()
+        self.y += embiggen + margin
+        if self.widget_no == self.focus_widget:
+            if self.focus_widget > self.focus_widget_prev:
+                self.focus_widget += 1
+            else:
+                self.focus_widget -= 1
         ctx.gray(1)
         ctx.move_to(self.mid_x, self.y)
         ctx.save()
-        ctx.rgb(0.8, 0.8, 0.8)
+        ctx.rgb(*col)
         ctx.move_to(0, self.y)
         ctx.text_align = ctx.CENTER
-        ctx.font_size += 6
+        ctx.font_size += embiggen
         ctx.text(label)
         ctx.restore()
-        self.y += self.line_height + 8
+        self.y += self.line_height + embiggen + margin
 
     def draw_widget(self, label):
         ctx = self.ctx
@@ -63,24 +83,25 @@ class Drawable:
             return
         self.widget_no += 1
         if not self.active:
-            if self.press.select_pressed and self.focused_widget > 0:
+            if self.press.select_pressed and self.focus_widget > 0:
                 self.active = True
                 self.press.select_pressed = False
             elif self.press.left_pressed:
-                self.focused_widget -= 1
-                if self.focused_widget < 2:
-                    self.focused_widget = 2
+                self.focus_widget -= 1
                 self.press.left_pressed = False
             elif self.press.right_pressed:
-                self.focused_widget += 1
-                if self.focused_widget > self.num_widgets - 1:
-                    self.focused_widget = self.num_widgets - 1
+                self.focus_widget += 1
                 self.press.right_pressed = False
-        if self.widget_no == self.focused_widget and not self.active:
-            ctx.rectangle(-130, int(self.y - self.font_size * 0.8), 260, self.font_size)
-            ctx.line_width = 2.0
-            ctx.rgba(*colours.GO_GREEN, 1.0)
-            ctx.stroke()
+        if self.widget_no == self.focus_widget:
+            self.focus_widget_pos_min = self.y
+            if not self.active:
+                ctx.rectangle(
+                    -130, int(self.y - self.font_size * 0.8), 260, self.font_size
+                )
+                ctx.line_width = 2.0
+                ctx.rgba(*colours.GO_GREEN, 1.0)
+                ctx.stroke()
+            self.focus_widget_pos_max = self.y + self.line_height
         ctx.gray(1)
         ctx.move_to(self.mid_x, self.y)
         ctx.save()
@@ -95,7 +116,7 @@ class Drawable:
         if ctx is None:
             return
         self.draw_widget(label)
-        if self.widget_no == self.focused_widget and self.active:
+        if self.widget_no == self.focus_widget and self.active:
             if self.press.left_pressed:
                 no -= 1
                 if no < 0:
@@ -108,7 +129,7 @@ class Drawable:
                 self.active = False
                 self.press.select_pressed = False
         for a in range(len(choices)):
-            if a == no and self.active and self.widget_no == self.focused_widget:
+            if a == no and self.active and self.widget_no == self.focus_widget:
                 ctx.save()
                 ctx.rgba(*colours.GO_GREEN, 1.0)
                 ctx.rectangle(
@@ -135,13 +156,13 @@ class Drawable:
                 ctx.text(choices[a] + " ")
         return no
 
-    def draw_number(self, label, step_size, no, unit=""):
+    def draw_number(self, label, step_size, no, unit="", val_col=(0.8, 0.8, 0.8)):
         ctx = self.ctx
         if ctx is None:
             return
         self.draw_widget(label)
         ret = no
-        if self.widget_no == self.focused_widget and self.active:
+        if self.widget_no == self.focus_widget and self.active:
             if self.press.left_pressed:
                 ret -= step_size
             elif self.press.right_pressed:
@@ -150,7 +171,7 @@ class Drawable:
                 self.active = False
                 self.press.select_pressed = False
 
-        if self.active and self.widget_no == self.focused_widget:
+        if self.active and self.widget_no == self.focus_widget:
             ctx.save()
             ctx.rgba(*colours.GO_GREEN, 1.0)
             ctx.rectangle(
@@ -160,24 +181,57 @@ class Drawable:
                 self.font_size,
             ).stroke()
             ctx.restore()
-            ctx.text(str(no)[:4] + unit)
-        else:
-            ctx.text(str(no)[:4] + unit)
+
+        ctx.save()
+        ctx.rgb(*val_col)
+        ctx.text(str(no)[:4] + unit)
+        ctx.restore()
         return ret
 
-    def draw_boolean(self, label, value, on_str="on", off_str="off"):
+    def draw_boolean(
+        self,
+        label,
+        value,
+        on_str="on",
+        off_str="off",
+        val_col=(0.8, 0.8, 0.8),
+        on_hint=None,
+        off_hint=None,
+    ):
         ctx = self.ctx
         if ctx is None:
             return
         self.draw_widget(label)
-        if self.widget_no == self.focused_widget and self.active:
+        if self.widget_no == self.focus_widget and self.active:
             value = not value
             self.active = False
 
+        ctx.save()
+        ctx.rgb(*val_col)
         if value:
             ctx.text(on_str)
         else:
             ctx.text(off_str)
+        ctx.restore()
+        if self.widget_no == self.focus_widget:
+            if value:
+                hint = on_hint
+            else:
+                hint = off_hint
+            if hint is not None:
+                ctx.save()
+                ctx.font_size -= 4
+                ctx.text_align = ctx.CENTER
+                ctx.rgb(0.9, 0.9, 0.9)
+                lines = hint.split("\n")
+                self.y -= 3
+                for line in lines:
+                    ctx.move_to(0, self.y)
+                    ctx.text(line)
+                    self.y += self.line_height - 5
+                ctx.restore()
+                if self.y > 115:
+                    self.focus_widget_pos_max = self.y
         return value
 
     def draw_bg(self):
@@ -186,25 +240,29 @@ class Drawable:
             return
         ctx.gray(1.0)
         ctx.move_to(-100, -80)
-        wig = self.focused_widget - 1
-        if wig < 2:
-            wig = 2
-        if wig > self.num_widgets - 3:
-            wig = self.num_widgets - 3
-        focus_pos = self.overhang + (wig - 0.5) * self.line_height
-        if focus_pos > 40:
-            self.overhang -= 7
-        if focus_pos < -40:
-            self.overhang += 7
+        scroll_val = 0
+        scroll_speed = 7
+        if self.at_last_widget:
+            if self.focus_widget_pos_max > self.focus_pos_limit_last:
+                scroll_val = -self.focus_widget_pos_max + self.focus_pos_limit_last
+        elif self.at_first_widget:
+            if self.focus_widget_pos_min < self.focus_pos_limit_first:
+                scroll_val = 9999
+        elif self.focus_widget_pos_max > self.focus_pos_limit_max:
+            scroll_val = -9999
+        elif self.focus_widget_pos_min < self.focus_pos_limit_min:
+            scroll_val = 9999
+
+        if scroll_val > 0:
+            self.overhang += min(scroll_val, scroll_speed)
+        else:
+            self.overhang += max(scroll_val, -scroll_speed)
+
         self.y = self.overhang
         self.widget_no = 0
         ctx.rectangle(-120, -120, 240, 240)
         ctx.gray(0)
         ctx.fill()
-        ctx.save()
-        ctx.font_size = 20
-        ctx.gray(0.8)
-        ctx.restore()
         ctx.font_size = self.font_size
 
 
@@ -226,9 +284,12 @@ class SpeakerMenu(Submenu):
     def __init__(self, press):
         super().__init__(press)
         self.num_widgets = 6
-        self.focused_widget = 2
         self.overhang = -40
         self.mid_x = 50
+        self.focus_pos_limit_min = -100
+        self.focus_pos_limit_max = 100
+        self.focus_pos_limit_first = -100
+        self.focus_pos_limit_last = 100
 
     def _draw(self, ctx):
         self.ctx = ctx
@@ -272,9 +333,12 @@ class HeadphonesMenu(Submenu):
     def __init__(self, press):
         super().__init__(press)
         self.num_widgets = 5
-        self.focused_widget = 2
         self.overhang = -40
         self.mid_x = 50
+        self.focus_pos_limit_min = -100
+        self.focus_pos_limit_max = 100
+        self.focus_pos_limit_first = -100
+        self.focus_pos_limit_last = 100
 
     def _draw(self, ctx):
         self.ctx = ctx
@@ -316,9 +380,12 @@ class VolumeControlMenu(Submenu):
     def __init__(self, press):
         super().__init__(press)
         self.num_widgets = 6
-        self.focused_widget = 2
         self.overhang = -40
         self.mid_x = 25
+        self.focus_pos_limit_min = -100
+        self.focus_pos_limit_max = 100
+        self.focus_pos_limit_first = -100
+        self.focus_pos_limit_last = 100
 
     def _draw(self, ctx):
         self.ctx = ctx
@@ -370,21 +437,121 @@ class VolumeControlMenu(Submenu):
 class InputMenu(Submenu):
     def __init__(self, press):
         super().__init__(press)
-        self.num_widgets = 6
-        self.focused_widget = 2
-        self.overhang = -40
-        self.mid_x = 50
+        self.num_widgets = 11
+        self.overhang = -85
+        self.mid_x = 0
 
     def _draw(self, ctx):
         self.ctx = ctx
         self.draw_bg()
-        self.draw_heading("inputs")
-        tmp = self.draw_number(
-            "headset gain", 1, int(settings.num_headset_gain_db.value), unit="dB"
+
+        avail_col = (0.0, 0.9, 0.6)
+        warn_col = (0.9, 0.0, 0.0)
+        allow_col = (0.0, 0.7, 0.5)
+        not_allow_col = (0.8, 0.3, 0.3)
+        not_avail_col = (0.6, 0.6, 0.6)
+
+        self.draw_heading("line in", embiggen=5, margin=0)
+        if audio.line_in_get_allowed():
+            if audio.input_engine_get_source_avail(audio.INPUT_SOURCE_LINE_IN):
+                col = avail_col
+            else:
+                col = allow_col
+        else:
+            col = not_allow_col
+        tmp = self.draw_boolean(
+            "line in",
+            settings.onoff_line_in_allowed.value,
+            on_str="allowed",
+            off_str="blocked",
+            val_col=col,
         )
-        if settings.num_headset_gain_db.value != tmp:
-            audio.headset_set_gain_dB(int(tmp))
-            settings.num_headset_gain_db.set_value(audio.headset_get_gain_dB())
+        if settings.onoff_line_in_allowed.value != tmp:
+            audio.line_in_set_allowed(tmp)
+            settings.onoff_line_in_allowed.set_value(tmp)
+
+        tmp = self.draw_number(
+            "gain",
+            1.5,
+            float(settings.num_line_in_gain_db.value),
+            unit="dB",
+        )
+        if settings.num_line_in_gain_db.value != tmp:
+            audio.line_in_set_gain_dB(tmp)
+            settings.num_line_in_gain_db.set_value(audio.line_in_get_gain_dB())
+
+        self.draw_heading("headset mic", embiggen=5, margin=0)
+
+        if audio.headset_mic_get_allowed():
+            if audio.input_engine_get_source_avail(audio.INPUT_SOURCE_HEADSET_MIC):
+                col = avail_col
+            else:
+                col = allow_col
+        else:
+            col = not_allow_col
+        tmp = self.draw_boolean(
+            "access",
+            settings.onoff_headset_mic_allowed.value,
+            on_str="allowed",
+            off_str="blocked",
+            val_col=col,
+        )
+        if settings.onoff_headset_mic_allowed.value != tmp:
+            audio.headset_mic_set_allowed(tmp)
+            settings.onoff_headset_mic_allowed.set_value(tmp)
+
+        tmp = self.draw_number(
+            "gain",
+            1.5,
+            float(settings.num_headset_mic_gain_db.value),
+            unit="dB",
+        )
+        if settings.num_headset_mic_gain_db.value != tmp:
+            tmp = audio.headset_mic_set_gain_dB(tmp)
+            settings.num_headset_mic_gain_db.set_value(tmp)
+
+        self.draw_heading("onboard mic", embiggen=5, margin=0)
+
+        if audio.onboard_mic_get_allowed():
+            col = avail_col
+        else:
+            col = not_allow_col
+        tmp = self.draw_boolean(
+            "access",
+            settings.onoff_onboard_mic_allowed.value,
+            on_str="allowed",
+            off_str="blocked",
+            val_col=col,
+        )
+        if settings.onoff_onboard_mic_allowed.value != tmp:
+            audio.onboard_mic_set_allowed(tmp)
+            settings.onoff_onboard_mic_allowed.set_value(tmp)
+
+        tmp = self.draw_number(
+            "gain",
+            1.5,
+            float(settings.num_onboard_mic_gain_db.value),
+            unit="dB",
+        )
+        if settings.num_onboard_mic_gain_db.value != tmp:
+            tmp = audio.onboard_mic_set_gain_dB(tmp)
+            settings.num_onboard_mic_gain_db.set_value(tmp)
+
+        if not audio.onboard_mic_to_speaker_get_allowed():
+            col = not_allow_col
+        else:
+            col = warn_col
+        tmp = self.draw_boolean(
+            "thru",
+            settings.onoff_onboard_mic_to_speaker_allowed.value,
+            on_str="allow",
+            off_str="phones",
+            val_col=col,
+            on_hint=" /!\ feedback possible /!\ ",
+        )
+        if settings.onoff_onboard_mic_to_speaker_allowed.value != tmp:
+            audio.onboard_mic_to_speaker_set_allowed(tmp)
+            settings.onoff_onboard_mic_to_speaker_allowed.set_value(tmp)
 
 
 class Press:
