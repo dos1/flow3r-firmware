@@ -141,11 +141,15 @@ static void mp3_draw(st3m_media *media, Ctx *ctx) {
 static void mp3_think(st3m_media *media, float ms_elapsed) {
     mp3_state *self = (void *)media;
 
-    if (self->file && self->control.seek == 0) {
-        rewind(self->file);
-        self->offset = 0;
+    if (self->file && self->control.seek >= 0) {
+        float seek = self->control.seek;
+        if (seek > self->control.duration) {
+            seek = self->control.duration;
+        }
+        fseek(self->file, seek, SEEK_SET);
+        self->offset = seek;
         self->control.time = 0;
-        self->control.position = 0;
+        self->control.position = self->offset;
         self->control.seek = -1;
         mp3dec_init(&self->mp3d);
     }
