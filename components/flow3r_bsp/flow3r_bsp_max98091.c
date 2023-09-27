@@ -262,8 +262,6 @@ void flow3r_bsp_max98091_input_set_source(
             max98091_check(MAX98091_LEFT_ADC_MIXER, 0);
             max98091_check(MAX98091_RIGHT_ADC_MIXER, 0);
             break;
-        case flow3r_bsp_audio_input_source_auto:
-            break;
     }
 }
 

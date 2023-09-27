@@ -281,29 +281,25 @@ static void _audio_input_set_source(st3m_audio_input_source_t source) {
     st3m_audio_input_source_t prev_source = state.source;
     UNLOCK;
     if (source == prev_source) return;
-
-    flow3r_bsp_audio_input_source_t fsource;
-    switch (source) {
-        case st3m_audio_input_source_line_in:
-            fsource = flow3r_bsp_audio_input_source_line_in;
-            break;
-        case st3m_audio_input_source_onboard_mic:
-            fsource = flow3r_bsp_audio_input_source_onboard_mic;
-            break;
-        case st3m_audio_input_source_headset_mic:
-            fsource = flow3r_bsp_audio_input_source_headset_mic;
-            break;
-        case st3m_audio_input_source_none:
-            fsource = flow3r_bsp_audio_input_source_none;
-            break;
-        case st3m_audio_input_source_auto:
-            fsource = flow3r_bsp_audio_input_source_none;
-            break;
-    }
     LOCK;
     state.source = source;
     UNLOCK;
-    flow3r_bsp_audio_input_set_source(fsource);
+    switch (source) {
+        case st3m_audio_input_source_line_in:
+            flow3r_bsp_audio_input_set_source(
+                flow3r_bsp_audio_input_source_line_in);
+            break;
+        case st3m_audio_input_source_onboard_mic:
+            flow3r_bsp_audio_input_set_source(
+                flow3r_bsp_audio_input_source_onboard_mic);
+            break;
+        case st3m_audio_input_source_headset_mic:
+            flow3r_bsp_audio_input_set_source(
+                flow3r_bsp_audio_input_source_headset_mic);
+            break;
+        default:
+            break;
+    }
 }
 
 static bool _check_engine_source_avail(st3m_audio_input_source_t source) {
@@ -359,40 +355,12 @@ void _update_engine_source() {
             source = st3m_audio_input_source_none;
         }
     }
-    bool avail = _check_engine_source_avail(source);
-    UNLOCK;
-    source = avail ? source : st3m_audio_input_source_none;
-    LOCK;
-    bool return_early = state.source == source;
+    bool switch_source = _check_engine_source_avail(source);
+    source = switch_source ? source : st3m_audio_input_source_none;
+    switch_source = switch_source && (state.engine_source != source);
     state.engine_source = source;
     UNLOCK;
-    if (return_early) return;
-
-    if (avail) {
-        switch (source) {
-            case st3m_audio_input_source_none:
-                break;
-            case st3m_audio_input_source_auto:
-                break;
-            case st3m_audio_input_source_line_in:
-                if (avail) {
-                    _audio_input_set_source(st3m_audio_input_source_line_in);
-                }
-                break;
-            case st3m_audio_input_source_headset_mic:
-                if (avail) {
-                    _audio_input_set_source(
-                        st3m_audio_input_source_headset_mic);
-                }
-                break;
-            case st3m_audio_input_source_onboard_mic:
-                if (avail) {
-                    _audio_input_set_source(
-                        st3m_audio_input_source_onboard_mic);
-                }
-                break;
-        }
-    }
+    if (switch_source) _audio_input_set_source(source);
 }
 
 void st3m_audio_input_engine_set_source(st3m_audio_input_source_t source) {
@@ -440,7 +408,9 @@ void _update_thru_source() {
     LOCK;
     source = state.thru_target_source;
     if (source == st3m_audio_input_source_auto) {
-        if (state.engine_source != st3m_audio_input_source_none) {
+        if ((state.engine_source != st3m_audio_input_source_none) &&
+            ((state.engine_source != st3m_audio_input_source_onboard_mic) ||
+             (state.jacksense.headphones))) {
             source = state.engine_source;
         } else if (_check_thru_source_avail(st3m_audio_input_source_line_in)) {
             source = st3m_audio_input_source_line_in;
@@ -448,59 +418,32 @@ void _update_thru_source() {
                        st3m_audio_input_source_headset_mic)) {
             source = st3m_audio_input_source_headset_mic;
         } else if (_check_thru_source_avail(
-                       st3m_audio_input_source_onboard_mic)) {
+                       st3m_audio_input_source_onboard_mic) &&
+                   (state.jacksense.headphones)) {
             source = st3m_audio_input_source_onboard_mic;
         } else {
             source = st3m_audio_input_source_none;
         }
     }
 
-    bool avail = _check_thru_source_avail(source);
-    UNLOCK;
-    source = avail ? source : st3m_audio_input_source_none;
+    bool switch_source = _check_thru_source_avail(source);
+    source = switch_source ? source : st3m_audio_input_source_none;
 
-    bool return_flag = false;
-    LOCK;
     if (state.engine_source != st3m_audio_input_source_none) {
         if (state.engine_source == source) {
             state.thru_source = state.engine_source;
         } else {
             state.thru_source = st3m_audio_input_source_none;
         }
-        return_flag = true;
+        switch_source = false;
     }
     state.thru_source = source;
     if (state.thru_source == state.source) {
-        return_flag = true;
+        switch_source = false;
     }
     UNLOCK;
-    if (return_flag) return;
 
-    switch (source) {
-        case st3m_audio_input_source_none:
-            if (avail) {
-                _audio_input_set_source(st3m_audio_input_source_none);
-            }
-            break;
-        case st3m_audio_input_source_line_in:
-            if (avail) {
-                _audio_input_set_source(st3m_audio_input_source_line_in);
-            }
-            break;
-        case st3m_audio_input_source_headset_mic:
-            if (avail) {
-                _audio_input_set_source(st3m_audio_input_source_headset_mic);
-            }
-            break;
-        case st3m_audio_input_source_onboard_mic:
-            if (avail) {
-                _audio_input_set_source(st3m_audio_input_source_onboard_mic);
-            }
-            break;
-        case st3m_audio_input_source_auto:
-            // should not be possible
-            break;
-    }
+    if (switch_source) _audio_input_set_source(source);
 }
 
 void st3m_audio_input_thru_set_source(st3m_audio_input_source_t source) {
@@ -603,7 +546,7 @@ static void _audio_player_task(void *data) {
 
         // <RX SIGNAL PREPROCESSING>
 
-        int16_t rx_gain = 256;  // unity
+        int32_t rx_gain = 256;  // unity
         uint8_t rx_chan = 3;    // stereo = 0; left = 1; right = 2; off = 3;
         if (source != source_prev) {
             // state change: throw away buffer
@@ -630,7 +573,7 @@ static void _audio_player_task(void *data) {
             // keep stereo image
             for (uint16_t i = 0; i < FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2;
                  i++) {
-                buffer_rx[i] = (((int32_t)buffer_rx[i]) * rx_gain) >> 8;
+                buffer_rx[i] = (buffer_rx[i] * rx_gain) >> 8;
             }
         } else if (rx_chan < 3) {
             // mix one of the input channels to both rx stereo chans (easier
@@ -638,7 +581,7 @@ static void _audio_player_task(void *data) {
             for (uint16_t i = 0; i < FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2;
                  i++) {
                 uint16_t j = (i / 2) * 2 + rx_chan - 1;
-                buffer_rx[i] = (((int32_t)buffer_rx[j]) * rx_gain) >> 8;
+                buffer_rx[i] = (buffer_rx[j] * rx_gain) >> 8;
             }
         }
 
@@ -657,20 +600,22 @@ static void _audio_player_task(void *data) {
         // </ACTUAL ENGINE CALL>
 
         for (uint16_t i = 0; i < FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE; i++) {
-            st3m_scope_write(buffer_tx[2 * i] >> 2);
+            st3m_scope_write(
+                (buffer_tx[2 * i] + (uint32_t)buffer_tx[2 * i + 1]) >> 3);
         }
 
         for (int i = 0; i < (FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2); i += 1) {
             int32_t acc = buffer_tx[i];
 
-            acc = (acc * software_volume) >> 15;
-
             if ((thru_source != st3m_audio_input_source_none) &&
                 ((engine_source == thru_source) ||
                  (engine_source == st3m_audio_input_source_none)) &&
                 (!input_thru_mute)) {
-                acc += (((int32_t)buffer_rx[i]) * input_thru_vol_int) >> 15;
+                acc += (buffer_rx[i] * input_thru_vol_int) >> 15;
             }
+
+            acc = (acc * software_volume) >> 15;
+
             buffer_tx[i] = acc;
         }
 

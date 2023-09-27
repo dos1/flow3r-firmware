@@ -85,8 +85,12 @@ in the user config.
 
 .. py:data:: INPUT_SOURCE_AUTO
 
-    Stream data from available input, line in is preferred to headset mic is preferred to onboard mic.
-    For ``input_thru_source`` matching ``input_engine_source`` is preferred to line in.
+    Stream data from available input, ``INPUT_SOURCE_LINE_IN`` is preferred to ``INPUT_SOURCE_HEADSET_MIC``
+    is preferred to ``INPUT_SOURCE_ONBOARD_MIC``.
+
+    For ``input_thru_set_source()`` only: matching ``input_engine_get_source()`` unless it is
+    ``INPUT_SOURCE_NONE`` has highest preference, and ``INPUT_SOURCE_ONBOARD_MIC`` is never returned
+    when speakers are on even if access is permitted.
 
 .. py:function:: input_engine_set_source(source : int) -> int
 
