@@ -23,11 +23,41 @@ class TinySampler(Application):
         self.has_data_stored = [False] * 5
 
         self.ct_prev = captouch.read()
-        self.mode = 0
-        self._num_modes = 3
+        self._num_modes = 6
+        self._mode = 0
         self.press_event = [False] * 10
         self.release_event = [False] * 10
         self.pitch_shift = [0] * 5
+
+    def _check_mode_avail(self, mode):
+        if mode == 0:
+            return audio.input_engine_get_source_avail(audio.INPUT_SOURCE_ONBOARD_MIC)
+        if mode == 1:
+            return audio.input_engine_get_source_avail(audio.INPUT_SOURCE_LINE_IN)
+        if mode == 2:
+            return audio.input_engine_get_source_avail(audio.INPUT_SOURCE_HEADSET_MIC)
+        return True
+
+    @property
+    def mode(self):
+        return self._mode
+
+    @mode.setter
+    def mode(self, val):
+        val = val % self._num_modes
+        if self.mode == 0:
+            if val < 3:
+                direction = 1
+            else:
+                direction = -1
+        elif val > self.mode:
+            direction = 1
+        else:
+            direction = -1
+
+        while not self._check_mode_avail(val):
+            val = (val + direction) % self._num_modes
+        self._mode = val
 
     def _build_synth(self):
         if self.blm is None:
@@ -79,7 +109,49 @@ class TinySampler(Application):
             ctx.stroke()
         ctx.restore()
 
-    def draw_mode_0(self, ctx):
+    def draw_play_mode(self, ctx):
+        ctx.save()
+        dist = 90
+        ctx.line_width = 5
+        for i in range(5):
+            if not self.has_data[i]:
+                ctx.rgb(0.4, 0.4, 0.4)
+            elif self.is_playing[i] and audio.input_thru_get_mute():
+                ctx.rgb(0.2, 0.2, 0.9)
+            else:
+                ctx.rgb(0.8, 0.8, 0.8)
+            ctx.move_to(0, -dist)
+            ctx.rel_line_to(0, -8)
+            ctx.rel_line_to(11, 8)
+            ctx.rel_line_to(-11, 8)
+            ctx.rel_line_to(0, -8)
+            ctx.fill()
+            ctx.move_to(0, 12 - dist)
+            ctx.rel_line_to(11, 0)
+            ctx.stroke()
+            ctx.move_to(0, 0)
+
+            ctx.rotate(6.28 / 10)
+
+            if not self.has_data[i]:
+                ctx.rgb(0.4, 0.4, 0.4)
+            elif self.is_playing[i] and not audio.input_thru_get_mute():
+                ctx.rgb(0.2, 0.9, 0.2)
+            else:
+                ctx.rgb(0.8, 0.8, 0.8)
+
+            ctx.move_to(-7, -dist)
+            ctx.rel_line_to(0, -8)
+            ctx.rel_line_to(11, 8)
+            ctx.rel_line_to(-11, 8)
+            ctx.rel_line_to(0, -8)
+            ctx.fill()
+
+            ctx.move_to(0, 0)
+            ctx.rotate(6.28 / 10)
+        ctx.restore()
+
+    def draw_rec_mode(self, ctx):
         ctx.save()
         dist = 90
         ctx.line_width = 5
@@ -110,7 +182,7 @@ class TinySampler(Application):
             ctx.rotate(6.28 / 10)
         ctx.restore()
 
-    def draw_mode_1(self, ctx):
+    def draw_save_mode(self, ctx):
         ctx.save()
         dist = 80
         text_shift = 5
@@ -138,7 +210,7 @@ class TinySampler(Application):
             ctx.rotate(6.28 / 10 + 2 * rot_over)
         ctx.restore()
 
-    def draw_mode_2(self, ctx):
+    def draw_pitch_mode(self, ctx):
         ctx.save()
         dist = 80
         text_shift = 5
@@ -165,12 +237,31 @@ class TinySampler(Application):
         ctx.rgb(0.1, 0.5, 0.6)
         ctx.line_width = 6
         self.draw_two_petal_group(ctx, stop=5)
+        if self.mode < 3:
+            self.draw_rec_mode(ctx)
+        if self.mode == 3:
+            self.draw_play_mode(ctx)
+        elif self.mode == 4:
+            self.draw_save_mode(ctx)
+        elif self.mode == 5:
+            self.draw_pitch_mode(ctx)
+
+        ctx.text_align = ctx.CENTER
+        ctx.gray(0.8)
+        ctx.font_size = 18
         if self.mode == 0:
-            self.draw_mode_0(ctx)
+            ctx.move_to(0, 0)
+            ctx.text("onboard")
+            ctx.move_to(0, ctx.font_size)
+            ctx.text("mic")
         elif self.mode == 1:
-            self.draw_mode_1(ctx)
+            ctx.move_to(0, ctx.font_size / 2)
+            ctx.text("line in")
         elif self.mode == 2:
-            self.draw_mode_2(ctx)
+            ctx.move_to(0, 0)
+            ctx.text("headset")
+            ctx.move_to(0, ctx.font_size)
+            ctx.text("mic")
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
@@ -186,10 +277,10 @@ class TinySampler(Application):
         if self.blm is None:
             return
         if self.input.buttons.app.left.pressed:
-            self.mode = (self.mode - 1) % self._num_modes
+            self.mode -= 1
             release_all = True
         elif self.input.buttons.app.right.pressed:
-            self.mode = (self.mode + 1) % self._num_modes
+            self.mode += 1
             release_all = True
         else:
             release_all = False
@@ -208,20 +299,15 @@ class TinySampler(Application):
                     self.release_event[i] = True
 
         if self.mode == 0:
-            if self.orig_source == audio.INPUT_SOURCE_NONE:
-                if audio.input_engine_get_source_avail(audio.INPUT_SOURCE_ONBOARD_MIC):
-                    audio.input_engine_set_source(audio.INPUT_SOURCE_ONBOARD_MIC)
-                else:
-                    audio.input_engine_set_source(audio.INPUT_SOURCE_AUTO)
-            else:
-                if audio.input_engine_get_source_avail(self.orig_source):
-                    audio.input_engine_set_source(audio.self.orig_source)
-                else:
-                    audio.input_engine_set_source(audio.INPUT_SOURCE_AUTO)
+            audio.input_engine_set_source(audio.INPUT_SOURCE_ONBOARD_MIC)
+        elif self.mode == 1:
+            audio.input_engine_set_source(audio.INPUT_SOURCE_LINE_IN)
+        elif self.mode == 2:
+            audio.input_engine_set_source(audio.INPUT_SOURCE_HEADSET_MIC)
         else:
             audio.input_engine_set_source(audio.INPUT_SOURCE_NONE)
 
-        if self.mode == 0 or release_all:
+        if self.mode < 3 or release_all:
             for i in range(5):
                 if not self.is_recording[i]:
                     if self.press_event[i * 2]:
@@ -240,7 +326,24 @@ class TinySampler(Application):
                         self.samplers[i].signals.rec_trigger.stop()
                         self.is_recording[i] = False
                         self.has_data[i] = True
-        elif self.mode == 1 or release_all:
+        if self.mode == 3 or release_all:
+            for i in range(5):
+                if self.press_event[i * 2]:
+                    self.samplers[i].signals.trigger.start()
+                    self.is_playing[i] = True
+                    audio.input_thru_set_mute(True)
+                if self.release_event[i * 2]:
+                    self.samplers[i].signals.trigger.stop()
+                    self.is_playing[i] = False
+                    audio.input_thru_set_mute(False)
+            for i in range(5):
+                if self.press_event[i * 2 + 1]:
+                    self.samplers[i].signals.trigger.start()
+                    self.is_playing[i] = True
+                if self.release_event[i * 2 + 1]:
+                    self.samplers[i].signals.trigger.stop()
+                    self.is_playing[i] = False
+        elif self.mode == 4 or release_all:
             for i in range(5):
                 if self.press_event[i * 2]:
                     self.has_data_stored[i] = self.samplers[i].load(
@@ -254,7 +357,7 @@ class TinySampler(Application):
                             "tiny_sample_" + str(i) + ".wav", overwrite=True
                         ):
                             self.has_data_stored[i] = True
-        elif self.mode == 2 or release_all:
+        elif self.mode == 5 or release_all:
             for i in range(5):
                 if self.press_event[i * 2]:
                     self.samplers[i].plugins.sampler.signals.pitch_shift.tone += 1
@@ -282,13 +385,14 @@ class TinySampler(Application):
 
     def on_enter(self, vm) -> None:
         super().on_enter(vm)
-        self.mode = 0
         self.orig_source = audio.input_engine_get_source()
+        self.orig_thru_mute = audio.input_thru_get_mute()
         if self.blm is None:
             self._build_synth()
 
     def on_exit(self) -> None:
         audio.input_engine_set_source(self.orig_source)
+        audio.input_thru_set_mute(self.orig_thru_mute)
         for i in range(5):
             if self.is_recording[i]:
                 self.samplers[i].signals.rec_trigger.stop()

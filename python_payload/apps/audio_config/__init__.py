@@ -55,12 +55,14 @@ class Drawable:
     def at_last_widget(self):
         return self.focus_widget >= (self.num_widgets - 1)
 
-    def draw_heading(self, label, col=(0.8, 0.8, 0.8), embiggen=6, margin=2):
+    def draw_heading(
+        self, label, col=(0.8, 0.8, 0.8), embiggen=6, top_margin=2, bot_margin=2
+    ):
         ctx = self.ctx
         if ctx is None:
             return
         self.widget_no += 1
-        self.y += embiggen + margin
+        self.y += embiggen + top_margin
         if self.widget_no == self.focus_widget:
             if self.focus_widget > self.focus_widget_prev:
                 self.focus_widget += 1
@@ -75,7 +77,7 @@ class Drawable:
         ctx.font_size += embiggen
         ctx.text(label)
         ctx.restore()
-        self.y += self.line_height + embiggen + margin
+        self.y += self.line_height + embiggen + bot_margin
 
     def draw_widget(self, label):
         ctx = self.ctx
@@ -156,7 +158,7 @@ class Drawable:
                 ctx.text(choices[a] + " ")
         return no
 
-    def draw_number(self, label, step_size, no, unit="", val_col=(0.8, 0.8, 0.8)):
+    def draw_number(self, label, step_size, no, unit="", val_col=(1.0, 1.0, 1.0)):
         ctx = self.ctx
         if ctx is None:
             return
@@ -194,7 +196,7 @@ class Drawable:
         value,
         on_str="on",
         off_str="off",
-        val_col=(0.8, 0.8, 0.8),
+        val_col=(1.0, 1.0, 1.0),
         on_hint=None,
         off_hint=None,
     ):
@@ -438,8 +440,10 @@ class InputMenu(Submenu):
     def __init__(self, press):
         super().__init__(press)
         self.num_widgets = 11
-        self.overhang = -85
+        self.overhang = -89
         self.mid_x = 0
+        self.focus_pos_limit_max = 80
+        self.focus_pos_limit_last = 100
 
     def _draw(self, ctx):
         self.ctx = ctx
@@ -451,7 +455,7 @@ class InputMenu(Submenu):
         not_allow_col = (0.8, 0.3, 0.3)
         not_avail_col = (0.6, 0.6, 0.6)
 
-        self.draw_heading("line in", embiggen=5, margin=0)
+        self.draw_heading("line in", embiggen=5, top_margin=5, bot_margin=-4)
         if audio.line_in_get_allowed():
             if audio.input_engine_get_source_avail(audio.INPUT_SOURCE_LINE_IN):
                 col = avail_col
@@ -480,7 +484,7 @@ class InputMenu(Submenu):
             audio.line_in_set_gain_dB(tmp)
             settings.num_line_in_gain_db.set_value(audio.line_in_get_gain_dB())
 
-        self.draw_heading("headset mic", embiggen=5, margin=0)
+        self.draw_heading("headset mic", embiggen=5, top_margin=5, bot_margin=-4)
 
         if audio.headset_mic_get_allowed():
             if audio.input_engine_get_source_avail(audio.INPUT_SOURCE_HEADSET_MIC):
@@ -510,7 +514,7 @@ class InputMenu(Submenu):
             tmp = audio.headset_mic_set_gain_dB(tmp)
             settings.num_headset_mic_gain_db.set_value(tmp)
 
-        self.draw_heading("onboard mic", embiggen=5, margin=0)
+        self.draw_heading("onboard mic", embiggen=5, top_margin=5, bot_margin=-4)
 
         if audio.onboard_mic_get_allowed():
             col = avail_col

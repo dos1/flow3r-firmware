@@ -23,11 +23,11 @@ class App(Application):
         self.focused_widget = 1
         self.active = False
         self.num_widgets = 5
-        self.overhang = -20
+        self.overhang = -30
         self.line_height = 24
         self.input.buttons.app.left.repeat_enable(800, 300)
         self.input.buttons.app.right.repeat_enable(800, 300)
-        self.mid_x = 42
+        self.mid_x = 55
         self.led_accumulator_ms = 0
         self.blueish = False
 
@@ -106,17 +106,50 @@ class App(Application):
                 ctx.text(choices[a] + " ")
         return no
 
-    def draw_boolean(self, label, value, on_str="on", off_str="off"):
+    def draw_boolean(
+        self,
+        label,
+        value,
+        on_str="on",
+        off_str="off",
+        val_col=(1, 1, 1),
+        on_hint=None,
+        off_hint=None,
+    ):
         ctx = self.ctx
+        if ctx is None:
+            return
         self.draw_widget(label)
         if self.widget_no == self.focused_widget and self.active:
             value = not value
             self.active = False
 
+        ctx.save()
+        ctx.rgb(*val_col)
         if value:
             ctx.text(on_str)
         else:
             ctx.text(off_str)
+        ctx.restore()
+        if self.widget_no == self.focused_widget:
+            if value:
+                hint = on_hint
+            else:
+                hint = off_hint
+            if hint is not None:
+                ctx.save()
+                ctx.font_size -= 4
+                ctx.text_align = ctx.CENTER
+                ctx.rgb(0.9, 0.9, 0.9)
+                lines = hint.split("\n")
+                self.y -= 3
+                for line in lines:
+                    ctx.move_to(0, self.y)
+                    ctx.text(line)
+                    self.y += self.line_height - 5
+                ctx.restore()
+                if self.y > 115:
+                    self.focus_widget_pos_max = self.y
         return value
 
     def draw_number(self, label, step_size, no, unit=""):
@@ -217,7 +250,11 @@ class App(Application):
             leds.set_slew_rate(settings.num_leds_speed.value)
 
         tmp = self.draw_boolean(
-            "menu LEDs", settings.onoff_leds_random_menu.value, "random", "user"
+            "menu LEDs",
+            settings.onoff_leds_random_menu.value,
+            on_str="rng",
+            off_str="user",
+            off_hint="set pattern with LED Painter",
         )
         if tmp != settings.onoff_leds_random_menu.value:
             settings.onoff_leds_random_menu.set_value(tmp)
