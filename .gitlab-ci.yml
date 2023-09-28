@@ -33,6 +33,7 @@ build:
   stage: build
   script:
     - idf.py -g c23 build
+    - idf.py size
   artifacts:
     expose_as: 'firmware'
     paths: ['build/flow3r.bin']
@@ -43,6 +44,7 @@ build_recovery:
   script:
     - cd recovery
     - idf.py build
+    - idf.py size
   artifacts:
     expose_as: 'Recovery'
     paths: ['recovery/build/flow3r-recovery.bin', 'recovery/build/partition_table/partition-table.bin', 'recovery/build/bootloader/bootloader.bin']
