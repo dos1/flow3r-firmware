@@ -236,8 +236,8 @@ typedef struct {
     bool onboard_mic_allowed;
     bool line_in_allowed;
     bool onboard_mic_to_speaker_allowed;
-    st3m_audio_input_source_t engine_source;
-    st3m_audio_input_source_t engine_target_source;
+    st3m_audio_input_source_t engines_source;
+    st3m_audio_input_source_t engines_target_source;
     st3m_audio_input_source_t thru_source;
     st3m_audio_input_source_t thru_target_source;
     st3m_audio_input_source_t source;
@@ -298,8 +298,8 @@ static st3m_audio_state_t state = {
     .input_thru_vol_int = 32768,
     .input_thru_mute = false, // deprecated
 
-    .engine_target_source = st3m_audio_input_source_none,
-    .engine_source = st3m_audio_input_source_none,
+    .engines_target_source = st3m_audio_input_source_none,
+    .engines_source = st3m_audio_input_source_none,
     .thru_source = st3m_audio_input_source_none,
     .thru_target_source = st3m_audio_input_source_none,
     .source = st3m_audio_input_source_none,
@@ -339,7 +339,7 @@ static void _audio_input_set_source(st3m_audio_input_source_t source) {
     }
 }
 
-static bool _check_engine_source_avail(st3m_audio_input_source_t source) {
+static bool _check_engines_source_avail(st3m_audio_input_source_t source) {
     switch (source) {
         case st3m_audio_input_source_none:
             return true;
@@ -355,67 +355,67 @@ static bool _check_engine_source_avail(st3m_audio_input_source_t source) {
     return false;
 }
 
-bool st3m_audio_input_engine_get_source_avail(
+bool st3m_audio_input_engines_get_source_avail(
     st3m_audio_input_source_t source) {
     bool ret = false;
     if (source == st3m_audio_input_source_auto) {
         LOCK;
         ret =
-            ret || _check_engine_source_avail(st3m_audio_input_source_line_in);
+            ret || _check_engines_source_avail(st3m_audio_input_source_line_in);
         ret = ret ||
-              _check_engine_source_avail(st3m_audio_input_source_headset_mic);
+              _check_engines_source_avail(st3m_audio_input_source_headset_mic);
         ret = ret ||
-              _check_engine_source_avail(st3m_audio_input_source_onboard_mic);
+              _check_engines_source_avail(st3m_audio_input_source_onboard_mic);
         UNLOCK;
     } else {
         LOCK;
-        ret = _check_engine_source_avail(source);
+        ret = _check_engines_source_avail(source);
         UNLOCK;
     }
     return ret;
 }
 
-void _update_engine_source() {
+void _update_engines_source() {
     st3m_audio_input_source_t source;
     LOCK;
-    source = state.engine_target_source;
+    source = state.engines_target_source;
     if (source == st3m_audio_input_source_auto) {
-        if (_check_engine_source_avail(st3m_audio_input_source_line_in)) {
+        if (_check_engines_source_avail(st3m_audio_input_source_line_in)) {
             source = st3m_audio_input_source_line_in;
-        } else if (_check_engine_source_avail(
+        } else if (_check_engines_source_avail(
                        st3m_audio_input_source_headset_mic)) {
             source = st3m_audio_input_source_headset_mic;
-        } else if (_check_engine_source_avail(
+        } else if (_check_engines_source_avail(
                        st3m_audio_input_source_onboard_mic)) {
             source = st3m_audio_input_source_onboard_mic;
         } else {
             source = st3m_audio_input_source_none;
         }
     }
-    bool switch_source = _check_engine_source_avail(source);
+    bool switch_source = _check_engines_source_avail(source);
     source = switch_source ? source : st3m_audio_input_source_none;
-    switch_source = switch_source && (state.engine_source != source);
-    state.engine_source = source;
+    switch_source = switch_source && (state.engines_source != source);
+    state.engines_source = source;
     UNLOCK;
     if (switch_source) _audio_input_set_source(source);
 }
 
-void st3m_audio_input_engine_set_source(st3m_audio_input_source_t source) {
+void st3m_audio_input_engines_set_source(st3m_audio_input_source_t source) {
     LOCK;
-    state.engine_target_source = source;
+    state.engines_target_source = source;
     UNLOCK;
 }
 
 static bool _check_thru_source_avail(st3m_audio_input_source_t source) {
-    bool avail = _check_engine_source_avail(source);
+    bool avail = _check_engines_source_avail(source);
     if ((source == st3m_audio_input_source_onboard_mic) &&
         (!state.onboard_mic_to_speaker_allowed) &&
         (!state.jacksense.headphones)) {
         avail = false;
     }
 
-    if ((state.engine_source != st3m_audio_input_source_none) &&
-        (state.engine_source != source)) {
+    if ((state.engines_source != st3m_audio_input_source_none) &&
+        (state.engines_source != source)) {
         avail = false;
     }
     return avail;
@@ -445,10 +445,10 @@ void _update_thru_source() {
     LOCK;
     source = state.thru_target_source;
     if (source == st3m_audio_input_source_auto) {
-        if ((state.engine_source != st3m_audio_input_source_none) &&
-            ((state.engine_source != st3m_audio_input_source_onboard_mic) ||
+        if ((state.engines_source != st3m_audio_input_source_none) &&
+            ((state.engines_source != st3m_audio_input_source_onboard_mic) ||
              (state.jacksense.headphones))) {
-            source = state.engine_source;
+            source = state.engines_source;
         } else if (_check_thru_source_avail(st3m_audio_input_source_line_in)) {
             source = st3m_audio_input_source_line_in;
         } else if (_check_thru_source_avail(
@@ -466,9 +466,9 @@ void _update_thru_source() {
     bool switch_source = _check_thru_source_avail(source);
     source = switch_source ? source : st3m_audio_input_source_none;
 
-    if (state.engine_source != st3m_audio_input_source_none) {
-        if (state.engine_source == source) {
-            state.thru_source = state.engine_source;
+    if (state.engines_source != st3m_audio_input_source_none) {
+        if (state.engines_source == source) {
+            state.thru_source = state.engines_source;
         } else {
             state.thru_source = st3m_audio_input_source_none;
         }
@@ -513,7 +513,7 @@ void _update_sink() {
 static void _update_routing() {
     // order important
     _update_sink();
-    _update_engine_source();
+    _update_engines_source();
     _update_thru_source();
 }
 
@@ -560,7 +560,7 @@ static void _audio_player_task(void *data) {
     int16_t buffer_rx[FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2];
     int16_t buffer_rx_dummy[FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2];
     int32_t output_acc[FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2];
-    int16_t engine_tx[FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2];
+    int16_t engines_tx[FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2];
     memset(buffer_tx, 0, sizeof(buffer_tx));
     memset(buffer_rx, 0, sizeof(buffer_rx));
     memset(buffer_rx_dummy, 0, sizeof(buffer_rx_dummy));
@@ -592,7 +592,7 @@ static void _audio_player_task(void *data) {
             engines_mute[e] = state.engines_data[e].mute;
         }
         st3m_audio_input_source_t source = state.source;
-        st3m_audio_input_source_t engine_source = state.engine_source;
+        st3m_audio_input_source_t engines_source = state.engines_source;
         st3m_audio_input_source_t thru_source = state.thru_source;
         bool headphones = _headphones_connected();
         int32_t software_volume = headphones ? state.headphones.volume_software
@@ -640,12 +640,12 @@ static void _audio_player_task(void *data) {
             }
         }
 
-        int16_t *engine_rx;
+        int16_t *engines_rx;
 
-        if (engine_source == st3m_audio_input_source_none) {
-            engine_rx = buffer_rx_dummy;
+        if (engines_source == st3m_audio_input_source_none) {
+            engines_rx = buffer_rx_dummy;
         } else {
-            engine_rx = buffer_rx;
+            engines_rx = buffer_rx;
         }
         // </RX SIGNAL PREPROCESSING>
 
@@ -656,18 +656,18 @@ static void _audio_player_task(void *data) {
             // always run function even when muted, else the engine
             // might suffer from being deprived of the passage of time
             engines_active[e] = (*engines[e].render_fun)(
-                engine_rx, engine_tx, FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2);
+                engines_rx, engines_tx, FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2);
             if ((!engines_active[e]) || (!engines_vol[e]) || engines_mute[e])
                 continue;
             if (output_acc_uninit) {
                 for (uint16_t i = 0; i < FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2;
                      i++) {
-                    output_acc[i] = (engine_tx[i] * engines_vol[e]) >> 12;
+                    output_acc[i] = (engines_tx[i] * engines_vol[e]) >> 12;
                 }
             } else {
                 for (uint16_t i = 0; i < FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2;
                      i++) {
-                    output_acc[i] += (engine_tx[i] * engines_vol[e]) >> 12;
+                    output_acc[i] += (engines_tx[i] * engines_vol[e]) >> 12;
                 }
             }
             output_acc_uninit = false;
@@ -692,8 +692,8 @@ static void _audio_player_task(void *data) {
 
         for (int i = 0; i < (FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2); i += 1) {
             if ((thru_source != st3m_audio_input_source_none) &&
-                ((engine_source == thru_source) ||
-                 (engine_source == st3m_audio_input_source_none)) &&
+                ((engines_source == thru_source) ||
+                 (engines_source == st3m_audio_input_source_none)) &&
                 (!input_thru_mute)) {
                 output_acc[i] += (buffer_rx[i] * input_thru_vol_int) >> 15;
             }
@@ -767,12 +767,12 @@ GETTER(float, audio_headphones_get_maximum_volume_dB,
 GETTER(float, audio_speaker_get_maximum_volume_dB, state.speaker.volume_max)
 GETTER(bool, audio_headphones_get_mute, state.headphones.mute)
 GETTER(bool, audio_speaker_get_mute, state.speaker.mute)
-GETTER(st3m_audio_input_source_t, audio_input_engine_get_source,
-       state.engine_source)
+GETTER(st3m_audio_input_source_t, audio_input_engines_get_source,
+       state.engines_source)
 GETTER(st3m_audio_input_source_t, audio_input_thru_get_source,
        state.thru_source)
-GETTER(st3m_audio_input_source_t, audio_input_engine_get_target_source,
-       state.engine_target_source)
+GETTER(st3m_audio_input_source_t, audio_input_engines_get_target_source,
+       state.engines_target_source)
 GETTER(st3m_audio_input_source_t, audio_input_thru_get_target_source,
        state.thru_target_source)
 GETTER(st3m_audio_input_source_t, audio_input_get_source, state.source)

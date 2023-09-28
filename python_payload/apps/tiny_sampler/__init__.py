@@ -31,11 +31,11 @@ class TinySampler(Application):
 
     def _check_mode_avail(self, mode):
         if mode == 0:
-            return audio.input_engine_get_source_avail(audio.INPUT_SOURCE_ONBOARD_MIC)
+            return audio.input_engines_get_source_avail(audio.INPUT_SOURCE_ONBOARD_MIC)
         if mode == 1:
-            return audio.input_engine_get_source_avail(audio.INPUT_SOURCE_LINE_IN)
+            return audio.input_engines_get_source_avail(audio.INPUT_SOURCE_LINE_IN)
         if mode == 2:
-            return audio.input_engine_get_source_avail(audio.INPUT_SOURCE_HEADSET_MIC)
+            return audio.input_engines_get_source_avail(audio.INPUT_SOURCE_HEADSET_MIC)
         return True
 
     @property
@@ -305,13 +305,13 @@ class TinySampler(Application):
                     self.release_event[i] = True
 
         if self.mode == 0:
-            audio.input_engine_set_source(audio.INPUT_SOURCE_ONBOARD_MIC)
+            audio.input_engines_set_source(audio.INPUT_SOURCE_ONBOARD_MIC)
         elif self.mode == 1:
-            audio.input_engine_set_source(audio.INPUT_SOURCE_LINE_IN)
+            audio.input_engines_set_source(audio.INPUT_SOURCE_LINE_IN)
         elif self.mode == 2:
-            audio.input_engine_set_source(audio.INPUT_SOURCE_HEADSET_MIC)
+            audio.input_engines_set_source(audio.INPUT_SOURCE_HEADSET_MIC)
         else:
-            audio.input_engine_set_source(audio.INPUT_SOURCE_NONE)
+            audio.input_engines_set_source(audio.INPUT_SOURCE_NONE)
 
         if self.mode < 3 or release_all:
             for i in range(5):
@@ -397,7 +397,7 @@ class TinySampler(Application):
 
     def on_enter(self, vm) -> None:
         super().on_enter(vm)
-        self.orig_source = audio.input_engine_get_source()
+        self.orig_source = audio.input_engines_get_source()
         self.orig_thru_mute = audio.input_thru_get_mute()
         self._mode = self._num_modes - 1
         self.mode = 0
@@ -405,7 +405,7 @@ class TinySampler(Application):
             self._build_synth()
 
     def on_exit(self) -> None:
-        audio.input_engine_set_source(self.orig_source)
+        audio.input_engines_set_source(self.orig_source)
         audio.input_thru_set_mute(self.orig_thru_mute)
         for i in range(5):
             if self.is_recording[i]:

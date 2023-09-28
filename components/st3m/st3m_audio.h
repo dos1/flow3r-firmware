@@ -182,9 +182,9 @@ void st3m_audio_line_in_set_hardware_thru(bool enable);
  * a clock signal which is considered a good proxy for its capability of reading
  * data.
  */
-void st3m_audio_input_engine_set_source(st3m_audio_input_source_t source);
-st3m_audio_input_source_t st3m_audio_input_engine_get_source(void);
-st3m_audio_input_source_t st3m_audio_input_engine_get_target_source(void);
+void st3m_audio_input_engines_set_source(st3m_audio_input_source_t source);
+st3m_audio_input_source_t st3m_audio_input_engines_get_source(void);
+st3m_audio_input_source_t st3m_audio_input_engines_get_target_source(void);
 
 void st3m_audio_input_thru_set_source(st3m_audio_input_source_t source);
 st3m_audio_input_source_t st3m_audio_input_thru_get_source(void);
@@ -233,7 +233,8 @@ bool st3m_audio_line_in_get_allowed(void);
 void st3m_audio_onboard_mic_to_speaker_set_allowed(bool allowed);
 bool st3m_audio_onboard_mic_to_speaker_get_allowed(void);
 
-bool st3m_audio_input_engine_get_source_avail(st3m_audio_input_source_t source);
+bool st3m_audio_input_engines_get_source_avail(
+    st3m_audio_input_source_t source);
 bool st3m_audio_input_thru_get_source_avail(st3m_audio_input_source_t source);
 
 /*

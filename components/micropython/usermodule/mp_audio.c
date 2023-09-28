@@ -222,32 +222,32 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_line_in_is_connected_obj,
 
 // <INPUT SETUP>
 
-// engine
-STATIC mp_obj_t mp_input_engine_set_source(mp_obj_t source) {
-    st3m_audio_input_engine_set_source(mp_obj_get_int(source));
+// engines
+STATIC mp_obj_t mp_input_engines_set_source(mp_obj_t source) {
+    st3m_audio_input_engines_set_source(mp_obj_get_int(source));
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_input_engine_set_source_obj,
-                                 mp_input_engine_set_source);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_input_engines_set_source_obj,
+                                 mp_input_engines_set_source);
 
-STATIC mp_obj_t mp_input_engine_get_source(void) {
-    return mp_obj_new_int(st3m_audio_input_engine_get_source());
+STATIC mp_obj_t mp_input_engines_get_source(void) {
+    return mp_obj_new_int(st3m_audio_input_engines_get_source());
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_input_engine_get_source_obj,
-                                 mp_input_engine_get_source);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_input_engines_get_source_obj,
+                                 mp_input_engines_get_source);
 
-STATIC mp_obj_t mp_input_engine_get_target_source(void) {
-    return mp_obj_new_int(st3m_audio_input_engine_get_target_source());
+STATIC mp_obj_t mp_input_engines_get_target_source(void) {
+    return mp_obj_new_int(st3m_audio_input_engines_get_target_source());
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_input_engine_get_target_source_obj,
-                                 mp_input_engine_get_target_source);
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_input_engines_get_target_source_obj,
+                                 mp_input_engines_get_target_source);
 
-STATIC mp_obj_t mp_input_engine_get_source_avail(mp_obj_t source) {
+STATIC mp_obj_t mp_input_engines_get_source_avail(mp_obj_t source) {
     return mp_obj_new_int(
-        st3m_audio_input_engine_get_source_avail(mp_obj_get_int(source)));
+        st3m_audio_input_engines_get_source_avail(mp_obj_get_int(source)));
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_input_engine_get_source_avail_obj,
-                                 mp_input_engine_get_source_avail);
+STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_input_engines_get_source_avail_obj,
+                                 mp_input_engines_get_source_avail);
 
 // thru
 STATIC mp_obj_t mp_input_thru_set_source(mp_obj_t source) {
@@ -511,14 +511,14 @@ STATIC const mp_rom_map_elem_t mp_module_audio_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_line_in_is_connected),
       MP_ROM_PTR(&mp_line_in_is_connected_obj) },
 
-    { MP_ROM_QSTR(MP_QSTR_input_engine_set_source),
-      MP_ROM_PTR(&mp_input_engine_set_source_obj) },
-    { MP_ROM_QSTR(MP_QSTR_input_engine_get_source),
-      MP_ROM_PTR(&mp_input_engine_get_source_obj) },
-    { MP_ROM_QSTR(MP_QSTR_input_engine_get_target_source),
-      MP_ROM_PTR(&mp_input_engine_get_target_source_obj) },
-    { MP_ROM_QSTR(MP_QSTR_input_engine_get_source_avail),
-      MP_ROM_PTR(&mp_input_engine_get_source_avail_obj) },
+    { MP_ROM_QSTR(MP_QSTR_input_engines_set_source),
+      MP_ROM_PTR(&mp_input_engines_set_source_obj) },
+    { MP_ROM_QSTR(MP_QSTR_input_engines_get_source),
+      MP_ROM_PTR(&mp_input_engines_get_source_obj) },
+    { MP_ROM_QSTR(MP_QSTR_input_engines_get_target_source),
+      MP_ROM_PTR(&mp_input_engines_get_target_source_obj) },
+    { MP_ROM_QSTR(MP_QSTR_input_engines_get_source_avail),
+      MP_ROM_PTR(&mp_input_engines_get_source_avail_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_input_thru_set_source),
       MP_ROM_PTR(&mp_input_thru_set_source_obj) },
@@ -533,7 +533,7 @@ STATIC const mp_rom_map_elem_t mp_module_audio_globals_table[] = {
       MP_ROM_PTR(&mp_input_get_source_obj) },
     // TODO: DEPRECATE
     { MP_ROM_QSTR(MP_QSTR_input_set_source),
-      MP_ROM_PTR(&mp_input_engine_set_source_obj) },
+      MP_ROM_PTR(&mp_input_engines_set_source_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_headset_mic_set_gain_dB),
       MP_ROM_PTR(&mp_headset_mic_set_gain_dB_obj) },

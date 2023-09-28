@@ -457,7 +457,7 @@ class InputMenu(Submenu):
 
         self.draw_heading("line in", embiggen=5, top_margin=5, bot_margin=-4)
         if audio.line_in_get_allowed():
-            if audio.input_engine_get_source_avail(audio.INPUT_SOURCE_LINE_IN):
+            if audio.input_engines_get_source_avail(audio.INPUT_SOURCE_LINE_IN):
                 col = avail_col
             else:
                 col = allow_col
@@ -487,7 +487,7 @@ class InputMenu(Submenu):
         self.draw_heading("headset mic", embiggen=5, top_margin=5, bot_margin=-4)
 
         if audio.headset_mic_get_allowed():
-            if audio.input_engine_get_source_avail(audio.INPUT_SOURCE_HEADSET_MIC):
+            if audio.input_engines_get_source_avail(audio.INPUT_SOURCE_HEADSET_MIC):
                 col = avail_col
             else:
                 col = allow_col

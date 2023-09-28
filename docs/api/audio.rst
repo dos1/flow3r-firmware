@@ -90,24 +90,24 @@ in the user config.
     Stream data from available input, ``INPUT_SOURCE_LINE_IN`` is preferred to ``INPUT_SOURCE_HEADSET_MIC``
     is preferred to ``INPUT_SOURCE_ONBOARD_MIC``.
 
-    For ``input_thru_set_source()`` only: matching ``input_engine_get_source()`` unless it is
+    For ``input_thru_set_source()`` only: matching ``input_engines_get_source()`` unless it is
     ``INPUT_SOURCE_NONE`` has highest preference, and ``INPUT_SOURCE_ONBOARD_MIC`` is never returned
     when speakers are on even if access is permitted.
 
-.. py:function:: input_engine_set_source(source : int) -> int
+.. py:function:: input_engines_set_source(source : int) -> int
 
     Set up a continuous connection query for routing the given source to the input for the audio engines.
-    Check for success with ``input_engine_get_source()`` and clean up by passing ``INPUT_SOURCE_NONE``
+    Check for success with ``input_engines_get_source()`` and clean up by passing ``INPUT_SOURCE_NONE``
 
-.. py:function:: input_engine_get_target_source() -> int
+.. py:function:: input_engines_get_target_source() -> int
 
-    Returns target source last set with input_engine_set_source.
+    Returns target source last set with i``nput_engines_set_source()``.
 
-.. py:function:: input_engine_get_source() -> int
+.. py:function:: input_engines_get_source() -> int
 
     Returns source currently connected to the audio engines.
 
-.. py:function:: input_engine_get_source_avail(source : int) -> bool
+.. py:function:: input_engines_get_source_avail(source : int) -> bool
 
     Returns true if it is currently possible to connect the audio engines to a given source.
     If given ``INPUT_SOURCE_AUTO`` returns true if any source can be connected to the engines.
