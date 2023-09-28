@@ -4,7 +4,9 @@
 ================
 
 The audio module provides the backbone for handling basic audio bookkeeping such as volume and signal routing.
-Actual sound is created by the engines, i.e. bl00mbox and media player at the moment.
+Actual sound is created by the engines, i.e. bl00mbox and media player at the moment. If you wish to add your
+own C-based sound engine to flow3r, please check out the framework we have set up for that in
+``components/st3m/st3m_audio.*``.
 
 Jack Detection
 --------------

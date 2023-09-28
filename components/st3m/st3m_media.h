@@ -106,3 +106,5 @@ void st3m_media_set(const char *key, float value);
 // API for use in implementations
 // query how manu audio samples have been queued in the pcm output buffer
 int st3m_media_samples_queued(void);
+
+bool st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len);

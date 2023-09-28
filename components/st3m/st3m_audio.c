@@ -13,7 +13,46 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 
+#include "bl00mbox.h"
+#include "st3m_media.h"
+
 static const char *TAG = "st3m-audio";
+
+// TODO: clean up
+static void bl00mbox_init_wrapper(uint32_t sample_rate, uint16_t max_len) {
+    bl00mbox_init();
+}
+static bool bl00mbox_audio_render_wrapper(int16_t *rx, int16_t *tx,
+                                          uint16_t len) {
+    bl00mbox_audio_render(rx, tx, len);
+    return true;
+}
+
+/* You can add your own audio engine here by simply adding a valid struct to
+ * this list! For details about the fields check out st3m_audio.h.
+ */
+
+static const st3m_audio_engine_t engines[] = {
+    {
+        .name = "bl00mbox",
+        .render_fun = bl00mbox_audio_render_wrapper,
+        .init_fun = bl00mbox_init_wrapper,
+    },
+    {
+        .name = "media_audio",
+        .render_fun = st3m_media_audio_render,
+        .init_fun = NULL,
+    }
+};
+
+static const uint8_t num_engines =
+    (sizeof(engines)) / (sizeof(st3m_audio_engine_t));
+
+typedef struct {
+    int32_t volume;
+    bool mute;
+    bool active;  // whether the engine has been filling tx in the last run
+} _engine_data_t;
 
 #define TIMEOUT_MS 1000
 
@@ -203,13 +242,12 @@ typedef struct {
     st3m_audio_input_source_t thru_target_source;
     st3m_audio_input_source_t source;
 
+    _engine_data_t *engines_data;
+
     // Software-based audio pipe settings.
     int32_t input_thru_vol;
     int32_t input_thru_vol_int;
     bool input_thru_mute;
-
-    // Main player function callback.
-    st3m_audio_player_function_t function;
 } st3m_audio_state_t;
 
 SemaphoreHandle_t state_mutex;
@@ -265,7 +303,6 @@ static st3m_audio_state_t state = {
     .thru_source = st3m_audio_input_source_none,
     .thru_target_source = st3m_audio_input_source_none,
     .source = st3m_audio_input_source_none,
-    .function = st3m_audio_player_function_dummy,
 };
 
 // Returns whether we should be outputting audio through headphones. If not,
@@ -480,18 +517,29 @@ static void _update_routing() {
     _update_thru_source();
 }
 
-void st3m_audio_player_function_dummy(int16_t *rx, int16_t *tx, uint16_t len) {
-    for (uint16_t i = 0; i < len; i++) {
-        tx[i] = 0;
-    }
-}
-
 void st3m_audio_init(void) {
     state_mutex = xSemaphoreCreateRecursiveMutex();
     assert(state_mutex != NULL);
-    state.function = st3m_audio_player_function_dummy;
 
     flow3r_bsp_audio_init();
+    {
+        _engine_data_t *tmp = malloc(sizeof(_engine_data_t) * num_engines);
+        LOCK;
+        state.engines_data = tmp;
+        UNLOCK;
+    }
+
+    for (uint8_t i = 0; i < num_engines; i++) {
+        LOCK;
+        state.engines_data[i].volume = 4096;
+        state.engines_data[i].mute = false;
+        state.engines_data[i].active = false;  // is ignored by engine anyways
+        UNLOCK;
+        if (engines[i].init_fun != NULL) {
+            (*engines[i].init_fun)(FLOW3R_BSP_AUDIO_SAMPLE_RATE,
+                                   FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE);
+        }
+    }
 
     _update_routing();
     _output_apply(&state.speaker);
@@ -511,11 +559,13 @@ static void _audio_player_task(void *data) {
     int16_t buffer_tx[FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2];
     int16_t buffer_rx[FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2];
     int16_t buffer_rx_dummy[FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2];
+    int32_t output_acc[FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2];
+    int16_t engine_tx[FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2];
     memset(buffer_tx, 0, sizeof(buffer_tx));
     memset(buffer_rx, 0, sizeof(buffer_rx));
-    memset(buffer_rx_dummy, 0, sizeof(buffer_rx));
-    size_t count;
+    memset(buffer_rx_dummy, 0, sizeof(buffer_rx_dummy));
 
+    size_t count;
     st3m_audio_input_source_t source_prev = st3m_audio_input_source_none;
 
     while (true) {
@@ -532,12 +582,19 @@ static void _audio_player_task(void *data) {
             continue;
         }
 
+        int32_t engines_vol[num_engines];
+        bool engines_mute[num_engines];
+        bool engines_active[num_engines];
+
         LOCK;
+        for (uint8_t e = 0; e < num_engines; e++) {
+            engines_vol[e] = state.engines_data[e].volume;
+            engines_mute[e] = state.engines_data[e].mute;
+        }
         st3m_audio_input_source_t source = state.source;
         st3m_audio_input_source_t engine_source = state.engine_source;
         st3m_audio_input_source_t thru_source = state.thru_source;
         bool headphones = _headphones_connected();
-        st3m_audio_player_function_t function = state.function;
         int32_t software_volume = headphones ? state.headphones.volume_software
                                              : state.speaker.volume_software;
         bool input_thru_mute = state.input_thru_mute;
@@ -552,21 +609,19 @@ static void _audio_player_task(void *data) {
             // state change: throw away buffer
             source_prev = source;
             memset(buffer_rx, 0, sizeof(buffer_rx));
-        } else if (source == st3m_audio_input_source_headset_mic) {
-            // headset has its own gain thing going on, leave at unity
-            rx_chan = 1;
-        } else if (source == st3m_audio_input_source_line_in) {
+        } else {
             LOCK;
-            int16_t gain = state.line_in_gain_software;
+            if (source == st3m_audio_input_source_headset_mic) {
+                rx_gain = state.headset_mic_gain_software;
+                rx_chan = 0;  // not sure, don't have one here, need to test
+            } else if (source == st3m_audio_input_source_line_in) {
+                rx_gain = state.line_in_gain_software;
+                rx_chan = 0;
+            } else if (source == st3m_audio_input_source_onboard_mic) {
+                rx_gain = state.onboard_mic_gain_software;
+                rx_chan = 1;
+            }
             UNLOCK;
-            rx_gain = gain;
-            rx_chan = 0;
-        } else if (source == st3m_audio_input_source_onboard_mic) {
-            LOCK;
-            int16_t gain = state.onboard_mic_gain_software;
-            UNLOCK;
-            rx_gain = gain;
-            rx_chan = 1;
         }
 
         if (rx_chan == 0) {
@@ -592,32 +647,66 @@ static void _audio_player_task(void *data) {
         } else {
             engine_rx = buffer_rx;
         }
+        // </RX SIGNAL PREPROCESSING>
 
-        // <ACTUAL ENGINE CALL>
+        // <ACCUMULATING ENGINES>
 
-        (*function)(engine_rx, buffer_tx, FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2);
+        bool output_acc_uninit = true;
+        for (uint8_t e = 0; e < num_engines; e++) {
+            // always run function even when muted, else the engine
+            // might suffer from being deprived of the passage of time
+            engines_active[e] = (*engines[e].render_fun)(
+                engine_rx, engine_tx, FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2);
+            if ((!engines_active[e]) || (!engines_vol[e]) || engines_mute[e])
+                continue;
+            if (output_acc_uninit) {
+                for (uint16_t i = 0; i < FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2;
+                     i++) {
+                    output_acc[i] = (engine_tx[i] * engines_vol[e]) >> 12;
+                }
+            } else {
+                for (uint16_t i = 0; i < FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2;
+                     i++) {
+                    output_acc[i] += (engine_tx[i] * engines_vol[e]) >> 12;
+                }
+            }
+            output_acc_uninit = false;
+        }
+        if (output_acc_uninit) {
+            memset(output_acc, 0, sizeof(output_acc));
+        }
 
-        // </ACTUAL ENGINE CALL>
+        LOCK;
+        for (uint8_t e = 0; e < num_engines; e++) {
+            state.engines_data[e].active = engines_active[e];
+        }
+        UNLOCK;
+
+        // </ACCUMULATING ENGINES>
+
+        // <VOLUME AND THRU>
 
         for (uint16_t i = 0; i < FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE; i++) {
-            st3m_scope_write(
-                (buffer_tx[2 * i] + (uint32_t)buffer_tx[2 * i + 1]) >> 3);
+            st3m_scope_write((output_acc[2 * i] + output_acc[2 * i + 1]) >> 3);
         }
 
         for (int i = 0; i < (FLOW3R_BSP_AUDIO_DMA_BUFFER_SIZE * 2); i += 1) {
-            int32_t acc = buffer_tx[i];
-
             if ((thru_source != st3m_audio_input_source_none) &&
                 ((engine_source == thru_source) ||
                  (engine_source == st3m_audio_input_source_none)) &&
                 (!input_thru_mute)) {
-                acc += (buffer_rx[i] * input_thru_vol_int) >> 15;
+                output_acc[i] += (buffer_rx[i] * input_thru_vol_int) >> 15;
             }
 
-            acc = (acc * software_volume) >> 15;
+            output_acc[i] = (output_acc[i] * software_volume) >> 15;
 
-            buffer_tx[i] = acc;
+            if (output_acc[i] > 32767) output_acc[i] = 32767;
+            if (output_acc[i] < -32767) output_acc[i] = -32767;
+
+            buffer_tx[i] = output_acc[i];
         }
+
+        // </VOLUME AND THRU>
 
         flow3r_bsp_audio_write(buffer_tx, sizeof(buffer_tx), &count, 1000);
         if (count != sizeof(buffer_tx)) {
@@ -780,12 +869,6 @@ float st3m_audio_input_thru_set_volume_dB(float vol_dB) {
     state.input_thru_vol = vol_dB;
     UNLOCK;
     return vol_dB;
-}
-
-void st3m_audio_set_player_function(st3m_audio_player_function_t fun) {
-    LOCK;
-    state.function = fun;
-    UNLOCK;
 }
 
 bool st3m_audio_headphones_are_connected(void) {

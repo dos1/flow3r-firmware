@@ -17,12 +17,9 @@
 static st3m_media *audio_media = NULL;
 static TaskHandle_t media_task;
 static bool media_pending_destroy = false;
+static bool audio_inactive = true;
 
 static int16_t *audio_buffer = NULL;
-
-// XXX : it would be better to be able to push and pop the
-//       st3m_audio_player_function
-void bl00mbox_audio_render(int16_t *rx, int16_t *tx, uint16_t len);
 
 static inline int16_t mix_and_clip(int16_t a, int16_t b, int16_t gain) {
     if (a == 0 && gain == 4096) return b;
@@ -36,20 +33,20 @@ static inline int16_t mix_and_clip(int16_t a, int16_t b, int16_t gain) {
     return val;
 }
 
-void st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len) {
-    bl00mbox_audio_render(rx, tx, len);
-    if (!audio_media) return;
+bool st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len) {
+    if (audio_inactive || (!audio_media)) return false;
     for (int i = 0; i < len; i++) {
         if ((audio_media->audio_r + 1 != audio_media->audio_w) &&
             (audio_media->audio_r + 1 - AUDIO_BUF_SIZE !=
              audio_media->audio_w)) {
             tx[i] = mix_and_clip(
-                tx[i], audio_media->audio_buffer[audio_media->audio_r++],
+                0, audio_media->audio_buffer[audio_media->audio_r++],
                 audio_media->volume);
             if (audio_media->audio_r >= AUDIO_BUF_SIZE)
                 audio_media->audio_r = 0;
         }
     }
+    return true;
 }
 int st3m_media_samples_queued(void) {
     if (!audio_media) return 0;
@@ -70,7 +67,7 @@ static void st3m_media_task(void *_arg) {
     }
     if (audio_media->destroy) audio_media->destroy(audio_media);
     audio_media = 0;
-    st3m_audio_set_player_function(bl00mbox_audio_render);
+    audio_inactive = true;
     if (audio_buffer) {
         free(audio_buffer);
         audio_buffer = NULL;
@@ -241,7 +238,7 @@ int st3m_media_load(const char *path) {
 
     if (!audio_buffer)
         audio_buffer = heap_caps_malloc(AUDIO_BUF_SIZE * 2, MALLOC_CAP_DMA);
-    st3m_audio_set_player_function(st3m_media_audio_render);
+    audio_inactive = false;
     audio_media->audio_buffer = audio_buffer;
     audio_media->audio_r = 0;
     audio_media->audio_w = 1;

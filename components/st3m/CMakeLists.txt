@@ -44,6 +44,7 @@ idf_component_register(
         audio_mod
         audio_mp3
         video_mpeg
+        bl00mbox
 )
 
 idf_component_get_property(tusb_lib tinyusb COMPONENT_LIB)

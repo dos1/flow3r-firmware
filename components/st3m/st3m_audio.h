@@ -16,20 +16,47 @@ typedef enum {
     st3m_audio_input_source_auto = 4
 } st3m_audio_input_source_t;
 
-typedef void (*st3m_audio_player_function_t)(int16_t* tx, int16_t* rx,
-                                             uint16_t len);
-
-/* The default audio task takes a function of prototype
- * &st3m_audio_player_function_t, loops it and sets software volume/adds
- * software thru. tx is the stereo zipped l/r output, rx is the stereo zipped
- * input, each buffer the size of len.
+/* Initializes the audio engine and passes sample rate as well as max buffer
+ * length. At this point those values are always 48000/128, but this might
+ * become variable in the future. However, we see flow3r primarily as a real
+ * time instrument, and longer buffers introduce latency; the current buffer
+ * length corresponds to 1.3ms latency which isn't much, but given the up to
+ * 10ms captouch latency on top we shouldn't be super careless here.
  */
-void st3m_audio_set_player_function(st3m_audio_player_function_t fun);
+typedef void (*st3m_audio_engine_init_function_t)(uint32_t sample_rate,
+                                                  uint16_t max_len);
 
-/* Dummy for st3m_audio_set_player_function that just writes zeros to the
- * output. Default state.
+/* Renders the output of the audio engine and returns whether or not it has
+ * overwritten tx. Always called for each buffer, no exceptions. This means you
+ * can keep track of time within the engine easily and use the audio player task
+ * to handle musical events (the current 1.3ms buffer rate is well paced for
+ * this), but it also puts the burden on you of exiting early if there's nothing
+ * to do.
+ *
+ * rx (input) and tx (output) are both stereo interlaced, i.e. the even indices
+ * represent the left channel, the odd indices represent the right channel. The
+ * length is the total length of the buffer so that each channel has len/2 data
+ * points. len is always even.
+ *
+ * The function must never modify rx. This is so that we can pass the same
+ * buffer to all the engines without having to memcpy by default, so if you need
+ * to modify rx please do your own memcpy of it.
+ *
+ * In a similar manner, tx is not cleaned up when calling the function, it
+ * carries random junk data that is not supposed to be read by the user. The
+ * return value indicates whether tx should be used or if tx should be ignored
+ * andit should be treated as if you had written all zeroes into it (without you
+ * actually doing so). If you choose to return true please make sure you have
+ * overwritten the entirety of tx with valid data.
  */
-void st3m_audio_player_function_dummy(int16_t* rx, int16_t* tx, uint16_t len);
+typedef bool (*st3m_audio_engine_render_function_t)(int16_t* rx, int16_t* tx,
+                                                    uint16_t len);
+
+typedef struct {
+    char* name;  // used for UI, no longer than 14 characters
+    st3m_audio_engine_render_function_t render_fun;
+    st3m_audio_engine_init_function_t init_fun;  // optional, else NULL
+} st3m_audio_engine_t;
 
 /* Initializes I2S bus, the audio task and required data structures.
  * Expects an initialized I2C bus, will fail ungracefully otherwise (TODO).
