@@ -150,7 +150,7 @@ class ScrollController(st3m.Responder):
 
         if abs(diff) > 0.1:
             # Apply force to reach target position.
-            velocity += 80 * delta * diff
+            velocity += 80 * delta * (max(diff, 1.0) if diff > 0 else min(diff, -1.0))
 
             # Clamp velocity.
             if velocity > max_velocity:
