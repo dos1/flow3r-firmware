@@ -680,7 +680,12 @@ You can then run the simulator:
 
 Grey areas near the petals and buttons can be pressed.
 
-The simulators apps live in `python_payload/apps` copy you app folder in there
+The 3-way switches can be controlled with keyboard keys and have a default
+mapping of ``1``, ``2``, ``3`` for the left and ``8``, ``9``, ``0`` for the
+right switch. This mapping can be changed by copying ``sim/config.py.default``
+to ``sim/config.py`` and adjusting it to personal preference.
+
+The simulators apps live in ``python_payload/apps`` copy you app folder in there
 and it will appear in the simulators menu system.
 
 *TODO: make simulator directly run a bundle on startup when requested*

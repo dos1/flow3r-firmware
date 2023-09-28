@@ -6,6 +6,10 @@ import sys
 
 import pygame
 
+try:
+    import config as CONFIG
+except ImportError:
+    print("Info: No custom config.py found")
 
 pygame.init()
 screen_w = 814
@@ -213,14 +217,33 @@ class ButtonsInput(Input):
         (756, 240),
         (788, 240),
     ]
+
+    # Default keyboard mapping
+    button_map = {
+        "left_jog_left": pygame.K_1,
+        "left_press": pygame.K_2,
+        "left_jog_right": pygame.K_3,
+        "right_jog_left": pygame.K_8,
+        "right_press": pygame.K_9,
+        "right_jog_right": pygame.K_0,
+    }
+
+    # Load custom keymapping if available
+    try:
+        if CONFIG.button_map != {}:
+            button_map = CONFIG.button_map
+    except:
+        print("Info: No custom button mapping found in config.py")
+
     KEYS = [
-        pygame.K_LEFT,
-        pygame.K_SPACE,
-        pygame.K_RIGHT,
-        pygame.K_1,
-        pygame.K_2,
-        pygame.K_3,
+        button_map["left_jog_left"],
+        button_map["left_press"],
+        button_map["left_jog_right"],
+        button_map["right_jog_left"],
+        button_map["right_press"],
+        button_map["right_jog_right"],
     ]
+
     MARKER_SIZE = 20
     COLOR_HELD = (0x80, 0x80, 0x80, 0xFF)
     COLOR_HOVER = (0x40, 0x40, 0x40, 0xFF)

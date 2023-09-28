@@ -20,6 +20,11 @@ import wasmer
 import wasmer_compiler_cranelift
 
 try:
+    import config
+except:
+    pass
+
+try:
     import requests
 except ImportError:
     print("Warning: `requests` is missing so no `urequests` mock will exist")
