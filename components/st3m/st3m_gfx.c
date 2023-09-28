@@ -1,10 +1,3 @@
-// TODO:   18bit output in 24bit mode
-//         avoid tearing
-//         unify video-ram in one allocation
-//         resizing/panning buffers
-//         dithering of overlay compositing
-//         text-modes
-
 #include "st3m_gfx.h"
 
 #include <string.h>
@@ -389,6 +382,8 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride) {
 static void *osd_fb = st3m_fb2;
 #endif
 
+static uint8_t *blit_src = (uint8_t *)st3m_fb;
+
 static void st3m_gfx_blit(st3m_gfx_drawlist *drawlist) {
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
     int bits = _st3m_gfx_bpp(set_mode);
@@ -403,17 +398,17 @@ static void st3m_gfx_blit(st3m_gfx_drawlist *drawlist) {
         if (((set_mode & st3m_gfx_osd) && (osd_y0 != osd_y1))) {
             xSemaphoreTake(st3m_osd_lock,
                            ST3M_OSD_LOCK_TIMEOUT / portTICK_PERIOD_MS);
-            flow3r_bsp_display_send_fb_osd(st3m_fb_copy, bits, scale, osd_fb,
+            flow3r_bsp_display_send_fb_osd(blit_src, bits, scale, osd_fb,
                                            osd_x0, osd_y0, osd_x1, osd_y1);
             xSemaphoreGive(st3m_osd_lock);
         } else {
-            flow3r_bsp_display_send_fb_osd(st3m_fb_copy, bits, scale, NULL, 0,
-                                           0, 0, 0);
+            flow3r_bsp_display_send_fb_osd(blit_src, bits, scale, NULL, 0, 0, 0,
+                                           0);
         }
     } else
 #endif
     {
-        flow3r_bsp_display_send_fb(st3m_fb_copy, bits);
+        flow3r_bsp_display_send_fb(blit_src, bits);
     }
     xSemaphoreGive(st3m_fb_copy_lock);
 }
@@ -438,6 +433,8 @@ static void st3m_gfx_rast_task(void *_arg) {
     st3m_gfx_mode prev_set_mode = ST3M_GFX_DEFAULT_MODE - 1;
     void *user_fb = st3m_fb;
 
+    int direct_blit = 0;
+
     while (true) {
         int desc_no = 0;
 
@@ -455,6 +452,13 @@ static void st3m_gfx_rast_task(void *_arg) {
         if (prev_set_mode != set_mode) {
             bits = _st3m_gfx_bpp(set_mode);
             prev_set_mode = set_mode;
+
+            if (((set_mode & st3m_gfx_low_latency) == st3m_gfx_low_latency) ||
+                ((set_mode & st3m_gfx_direct_ctx) == st3m_gfx_direct_ctx))
+                direct_blit = 1;
+            else
+                direct_blit = 0;
+
             switch (bits) {
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
                 case 1:
@@ -539,12 +543,19 @@ static void st3m_gfx_rast_task(void *_arg) {
             ctx_drawlist_clear(drawlist->user_ctx);
         }
 
-        xSemaphoreTake(st3m_fb_copy_lock, portMAX_DELAY);
-        memcpy(st3m_fb_copy, user_fb, (240 * 240 * bits / 8));
-        xSemaphoreGive(st3m_fb_copy_lock);
-        xSemaphoreGive(st3m_fb_lock);
-
-        xQueueSend(user_ctx_blitq, &desc_no, portMAX_DELAY);
+        if (direct_blit) {
+            blit_src = user_fb;
+            st3m_gfx_blit(drawlist);
+            xSemaphoreGive(st3m_fb_lock);
+            xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
+        } else {
+            blit_src = st3m_fb_copy;
+            xSemaphoreTake(st3m_fb_copy_lock, portMAX_DELAY);
+            memcpy(st3m_fb_copy, user_fb, (240 * 240 * bits / 8));
+            xSemaphoreGive(st3m_fb_copy_lock);
+            xSemaphoreGive(st3m_fb_lock);
+            xQueueSend(user_ctx_blitq, &desc_no, portMAX_DELAY);
+        }
 
         st3m_counter_rate_sample(&rast_rate);
         float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
