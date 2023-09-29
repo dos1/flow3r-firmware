@@ -1,4 +1,5 @@
 import os
+import media
 
 from ctx import Context
 from st3m.goose import Callable
@@ -18,6 +19,7 @@ class Reader(ActionView):
 
     is_loading: bool = True
     has_error: bool = False
+    is_media: bool = False
     content: str
     viewport_offset = (0.0, 0.0)
     zoom_enabled = False
@@ -41,21 +43,26 @@ class Reader(ActionView):
         self.update_path = update_path
 
         # TODO: Buffered reading?
-        if self._check_file():
+        if self._is_media():
+            self.is_loading = False
+            self.is_media = True
+            media.load(self.path)
+        elif self._check_file():
             self._read_file()
             self.is_loading = False
         else:
             self.has_error = True
             self.is_loading = False
 
+        controls = not self.has_error and not self.is_media
+
         self.actions = [
             None,
-            Action(icon="\ue8d5", label="Scroll Y", enabled=not self.has_error),
-            Action(icon="\ue8b6", label="Zoom", enabled=not self.has_error),
+            Action(icon="\ue8d5", label="Scroll Y", enabled=controls),
+            Action(icon="\ue8b6", label="Zoom", enabled=controls),
             Action(icon="\ue5c4", label="Back"),
-            Action(icon="\ue8d4", label="Scroll X", enabled=not self.has_error),
+            Action(icon="\ue8d4", label="Scroll X", enabled=controls),
         ]
-
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
@@ -80,8 +87,11 @@ class Reader(ActionView):
 
         if self.is_loading:
             self._draw_loading(ctx)
+            return
         elif self.has_error:
             self._draw_not_supported(ctx)
+        elif self.is_media:
+            self._draw_media(ctx)
         else:
             self._draw_content(ctx)
 
@@ -133,7 +143,12 @@ class Reader(ActionView):
         ctx.text(f"{self.content}")
         ctx.restore()
 
+    def _draw_media(self, ctx: Context) -> None:
+        media.draw(ctx)
+
     def _back(self) -> None:
+        if self.is_media:
+            media.stop()
         dir = os.path.dirname(self.path) + "/"
         self.update_path(dir, os.path.basename(self.path))
         self.navigate("browser")
@@ -153,3 +168,13 @@ class Reader(ActionView):
             return True
         except UnicodeError:
             return False
+
+    def _is_media(self) -> bool:
+        for ext in [".mp3", ".mod"]:
+            if self.path.lower().endswith(ext):
+                return True
+        return False
+
+    def on_exit(self):
+        if self.is_media:
+            media.stop()
