@@ -60,10 +60,12 @@ class App(Application):
 
     def on_enter(self, vm):
         super().on_enter(vm)
-        self.load_stream()
+        if not media.is_playing():
+            self.load_stream()
 
     def on_exit(self):
-        media.stop()
+        if self._streams[self._stream_no].endswith(".mpg") or not media.is_playing():
+            media.stop()
 
 
 if __name__ == "__main__":

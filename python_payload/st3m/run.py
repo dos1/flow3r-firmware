@@ -77,7 +77,7 @@ class ApplicationMenu(SimpleMenu):
         sys_display.set_mode(0)
         leds.set_slew_rate(100)
         led_patterns.set_menu_colors()
-        media.stop()
+        # media.stop()
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
