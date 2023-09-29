@@ -112,11 +112,11 @@ static void mpg1_on_audio(plm_t *mpeg, plm_samples_t *samples, void *user) {
         for (int i = 0; i < samples->count; i++) {
         again:
             mpg1->control.audio_buffer[mpg1->control.audio_w++] =
-                samples->interleaved[i * 2] * 20000;
+                samples->interleaved[i * 2] * 32767;
             if (mpg1->control.audio_w >= AUDIO_BUF_SIZE)
                 mpg1->control.audio_w = 0;
             mpg1->control.audio_buffer[mpg1->control.audio_w++] =
-                samples->interleaved[i * 2 + 1] * 20000;
+                samples->interleaved[i * 2 + 1] * 32767;
             if (mpg1->control.audio_w >= AUDIO_BUF_SIZE)
                 mpg1->control.audio_w = 0;
             phase += ((48000 / 44100.0) - 1.0) * 65536;
@@ -129,11 +129,11 @@ static void mpg1_on_audio(plm_t *mpeg, plm_samples_t *samples, void *user) {
     } else
         for (int i = 0; i < samples->count; i++) {
             mpg1->control.audio_buffer[mpg1->control.audio_w++] =
-                samples->interleaved[i * 2] * 20000;
+                samples->interleaved[i * 2] * 32767;
             if (mpg1->control.audio_w >= AUDIO_BUF_SIZE)
                 mpg1->control.audio_w = 0;
             mpg1->control.audio_buffer[mpg1->control.audio_w++] =
-                samples->interleaved[i * 2 + 1] * 20000;
+                samples->interleaved[i * 2 + 1] * 32767;
             if (mpg1->control.audio_w >= AUDIO_BUF_SIZE)
                 mpg1->control.audio_w = 0;
         }
