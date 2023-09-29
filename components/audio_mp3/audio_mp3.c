@@ -176,7 +176,8 @@ static void mp3_think(st3m_media *media, float ms_elapsed) {
         mp3_think(media, 100);
     }
     int samples_needed =
-        ((AUDIO_BUF_SIZE - st3m_media_pcm_queued()) / 2) - 2400;
+        (((AUDIO_BUF_SIZE - st3m_media_pcm_queued()) / 2) - 2400) / 48000.0 *
+        self->samplerate;
 
     int samples;
     mp3dec_frame_info_t info = {
