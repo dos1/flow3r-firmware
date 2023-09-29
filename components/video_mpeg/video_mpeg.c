@@ -155,6 +155,7 @@ static void mpg1_draw(st3m_media *media, Ctx *ctx) {
                     ctx_gray(ctx, 0.0);
                     ctx_fill(ctx);
                 }
+                ctx_save(ctx);
                 ctx_translate(ctx, -dim / 2, -dim / 2);
                 ctx_translate(ctx, (dim - mpg1->width * scale) / 2.0 + cx,
                               (dim - mpg1->height * scale) / 2.0 + cy);
@@ -167,6 +168,7 @@ static void mpg1_draw(st3m_media *media, Ctx *ctx) {
                 ctx_image_smoothing(ctx, false);
                 ctx_compositing_mode(ctx, CTX_COMPOSITE_COPY);
                 ctx_fill(ctx);
+                ctx_restore(ctx);
             }
         } else {
             ctx_rgb(ctx, 0.2, 0.3, 0.4);
