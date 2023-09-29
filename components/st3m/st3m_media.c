@@ -74,8 +74,8 @@ void st3m_media_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
                     ST3M_PCM_CLAMP_AUDIO_W;
                 }
             break;
-        case 44100: {
-            int fraction = ((48000.0 / 44100) - 1.0) * 65536;
+        default: {
+            int fraction = ((48000.0 / hz) - 1.0) * 65536;
             if (ch == 2)
                 for (int i = 0; i < count; i++) {
                 again2:
@@ -83,12 +83,11 @@ void st3m_media_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
                     ST3M_PCM_CLAMP_AUDIO_W;
                     audio_buffer[audio_w++] = apply_gain(data[i * 2 + 1], gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
-                    phase += fraction;
                     if (phase > 65536) {
                         phase -= 65536;
-                        phase -= fraction;
                         goto again2;
                     }
+                    phase += fraction;
                 }
             else if (ch == 1)
 
@@ -99,12 +98,11 @@ void st3m_media_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
                     audio_buffer[audio_w++] = apply_gain(data[i], gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
 
-                    phase += fraction;
                     if (phase > 65536) {
                         phase -= 65536;
-                        phase -= fraction;
                         goto again1;
                     }
+                    phase += fraction;
                 }
             break;
         }
@@ -128,8 +126,8 @@ void st3m_media_pcm_queue_float(int hz, int ch, int count, float *data) {
                     ST3M_PCM_CLAMP_AUDIO_W;
                 }
             break;
-        case 44100: {
-            int fraction = ((48000.0 / 44100) - 1.0) * 65536;
+        default: {
+            int fraction = ((48000.0 / hz) - 1.0) * 65536;
             if (ch == 2) {
                 for (int i = 0; i < count; i++) {
                 again2:
@@ -139,12 +137,11 @@ void st3m_media_pcm_queue_float(int hz, int ch, int count, float *data) {
                     audio_buffer[audio_w++] =
                         apply_gain(data[i * 2 + 1] * 32767, gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
-                    phase += fraction;
-                    if (phase > 65536) {
+                    if (phase >= 65536) {
                         phase -= 65536;
-                        phase -= fraction;
                         goto again2;
                     }
+                    phase += fraction;
                 }
             } else if (ch == 1) {
                 for (int i = 0; i < count; i++) {
@@ -154,12 +151,11 @@ void st3m_media_pcm_queue_float(int hz, int ch, int count, float *data) {
                     audio_buffer[audio_w++] = apply_gain(data[i] * 32767, gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
 
-                    phase += fraction;
-                    if (phase > 65536) {
+                    if (phase >= 65536) {
                         phase -= 65536;
-                        phase -= fraction;
                         goto again1;
                     }
+                    phase += fraction;
                 }
             }
             break;
