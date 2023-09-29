@@ -21,27 +21,27 @@ static bool audio_inactive = true;
 
 static int16_t *audio_buffer = NULL;
 
-static inline int16_t mix_and_clip(int16_t a, int16_t b, int16_t gain) {
-    if (a == 0 && gain == 4096) return b;
-    int32_t val = a;
-    val += (b * gain) >> 12;
+static inline int16_t apply_gain(int16_t sample, int16_t gain) {
+    if (gain == 4096) return sample;
+    int32_t val = (sample * gain) >> 12;
+    if (gain < 4096) return val;
     if (val > 32767) {
-        val = 32767;
+        return 32767;
     } else if (val < -32767) {
-        val = -32767;
+        return -32767;
     }
     return val;
 }
 
 bool st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len) {
-    if (audio_inactive || (!audio_media)) return false;
+    if (audio_inactive || !audio_media) return false;
     for (int i = 0; i < len; i++) {
         if ((audio_media->audio_r + 1 != audio_media->audio_w) &&
             (audio_media->audio_r + 1 - AUDIO_BUF_SIZE !=
              audio_media->audio_w)) {
-            tx[i] = mix_and_clip(
-                0, audio_media->audio_buffer[audio_media->audio_r++],
-                audio_media->volume);
+            tx[i] =
+                apply_gain(audio_media->audio_buffer[audio_media->audio_r++],
+                           audio_media->volume);
             if (audio_media->audio_r >= AUDIO_BUF_SIZE)
                 audio_media->audio_r = 0;
         } else {
@@ -66,10 +66,11 @@ static void st3m_media_task(void *_arg) {
         if (audio_media->think)
             audio_media->think(audio_media,
                                (waketime - lastwake) * portTICK_PERIOD_MS);
+        audio_inactive = audio_media->paused;
     }
-    if (audio_media->destroy) audio_media->destroy(audio_media);
-    audio_media = 0;
     audio_inactive = true;
+    if (audio_media->destroy) audio_media->destroy(audio_media);
+    audio_media = NULL;
     if (audio_buffer) {
         free(audio_buffer);
         audio_buffer = NULL;
@@ -240,7 +241,6 @@ int st3m_media_load(const char *path) {
 
     if (!audio_buffer)
         audio_buffer = heap_caps_malloc(AUDIO_BUF_SIZE * 2, MALLOC_CAP_DMA);
-    audio_inactive = false;
     audio_media->audio_buffer = audio_buffer;
     audio_media->audio_r = 0;
     audio_media->audio_w = 1;
