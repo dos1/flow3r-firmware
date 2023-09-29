@@ -20,6 +20,8 @@ static bool media_pending_destroy = false;
 static bool audio_inactive = true;
 
 static int16_t *audio_buffer = NULL;
+static int audio_w = 1;
+static int audio_r = 0;
 
 static inline int16_t apply_gain(int16_t sample, int16_t gain) {
     if (gain == 4096) return sample;
@@ -36,13 +38,10 @@ static inline int16_t apply_gain(int16_t sample, int16_t gain) {
 bool st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len) {
     if (audio_inactive || !audio_media) return false;
     for (int i = 0; i < len; i++) {
-        if ((audio_media->audio_r + 1 != audio_media->audio_w) &&
-            (audio_media->audio_r + 1 - AUDIO_BUF_SIZE !=
-             audio_media->audio_w)) {
-            tx[i] = apply_gain(audio_buffer[audio_media->audio_r++],
-                               audio_media->volume);
-            if (audio_media->audio_r >= AUDIO_BUF_SIZE)
-                audio_media->audio_r = 0;
+        if ((audio_r + 1 != audio_w) &&
+            (audio_r + 1 - AUDIO_BUF_SIZE != audio_w)) {
+            tx[i] = apply_gain(audio_buffer[audio_r++], audio_media->volume);
+            if (audio_r >= AUDIO_BUF_SIZE) audio_r = 0;
         } else {
             tx[i] = 0;
         }
@@ -52,24 +51,25 @@ bool st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len) {
 
 static int phase = 0;
 
+#define ST3M_PCM_CLAMP_AUDIO_W \
+    audio_w =                  \
+        (audio_w >= AUDIO_BUF_SIZE) * 0 + (audio_w < AUDIO_BUF_SIZE) * audio_w
+
 void st3m_media_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
     if (!audio_media) return;
     switch (hz) {
         case 48000:
             if (ch == 2)
                 for (int i = 0; i < count * 2; i++) {
-                    audio_buffer[audio_media->audio_w++] = data[i];
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
+                    audio_buffer[audio_w++] = data[i];
+                    ST3M_PCM_CLAMP_AUDIO_W;
                 }
             else if (ch == 1)
                 for (int i = 0; i < count; i++) {
-                    audio_buffer[audio_media->audio_w++] = data[i];
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
-                    audio_buffer[audio_media->audio_w++] = data[i];
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
+                    audio_buffer[audio_w++] = data[i];
+                    ST3M_PCM_CLAMP_AUDIO_W;
+                    audio_buffer[audio_w++] = data[i];
+                    ST3M_PCM_CLAMP_AUDIO_W;
                 }
             break;
         case 44100: {
@@ -77,12 +77,10 @@ void st3m_media_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
             if (ch == 2)
                 for (int i = 0; i < count; i++) {
                 again2:
-                    audio_buffer[audio_media->audio_w++] = data[i * 2];
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
-                    audio_buffer[audio_media->audio_w++] = data[i * 2 + 1];
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
+                    audio_buffer[audio_w++] = data[i * 2];
+                    ST3M_PCM_CLAMP_AUDIO_W;
+                    audio_buffer[audio_w++] = data[i * 2 + 1];
+                    ST3M_PCM_CLAMP_AUDIO_W;
                     phase += fraction;
                     if (phase > 65536) {
                         phase -= 65536;
@@ -94,12 +92,10 @@ void st3m_media_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
 
                 for (int i = 0; i < count; i++) {
                 again1:
-                    audio_buffer[audio_media->audio_w++] = data[i];
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
-                    audio_buffer[audio_media->audio_w++] = data[i];
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
+                    audio_buffer[audio_w++] = data[i];
+                    ST3M_PCM_CLAMP_AUDIO_W;
+                    audio_buffer[audio_w++] = data[i];
+                    ST3M_PCM_CLAMP_AUDIO_W;
 
                     phase += fraction;
                     if (phase > 65536) {
@@ -118,18 +114,15 @@ void st3m_media_pcm_queue_float(int hz, int ch, int count, float *data) {
         case 48000:
             if (ch == 2)
                 for (int i = 0; i < count * 2; i++) {
-                    audio_buffer[audio_media->audio_w++] = data[i] * 32767;
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
+                    audio_buffer[audio_w++] = data[i] * 32767;
+                    ST3M_PCM_CLAMP_AUDIO_W;
                 }
             else if (ch == 1)
                 for (int i = 0; i < count; i++) {
-                    audio_buffer[audio_media->audio_w++] = data[i] * 32767;
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
-                    audio_buffer[audio_media->audio_w++] = data[i] * 32767;
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
+                    audio_buffer[audio_w++] = data[i] * 32767;
+                    ST3M_PCM_CLAMP_AUDIO_W;
+                    audio_buffer[audio_w++] = data[i] * 32767;
+                    ST3M_PCM_CLAMP_AUDIO_W;
                 }
             break;
         case 44100: {
@@ -137,13 +130,10 @@ void st3m_media_pcm_queue_float(int hz, int ch, int count, float *data) {
             if (ch == 2) {
                 for (int i = 0; i < count; i++) {
                 again2:
-                    audio_buffer[audio_media->audio_w++] = data[i * 2] * 32767;
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
-                    audio_buffer[audio_media->audio_w++] =
-                        data[i * 2 + 1] * 32767;
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
+                    audio_buffer[audio_w++] = data[i * 2] * 32767;
+                    ST3M_PCM_CLAMP_AUDIO_W;
+                    audio_buffer[audio_w++] = data[i * 2 + 1] * 32767;
+                    ST3M_PCM_CLAMP_AUDIO_W;
                     phase += fraction;
                     if (phase > 65536) {
                         phase -= 65536;
@@ -154,12 +144,10 @@ void st3m_media_pcm_queue_float(int hz, int ch, int count, float *data) {
             } else if (ch == 1) {
                 for (int i = 0; i < count; i++) {
                 again1:
-                    audio_buffer[audio_media->audio_w++] = data[i] * 32767;
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
-                    audio_buffer[audio_media->audio_w++] = data[i] * 32767;
-                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
-                        audio_media->audio_w = 0;
+                    audio_buffer[audio_w++] = data[i] * 32767;
+                    ST3M_PCM_CLAMP_AUDIO_W;
+                    audio_buffer[audio_w++] = data[i] * 32767;
+                    ST3M_PCM_CLAMP_AUDIO_W;
 
                     phase += fraction;
                     if (phase > 65536) {
@@ -176,9 +164,8 @@ void st3m_media_pcm_queue_float(int hz, int ch, int count, float *data) {
 
 int st3m_media_pcm_queued(void) {
     if (!audio_media) return 0;
-    if (audio_media->audio_r > audio_media->audio_w)
-        return (AUDIO_BUF_SIZE - audio_media->audio_r) + audio_media->audio_w;
-    return audio_media->audio_w - audio_media->audio_r;
+    if (audio_r > audio_w) return (AUDIO_BUF_SIZE - audio_r) + audio_w;
+    return audio_w - audio_r;
 }
 
 static void st3m_media_task(void *_arg) {
@@ -365,9 +352,8 @@ int st3m_media_load(const char *path, bool paused) {
 
     if (!audio_buffer)
         audio_buffer = heap_caps_malloc(AUDIO_BUF_SIZE * 2, MALLOC_CAP_DMA);
-    audio_media->audio_buffer = audio_buffer;
-    audio_media->audio_r = 0;
-    audio_media->audio_w = 1;
+    audio_r = 0;
+    audio_w = 1;
     audio_media->volume = 4096;
     audio_media->paused = paused;
 

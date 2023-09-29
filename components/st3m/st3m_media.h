@@ -27,13 +27,6 @@ struct _st3m_media {
     // do decoding work corresponding to passed time
     void (*think)(st3m_media *media, float ms);
 
-    // pointer to global pcm output buffer
-    int16_t *audio_buffer;
-    // playback head
-    int audio_r;
-    // queuing/writing head
-    int audio_w;
-
     // Duration of media in seconds or -1 for infinite/streaming media
     // at worst approximation of some unit, set by decoder.
     float duration;
@@ -104,7 +97,7 @@ float st3m_media_get(const char *key);
 void st3m_media_set(const char *key, float value);
 
 // API for use in implementations
-// query how many audio samples have been queued in the pcm output buffer
+// query how many pcm samples have been queued for output
 int st3m_media_pcm_queued(void);
 
 // queue signed 16bit samples, supports hz is 44100 and 48000, ch 1 or 2
