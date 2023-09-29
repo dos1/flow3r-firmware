@@ -12,162 +12,13 @@
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#define ST3M_PCM_BUF_SIZE (16384)
 
-#ifdef CONFIG_FLOW3R_CTX_FLAVOUR_FULL
 static st3m_media *audio_media = NULL;
+#ifdef CONFIG_FLOW3R_CTX_FLAVOUR_FULL
+
 static TaskHandle_t media_task;
 static bool media_pending_destroy = false;
-static bool audio_inactive = true;
-
-static int16_t *audio_buffer = NULL;
-static int audio_w = 1;
-static int audio_r = 0;
-
-static inline int16_t apply_gain(int16_t sample, int16_t gain) {
-    if (gain == 4096) return sample;
-    int32_t val = (sample * gain) >> 12;
-    if (gain < 4096) return val;
-    if (val > 32767) {
-        return 32767;
-    } else if (val < -32767) {
-        return -32767;
-    }
-    return val;
-}
-
-bool st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len) {
-    if (audio_inactive || !audio_media) return false;
-    for (int i = 0; i < len; i++) {
-        if ((audio_r + 1 != audio_w) &&
-            (audio_r + 1 - AUDIO_BUF_SIZE != audio_w)) {
-            tx[i] = audio_buffer[audio_r++];
-            audio_r = (audio_r >= AUDIO_BUF_SIZE) * 0 +
-                      (audio_r < AUDIO_BUF_SIZE) * audio_r;
-        } else {
-            tx[i] = 0;
-        }
-    }
-    return true;
-}
-
-static int phase = 0;
-
-#define ST3M_PCM_CLAMP_AUDIO_W \
-    audio_w =                  \
-        (audio_w >= AUDIO_BUF_SIZE) * 0 + (audio_w < AUDIO_BUF_SIZE) * audio_w
-
-void st3m_media_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
-    if (!audio_media) return;
-    int16_t gain = audio_media->volume;
-    switch (hz) {
-        case 48000:
-            if (ch == 2)
-                for (int i = 0; i < count * 2; i++) {
-                    audio_buffer[audio_w++] = apply_gain(data[i], gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-                }
-            else if (ch == 1)
-                for (int i = 0; i < count; i++) {
-                    audio_buffer[audio_w++] = apply_gain(data[i], gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-                    audio_buffer[audio_w++] = apply_gain(data[i], gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-                }
-            break;
-        default: {
-            int fraction = ((48000.0 / hz) - 1.0) * 65536;
-            if (ch == 2)
-                for (int i = 0; i < count; i++) {
-                again2:
-                    audio_buffer[audio_w++] = apply_gain(data[i * 2], gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-                    audio_buffer[audio_w++] = apply_gain(data[i * 2 + 1], gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-                    if (phase > 65536) {
-                        phase -= 65536;
-                        goto again2;
-                    }
-                    phase += fraction;
-                }
-            else if (ch == 1)
-
-                for (int i = 0; i < count; i++) {
-                again1:
-                    audio_buffer[audio_w++] = apply_gain(data[i], gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-                    audio_buffer[audio_w++] = apply_gain(data[i], gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-
-                    if (phase > 65536) {
-                        phase -= 65536;
-                        goto again1;
-                    }
-                    phase += fraction;
-                }
-            break;
-        }
-    }
-}
-void st3m_media_pcm_queue_float(int hz, int ch, int count, float *data) {
-    if (!audio_media) return;
-    int16_t gain = audio_media->volume;
-    switch (hz) {
-        case 48000:
-            if (ch == 2)
-                for (int i = 0; i < count * 2; i++) {
-                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767, gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-                }
-            else if (ch == 1)
-                for (int i = 0; i < count; i++) {
-                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767, gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767, gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-                }
-            break;
-        default: {
-            int fraction = ((48000.0 / hz) - 1.0) * 65536;
-            if (ch == 2) {
-                for (int i = 0; i < count; i++) {
-                again2:
-                    audio_buffer[audio_w++] =
-                        apply_gain(data[i * 2] * 32767, gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-                    audio_buffer[audio_w++] =
-                        apply_gain(data[i * 2 + 1] * 32767, gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-                    if (phase >= 65536) {
-                        phase -= 65536;
-                        goto again2;
-                    }
-                    phase += fraction;
-                }
-            } else if (ch == 1) {
-                for (int i = 0; i < count; i++) {
-                again1:
-                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767, gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767, gain);
-                    ST3M_PCM_CLAMP_AUDIO_W;
-
-                    if (phase >= 65536) {
-                        phase -= 65536;
-                        goto again1;
-                    }
-                    phase += fraction;
-                }
-            }
-            break;
-        }
-    }
-}
-
-int st3m_media_pcm_queued(void) {
-    if (!audio_media) return 0;
-    if (audio_r > audio_w) return (AUDIO_BUF_SIZE - audio_r) + audio_w;
-    return audio_w - audio_r;
-}
 
 static void st3m_media_task(void *_arg) {
     (void)_arg;
@@ -178,15 +29,9 @@ static void st3m_media_task(void *_arg) {
         if (audio_media->think)
             audio_media->think(audio_media,
                                (waketime - lastwake) * portTICK_PERIOD_MS);
-        audio_inactive = audio_media->paused;
     }
-    audio_inactive = true;
     if (audio_media->destroy) audio_media->destroy(audio_media);
     audio_media = NULL;
-    if (audio_buffer) {
-        free(audio_buffer);
-        audio_buffer = NULL;
-    }
     media_pending_destroy = false;
     vTaskDelete(NULL);
 }
@@ -227,7 +72,7 @@ float st3m_media_get_position(void) {
 float st3m_media_get_time(void) {
     if (!audio_media) return 0;
     if (audio_media->time <= 0) return audio_media->time;
-    return audio_media->time - st3m_media_pcm_queued() / 48000.0 / 2.0;
+    return audio_media->time - st3m_pcm_queued() / 48000.0 / 2.0;
 }
 
 void st3m_media_seek(float position) {
@@ -240,15 +85,9 @@ void st3m_media_seek_relative(float time) {
     st3m_media_seek((audio_media->position * audio_media->duration) + time);
 }
 
-void st3m_media_set_volume(float volume) {
-    if (!audio_media) return;
-    audio_media->volume = volume * 4096;
-}
+void st3m_media_set_volume(float volume) { st3m_pcm_set_volume(volume); }
 
-float st3m_media_get_volume(void) {
-    if (!audio_media) return 0;
-    return audio_media->volume / 4096.0;
-}
+float st3m_media_get_volume(void) { return st3m_pcm_get_volume(); }
 
 void st3m_media_draw(Ctx *ctx) {
     if (audio_media && audio_media->draw) audio_media->draw(audio_media, ctx);
@@ -351,10 +190,6 @@ int st3m_media_load(const char *path, bool paused) {
         audio_media = st3m_media_load_txt(path);
     }
 
-    if (!audio_buffer)
-        audio_buffer = heap_caps_malloc(AUDIO_BUF_SIZE * 2, MALLOC_CAP_DMA);
-    audio_r = 0;
-    audio_w = 1;
     audio_media->volume = 4096;
     audio_media->paused = paused;
 

@@ -19,6 +19,7 @@ idf_component_register(
         st3m_usb_msc.c
         st3m_usb.c
         st3m_console.c
+        st3m_pcm.c
         st3m_media.c
         st3m_mode.c
         st3m_captouch.c

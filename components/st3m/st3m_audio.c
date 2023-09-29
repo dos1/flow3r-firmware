@@ -14,7 +14,7 @@
 #include "freertos/task.h"
 
 #include "bl00mbox.h"
-#include "st3m_media.h"
+#include "st3m_pcm.h"
 
 static const char *TAG = "st3m-audio";
 
@@ -39,8 +39,8 @@ static const st3m_audio_engine_t engines[] = {
         .init_fun = bl00mbox_init_wrapper,
     },
     {
-        .name = "media_audio",
-        .render_fun = st3m_media_audio_render,
+        .name = "PCM",
+        .render_fun = st3m_pcm_audio_render,
         .init_fun = NULL,
     }
 };

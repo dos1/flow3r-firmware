@@ -103,8 +103,8 @@ static void mpg1_on_video(plm_t *mpeg, plm_frame_t *frame, void *user) {
 }
 
 static void mpg1_on_audio(plm_t *mpeg, plm_samples_t *samples, void *user) {
-    st3m_media_pcm_queue_float(((mpg1_state *)user)->sample_rate, 2,
-                               samples->count, samples->interleaved);
+    st3m_pcm_queue_float(((mpg1_state *)user)->sample_rate, 2, samples->count,
+                         samples->interleaved);
 }
 
 static void mpg1_draw(st3m_media *media, Ctx *ctx) {
