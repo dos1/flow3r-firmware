@@ -19,31 +19,31 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_load_obj, 1, 2, mp_load);
 STATIC mp_obj_t mp_draw(mp_obj_t uctx_mp) {
     mp_ctx_obj_t *uctx = MP_OBJ_TO_PTR(uctx_mp);
     st3m_media_draw(uctx->ctx);
-    return 0;
+    return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_draw_obj, mp_draw);
 
 STATIC mp_obj_t mp_think(mp_obj_t ms_in) {
     st3m_media_think(mp_obj_get_float(ms_in));
-    return 0;
+    return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_think_obj, mp_think);
 
 STATIC mp_obj_t mp_stop(void) {
     st3m_media_stop();
-    return 0;
+    return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_stop_obj, mp_stop);
 
 STATIC mp_obj_t mp_pause(void) {
     st3m_media_pause();
-    return 0;
+    return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_pause_obj, mp_pause);
 
 STATIC mp_obj_t mp_play(void) {
     st3m_media_play();
-    return 0;
+    return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_play_obj, mp_play);
 
@@ -69,19 +69,19 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_time_obj, mp_get_time);
 
 STATIC mp_obj_t mp_seek(mp_obj_t position) {
     st3m_media_seek(mp_obj_get_float(position));
-    return 0;
+    return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_seek_obj, mp_seek);
 
 STATIC mp_obj_t mp_seek_relative(mp_obj_t time) {
     st3m_media_seek_relative(mp_obj_get_float(time));
-    return 0;
+    return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_seek_relative_obj, mp_seek_relative);
 
 STATIC mp_obj_t mp_set_volume(mp_obj_t volume) {
     st3m_media_set_volume(mp_obj_get_float(volume));
-    return 0;
+    return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_set_volume_obj, mp_set_volume);
 
@@ -92,7 +92,7 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_get_volume_obj, mp_get_volume);
 
 STATIC mp_obj_t mp_set(mp_obj_t key, mp_obj_t value) {
     st3m_media_set(mp_obj_str_get_str(key), mp_obj_get_float(value));
-    return 0;
+    return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_set_obj, mp_set);
 
