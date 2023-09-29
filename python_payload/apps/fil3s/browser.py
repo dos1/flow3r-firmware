@@ -21,6 +21,7 @@ class Browser(ActionView):
     prev_enabled: bool = False
     next_enabled: bool = False
     delete_enabled: bool = True
+    select_enabled: bool = True
     current_pos = 0
     current_entry: tuple[str, str]
 
@@ -132,6 +133,9 @@ class Browser(ActionView):
         self._update_actions()
 
     def _select(self) -> None:
+        if not self.select_enabled:
+            return
+
         name = self.dir_entries[self.current_pos][0]
 
         old_path = self.path
@@ -148,6 +152,9 @@ class Browser(ActionView):
             self._change_path(old_path)
 
     def _delete(self) -> None:
+        if not self.delete_enabled:
+            return
+
         name = self.dir_entries[self.current_pos][0]
         path = self.path + name
 
@@ -180,7 +187,7 @@ class Browser(ActionView):
         self.actions = [
             Action(icon="\ue92b", label="Delete", enabled=self.delete_enabled),
             Action(icon="\ue409", label="Next", enabled=self.next_enabled),
-            Action(icon="\ue876", label="Select"),
+            Action(icon="\ue876", label="Select", enabled=self.select_enabled),
             Action(icon="\ue5c4", label="Back", enabled=self.up_enabled),
             Action(icon="\ue5cb", label="Prev", enabled=self.prev_enabled),
         ]
@@ -188,18 +195,25 @@ class Browser(ActionView):
     def _update_position(self) -> None:
         try:
             self.current_entry = self.dir_entries[self.current_pos]
+            self.select_enabled = True
         except Exception:
             self.current_entry = ("\ue002", "No files")
+            self.select_enabled = False
 
+        self.up_enabled = self.path != "/"
         self.prev_enabled = self.current_pos > 0
         self.next_enabled = self.current_pos < len(self.dir_entries) - 1
         # disallow deleting st3m folder
-        name = self.dir_entries[self.current_pos][0]
-        self.delete_enabled = self.path + name not in [
-            "/flash",
-            "/flash/sys",
-            "/flash/sys/st3m",
-            "/sd",
-        ]
+        name = self.current_entry[0]
+        self.delete_enabled = (
+            self.path + name
+            not in [
+                "/flash",
+                "/flash/sys",
+                "/flash/sys/st3m",
+                "/sd",
+            ]
+            and self.select_enabled
+        )
 
         self._update_actions()

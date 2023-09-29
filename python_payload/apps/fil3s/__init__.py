@@ -15,6 +15,7 @@ class Fil3sApp(Application):
 
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx=app_ctx)
+        self.view = "browser"
 
     def on_enter(self, vm: ViewManager | None) -> None:
         super().on_enter(vm)
@@ -22,11 +23,16 @@ class Fil3sApp(Application):
         if self.vm is None:
             raise RuntimeError("vm is None")
 
-        self.vm.replace(Browser(self.path, self.on_navigate, self.on_update_path))
+        if self.view == "browser":
+            self.vm.replace(Browser(self.path, self.on_navigate, self.on_update_path))
+        elif self.view == "reader":
+            self.vm.replace(Reader(self.path, self.on_navigate, self.on_update_path))
 
     def on_navigate(self, view: str) -> None:
         if self.vm is None:
             raise RuntimeError("vm is None")
+
+        self.view = view
 
         if view == "browser":
             self.vm.replace(Browser(self.path, self.on_navigate, self.on_update_path))
