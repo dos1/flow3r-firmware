@@ -60,7 +60,7 @@ struct _st3m_media {
 // stops the currently playing media item
 void st3m_media_stop(void);
 // set a new media item
-int st3m_media_load(const char *path_or_uri);
+int st3m_media_load(const char *path_or_uri, bool paused);
 
 // decode current media item ms ahead (unless paused)
 void st3m_media_think(float ms);

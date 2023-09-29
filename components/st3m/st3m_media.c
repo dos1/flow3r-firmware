@@ -200,7 +200,7 @@ static int file_get_contents(const char *path, uint8_t **contents,
     return 0;
 }
 
-int st3m_media_load(const char *path) {
+int st3m_media_load(const char *path, bool paused) {
     struct stat statbuf;
 #if 1
     if (!strncmp(path, "http://", 7)) {
@@ -245,6 +245,7 @@ int st3m_media_load(const char *path) {
     audio_media->audio_r = 0;
     audio_media->audio_w = 1;
     audio_media->volume = 4096;
+    audio_media->paused = paused;
 
     BaseType_t res =
         xTaskCreatePinnedToCore(st3m_media_task, "media", 16384, NULL,

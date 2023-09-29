@@ -9,10 +9,12 @@ typedef struct _mp_ctx_obj_t {
     mp_obj_t user_data;
 } mp_ctx_obj_t;
 
-STATIC mp_obj_t mp_load(mp_obj_t path) {
-    return mp_obj_new_int(st3m_media_load(mp_obj_str_get_str(path)));
+STATIC mp_obj_t mp_load(size_t n_args, const mp_obj_t *args) {
+    bool paused = false;
+    if (n_args > 1) paused = args[1] == mp_const_true;
+    return mp_obj_new_int(st3m_media_load(mp_obj_str_get_str(args[0]), paused));
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_load_obj, mp_load);
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_load_obj, 1, 2, mp_load);
 
 STATIC mp_obj_t mp_draw(mp_obj_t uctx_mp) {
     mp_ctx_obj_t *uctx = MP_OBJ_TO_PTR(uctx_mp);
