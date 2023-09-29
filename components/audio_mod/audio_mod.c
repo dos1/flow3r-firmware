@@ -33,9 +33,8 @@ static void mod_draw(st3m_media *media, Ctx *ctx) {
     ctx_rgb(ctx, 1.0, 1.0, 1.0);
     ctx_font_size(ctx, 20);
     char buf[100];
-    sprintf(buf, "p:%i/%i l:%i lc:%i", self->pocketmod.pattern,
-            self->pocketmod.num_patterns, self->pocketmod.line,
-            self->pocketmod.loop_count);
+    sprintf(buf, "pat:%i/%i line:%i", self->pocketmod.pattern,
+            self->pocketmod.num_patterns, self->pocketmod.line);
     ctx_text_align(ctx, CTX_TEXT_ALIGN_CENTER);
     ctx_move_to(ctx, 0, -20);
     ctx_text(ctx, buf);
@@ -66,6 +65,14 @@ static void mod_think(st3m_media *media, float ms_elapsed) {
             rendered[i] * 32767;
         if (self->control.audio_w >= AUDIO_BUF_SIZE) self->control.audio_w = 0;
     }
+    if (self->control.duration == 0) {
+        self->control.duration = self->pocketmod.num_patterns + 1;
+    }
+    if (self->pocketmod.pattern > self->control.duration)
+        self->control.duration = self->pocketmod.pattern + 1;
+    self->control.position = self->pocketmod.pattern;
+    if (self->pocketmod.loop_count)
+        self->control.duration = self->control.position;
 
     self->scroll_pos += ms_elapsed / 1000.0;
 }
@@ -120,7 +127,6 @@ st3m_media *st3m_media_load_mod(const char *path) {
     file_get_contents(path, &self->data, &self->size);
     if (!self->data ||
         !pocketmod_init(&self->pocketmod, self->data, self->size, 48000)) {
-        printf("BOOO\n");
         if (self->data) free(self->data);
         free(self);
         return NULL;
