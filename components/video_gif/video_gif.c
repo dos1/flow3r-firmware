@@ -202,6 +202,8 @@ st3m_media *st3m_media_load_gif(const char *path) {
     gif->control.draw = gif_draw;
     gif->control.think = gif_think;
     gif->control.destroy = gif_destroy;
+    gif->control.has_video = true;
+    gif->control.is_visual = true;
     if (gif_init(gif, path) != 0) {
         free(gif);
         return NULL;

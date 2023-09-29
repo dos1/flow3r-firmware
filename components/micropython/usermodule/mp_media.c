@@ -52,6 +52,21 @@ STATIC mp_obj_t mp_is_playing(void) {
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_is_playing_obj, mp_is_playing);
 
+STATIC mp_obj_t mp_has_video(void) {
+    return mp_obj_new_bool(st3m_media_has_video());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_has_video_obj, mp_has_video);
+
+STATIC mp_obj_t mp_has_audio(void) {
+    return mp_obj_new_bool(st3m_media_has_audio());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_has_audio_obj, mp_has_audio);
+
+STATIC mp_obj_t mp_is_visual(void) {
+    return mp_obj_new_bool(st3m_media_is_visual());
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_0(mp_is_visual_obj, mp_is_visual);
+
 STATIC mp_obj_t mp_get_duration(void) {
     return mp_obj_new_float(st3m_media_get_duration());
 }
@@ -118,6 +133,9 @@ STATIC const mp_rom_map_elem_t globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_pause), MP_ROM_PTR(&mp_pause_obj) },
     { MP_ROM_QSTR(MP_QSTR_play), MP_ROM_PTR(&mp_play_obj) },
     { MP_ROM_QSTR(MP_QSTR_is_playing), MP_ROM_PTR(&mp_is_playing_obj) },
+    { MP_ROM_QSTR(MP_QSTR_has_video), MP_ROM_PTR(&mp_has_video_obj) },
+    { MP_ROM_QSTR(MP_QSTR_has_audio), MP_ROM_PTR(&mp_has_audio_obj) },
+    { MP_ROM_QSTR(MP_QSTR_is_visual), MP_ROM_PTR(&mp_is_visual_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_duration), MP_ROM_PTR(&mp_get_duration_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_position), MP_ROM_PTR(&mp_get_position_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_time), MP_ROM_PTR(&mp_get_time_obj) },

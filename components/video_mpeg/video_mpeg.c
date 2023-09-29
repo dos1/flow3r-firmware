@@ -211,6 +211,10 @@ st3m_media *st3m_media_load_mpg1(const char *path) {
     self->sample_rate = plm_get_samplerate(self->plm);
     self->control.duration = plm_get_duration(self->plm);
 
+    self->control.has_video = self->video;
+    self->control.has_audio = self->audio;
+    self->control.is_visual = self->video;
+
     plm_set_video_decode_callback(self->plm, mpg1_on_video, self);
     plm_set_audio_decode_callback(self->plm, mpg1_on_audio, self);
     plm_set_video_enabled(self->plm, self->video);
