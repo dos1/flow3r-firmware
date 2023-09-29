@@ -142,10 +142,10 @@ static void mp3_think(st3m_media *media, float ms_elapsed) {
     mp3_state *self = (void *)media;
 
     if (self->file && self->control.seek >= 0) {
-        float seek = self->control.seek;
-        if (seek > self->control.duration) {
-            seek = self->control.duration;
+        if (self->control.seek > 1.0) {
+            self->control.seek = 1.0;
         }
+        float seek = self->control.seek * self->control.duration;
         fseek(self->file, seek, SEEK_SET);
         self->offset = seek;
         self->control.time = 0;
