@@ -332,8 +332,10 @@ st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode) {
 
     _st3m_gfx_mode = (mode == default_mode) ? st3m_gfx_default : mode;
 
-    _st3m_gfx_low_latency = ((mode & st3m_gfx_low_latency) != 0);
-    if (mode & st3m_gfx_direct_ctx) _st3m_gfx_low_latency = 1;
+    if (((mode & st3m_gfx_low_latency) != 0) ||
+        ((mode & st3m_gfx_direct_ctx) != 0))
+        _st3m_gfx_low_latency = (N_DRAWLISTS - 1);
+
     return mode;
 }
 
