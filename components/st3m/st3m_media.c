@@ -62,14 +62,14 @@ void st3m_media_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
         case 48000:
             if (ch == 2)
                 for (int i = 0; i < count * 2; i++) {
-                    audio_buffer[audio_w++] = apply_gain (data[i], gain);
+                    audio_buffer[audio_w++] = apply_gain(data[i], gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
                 }
             else if (ch == 1)
                 for (int i = 0; i < count; i++) {
-                    audio_buffer[audio_w++] = apply_gain (data[i], gain);
+                    audio_buffer[audio_w++] = apply_gain(data[i], gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
-                    audio_buffer[audio_w++] = apply_gain (data[i], gain);
+                    audio_buffer[audio_w++] = apply_gain(data[i], gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
                 }
             break;
@@ -78,9 +78,9 @@ void st3m_media_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
             if (ch == 2)
                 for (int i = 0; i < count; i++) {
                 again2:
-                    audio_buffer[audio_w++] = apply_gain (data[i*2], gain);
+                    audio_buffer[audio_w++] = apply_gain(data[i * 2], gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
-                    audio_buffer[audio_w++] = apply_gain (data[i*2+1], gain);
+                    audio_buffer[audio_w++] = apply_gain(data[i * 2 + 1], gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
                     phase += fraction;
                     if (phase > 65536) {
@@ -93,9 +93,9 @@ void st3m_media_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
 
                 for (int i = 0; i < count; i++) {
                 again1:
-                    audio_buffer[audio_w++] = apply_gain(data[i],gain);
+                    audio_buffer[audio_w++] = apply_gain(data[i], gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
-                    audio_buffer[audio_w++] = apply_gain(data[i],gain);
+                    audio_buffer[audio_w++] = apply_gain(data[i], gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
 
                     phase += fraction;
@@ -111,18 +111,19 @@ void st3m_media_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
 }
 void st3m_media_pcm_queue_float(int hz, int ch, int count, float *data) {
     if (!audio_media) return;
+    int16_t gain = audio_media->volume;
     switch (hz) {
         case 48000:
             if (ch == 2)
                 for (int i = 0; i < count * 2; i++) {
-                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767,gain);
+                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767, gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
                 }
             else if (ch == 1)
                 for (int i = 0; i < count; i++) {
-                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767,gain);
+                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767, gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
-                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767,gain);
+                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767, gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
                 }
             break;
@@ -131,9 +132,11 @@ void st3m_media_pcm_queue_float(int hz, int ch, int count, float *data) {
             if (ch == 2) {
                 for (int i = 0; i < count; i++) {
                 again2:
-                    audio_buffer[audio_w++] = apply_gain(data[i * 2] * 32767,gain);
+                    audio_buffer[audio_w++] =
+                        apply_gain(data[i * 2] * 32767, gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
-                    audio_buffer[audio_w++] = apply_gain(data[i * 2 + 1] * 32767,gain);
+                    audio_buffer[audio_w++] =
+                        apply_gain(data[i * 2 + 1] * 32767, gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
                     phase += fraction;
                     if (phase > 65536) {
@@ -145,9 +148,9 @@ void st3m_media_pcm_queue_float(int hz, int ch, int count, float *data) {
             } else if (ch == 1) {
                 for (int i = 0; i < count; i++) {
                 again1:
-                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767,gain);
+                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767, gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
-                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767,gain);
+                    audio_buffer[audio_w++] = apply_gain(data[i] * 32767, gain);
                     ST3M_PCM_CLAMP_AUDIO_W;
 
                     phase += fraction;
