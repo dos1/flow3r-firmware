@@ -41,7 +41,8 @@ bool st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len) {
         if ((audio_r + 1 != audio_w) &&
             (audio_r + 1 - AUDIO_BUF_SIZE != audio_w)) {
             tx[i] = audio_buffer[audio_r++];
-            if (audio_r >= AUDIO_BUF_SIZE) audio_r = 0;
+            audio_r = (audio_r >= AUDIO_BUF_SIZE) * 0 +
+                      (audio_r < AUDIO_BUF_SIZE) * audio_r;
         } else {
             tx[i] = 0;
         }
