@@ -38,7 +38,9 @@ class App(Application):
 
     def think(self, ins, delta_ms):
         super().think(ins, delta_ms)
-        if self.input.buttons.app.right.pressed:  # or media.get_position() >= 1.0:
+        if self.input.buttons.app.right.pressed or (
+            media.get_position() >= media.get_duration() and media.get_duration() > 0
+        ):
             self._stream_no += 1
             if self._stream_no >= len(self._streams):
                 self._stream_no = len(self._streams) - 1
