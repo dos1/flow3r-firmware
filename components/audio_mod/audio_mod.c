@@ -121,6 +121,7 @@ st3m_media *st3m_media_load_mod(const char *path) {
     self->control.draw = mod_draw;
     self->control.think = mod_think;
     self->control.destroy = mod_destroy;
+    self->control.has_audio = true;
     file_get_contents(path, &self->data, &self->size);
     if (!self->data ||
         !pocketmod_init(&self->pocketmod, self->data, self->size, 48000)) {

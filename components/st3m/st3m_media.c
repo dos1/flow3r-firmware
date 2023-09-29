@@ -54,9 +54,24 @@ void st3m_media_play(void) {
     media_item->paused = 0;
 }
 
-int st3m_media_is_playing(void) {
+bool st3m_media_is_playing(void) {
     if (!media_item) return 0;
     return !media_item->paused;
+}
+
+bool st3m_media_has_video(void) {
+    if (!media_item) return false;
+    return media_item->has_video;
+}
+
+bool st3m_media_has_audio(void) {
+    if (!media_item) return false;
+    return media_item->has_audio;
+}
+
+bool st3m_media_is_visual(void) {
+    if (!media_item) return false;
+    return media_item->is_visual;
 }
 
 float st3m_media_get_duration(void) {
@@ -171,7 +186,7 @@ static int file_get_contents(const char *path, uint8_t **contents,
     return 0;
 }
 
-int st3m_media_load(const char *path, bool paused) {
+bool st3m_media_load(const char *path, bool paused) {
     struct stat statbuf;
     if (!strncmp(path, "http://", 7)) {
         st3m_media_stop();

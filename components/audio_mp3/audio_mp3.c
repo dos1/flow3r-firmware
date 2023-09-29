@@ -246,6 +246,7 @@ st3m_media *st3m_media_load_mp3(const char *path) {
     self->control.think = mp3_think;
     self->control.destroy = mp3_destroy;
     self->control.get_string = mp3_get_string;
+    self->control.has_audio = true;
     self->samplerate = 44100;
     self->buffer_size = 32 * 1024;
     self->scroll_pos = 0;
