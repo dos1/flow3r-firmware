@@ -30,6 +30,12 @@ class App(Application):
         else:
             self._stream_no = 0
 
+    def show_icons(self) -> bool:
+        return (
+            not self._streams[self._stream_no].endswith(".mpg")
+            or not media.is_playing()
+        )
+
     def load_stream(self):
         media.stop()
         self._filename = self._streams[self._stream_no]
