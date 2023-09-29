@@ -40,14 +40,6 @@ class Reader(ActionView):
         self.navigate = navigate
         self.update_path = update_path
 
-        self.actions = [
-            None,
-            Action(icon="\ue8d5", label="Scroll Y"),
-            Action(icon="\ue8b6", label="Zoom"),
-            Action(icon="\ue5c4", label="Back"),
-            Action(icon="\ue8d4", label="Scroll X"),
-        ]
-
         # TODO: Buffered reading?
         if self._check_file():
             self._read_file()
@@ -55,6 +47,15 @@ class Reader(ActionView):
         else:
             self.has_error = True
             self.is_loading = False
+
+        self.actions = [
+            None,
+            Action(icon="\ue8d5", label="Scroll Y", enabled=not self.has_error),
+            Action(icon="\ue8b6", label="Zoom", enabled=not self.has_error),
+            Action(icon="\ue5c4", label="Back"),
+            Action(icon="\ue8d4", label="Scroll X", enabled=not self.has_error),
+        ]
+
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
@@ -83,6 +84,8 @@ class Reader(ActionView):
             self._draw_not_supported(ctx)
         else:
             self._draw_content(ctx)
+
+        super().draw(ctx)
 
     def _draw_loading(self, ctx: Context) -> None:
         ctx.save()
@@ -129,8 +132,6 @@ class Reader(ActionView):
         ctx.move_to(self.viewport_offset[0], self.viewport_offset[1])
         ctx.text(f"{self.content}")
         ctx.restore()
-
-        super().draw(ctx)
 
     def _back(self) -> None:
         dir = os.path.dirname(self.path) + "/"
