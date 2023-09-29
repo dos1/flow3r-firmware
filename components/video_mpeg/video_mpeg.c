@@ -66,8 +66,8 @@ static void mpg1_think(st3m_media *media, float ms_elapsed) {
         plm_decode(self->plm, elapsed_time);
     }
 
-    if (plm_has_ended(self->plm)) {
-    }
+    self->control.time = plm_get_time(self->plm);
+    self->control.position = self->control.time;
 }
 
 static inline int memcpy_chroma(uint8_t *restrict target, uint8_t *restrict src,
