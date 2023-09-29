@@ -104,7 +104,13 @@ float st3m_media_get(const char *key);
 void st3m_media_set(const char *key, float value);
 
 // API for use in implementations
-// query how manu audio samples have been queued in the pcm output buffer
-int st3m_media_samples_queued(void);
+// query how many audio samples have been queued in the pcm output buffer
+int st3m_media_pcm_queued(void);
+
+// queue signed 16bit samples, supports hz is 44100 and 48000, ch 1 or 2
+void st3m_media_pcm_queue_s16(int hz, int ch, int count, int16_t *data);
+
+// queue 32bit float samples, supports hz is 44100 and 48000, ch 1 or 2
+void st3m_media_pcm_queue_float(int hz, int ch, int count, float *data);
 
 bool st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len);

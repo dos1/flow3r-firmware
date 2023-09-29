@@ -176,7 +176,7 @@ static void mp3_think(st3m_media *media, float ms_elapsed) {
         mp3_think(media, 100);
     }
     int samples_needed =
-        ((AUDIO_BUF_SIZE - st3m_media_samples_queued()) / 2) - 2400;
+        ((AUDIO_BUF_SIZE - st3m_media_pcm_queued()) / 2) - 2400;
 
     int samples;
     mp3dec_frame_info_t info = {
@@ -195,73 +195,8 @@ static void mp3_think(st3m_media *media, float ms_elapsed) {
             self->pos += info.frame_bytes;
             self->control.time += samples / (float)self->samplerate;
 
-            if (self->samplerate != 48000) {
-                int phase = 0;
-                int fraction = ((48000.0 / self->samplerate) - 1.0) * 65536;
-                if (info.channels == 1)
-                    for (int i = 0; i < samples; i++) {
-                    again1:
-                        self->control.audio_buffer[self->control.audio_w++] =
-                            rendered[i] / 2;
-                        if (self->control.audio_w >= AUDIO_BUF_SIZE)
-                            self->control.audio_w = 0;
-                        self->control.audio_buffer[self->control.audio_w++] =
-                            rendered[i] / 2;
-                        if (self->control.audio_w >= AUDIO_BUF_SIZE)
-                            self->control.audio_w = 0;
-
-                        phase += fraction;
-                        if (phase > 65536) {
-                            phase -= 65536;
-                            phase -= fraction;
-                            goto again1;
-                        }
-                    }
-                else if (info.channels == 2) {
-                    for (int i = 0; i < samples; i++) {
-                    again2:
-                        self->control.audio_buffer[self->control.audio_w++] =
-                            rendered[i * 2] / 2;
-                        if (self->control.audio_w >= AUDIO_BUF_SIZE)
-                            self->control.audio_w = 0;
-                        self->control.audio_buffer[self->control.audio_w++] =
-                            rendered[i * 2 + 1] / 2;
-                        if (self->control.audio_w >= AUDIO_BUF_SIZE)
-                            self->control.audio_w = 0;
-
-                        phase += fraction;
-                        if (phase > 65536) {
-                            phase -= 65536;
-                            phase -= fraction;
-                            goto again2;
-                        }
-                    }
-                }
-            } else {
-                if (info.channels == 1)
-                    for (int i = 0; i < samples; i++) {
-                        self->control.audio_buffer[self->control.audio_w++] =
-                            rendered[i];
-                        if (self->control.audio_w >= AUDIO_BUF_SIZE)
-                            self->control.audio_w = 0;
-                        self->control.audio_buffer[self->control.audio_w++] =
-                            rendered[i];
-                        if (self->control.audio_w >= AUDIO_BUF_SIZE)
-                            self->control.audio_w = 0;
-                    }
-                else if (info.channels == 2) {
-                    for (int i = 0; i < samples; i++) {
-                        self->control.audio_buffer[self->control.audio_w++] =
-                            rendered[i * 2];
-                        if (self->control.audio_w >= AUDIO_BUF_SIZE)
-                            self->control.audio_w = 0;
-                        self->control.audio_buffer[self->control.audio_w++] =
-                            rendered[i * 2 + 1];
-                        if (self->control.audio_w >= AUDIO_BUF_SIZE)
-                            self->control.audio_w = 0;
-                    }
-                }
-            }
+            st3m_media_pcm_queue_s16(self->samplerate, info.channels, samples,
+                                     rendered);
 
             samples_needed -= (samples);
 

@@ -106,37 +106,8 @@ static void mpg1_on_audio(plm_t *mpeg, plm_samples_t *samples, void *user) {
     mpg1_state *mpg1 = user;
 
     if (!mpg1->control.audio_buffer) return;
-    // if (self->control.paused) return;
-    if (mpg1->sample_rate != 48000) {
-        int phase = 0;
-        for (int i = 0; i < samples->count; i++) {
-        again:
-            mpg1->control.audio_buffer[mpg1->control.audio_w++] =
-                samples->interleaved[i * 2] * 32767;
-            if (mpg1->control.audio_w >= AUDIO_BUF_SIZE)
-                mpg1->control.audio_w = 0;
-            mpg1->control.audio_buffer[mpg1->control.audio_w++] =
-                samples->interleaved[i * 2 + 1] * 32767;
-            if (mpg1->control.audio_w >= AUDIO_BUF_SIZE)
-                mpg1->control.audio_w = 0;
-            phase += ((48000 / (float)mpg1->sample_rate) - 1.0) * 65536;
-            if (phase > 65536) {
-                phase -= 65536;
-                phase -= ((48000 / (float)mpg1->sample_rate) - 1.0) * 65536;
-                goto again;
-            }
-        }
-    } else
-        for (int i = 0; i < samples->count; i++) {
-            mpg1->control.audio_buffer[mpg1->control.audio_w++] =
-                samples->interleaved[i * 2] * 32767;
-            if (mpg1->control.audio_w >= AUDIO_BUF_SIZE)
-                mpg1->control.audio_w = 0;
-            mpg1->control.audio_buffer[mpg1->control.audio_w++] =
-                samples->interleaved[i * 2 + 1] * 32767;
-            if (mpg1->control.audio_w >= AUDIO_BUF_SIZE)
-                mpg1->control.audio_w = 0;
-        }
+    st3m_media_pcm_queue_float(mpg1->sample_rate, 2, samples->count,
+                               samples->interleaved);
 }
 
 static void mpg1_draw(st3m_media *media, Ctx *ctx) {

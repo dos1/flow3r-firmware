@@ -60,11 +60,8 @@ static void mod_think(st3m_media *media, float ms_elapsed) {
 
     float rendered[samples_needed * 2];
     int rend = pocketmod_render(&self->pocketmod, rendered, sizeof(rendered));
-    for (int i = 0; i < rend / 4; i++) {
-        self->control.audio_buffer[self->control.audio_w++] =
-            rendered[i] * 32767;
-        if (self->control.audio_w >= AUDIO_BUF_SIZE) self->control.audio_w = 0;
-    }
+    st3m_media_pcm_queue_float(48000, 2, rend / (sizeof(float) * 2), rendered);
+
     if (self->control.duration == 0) {
         self->control.duration = self->pocketmod.num_patterns + 1;
     }

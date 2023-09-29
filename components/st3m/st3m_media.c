@@ -39,9 +39,8 @@ bool st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len) {
         if ((audio_media->audio_r + 1 != audio_media->audio_w) &&
             (audio_media->audio_r + 1 - AUDIO_BUF_SIZE !=
              audio_media->audio_w)) {
-            tx[i] =
-                apply_gain(audio_media->audio_buffer[audio_media->audio_r++],
-                           audio_media->volume);
+            tx[i] = apply_gain(audio_buffer[audio_media->audio_r++],
+                               audio_media->volume);
             if (audio_media->audio_r >= AUDIO_BUF_SIZE)
                 audio_media->audio_r = 0;
         } else {
@@ -50,7 +49,132 @@ bool st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len) {
     }
     return true;
 }
-int st3m_media_samples_queued(void) {
+
+static int phase = 0;
+
+void st3m_media_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
+    if (!audio_media) return;
+    switch (hz) {
+        case 48000:
+            if (ch == 2)
+                for (int i = 0; i < count * 2; i++) {
+                    audio_buffer[audio_media->audio_w++] = data[i];
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+                }
+            else if (ch == 1)
+                for (int i = 0; i < count; i++) {
+                    audio_buffer[audio_media->audio_w++] = data[i];
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+                    audio_buffer[audio_media->audio_w++] = data[i];
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+                }
+            break;
+        case 44100: {
+            int fraction = ((48000.0 / 44100) - 1.0) * 65536;
+            if (ch == 2)
+                for (int i = 0; i < count; i++) {
+                again2:
+                    audio_buffer[audio_media->audio_w++] = data[i * 2];
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+                    audio_buffer[audio_media->audio_w++] = data[i * 2 + 1];
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+                    phase += fraction;
+                    if (phase > 65536) {
+                        phase -= 65536;
+                        phase -= fraction;
+                        goto again2;
+                    }
+                }
+            else if (ch == 1)
+
+                for (int i = 0; i < count; i++) {
+                again1:
+                    audio_buffer[audio_media->audio_w++] = data[i];
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+                    audio_buffer[audio_media->audio_w++] = data[i];
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+
+                    phase += fraction;
+                    if (phase > 65536) {
+                        phase -= 65536;
+                        phase -= fraction;
+                        goto again1;
+                    }
+                }
+            break;
+        }
+    }
+}
+void st3m_media_pcm_queue_float(int hz, int ch, int count, float *data) {
+    if (!audio_media) return;
+    switch (hz) {
+        case 48000:
+            if (ch == 2)
+                for (int i = 0; i < count * 2; i++) {
+                    audio_buffer[audio_media->audio_w++] = data[i] * 32767;
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+                }
+            else if (ch == 1)
+                for (int i = 0; i < count; i++) {
+                    audio_buffer[audio_media->audio_w++] = data[i] * 32767;
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+                    audio_buffer[audio_media->audio_w++] = data[i] * 32767;
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+                }
+            break;
+        case 44100: {
+            int fraction = ((48000.0 / 44100) - 1.0) * 65536;
+            if (ch == 2) {
+                for (int i = 0; i < count; i++) {
+                again2:
+                    audio_buffer[audio_media->audio_w++] = data[i * 2] * 32767;
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+                    audio_buffer[audio_media->audio_w++] =
+                        data[i * 2 + 1] * 32767;
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+                    phase += fraction;
+                    if (phase > 65536) {
+                        phase -= 65536;
+                        phase -= fraction;
+                        goto again2;
+                    }
+                }
+            } else if (ch == 1) {
+                for (int i = 0; i < count; i++) {
+                again1:
+                    audio_buffer[audio_media->audio_w++] = data[i] * 32767;
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+                    audio_buffer[audio_media->audio_w++] = data[i] * 32767;
+                    if (audio_media->audio_w >= AUDIO_BUF_SIZE)
+                        audio_media->audio_w = 0;
+
+                    phase += fraction;
+                    if (phase > 65536) {
+                        phase -= 65536;
+                        phase -= fraction;
+                        goto again1;
+                    }
+                }
+            }
+            break;
+        }
+    }
+}
+
+int st3m_media_pcm_queued(void) {
     if (!audio_media) return 0;
     if (audio_media->audio_r > audio_media->audio_w)
         return (AUDIO_BUF_SIZE - audio_media->audio_r) + audio_media->audio_w;
@@ -115,7 +239,7 @@ float st3m_media_get_position(void) {
 float st3m_media_get_time(void) {
     if (!audio_media) return 0;
     if (audio_media->time <= 0) return audio_media->time;
-    return audio_media->time - st3m_media_samples_queued() / 48000.0 / 2.0;
+    return audio_media->time - st3m_media_pcm_queued() / 48000.0 / 2.0;
 }
 
 void st3m_media_seek(float position) {
