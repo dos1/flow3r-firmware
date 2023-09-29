@@ -106,7 +106,9 @@ class ViewTransitionBlend(ViewTransition):
     def draw(
         self, ctx: Context, transition: float, incoming: Responder, outgoing: Responder
     ) -> None:
+        ctx.save()
         outgoing.draw(ctx)
+        ctx.restore()
 
         ctx.save()
         ctx.global_alpha = transition
