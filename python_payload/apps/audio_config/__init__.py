@@ -1,4 +1,5 @@
 from st3m.application import Application
+from st3m.ui.view import View, ViewTransitionDirection
 import math, random, sys_display
 from st3m import settings
 import audio
@@ -271,11 +272,9 @@ class Drawable:
 class Submenu(Drawable):
     def __init__(self, press):
         super().__init__(press)
-        self.submenu_active = False
 
     def draw(self, ctx):
-        if self.submenu_active:
-            self._draw(ctx)
+        self._draw(ctx)
 
     def _draw(self, ctx):
         # override w specific implementation!
@@ -565,6 +564,22 @@ class Press:
         self.select_pressed = False
 
 
+class SubView(View):
+    def __init__(self, menu, app):
+        self.menu = menu
+        self.app = app
+
+    def on_enter(self, vm):
+        self.vm = vm
+
+    def think(self, ins, delta_ms):
+        if self.vm.is_active(self):
+            self.app.think(ins, delta_ms)
+
+    def draw(self, ctx):
+        self.menu.draw(ctx)
+
+
 class App(Application):
     def __init__(self, app_ctx):
         super().__init__(app_ctx)
@@ -596,52 +611,45 @@ class App(Application):
     def draw(self, ctx):
         self.ctx = ctx
 
-        main_menu_active = True
-        for menu in self.menus:
-            menu.draw(self.ctx)
-            if menu.submenu_active:
-                main_menu_active = False
-
-        if main_menu_active:
-            self.draw_bg()
-            ctx.save()
-            ctx.rgb(*colours.GO_GREEN)
-            ctx.rotate(math.tau / 10)
-            for i in range(5):
-                if i == 2:
-                    ctx.rotate(math.tau / 5)
-                    continue
-                ctx.round_rectangle(-40, -110, 80, 45, 6).stroke()
+        self.draw_bg()
+        ctx.save()
+        ctx.rgb(*colours.GO_GREEN)
+        ctx.rotate(math.tau / 10)
+        for i in range(5):
+            if i == 2:
                 ctx.rotate(math.tau / 5)
-            ctx.restore()
+                continue
+            ctx.round_rectangle(-40, -110, 80, 45, 6).stroke()
+            ctx.rotate(math.tau / 5)
+        ctx.restore()
 
-            ctx.text_align = ctx.CENTER
-            ctx.rotate(math.tau / 10)
-            ctx.move_to(0, -91)
-            ctx.text("volume")
-            ctx.move_to(0, -74)
-            ctx.text("control")
-            ctx.move_to(0, 0)
-            ctx.rotate(math.tau * (1 / 5 + 1 / 2))
-            ctx.move_to(0, 92)
-            ctx.text("inputs")
-            ctx.move_to(0, 0)
-            ctx.rotate(math.tau * 2 / 5)
-            ctx.move_to(0, 92)
-            ctx.text("speaker")
-            ctx.move_to(0, 0)
-            ctx.rotate(math.tau * (1 / 5 + 1 / 2))
-            ctx.move_to(0, -91)
-            ctx.text("head")
-            ctx.move_to(0, -74)
-            ctx.text("phones")
-            ctx.rotate(math.tau / 10)
-            ctx.move_to(0, 0)
-            ctx.text("audio config")
-            ctx.rgb(0.7, 0.7, 0.7)
-            ctx.font_size = 18
-            ctx.move_to(0, 20)
-            ctx.text("exit to save")
+        ctx.text_align = ctx.CENTER
+        ctx.rotate(math.tau / 10)
+        ctx.move_to(0, -91)
+        ctx.text("volume")
+        ctx.move_to(0, -74)
+        ctx.text("control")
+        ctx.move_to(0, 0)
+        ctx.rotate(math.tau * (1 / 5 + 1 / 2))
+        ctx.move_to(0, 92)
+        ctx.text("inputs")
+        ctx.move_to(0, 0)
+        ctx.rotate(math.tau * 2 / 5)
+        ctx.move_to(0, 92)
+        ctx.text("speaker")
+        ctx.move_to(0, 0)
+        ctx.rotate(math.tau * (1 / 5 + 1 / 2))
+        ctx.move_to(0, -91)
+        ctx.text("head")
+        ctx.move_to(0, -74)
+        ctx.text("phones")
+        ctx.rotate(math.tau / 10)
+        ctx.move_to(0, 0)
+        ctx.text("audio config")
+        ctx.rgb(0.7, 0.7, 0.7)
+        ctx.font_size = 18
+        ctx.move_to(0, 20)
+        ctx.text("exit to save")
 
         self.press.select_pressed = False
         self.press.left_pressed = False
@@ -651,12 +659,12 @@ class App(Application):
         super().think(ins, delta_ms)
         for i in range(1, 10, 2):
             if self.input.captouch.petals[i].whole.pressed:
-                for menu in self.menus:
-                    menu.submenu_active = False
+                if not self.is_active():
+                    self.vm.pop()
                 if i < 5:
-                    self.menus[i // 2].submenu_active = True
+                    self.vm.push(SubView(self.menus[i // 2], self))
                 elif i > 5:
-                    self.menus[(i // 2) - 1].submenu_active = True
+                    self.vm.push(SubView(self.menus[(i // 2) - 1], self))
 
         if (
             self.input.buttons.app.right.pressed
@@ -670,11 +678,12 @@ class App(Application):
 
     def on_enter(self, vm):
         super().on_enter(vm)
-        settings.load_all()
+        if self.vm.direction == ViewTransitionDirection.FORWARD:
+            settings.load_all()
 
     def on_exit(self):
-        settings.save_all()
-        super().on_exit()
+        if self.vm.direction == ViewTransitionDirection.BACKWARD:
+            settings.save_all()
 
 
 if __name__ == "__main__":
