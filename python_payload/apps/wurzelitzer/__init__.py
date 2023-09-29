@@ -35,10 +35,7 @@ class App(Application):
         self._connected = False
 
     def show_icons(self) -> bool:
-        return (
-            not self._streams[self._stream_no].endswith(".mpg")
-            or not media.is_playing()
-        )
+        return not media.is_visual() or not media.is_playing()
 
     def load_stream(self):
         media.stop()
@@ -147,7 +144,7 @@ class App(Application):
             self.load_stream()
 
     def on_exit(self):
-        if self._streams[self._stream_no].endswith(".mpg") or not media.is_playing():
+        if media.is_visual() or not media.is_playing():
             media.stop()
 
     def on_exit_done(self):

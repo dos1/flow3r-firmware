@@ -38,6 +38,15 @@ struct _st3m_media {
                  // until first play through of some media, when time
                  // duration should also be set exact.
 
+    // whether the loaded file contains a video stream - set by decoder
+    bool has_video;
+
+    // whether the loaded file contains an audio stream - set by decoder
+    bool has_audio;
+
+    // whether the loaded file contains visual content - set by decoder
+    bool is_visual;
+
     // decoder should seek to this relative if not -1, and set it to -1
     float seek;
 
@@ -46,13 +55,13 @@ struct _st3m_media {
 
     // if set to 1 playback is momentarily stopped but can be resumed,
     // this is toggled by st3m_media_play | st3m_media_pause
-    int paused;
+    bool paused;
 };
 
 // stops the currently playing media item
 void st3m_media_stop(void);
 // set a new media item
-int st3m_media_load(const char *path_or_uri, bool paused);
+bool st3m_media_load(const char *path_or_uri, bool paused);
 
 // decode current media item ms ahead (unless paused)
 void st3m_media_think(float ms);
@@ -65,7 +74,16 @@ void st3m_media_draw(Ctx *ctx);
 // controls whether we are playing
 void st3m_media_pause(void);
 void st3m_media_play(void);
-int st3m_media_is_playing(void);
+bool st3m_media_is_playing(void);
+
+// whether there's a video stream being played
+bool st3m_media_has_video(void);
+
+// whether there's a video stream being played
+bool st3m_media_has_audio(void);
+
+// whether the played file has visual content
+bool st3m_media_is_visual(void);
 
 // get duration in seconds
 float st3m_media_get_duration(void);
