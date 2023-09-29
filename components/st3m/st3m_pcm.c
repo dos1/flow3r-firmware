@@ -42,24 +42,41 @@ static int phase = 0;
 
 void st3m_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
     if (hz == 48000) {
-        if (ch == 2)
-            for (int i = 0; i < count * 2; i++) {
-                st3m_pcm_buffer[st3m_pcm_w++] =
-                    apply_gain(data[i], st3m_pcm_gain);
-                st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+        if (ch == 2) {
+            if (st3m_pcm_gain == 4096) {
+                for (int i = 0; i < count * 2; i++) {
+                    st3m_pcm_buffer[st3m_pcm_w++] = data[i];
+                    st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+                }
+            } else {
+                for (int i = 0; i < count * 2; i++) {
+                    st3m_pcm_buffer[st3m_pcm_w++] =
+                        apply_gain(data[i], st3m_pcm_gain);
+                    st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+                }
             }
-        else if (ch == 1)
-            for (int i = 0; i < count; i++) {
-                st3m_pcm_buffer[st3m_pcm_w++] =
-                    apply_gain(data[i], st3m_pcm_gain);
-                st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
-                st3m_pcm_buffer[st3m_pcm_w++] =
-                    apply_gain(data[i], st3m_pcm_gain);
-                st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+        } else if (ch == 1) {
+            if (st3m_pcm_gain == 4096) {
+                for (int i = 0; i < count; i++) {
+                    st3m_pcm_buffer[st3m_pcm_w++] = data[i];
+                    st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+                    st3m_pcm_buffer[st3m_pcm_w++] = data[i];
+                    st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+                }
+            } else {
+                for (int i = 0; i < count; i++) {
+                    st3m_pcm_buffer[st3m_pcm_w++] =
+                        apply_gain(data[i], st3m_pcm_gain);
+                    st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+                    st3m_pcm_buffer[st3m_pcm_w++] =
+                        apply_gain(data[i], st3m_pcm_gain);
+                    st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+                }
             }
+        }
     } else {
         int fraction = ((48000.0 / hz) - 1.0) * 65536;
-        if (ch == 2)
+        if (ch == 2) {
             for (int i = 0; i < count; i++) {
                 st3m_pcm_buffer[st3m_pcm_w++] =
                     apply_gain(data[i * 2], st3m_pcm_gain);
@@ -74,8 +91,7 @@ void st3m_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
                 }
                 phase += fraction;
             }
-        else if (ch == 1)
-
+        } else if (ch == 1) {
             for (int i = 0; i < count; i++) {
                 st3m_pcm_buffer[st3m_pcm_w++] =
                     apply_gain(data[i], st3m_pcm_gain);
@@ -91,25 +107,42 @@ void st3m_pcm_queue_s16(int hz, int ch, int count, int16_t *data) {
                 }
                 phase += fraction;
             }
+        }
     }
 }
+
 void st3m_pcm_queue_float(int hz, int ch, int count, float *data) {
     if (hz == 48000) {
-        if (ch == 2)
-            for (int i = 0; i < count * 2; i++) {
-                st3m_pcm_buffer[st3m_pcm_w++] =
-                    apply_gain(data[i] * 32767, st3m_pcm_gain);
-                st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
-            }
-        else if (ch == 1)
-            for (int i = 0; i < count; i++) {
-                st3m_pcm_buffer[st3m_pcm_w++] =
-                    apply_gain(data[i] * 32767, st3m_pcm_gain);
-                st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
-                st3m_pcm_buffer[st3m_pcm_w++] =
-                    apply_gain(data[i] * 32767, st3m_pcm_gain);
-                st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
-            }
+        if (ch == 2) {
+            if (st3m_pcm_gain == 4096)
+                for (int i = 0; i < count * 2; i++) {
+                    st3m_pcm_buffer[st3m_pcm_w++] = data[i] * 32767;
+                    st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+                }
+            else
+                for (int i = 0; i < count * 2; i++) {
+                    st3m_pcm_buffer[st3m_pcm_w++] =
+                        apply_gain(data[i] * 32767, st3m_pcm_gain);
+                    st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+                }
+        } else if (ch == 1) {
+            if (st3m_pcm_gain == 4096)
+                for (int i = 0; i < count; i++) {
+                    st3m_pcm_buffer[st3m_pcm_w++] = data[i] * 32767;
+                    st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+                    st3m_pcm_buffer[st3m_pcm_w++] = data[i] * 32767;
+                    st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+                }
+            else
+                for (int i = 0; i < count; i++) {
+                    st3m_pcm_buffer[st3m_pcm_w++] =
+                        apply_gain(data[i] * 32767, st3m_pcm_gain);
+                    st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+                    st3m_pcm_buffer[st3m_pcm_w++] =
+                        apply_gain(data[i] * 32767, st3m_pcm_gain);
+                    st3m_pcm_w %= ST3M_PCM_BUF_SIZE;
+                }
+        }
     } else {
         int fraction = ((48000.0 / hz) - 1.0) * 65536;
         if (ch == 2) {
