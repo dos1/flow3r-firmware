@@ -44,6 +44,8 @@ bool st3m_media_audio_render(int16_t *rx, int16_t *tx, uint16_t len) {
                 audio_media->volume);
             if (audio_media->audio_r >= AUDIO_BUF_SIZE)
                 audio_media->audio_r = 0;
+        } else {
+            tx[i] = 0;
         }
     }
     return true;
