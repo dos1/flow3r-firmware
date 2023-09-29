@@ -35,7 +35,7 @@ EXT_RAM_BSS_ATTR static uint16_t
     st3m_fb[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT];
 #endif
 EXT_RAM_BSS_ATTR static uint8_t
-    st3m_fb_copy[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 4];
+    st3m_fb_copy[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 2];
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
 EXT_RAM_BSS_ATTR static uint8_t
     st3m_fb2[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 4];
@@ -454,7 +454,8 @@ static void st3m_gfx_rast_task(void *_arg) {
             prev_set_mode = set_mode;
 
             if (((set_mode & st3m_gfx_low_latency) == st3m_gfx_low_latency) ||
-                ((set_mode & st3m_gfx_direct_ctx) == st3m_gfx_direct_ctx))
+                ((set_mode & st3m_gfx_direct_ctx) == st3m_gfx_direct_ctx) ||
+                (bits > 16))
                 direct_blit = 1;
             else
                 direct_blit = 0;
