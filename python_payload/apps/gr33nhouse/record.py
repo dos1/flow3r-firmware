@@ -10,12 +10,6 @@ class RecordView(BaseView):
         super().__init__()
         self.background = Flow3rView()
 
-    def on_enter(self, vm: ViewManager | None) -> None:
-        super().on_enter(vm)
-
-        if self.vm is None:
-            raise RuntimeError("vm is None")
-
     def draw(self, ctx: Context) -> None:
         ctx.move_to(0, 0)
         ctx.save()

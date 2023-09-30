@@ -253,9 +253,6 @@ class WifiApp(Application):
         super().think(ins, delta_ms)
         self._scroll_pos += delta_ms / 1000
 
-        if not self.is_active():
-            return
-
         leds.set_all_rgb(0, 0, 0)
 
         if self.input.buttons.app.left.pressed and self._wlan_offset > 0:

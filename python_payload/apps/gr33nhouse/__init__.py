@@ -33,11 +33,9 @@ class Gr33nhouseApp(Application):
         self.state = ViewState.CONTENT
         self.wifi_status = None
 
-    def on_enter(self, vm: ViewManager | None) -> None:
-        super().on_enter(vm)
-
-        if self.vm is None:
-            raise RuntimeError("vm is None")
+    def on_exit(self) -> bool:
+        # request thinks after on_exit
+        return True
 
     def draw(self, ctx: Context) -> None:
         if self.state == ViewState.NO_INTERNET:
@@ -106,8 +104,10 @@ class Gr33nhouseApp(Application):
         super().think(ins, delta_ms)
         self._sc.think(ins, delta_ms)
 
-        if self.vm is None:
-            raise RuntimeError("vm is None")
+        self.background.think(ins, delta_ms)
+
+        if not self.is_active():
+            return
 
         if not network.WLAN(network.STA_IF).isconnected():
             self.state = ViewState.NO_INTERNET
@@ -115,8 +115,6 @@ class Gr33nhouseApp(Application):
             return
         else:
             self.state = ViewState.CONTENT
-
-        self.background.think(ins, delta_ms)
 
         if self.input.buttons.app.left.pressed or self.input.buttons.app.left.repeated:
             self._sc.scroll_left()

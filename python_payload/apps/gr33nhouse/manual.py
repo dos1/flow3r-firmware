@@ -46,8 +46,10 @@ class ManualInputView(BaseView):
         super().on_enter(vm)
         self.flow3r_seed = ""
         self.state = ViewState.ENTER_SEED
-        if self.vm is None:
-            raise RuntimeError("vm is None")
+
+    def on_exit(self) -> bool:
+        # request thinks after on_exit
+        return True
 
     def draw(self, ctx: Context) -> None:
         self.background.draw(ctx)

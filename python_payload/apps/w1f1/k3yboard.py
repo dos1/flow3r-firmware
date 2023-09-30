@@ -540,7 +540,7 @@ class KeyboardDemoApp(Application):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)  # Let Application do its thing
 
-        if self.is_active() and self.input.buttons.app.middle.pressed:
+        if self.input.buttons.app.middle.pressed:
             self.vm.push(KeyboardView(self._model))
 
 

@@ -21,11 +21,9 @@ class ConfirmationView(BaseView):
         self.name = name
         self.author = author
 
-    def on_enter(self, vm: ViewManager | None) -> None:
-        super().on_enter(vm)
-
-        if self.vm is None:
-            raise RuntimeError("vm is None")
+    def on_exit(self) -> bool:
+        # request thinks after on_exit
+        return True
 
     def draw(self, ctx: Context) -> None:
         ctx.move_to(0, 0)
@@ -72,10 +70,7 @@ class ConfirmationView(BaseView):
         super().think(ins, delta_ms)
         self.background.think(ins, delta_ms)
 
-        if self.vm is None:
-            raise RuntimeError("vm is None")
-
-        if self.input.buttons.app.middle.pressed:
+        if self.is_active() and self.input.buttons.app.middle.pressed:
             self.vm.replace(
                 DownloadView(
                     url=self.url,

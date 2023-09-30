@@ -31,6 +31,10 @@ class AppList(BaseView):
         self.background = Flow3rView()
         self._sc = ScrollController()
 
+    def on_exit(self) -> bool:
+        # request thinks after on_exit
+        return True
+
     def draw(self, ctx: Context) -> None:
         ctx.move_to(0, 0)
 
@@ -117,10 +121,10 @@ class AppList(BaseView):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
         self._sc.think(ins, delta_ms)
-        if self.is_active() and self.vm.transitioning:
-            return
 
         if self._state == ViewState.INITIAL:
+            if self.vm.transitioning:
+                return
             try:
                 self._state = ViewState.LOADING
                 print("Loading app list...")
@@ -146,6 +150,9 @@ class AppList(BaseView):
 
         self.background.think(ins, delta_ms)
         self._scroll_pos += delta_ms / 1000
+
+        if not self.is_active():
+            return
 
         if self.input.buttons.app.left.pressed or self.input.buttons.app.left.repeated:
             self._sc.scroll_left()

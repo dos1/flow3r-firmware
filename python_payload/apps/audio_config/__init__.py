@@ -569,12 +569,8 @@ class SubView(View):
         self.menu = menu
         self.app = app
 
-    def on_enter(self, vm):
-        self.vm = vm
-
     def think(self, ins, delta_ms):
-        if self.vm.is_active(self):
-            self.app.think(ins, delta_ms)
+        self.app.think(ins, delta_ms)
 
     def draw(self, ctx):
         self.menu.draw(ctx)

@@ -170,9 +170,6 @@ class Otamatone(Application):
         self._ts += delta_ms
         self._blob.think(ins, delta_ms)
 
-        if not self.is_active():
-            return
-
         petal = self.input.captouch.petals[self.PETAL_NO]
         pos = ins.captouch.petals[self.PETAL_NO].position
         ctrl = pos[0] / 40000
