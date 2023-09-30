@@ -16,10 +16,8 @@ class App(Application):
         self.left_pressed = False
         self.select_pressed = False
         self.angle = 0
-        self.focused_widget = 2
+        self.focused_widget = 1
         self.active = False
-        self.min_focus = 0
-        self.min_focus = 3
 
     def draw_widget(self, label):
         ctx = self.ctx
@@ -30,8 +28,8 @@ class App(Application):
                 self.select_pressed = False
             elif self.left_pressed:
                 self.focused_widget -= 1
-                if self.focused_widget < 2:
-                    self.focused_widget = 2
+                if self.focused_widget < 1:
+                    self.focused_widget = 1
                 self.left_pressed = False
             elif self.right_pressed:
                 self.focused_widget += 1
@@ -129,6 +127,7 @@ class App(Application):
         curmode = sys_display.get_mode()
         low_latency = (curmode & sys_display.low_latency) != 0
         direct_ctx = (curmode & sys_display.direct_ctx) != 0
+        blit_in_rast = (curmode & sys_display.blit_in_rast) != 0
         lock = (curmode & sys_display.lock) != 0
         osd = (curmode & sys_display.osd) != 0
         scale = 0
@@ -171,9 +170,6 @@ class App(Application):
         self.ctx = ctx
         self.draw_bg()
 
-        self.draw_widget("mode")
-        ctx.text(str(curmode))
-
         bpp = self.draw_choice("bpp", ["8", "16", "24", "32", "1", "2", "4"], bpp)
         if bpp > 0:
             palette = 0
@@ -181,6 +177,7 @@ class App(Application):
         scale = self.draw_choice("scale", ["1x", "2x", "3x", "4x"], scale)
         low_latency = self.draw_boolean("low latency", low_latency)
         direct_ctx = self.draw_boolean("direct ctx", direct_ctx)
+        blit_in_rast = self.draw_boolean("blit in rasterize task", blit_in_rast)
         osd = self.draw_boolean("osd", osd)
         lock = self.draw_boolean("lock", lock)
         if direct_ctx:
@@ -213,6 +210,7 @@ class App(Application):
         mode += osd * sys_display.osd
         mode += low_latency * sys_display.low_latency
         mode += direct_ctx * sys_display.direct_ctx
+        mode += blit_in_rast * sys_display.blit_in_rast
         mode += lock * sys_display.lock
 
         if scale == 1:

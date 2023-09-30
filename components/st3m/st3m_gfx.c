@@ -19,23 +19,33 @@
 #include "st3m_counter.h"
 #include "st3m_version.h"
 
+#define ST3M_GFX_BLIT_TASK 1
+
+#if CTX_ST3M_FB_INTERNAL_RAM
+#undef ST3M_GFX_BLIT_TASK
+#define ST3M_GFX_BLIT_TASK 0
+#endif
+
 #define ST3M_GFX_DEFAULT_MODE (16 | st3m_gfx_osd)
 
 static st3m_gfx_mode default_mode = ST3M_GFX_DEFAULT_MODE;
 
-// if the EXT_RAM_BSS_ATTR is removed 8bit and 16bit modes go
-// faster but it is not possible to enable wifi
-
 #if CTX_ST3M_FB_INTERNAL_RAM
+// without EXT_RAM_BSS_ATTR is removed 8bit and 16bit modes go
+// faster but it is not possible to enable wifi
 static uint16_t st3m_fb[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT];
 uint8_t st3m_pal[256 * 3];
 #else
 EXT_RAM_BSS_ATTR uint8_t st3m_pal[256 * 3];
-EXT_RAM_BSS_ATTR static uint16_t
-    st3m_fb[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT];
+EXT_RAM_BSS_ATTR static uint8_t
+    st3m_fb[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 2];
 #endif
+
+#if ST3M_GFX_BLIT_TASK
 EXT_RAM_BSS_ATTR static uint8_t
     st3m_fb_copy[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 2];
+#endif
+
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
 EXT_RAM_BSS_ATTR static uint8_t
     st3m_fb2[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 4];
@@ -98,7 +108,9 @@ static QueueHandle_t user_ctx_blitq = NULL;
 
 static st3m_counter_rate_t rast_rate;
 static TaskHandle_t graphics_rast_task;
+#if ST3M_GFX_BLIT_TASK
 static TaskHandle_t graphics_blit_task;
+#endif
 
 static int _st3m_gfx_low_latency = 0;
 
@@ -219,6 +231,8 @@ void st3m_gfx_set_default_mode(st3m_gfx_mode mode) {
             default_mode &= ~st3m_gfx_low_latency;
         else if (mode & st3m_gfx_direct_ctx)
             default_mode &= ~st3m_gfx_direct_ctx;
+        else if (mode & st3m_gfx_blit_in_rast)
+            default_mode &= ~st3m_gfx_blit_in_rast;
     } else if ((mode & (1 | 2 | 4 | 8 | 16 | 32)) == mode) {
         default_mode &= ~(1 | 2 | 4 | 8 | 16 | 32);
         default_mode |= mode;
@@ -239,6 +253,8 @@ void st3m_gfx_set_default_mode(st3m_gfx_mode mode) {
         default_mode |= st3m_gfx_lock;
     } else if (mode == st3m_gfx_direct_ctx) {
         default_mode |= st3m_gfx_direct_ctx;
+    } else if (mode == st3m_gfx_blit_in_rast) {
+        default_mode |= st3m_gfx_blit_in_rast;
     } else
         default_mode = mode;
 
@@ -415,6 +431,7 @@ static void st3m_gfx_blit(st3m_gfx_drawlist *drawlist) {
     xSemaphoreGive(st3m_fb_copy_lock);
 }
 
+#if ST3M_GFX_BLIT_TASK
 static void st3m_gfx_blit_task(void *_arg) {
     while (true) {
         int desc_no = 0;
@@ -426,6 +443,7 @@ static void st3m_gfx_blit_task(void *_arg) {
         xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
     }
 }
+#endif
 
 static void st3m_gfx_rast_task(void *_arg) {
     (void)_arg;
@@ -435,7 +453,9 @@ static void st3m_gfx_rast_task(void *_arg) {
     st3m_gfx_mode prev_set_mode = ST3M_GFX_DEFAULT_MODE - 1;
     void *user_fb = st3m_fb;
 
+#if ST3M_GFX_BLIT_TASK
     int direct_blit = 0;
+#endif
 
     while (true) {
         int desc_no = 0;
@@ -455,12 +475,19 @@ static void st3m_gfx_rast_task(void *_arg) {
             bits = _st3m_gfx_bpp(set_mode);
             prev_set_mode = set_mode;
 
-            if (((set_mode & st3m_gfx_low_latency) == st3m_gfx_low_latency) ||
-                ((set_mode & st3m_gfx_direct_ctx) == st3m_gfx_direct_ctx) ||
-                (bits > 16))
+#if ST3M_GFX_BLIT_TASK
+            if ((set_mode & st3m_gfx_blit_in_rast) != 0) {
                 direct_blit = 1;
-            else
-                direct_blit = 0;
+            } else {
+                if (((set_mode & st3m_gfx_low_latency) ==
+                     st3m_gfx_low_latency) ||
+                    ((set_mode & st3m_gfx_direct_ctx) == st3m_gfx_direct_ctx) ||
+                    (bits > 16))
+                    direct_blit = 1;
+                else
+                    direct_blit = 0;
+            }
+#endif
 
             switch (bits) {
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
@@ -546,11 +573,14 @@ static void st3m_gfx_rast_task(void *_arg) {
             ctx_drawlist_clear(drawlist->user_ctx);
         }
 
+#if ST3M_GFX_BLIT_TASK
         if (direct_blit) {
+#endif
             blit_src = user_fb;
             st3m_gfx_blit(drawlist);
             xSemaphoreGive(st3m_fb_lock);
             xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
+#if ST3M_GFX_BLIT_TASK
         } else {
             blit_src = st3m_fb_copy;
             xSemaphoreTake(st3m_fb_copy_lock, portMAX_DELAY);
@@ -559,6 +589,7 @@ static void st3m_gfx_rast_task(void *_arg) {
             xSemaphoreGive(st3m_fb_lock);
             xQueueSend(user_ctx_blitq, &desc_no, portMAX_DELAY);
         }
+#endif
 
         st3m_counter_rate_sample(&rast_rate);
         float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
@@ -862,9 +893,11 @@ void st3m_gfx_init(void) {
         xTaskCreatePinnedToCore(st3m_gfx_rast_task, "gfx-rast", 8192, NULL,
                                 ESP_TASK_PRIO_MIN + 1, &graphics_rast_task, 0);
     assert(res == pdPASS);
+#if ST3M_GFX_BLIT_TASK
     res = xTaskCreate(st3m_gfx_blit_task, "gfx-blit", 2048, NULL,
                       ESP_TASK_PRIO_MIN + 2, &graphics_blit_task);
     assert(res == pdPASS);
+#endif
 }
 static int last_descno = 0;
 static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {

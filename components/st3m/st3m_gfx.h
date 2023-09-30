@@ -12,15 +12,23 @@ typedef enum {
     // bitmask flag over base bpp to turn on OSD, only 16bpp for now will
     // become available for other bitdepths as grayscale rather than color
     // overlays.
+
+    // directly manipulate target framebuffer instead of having
+    // separate rasterization task
     st3m_gfx_direct_ctx = 1 << 7,
+    // enable osd compositing
     st3m_gfx_osd = 1 << 8,
-    // shallower pipeline, in the future might mean immediate mode
+    // shallower pipeline
     st3m_gfx_low_latency = 1 << 9,
     st3m_gfx_unset = 1 << 10,
     st3m_gfx_lock = 1 << 11,
     st3m_gfx_2x = 1 << 12,
     st3m_gfx_3x = 1 << 13,
     st3m_gfx_4x = st3m_gfx_2x | st3m_gfx_3x,
+
+    // do blitting in rasterization task, default is to
+    // blit in separate task if possible
+    st3m_gfx_blit_in_rast = 1 << 14,
     // 4 and 8bpp modes use the configured palette, the palette resides
     // in video ram and is lost upon mode change
     st3m_gfx_1bpp = 1,

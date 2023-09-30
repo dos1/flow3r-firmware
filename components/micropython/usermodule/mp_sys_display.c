@@ -143,6 +143,8 @@ STATIC const mp_rom_map_elem_t mp_module_sys_display_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_cool), MP_ROM_INT((int)st3m_gfx_cool) },
     { MP_ROM_QSTR(MP_QSTR_low_latency), MP_ROM_INT((int)st3m_gfx_low_latency) },
     { MP_ROM_QSTR(MP_QSTR_direct_ctx), MP_ROM_INT((int)st3m_gfx_direct_ctx) },
+    { MP_ROM_QSTR(MP_QSTR_blit_in_rast),
+      MP_ROM_INT((int)st3m_gfx_blit_in_rast) },
     { MP_ROM_QSTR(MP_QSTR_unset), MP_ROM_INT((int)st3m_gfx_unset) },
     { MP_ROM_QSTR(MP_QSTR_lock), MP_ROM_INT((int)st3m_gfx_lock) },
     { MP_ROM_QSTR(MP_QSTR_x2), MP_ROM_INT((int)st3m_gfx_2x) },
