@@ -65,7 +65,7 @@ static void mod_think(st3m_media *media, float ms_elapsed) {
     if (self->control.duration == 0) {
         self->control.duration = self->pocketmod.num_patterns + 1;
     }
-    if (self->pocketmod.pattern > self->control.duration)
+    if (self->pocketmod.pattern >= self->control.duration)
         self->control.duration = self->pocketmod.pattern + 1;
     self->control.position = self->pocketmod.pattern;
     if (self->pocketmod.loop_count)
