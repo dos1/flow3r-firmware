@@ -529,6 +529,71 @@ Here is our previous example rewritten to make use of `BaseView`:
     st3m.run.run_view(Example())
 
 
+In some cases, it's useful to know more about the view's lifecycle, so tasks
+like long-blocking loading screens can be synchronized with view transition
+animations. You'll also be interested in those events when doing unusual things
+with rendering, such as partial redraws or direct framebuffer manipulation.
+
+Here's the list of methods that you can implement in your class:
+
++-----------------------+-------------------------------------------------------------------------+
+| Function              | Meaning                                                                 |
++=======================+=========================================================================+
+| ``.on_enter(vm)``     | The view has became active and is about to start receiving ``.think()`` |
+|                       | and ``.draw()`` calls.                                                  |
++-----------------------+-------------------------------------------------------------------------+
+| ``.on_enter_done()``  | The view transition has finished animating; the whole screen is now     |
+|                       | under the control of the view.                                          |
+|                       |                                                                         |
+|                       | If you want to perform a long running blocking task (such as loading    |
+|                       | audio samples), it's a good idea to initiate it here to not block       |
+|                       | during the transition animation.                                        |
++-----------------------+-------------------------------------------------------------------------+
+| ``.on_exit()``        | The view has became inactive and started to transition out; no further  |
+|                       | ``.think()`` calls will be made until the next ``.on_enter()`` unless   |
+|                       | you return ``True`` from this handler.                                  |
+|                       |                                                                         |
+|                       | Do the clean-up of shared resources (such as LEDs or the media engine)  |
+|                       | here. This way you won't step onto the next view's shoes, as it may     |
+|                       | want to use them in its ``.on_enter()`` already.                        |
+|                       |                                                                         |
+|                       | **Note**: When returning ``True``, make sure not to handle input events |
+|                       | not meant for this view in your ``.think()`` handler during transition  |
+|                       | animation (see ``.is_active()`` below).                                 |
++-----------------------+-------------------------------------------------------------------------+
+| ``.on_exit_done()``   | The view transition has finished animating; no further ``.draw()`` or   |
+|                       | ``.think()`` calls will be made until the next ``.on_enter()``.         |
+|                       |                                                                         |
+|                       | A good place to do the clean-up of resources you have exclusive control |
+|                       | over, such as :ref:`bl00mbox` channels.                                 |
++-----------------------+-------------------------------------------------------------------------+
+| ``.show_icons()``     | Return ``True`` from it to have indicator icons drawn on top of your    |
+|                       | view by the system, just like in the main menu. Defaults to ``False``.  |
++-----------------------+-------------------------------------------------------------------------+
+
+:py:class:`ViewManager` also provides some methods to make handling common
+cases easier:
+
++-----------------------+-------------------------------------------------------------------------+
+| Function / property   | Meaning                                                                 |
++=======================+=========================================================================+
+| ``.is_active(view)``  | Returns a bool indicating whether the passed view is currently          |
+|                       | active. The active view is the one that's expected to be in control     |
+|                       | of user's input and the view stack. A view becomes active at            |
+|                       | ``.on_enter()`` and stops being active at ``.on_exit()``.               |
++-----------------------+-------------------------------------------------------------------------+
+| ``.transitioning``    | Whether a transition animation is currently in progress.                |
++-----------------------+-------------------------------------------------------------------------+
+| ``.direction``        | Returns the direction in which the currently active view has became one:|
+|                       |                                                                         |
+|                       |  - ``ViewTransitionDirection.NONE`` if it has replaced another view;    |
+|                       |  - ``ViewTransitionDirection.FORWARD`` if it was pushed into the stack; |
+|                       |  - ``ViewTransitionDirection.BACKWARD`` if another view was popped.     |
++-----------------------+-------------------------------------------------------------------------+
+
+On top of that, :py:class:`BaseView` implements an additional helper method
+``.is_active()``, which is simply a bit less awkward way to call
+``self.vm.is_active(self)``.
 
 Writing an application for the menu system
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
