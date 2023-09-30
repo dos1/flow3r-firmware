@@ -21,11 +21,13 @@ class View(Responder):
         """
         pass
 
-    def on_exit(self) -> None:
+    def on_exit(self) -> bool:
         """
         Called when the View is about to become inactive.
+        If it returns True, think calls will continue to happen
+        until on_exit_done.
         """
-        pass
+        return False
 
     def on_enter_done(self) -> None:
         """
@@ -199,6 +201,8 @@ class ViewManager(Responder):
         self._first_think = False
         self._fully_drawn = 0
 
+        self._outgoing_wants_to_think = False
+
     def _end_transition(self) -> None:
         if not self._transitioning:
             return
@@ -225,7 +229,7 @@ class ViewManager(Responder):
         self._incoming = self._pending
         self._pending = None
         if self._outgoing is not None:
-            self._outgoing.on_exit()
+            self._outgoing_wants_to_think = self._outgoing.on_exit()
         self._incoming.on_enter(self)
         if self._outgoing is None:
             self._end_transition()
@@ -251,7 +255,7 @@ class ViewManager(Responder):
             else:
                 self.pop(ViewTransitionSwipeRight())
 
-        if self._outgoing is not None:
+        if self._outgoing is not None and self._outgoing_wants_to_think:
             self._outgoing.think(ins, delta_ms)
         if self._incoming is not None:
             self._incoming.think(ins, delta_ms)
