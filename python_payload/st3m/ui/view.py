@@ -260,6 +260,12 @@ class ViewManager(Responder):
 
     def draw(self, ctx: Context) -> None:
         if self._transitioning:
+            if self._transition == 0.0:
+                ctx.save()
+                self._outgoing.draw(ctx)
+                ctx.restore()
+                return
+
             if self._transition >= 1.0:
                 self._fully_drawn += 1
 
@@ -292,7 +298,6 @@ class ViewManager(Responder):
         self._pending = r
         self._pending_vt = override_vt
         self._pending_direction = direction
-        self._end_transition()
 
     def push(self, r: View, override_vt: Optional[ViewTransition] = None) -> None:
         """
