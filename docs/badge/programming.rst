@@ -644,11 +644,6 @@ Here is our previous code changed to use `Application` for the base of its main 
         # Continue to make runnable via mpremote run.
         st3m.run.run_app(MyDemo)
 
-Using `Application` also gives you access to the `ApplicationContext`, which for example
-gives you a way to find out the base path of your app, in `app_ctx.bundle_path` or its
-bundle metadata in `app_ctx.bundle_metadata`. For a sample app using `bundle_path`, see
-`schneider's nyan-cat fork
-<https://git.flow3r.garden/chubbson/nyan-cat/-/tree/schneider/bundle-path>`_.
 
 To add the application to the menu we are missing one more thing: a `flow3r.toml`
 file which describes the application so flow3r knows where to put it in the menu system.
@@ -687,6 +682,40 @@ it should pick up your new application.
 | SD     | ``apps``             | ``/sd/apps``        | Doesn't exist by default. Will be     |
 |        |                      |                     | retained even across badge reflashes. |
 +--------+----------------------+---------------------+---------------------------------------+
+
+Handling assets
+^^^^^^^^^^^^^^^
+
+Using `Application` also gives you access to the `ApplicationContext` as ``self._app_ctx``,
+which for example gives you a way to find out the base path of your app in ``app_ctx.bundle_path``
+or its bundle metadata in ``app_ctx.bundle_metadata``. It's very important not to hardcode
+paths to your assets and use `bundle_path` instead, because applications can be installed
+in various places depending on installation method and moved between internal flash
+and SD card.
+
+A simple app that does nothing but draws a file named ``image.png`` from its directory 
+could look like this:
+
+.. code-block:: python
+
+    from st3m.application import Application
+    from ctx import Context
+    import st3m.run
+
+    class MyDemo(Application):
+        def draw(self, ctx: Context) -> None:
+            # Draw a image file
+            ctx.image(f"{self._app_ctx.bundle_path}/image.png", -120, -120, 240, 240)
+
+    if __name__ == '__main__':
+        # Continue to make runnable via mpremote run.
+        st3m.run.run_app(MyDemo, "/flash/apps/MyDemo")
+
+
+Note the default path provided in ``st3m.run.run_app`` call - this is the path
+that's going to be used when running standalone via `mpremote`, so set it to
+the path where you're putting your app files on your badge during development.
+
 
 Distributing applications
 -------------------------
