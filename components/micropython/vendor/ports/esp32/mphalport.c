@@ -86,7 +86,6 @@ static bool stdin_chr_buf = false;
 static char stdin_chr_val = 0;
 
 uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
-    printf("mp_hal_stdio_poll\n");
     uintptr_t ret = 0;
     if ((poll_flags & MP_STREAM_POLL_RD)) {
         if (!stdin_chr_buf) {
