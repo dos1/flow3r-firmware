@@ -225,7 +225,7 @@ num_speaker_startup_volume_db = NumberTunable(
     "Speaker Startup Volume dB", "system.audio.speaker_startup_volume_dB", -10
 )
 num_headphones_startup_volume_db = NumberTunable(
-    "Headphones Startup Volume dB", "system.audio.headphones_startup_volume_dB", -10
+    "Headphones Startup Volume dB", "system.audio.headphones_startup_volume_dB", -20
 )
 num_headphones_min_db = NumberTunable(
     "Min Headphone Volume dB", "system.audio.headphones_min_dB", -45

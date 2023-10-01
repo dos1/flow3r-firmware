@@ -21,6 +21,59 @@ tai = math.tau * 1j
 from st3m.application import Application, ApplicationContext
 
 
+class chord_organ_synth(bl00mbox.patches._Patch):
+    def __init__(self, chan):
+        super().__init__(chan)
+        self.plugins.osc = self._channel.new(bl00mbox.plugins.osc_fm)
+        self.plugins.osc.signals.waveform = -1
+        self.plugins.env = self._channel.new(bl00mbox.plugins.env_adsr)
+        self.plugins.env.signals.decay = 500
+        self.plugins.env.signals.release = 800
+        self.plugins.env.signals.attack = 100
+        self.plugins.env.signals.sustain = 29117
+        self.plugins.env.signals.input = self.plugins.osc.signals.output
+
+        self.plugins.osc_harm1 = self._channel.new(bl00mbox.plugins.osc_fm)
+        self.plugins.osc_harm1.signals.waveform = -1
+        self.plugins.env_harm1 = self._channel.new(bl00mbox.plugins.env_adsr)
+        self.plugins.env_harm1.signals.decay = 500
+        self.plugins.env_harm1.signals.release = 1200
+        self.plugins.env_harm1.signals.attack = 20
+        self.plugins.env_harm1.signals.sustain = 29117
+        self.plugins.env_harm1.signals.gain.dB = -9
+        self.plugins.env_harm1.signals.input = self.plugins.osc_harm1.signals.output
+
+        self.plugins.osc_harm2 = self._channel.new(bl00mbox.plugins.osc_fm)
+        self.plugins.osc_harm2.signals.waveform = -1
+        self.plugins.env_harm2 = self._channel.new(bl00mbox.plugins.env_adsr)
+        self.plugins.env_harm2.signals.decay = 500
+        self.plugins.env_harm2.signals.release = 1400
+        self.plugins.env_harm2.signals.attack = 300
+        self.plugins.env_harm2.signals.sustain = 29117
+        self.plugins.env_harm2.signals.gain.dB = -18
+        self.plugins.env_harm2.signals.input = self.plugins.osc_harm2.signals.output
+
+        self.plugins.mixer = self._channel.new(bl00mbox.plugins.mixer, 3)
+
+        for i, x in enumerate(
+            [self.plugins.env, self.plugins.env_harm1, self.plugins.env_harm2]
+        ):
+            self.plugins.mixer.signals.input[i] = x.signals.output
+
+        self.plugins.osc.signals.fm_pitch_offset.tone = 12 + 7
+        self.plugins.osc_harm1.signals.fm_pitch_offset.tone = 12 - 7 + 4
+        self.plugins.osc_harm1.signals.pitch = self.plugins.osc.signals.fm_pitch_thru
+        self.plugins.osc_harm2.signals.pitch = (
+            self.plugins.osc_harm1.signals.fm_pitch_thru
+        )
+
+        self.signals.pitch = self.plugins.osc.signals.pitch
+        self.signals.output = self.plugins.mixer.signals.output
+        self.signals.trigger = self.plugins.env.signals.trigger
+        self.signals.trigger_harm1 = self.plugins.env_harm1.signals.trigger
+        self.signals.trigger_harm2 = self.plugins.env_harm2.signals.trigger
+
+
 def tone_to_note_name(tone):
     # TODO: add this to radspa helpers
     sct = tone * 200 + 18367
@@ -84,7 +137,7 @@ class Chord:
     _triads = ["diminished", "minor", "major", "augmented", "sus2", "sus4"]
 
     def __init__(self):
-        self.root = 0
+        self._root = 0
         self.triad = "major"
         self.seven = False
         self.nine = False
@@ -92,6 +145,18 @@ class Chord:
         self.voicing = 0
         self._num_voicings = 2
         self.max_slew_rate = 0
+
+    @property
+    def root(self):
+        return self._root
+
+    @root.setter
+    def root(self, val):
+        if val > 12:
+            return
+        if val < -24:
+            return
+        self._root = val
 
     def __repr__(self):
         ret = tone_to_note_name(self.root)
@@ -344,31 +409,13 @@ class HarmonicApp(Application):
             self.chords[i].voicing = chord["voicing"]
 
     def _build_synth(self):
-        if self.blm is None:
-            self.blm = bl00mbox.Channel("harmonic demo")
-        self.synths = [self.blm.new(bl00mbox.patches.tinysynth) for i in range(5)]
-        self.mixer = self.blm.new(bl00mbox.plugins.mixer, 5)
-        self.lp = self.blm.new(bl00mbox.plugins.lowpass)
-        for i, synth in enumerate(self.synths):
-            synth.signals.decay = 500
-            synth.signals.waveform = 0
-            synth.signals.attack = 50
-            synth.signals.volume = 0.3 * 32767
-            synth.signals.sustain = 0.9 * 32767
-            synth.signals.release = 800
-            # synth.signals.output = self.blm.mixer
-        # sorry gonna fix that soon iou xoxo
-        self.synths[0].signals.output = self.mixer.signals.input0
-        self.synths[1].signals.output = self.mixer.signals.input1
-        self.synths[2].signals.output = self.mixer.signals.input2
-        self.synths[3].signals.output = self.mixer.signals.input3
-        self.synths[4].signals.output = self.mixer.signals.input4
-
-        self.mixer.signals.output = self.lp.signals.input
-        self.lp.signals.output = self.blm.mixer
-        self.lp.signals.freq = 4000
-        self.lp.signals.reso = 2000
-        self.lp.signals.gain.dB = +3
+        if self.blm is not None:
+            return
+        self.blm = bl00mbox.Channel("harmonic demo")
+        self.blm.volume = 32767
+        self.synths = [self.blm.new(chord_organ_synth) for i in range(5)]
+        for synth in self.synths:
+            synth.signals.output = self.blm.mixer
 
     def _set_chord(self, i, force_update=False):
         if i != self.chord_index or force_update:
@@ -568,6 +615,8 @@ class HarmonicApp(Application):
                 if not self.cp_prev.petals[j].pressed:
                     self.synths[i // 2].signals.pitch.tone = self.chord.notes[i // 2]
                     self.synths[i // 2].signals.trigger.start()
+                    self.synths[i // 2].signals.trigger_harm1.start()
+                    self.synths[i // 2].signals.trigger_harm2.start()
                     self.fade[i // 2] = 1
             else:
                 if self.fade[i // 2] > 0:
@@ -576,6 +625,8 @@ class HarmonicApp(Application):
                         self.fade[i // 2] = 0
                 if self.cp_prev.petals[j].pressed:
                     self.synths[i // 2].signals.trigger.stop()
+                    self.synths[i // 2].signals.trigger_harm1.stop()
+                    self.synths[i // 2].signals.trigger_harm2.stop()
 
         for j in range(5):
             if cp.petals[1 + 2 * j].pressed:
