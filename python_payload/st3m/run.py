@@ -23,7 +23,7 @@ from st3m import settings_menu as settings, logging, processors, wifi
 from st3m.ui import led_patterns
 import st3m.wifi
 
-import captouch, audio, leds, gc, sys_buttons, sys_display, sys_mode, media
+import captouch, audio, leds, gc, sys_buttons, sys_display, sys_mode, media, bl00mbox
 import os
 
 import machine
@@ -218,6 +218,10 @@ def run_main() -> None:
         )
     except Exception as e:
         log.error(f"Failed to set hostname {e}")
+
+    for i in range(1, 32):
+        bl00mbox.Channel(i).clear()
+        bl00mbox.Channel(i).free = True
 
     menu_settings = settings.build_menu()
     menu_system = ApplicationMenu(
