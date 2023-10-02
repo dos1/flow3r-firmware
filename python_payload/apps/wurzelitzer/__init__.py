@@ -1,4 +1,4 @@
-import st3m.run, media, os, ctx
+import st3m.run, st3m.wifi, media, os, ctx
 from st3m.application import Application
 
 RADIOSTATIONS = [
@@ -29,6 +29,10 @@ class App(Application):
             self._stream_no = len(RADIOSTATIONS)
         else:
             self._stream_no = 0
+        self._streaming = False
+        self._playing = False
+        self._connecting = False
+        self._connected = False
 
     def show_icons(self) -> bool:
         return (
@@ -38,12 +42,24 @@ class App(Application):
 
     def load_stream(self):
         media.stop()
+        self._playing = self._streaming = False
         self._filename = self._streams[self._stream_no]
         print("loading " + self._filename)
+        if self._filename.startswith("http"):
+            self._streaming = True
+            if not st3m.wifi.is_connected():
+                return
         media.load(self._filename)
+        self._playing = True
 
     def think(self, ins, delta_ms):
         super().think(ins, delta_ms)
+        self._connecting = st3m.wifi.is_connecting()
+        self._connected = st3m.wifi.is_connected()
+
+        if self._connected and not self._playing:
+            self.load_stream()
+
         if self.input.buttons.app.right.pressed or (
             media.get_position() >= media.get_duration() and media.get_duration() > 0
         ):
@@ -57,13 +73,32 @@ class App(Application):
                 self._stream_no = 0
             self.load_stream()
         if self.input.buttons.app.middle.pressed:
-            if media.is_playing():
+            if self._streaming and not self._connected:
+                st3m.wifi.run_wifi_settings(self.vm)
+            elif media.is_playing():
                 media.pause()
             else:
                 media.play()
         media.think(delta_ms)
 
     def draw(self, ctx):
+        if self._streaming and not self._connected:
+            ctx.gray(0)
+            ctx.rectangle(-120, -120, 240, 240).fill()
+            ctx.gray(1)
+            ctx.text_align = ctx.CENTER
+            ctx.text_baseline = ctx.MIDDLE
+            ctx.font_size = 18
+            if st3m.wifi.is_connecting():
+                ctx.move_to(0, 0)
+                ctx.text("Connecting...")
+                return
+            ctx.move_to(0, -10)
+            ctx.text("Press the app button to")
+            ctx.move_to(0, 10)
+            ctx.text("enter Wi-Fi settings")
+            return
+
         media.draw(ctx)
 
     def on_enter(self, vm):
@@ -73,6 +108,10 @@ class App(Application):
 
     def on_exit(self):
         if self._streams[self._stream_no].endswith(".mpg") or not media.is_playing():
+            media.stop()
+
+    def on_exit_done(self):
+        if not st3m.wifi.enabled() and self._streaming:
             media.stop()
 
 
