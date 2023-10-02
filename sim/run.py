@@ -54,9 +54,9 @@ class UnderscoreFinder(importlib.abc.MetaPathFinder):
 # sys.meta_path.insert(0, Hook())
 
 sys.path = [
+    os.path.join(projectpath, "sim", "fakes"),
     os.path.join(projectpath, "python_payload"),
     os.path.join(projectpath, "components", "micropython", "frozen"),
-    os.path.join(projectpath, "sim", "fakes"),
 ]
 
 builtin = BuiltinImporter()

@@ -178,11 +178,11 @@ class BundleMetadata:
         containing_path = os.path.dirname(self.path)
         package_name = os.path.basename(self.path)
 
-        if sys.path[0].endswith("python_payload"):
+        if sys.path[1].endswith("python_payload"):
             # We are in the simulator. Hack around to get this to work.
             prefix = "/flash/sys"
             assert containing_path.startswith(prefix)
-            containing_path = containing_path.replace(prefix, sys.path[0])
+            containing_path = containing_path.replace(prefix, sys.path[1])
 
         new_sys_path = old_sys_path + [containing_path]
         self._sys_path_set(new_sys_path)
