@@ -25,6 +25,7 @@ if TYPE_CHECKING:
         Any,
         Callable,
         Iterator,
+        Iterable,
         Generator,
         Union,
     )
@@ -49,6 +50,7 @@ else:
             Any,
             Callable,
             Iterator,
+            Iterable,
             Generator,
             Union,
         )
@@ -62,6 +64,7 @@ else:
         Any = None
         Callable = None
         Iterator = None
+        Iterable = None
         Generator = None
         Union = None
 
@@ -81,6 +84,7 @@ __all__ = [
     "Any",
     "Callable",
     "Iterator",
+    "Iterable",
     "Generator",
     "Union",
 ]
