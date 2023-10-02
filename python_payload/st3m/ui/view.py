@@ -272,6 +272,10 @@ class ViewManager(Responder):
 
             if self._transition >= 1.0:
                 self._fully_drawn += 1
+                ctx.save()
+                self._incoming.draw(ctx)
+                ctx.restore()
+                return
 
             vt = self._default_vt
             if self._overriden_vt is not None:
