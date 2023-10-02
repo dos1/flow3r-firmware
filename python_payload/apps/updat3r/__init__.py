@@ -46,6 +46,17 @@ class UpdaterApp(Application):
             ctx.text(line)
             y_offset += 15
 
+        ctx.gray(0.75)
+        if (
+            not st3m.wifi.is_connected()
+            and not st3m.wifi.is_connecting()
+            and not self.fetched_version
+        ):
+            ctx.move_to(0, 40)
+            ctx.text("press the app button to")
+            ctx.move_to(0, 55)
+            ctx.text("enter Wi-Fi settings")
+
     def version_to_number(self, version: str):
         if "dev" in version:
             return 0
@@ -64,15 +75,16 @@ class UpdaterApp(Application):
         self.use_dev_version = False
         self.download_percentage = 0
 
-        st3m.wifi.setup_wifi()
-        self.wlan_instance = st3m.wifi.iface
-        print(self.wlan_instance.active(), self.wlan_instance.isconnected())
-
         self._sd_present = sd_card_plugged()
         self._sd_failed = False
 
         if self._sd_present:
             self._state_text = "getting latest version..."
+
+            if not st3m.wifi.enabled() or (
+                not st3m.wifi.is_connected() and not st3m.wifi.is_connecting()
+            ):
+                self._state_text = "no connection"
         else:
             self._state_text = "no SD card detected!\n\nif you have one in there\nturn off and on flow3r power (ha)\nthen try to reattempt\ndownloading the update"
 
@@ -159,7 +171,16 @@ class UpdaterApp(Application):
             self._state_text = "don't panic, but...\na weird SD bug happened D:\nturn off and on flow3r power (ha)\nthen try to reattempt\ndownloading the update\n\nyou got this."
             return
 
-        if not self.fetched_version and self.wlan_instance.isconnected():
+        if not st3m.wifi.is_connected() and not st3m.wifi.is_connecting():
+            if self.input.buttons.app.middle.pressed:
+                st3m.wifi.run_wifi_settings(self.vm)
+            return
+
+        if (
+            not self.fetched_version
+            and st3m.wifi.is_connected()
+            and not self.vm.transitioning
+        ):
             req = urequests.get("https://flow3r.garden/api/releases.json")
             self.fetched_version = req.json()
             req.close()
