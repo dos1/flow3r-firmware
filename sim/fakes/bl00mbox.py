@@ -31,3 +31,11 @@ class tinysynth:
 
     def stop(self):
         pass
+
+
+class Channel:
+    def __init__(self, id):
+        pass
+
+    def clear(self):
+        pass
