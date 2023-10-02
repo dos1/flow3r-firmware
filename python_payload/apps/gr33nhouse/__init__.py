@@ -4,6 +4,7 @@ from st3m.input import InputState
 from st3m.ui.interactions import ScrollController
 from st3m.ui import colours
 from st3m.ui.view import ViewManager
+import st3m.wifi
 from ctx import Context
 import network
 from .applist import AppList
@@ -31,7 +32,6 @@ class Gr33nhouseApp(Application):
         self._sc.set_item_count(3)
 
         self.state = ViewState.CONTENT
-        self.wifi_status = None
 
     def on_exit(self) -> bool:
         # request thinks after on_exit
@@ -56,14 +56,14 @@ class Gr33nhouseApp(Application):
             ctx.text_baseline = ctx.MIDDLE
 
             ctx.move_to(0, -15)
-            ctx.text("No internet")
+            ctx.text("Connecting..." if st3m.wifi.is_connecting() else "No internet")
 
-            ctx.move_to(0, 15)
-            ctx.text(
-                "Connecting..."
-                if self.wifi_status == network.STAT_CONNECTING
-                else "Check settings"
-            )
+            ctx.gray(0.75)
+            ctx.move_to(0, 40)
+            ctx.font_size = 16
+            ctx.text("Press the app button to")
+            ctx.move_to(0, 55)
+            ctx.text("enter Wi-Fi settings.")
 
             ctx.restore()
             return
@@ -109,9 +109,10 @@ class Gr33nhouseApp(Application):
         if not self.is_active():
             return
 
-        if not network.WLAN(network.STA_IF).isconnected():
+        if not st3m.wifi.is_connected():
             self.state = ViewState.NO_INTERNET
-            self.wifi_status = network.WLAN(network.STA_IF).status()
+            if self.input.buttons.app.middle.pressed:
+                st3m.wifi.run_wifi_settings(self.vm)
             return
         else:
             self.state = ViewState.CONTENT
