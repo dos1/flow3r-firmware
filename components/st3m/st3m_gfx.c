@@ -89,6 +89,9 @@ typedef struct {
     int osd_x0;
     int osd_y1;
     int osd_x1;
+
+    st3m_gfx_mode mode;
+    uint8_t *blit_src;
 } st3m_gfx_drawlist;
 static st3m_gfx_drawlist drawlists[N_DRAWLISTS];
 
@@ -400,10 +403,9 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride) {
 static void *osd_fb = st3m_fb2;
 #endif
 
-static uint8_t *blit_src = (uint8_t *)st3m_fb;
-
 static void st3m_gfx_blit(st3m_gfx_drawlist *drawlist) {
-    st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
+    st3m_gfx_mode set_mode = drawlist->mode;
+    uint8_t *blit_src = drawlist->blit_src;
     int bits = _st3m_gfx_bpp(set_mode);
     if ((set_mode & 0xf) == st3m_gfx_rgb332) bits = 9;
 
@@ -465,6 +467,7 @@ static void st3m_gfx_rast_task(void *_arg) {
         xQueueReceiveNotifyStarved(user_ctx_rastq, &desc_no,
                                    "rast task starved (user_ctx)!");
         st3m_gfx_drawlist *drawlist = &drawlists[desc_no];
+        drawlist->mode = set_mode;
 
         xSemaphoreTake(st3m_fb_lock, portMAX_DELAY);
 
@@ -576,13 +579,13 @@ static void st3m_gfx_rast_task(void *_arg) {
 #if ST3M_GFX_BLIT_TASK
         if (direct_blit) {
 #endif
-            blit_src = user_fb;
+            drawlist->blit_src = user_fb;
             st3m_gfx_blit(drawlist);
             xSemaphoreGive(st3m_fb_lock);
             xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
 #if ST3M_GFX_BLIT_TASK
         } else {
-            blit_src = st3m_fb_copy;
+            drawlist->blit_src = st3m_fb_copy;
             xSemaphoreTake(st3m_fb_copy_lock, portMAX_DELAY);
             memcpy(st3m_fb_copy, user_fb, (240 * 240 * bits / 8));
             xSemaphoreGive(st3m_fb_copy_lock);
@@ -912,6 +915,7 @@ static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
     drawlist->osd_y1 = _st3m_osd_y1;
 #endif
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
+    drawlist->mode = set_mode;
 
     if (set_mode & st3m_gfx_direct_ctx) {
         while (!uxSemaphoreGetCount(st3m_fb_lock)) vTaskDelay(0);
