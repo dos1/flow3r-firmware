@@ -35,7 +35,7 @@ def disable() -> None:
 
 
 def enabled() -> bool:
-    return iface is not None
+    return iface is not None and iface.active()
 
 
 def is_connected() -> bool:
