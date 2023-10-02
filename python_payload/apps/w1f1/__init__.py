@@ -265,7 +265,7 @@ class WifiApp(Application):
             self._wlan_offset += 1
             self._scroll_pos = 0.0
 
-        if not self._nearby_wlans and self._iface.active() and self._scan_timer <= 0:
+        if not self._nearby_wlans and self._iface.active() and self._scan_timer <= 0 and not self.vm.transitioning:
             self._status_text = "scanning"
             self.scan_wifi()
             self._wlan_offset = 0
@@ -281,6 +281,7 @@ class WifiApp(Application):
         if ins.captouch.petals[0].pressed:
             if not self._petal_pressed.get(0, False):
                 self._iface.active(not self._iface.active())
+                self._scan_timer = 1
                 if not self._iface.active():
                     self._nearby_wlans = []
                 else:
