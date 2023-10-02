@@ -265,11 +265,16 @@ class WifiApp(Application):
             self._wlan_offset += 1
             self._scroll_pos = 0.0
 
-        if not self._nearby_wlans and self._iface.active() and self._scan_timer <= 0 and not self.vm.transitioning:
+        if (
+            not self._nearby_wlans
+            and st3m.wifi.enabled()
+            and self._scan_timer <= 0
+            and not self.vm.transitioning
+        ):
             self._status_text = "scanning"
             self.scan_wifi()
             self._wlan_offset = 0
-            self._status_text = "ready"
+            self._status_text = "connecting" if st3m.wifi.is_connecting() else "ready"
             self._scan_timer = 1
 
             if not self._nearby_wlans:
@@ -280,7 +285,11 @@ class WifiApp(Application):
 
         if ins.captouch.petals[0].pressed:
             if not self._petal_pressed.get(0, False):
-                self._iface.active(not self._iface.active())
+                if st3m.wifi.enabled():
+                    st3m.wifi.disable()
+                    st3m.wifi.iface = self._iface
+                else:
+                    st3m.wifi.setup_wifi()
                 self._scan_timer = 1
                 if not self._iface.active():
                     self._nearby_wlans = []
