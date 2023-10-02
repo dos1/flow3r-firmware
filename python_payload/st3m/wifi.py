@@ -45,6 +45,10 @@ def is_connected() -> bool:
         return False
 
 
+def is_connecting() -> bool:
+    return enabled() and iface.status() == network.STAT_CONNECTING
+
+
 def _onoff_wifi_update() -> None:
     if settings.onoff_wifi.value and not is_connected():
         setup_wifi()
