@@ -87,6 +87,8 @@ class DownloadView(BaseView):
             # Done
             ctx.move_to(0, -30)
             ctx.text("All done...")
+            ctx.gray(0.75)
+            ctx.font_size = 22
             text_to_draw = "The app will be\navailable after reboot"
         elif self._state == 6:
             # Errored
