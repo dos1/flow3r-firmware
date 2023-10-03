@@ -30,6 +30,11 @@
 
 static st3m_gfx_mode default_mode = ST3M_GFX_DEFAULT_MODE;
 
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
+EXT_RAM_BSS_ATTR static uint8_t
+    st3m_fb2[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 4];
+#endif
+
 #if CTX_ST3M_FB_INTERNAL_RAM
 // without EXT_RAM_BSS_ATTR is removed 8bit and 16bit modes go
 // faster but it is not possible to enable wifi
@@ -38,17 +43,12 @@ uint8_t st3m_pal[256 * 3];
 #else
 EXT_RAM_BSS_ATTR uint8_t st3m_pal[256 * 3];
 EXT_RAM_BSS_ATTR static uint8_t
-    st3m_fb[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 2];
+    st3m_fb[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 4];
 #endif
 
 #if ST3M_GFX_BLIT_TASK
 EXT_RAM_BSS_ATTR static uint8_t
     st3m_fb_copy[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 2];
-#endif
-
-#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-EXT_RAM_BSS_ATTR static uint8_t
-    st3m_fb2[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 4];
 #endif
 
 // Get a free drawlist ctx to draw into.
@@ -374,29 +374,22 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride) {
         if (stride) *stride = FLOW3R_BSP_DISPLAY_WIDTH * bpp / 8;
         if (width) *width = FLOW3R_BSP_DISPLAY_WIDTH;
         if (height) *height = FLOW3R_BSP_DISPLAY_HEIGHT;
-        if (bpp <= 16) return (uint8_t *)st3m_fb;
-#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-        return st3m_fb2;
-#endif
+        return ((uint8_t *)st3m_fb);
     }
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
     else if (mode == st3m_gfx_osd) {
         if (stride) *stride = FLOW3R_BSP_DISPLAY_WIDTH * bpp / 8;
         if (width) *width = FLOW3R_BSP_DISPLAY_WIDTH;
         if (height) *height = FLOW3R_BSP_DISPLAY_HEIGHT;
-        if (_st3m_gfx_bpp(set_mode) <= 16) return st3m_fb2;
-        return (uint8_t *)st3m_fb;
+        return st3m_fb2;
     }
 
     int scale = st3m_gfx_scale();
     if (stride) *stride = FLOW3R_BSP_DISPLAY_WIDTH * bpp / 8;
     if (width) *width = FLOW3R_BSP_DISPLAY_WIDTH / scale;
     if (height) *height = FLOW3R_BSP_DISPLAY_HEIGHT / scale;
-    if (bpp <= 16) return (uint8_t *)st3m_fb;
-    return st3m_fb2;
-#else
-    return (uint8_t *)st3m_fb;
 #endif
+    return (uint8_t *)st3m_fb;
 }
 
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
@@ -407,27 +400,30 @@ static void st3m_gfx_blit(st3m_gfx_drawlist *drawlist) {
     st3m_gfx_mode set_mode = drawlist->mode;
     uint8_t *blit_src = drawlist->blit_src;
     int bits = _st3m_gfx_bpp(set_mode);
-    if ((set_mode & 0xf) == st3m_gfx_rgb332) bits = 9;
 
     xSemaphoreTake(st3m_fb_copy_lock, portMAX_DELAY);
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
     int scale = st3m_gfx_scale();
     int osd_x0 = drawlist->osd_x0, osd_x1 = drawlist->osd_x1,
         osd_y0 = drawlist->osd_y0, osd_y1 = drawlist->osd_y1;
+
     if ((scale > 1) || ((set_mode & st3m_gfx_osd) && (osd_y0 != osd_y1))) {
         if (((set_mode & st3m_gfx_osd) && (osd_y0 != osd_y1))) {
+            if ((set_mode & 0xf) == st3m_gfx_rgb332) bits = 9;
             xSemaphoreTake(st3m_osd_lock,
                            ST3M_OSD_LOCK_TIMEOUT / portTICK_PERIOD_MS);
             flow3r_bsp_display_send_fb_osd(blit_src, bits, scale, osd_fb,
                                            osd_x0, osd_y0, osd_x1, osd_y1);
             xSemaphoreGive(st3m_osd_lock);
         } else {
+            if ((set_mode & 0xf) == st3m_gfx_rgb332) bits = 9;
             flow3r_bsp_display_send_fb_osd(blit_src, bits, scale, NULL, 0, 0, 0,
                                            0);
         }
     } else
 #endif
     {
+        if ((set_mode & 0xf) == st3m_gfx_rgb332) bits = 9;
         flow3r_bsp_display_send_fb(blit_src, bits);
     }
     xSemaphoreGive(st3m_fb_copy_lock);
@@ -453,7 +449,6 @@ static void st3m_gfx_rast_task(void *_arg) {
 
     int bits = 0;
     st3m_gfx_mode prev_set_mode = ST3M_GFX_DEFAULT_MODE - 1;
-    void *user_fb = st3m_fb;
 
 #if ST3M_GFX_BLIT_TASK
     int direct_blit = 0;
@@ -491,75 +486,45 @@ static void st3m_gfx_rast_task(void *_arg) {
                     direct_blit = 0;
             }
 #endif
-
+            int stride = (bits * 240) / 8;
             switch (bits) {
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
                 case 1:
                     ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
-                                          240 / 8, CTX_FORMAT_GRAY1);
-                    ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
-                                          240 * 4, CTX_FORMAT_RGBA8);
-                    osd_fb = st3m_fb2;
-                    user_fb = st3m_fb;
+                                          stride, CTX_FORMAT_GRAY1);
                     break;
                 case 2:
                     ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
-                                          240 / 4, CTX_FORMAT_GRAY2);
-                    ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
-                                          240 * 4, CTX_FORMAT_RGBA8);
-                    osd_fb = st3m_fb2;
-                    user_fb = st3m_fb;
+                                          stride, CTX_FORMAT_GRAY2);
                     break;
                 case 4:
                     ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
-                                          240 / 2, CTX_FORMAT_GRAY4);
-                    ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
-                                          240 * 4, CTX_FORMAT_RGBA8);
-                    osd_fb = st3m_fb2;
-                    user_fb = st3m_fb;
+                                          stride, CTX_FORMAT_GRAY4);
                     break;
                 case 8:
                 case 9:
                     if ((set_mode & 0xf) == 9)
                         ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
-                                              240, CTX_FORMAT_RGB332);
+                                              stride, CTX_FORMAT_RGB332);
                     else
                         ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
-                                              240, CTX_FORMAT_GRAY8);
-                    ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
-                                          240 * 4, CTX_FORMAT_RGBA8);
-                    osd_fb = st3m_fb2;
-                    user_fb = st3m_fb;
+                                              stride, CTX_FORMAT_GRAY8);
                     break;
 #endif
                 case 16:
                     ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
-                                          240 * 2,
+                                          stride,
                                           CTX_FORMAT_RGB565_BYTESWAPPED);
-#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-                    ctx_rasterizer_reinit(osd_ctx, st3m_fb2, 0, 0, 240, 240,
-                                          240 * 4, CTX_FORMAT_RGBA8);
-                    osd_fb = st3m_fb2;
-#endif
-                    user_fb = st3m_fb;
                     break;
 
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
                 case 24:
-                    ctx_rasterizer_reinit(fb_ctx, st3m_fb2, 0, 0, 240, 240,
+                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
                                           240 * 3, CTX_FORMAT_RGB8);
-                    ctx_rasterizer_reinit(osd_ctx, st3m_fb, 0, 0, 240, 240,
-                                          240 * 2, CTX_FORMAT_GRAYA8);
-                    osd_fb = st3m_fb;
-                    user_fb = st3m_fb2;
                     break;
                 case 32:
-                    ctx_rasterizer_reinit(fb_ctx, st3m_fb2, 0, 0, 240, 240,
+                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
                                           240 * 4, CTX_FORMAT_RGBA8);
-                    ctx_rasterizer_reinit(osd_ctx, st3m_fb, 0, 0, 240, 240,
-                                          240 * 2, CTX_FORMAT_GRAYA8);
-                    osd_fb = st3m_fb;
-                    user_fb = st3m_fb2;
                     break;
 #endif
             }
@@ -579,7 +544,7 @@ static void st3m_gfx_rast_task(void *_arg) {
 #if ST3M_GFX_BLIT_TASK
         if (direct_blit) {
 #endif
-            drawlist->blit_src = user_fb;
+            drawlist->blit_src = st3m_fb;
             st3m_gfx_blit(drawlist);
             xSemaphoreGive(st3m_fb_lock);
             xQueueSend(user_ctx_freeq, &desc_no, portMAX_DELAY);
@@ -587,7 +552,7 @@ static void st3m_gfx_rast_task(void *_arg) {
         } else {
             drawlist->blit_src = st3m_fb_copy;
             xSemaphoreTake(st3m_fb_copy_lock, portMAX_DELAY);
-            memcpy(st3m_fb_copy, user_fb, (240 * 240 * bits / 8));
+            memcpy(st3m_fb_copy, st3m_fb, 240 * (240 * bits / 8));
             xSemaphoreGive(st3m_fb_copy_lock);
             xSemaphoreGive(st3m_fb_lock);
             xQueueSend(user_ctx_blitq, &desc_no, portMAX_DELAY);
