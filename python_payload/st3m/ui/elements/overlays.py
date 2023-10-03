@@ -561,11 +561,10 @@ class BatteryIcon(Icon):
     def __init__(self) -> None:
         super().__init__()
         self._percent = 100.0
-        self._charging = False
-        self._changed = False
+        self._changed = True
 
     def visible(self) -> bool:
-        return True
+        return power.has_battery
 
     def draw(self, ctx: Context) -> None:
 
@@ -584,7 +583,7 @@ class BatteryIcon(Icon):
         ctx.stroke()
         ctx.rectangle(100, -30, -20, 60)
         ctx.fill()
-
+        
         ctx.font = ctx.get_font_name(1)
         ctx.move_to(-72, 32)
         ctx.font_size = 100
@@ -600,7 +599,12 @@ class ChargingIcon(Icon):
         self._charging = power.battery_charging
 
     def visible(self) -> bool:
-        return self._charging
+        if not power.has_battery:
+            # print("no battery")
+            return False
+        else:
+            # print("charging", self._charging)
+            return self._charging
 
     def draw(self, ctx: Context) -> None:
             ctx.rgb(255, 255, 255)
@@ -619,11 +623,8 @@ class ChargingIcon(Icon):
         self._changed = False
 
     def think(self, ins: InputState, delta_ms: int) -> None:
-        percent = approximate_battery_percentage(power.battery_voltage)
         charging = power.battery_charging
-        if percent != self._percent:
-            self._percent = percent
-            self._changed = True
+        # print("charging", charging)
         if charging != self._charging:
             self._charging = charging
             self._changed = True
