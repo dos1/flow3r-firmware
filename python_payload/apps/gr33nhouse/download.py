@@ -211,5 +211,6 @@ class DownloadView(BaseView):
                     print("writing to", filename)
                     f = t.extractfile(i)
                     with open(filename, "wb") as of:
-                        of.write(f.read())
+                        while data := f.read():
+                            of.write(data)
             self._state = 5
