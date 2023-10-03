@@ -873,12 +873,6 @@ static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
     if (res != pdTRUE) return NULL;
 
     st3m_gfx_drawlist *drawlist = &drawlists[last_descno];
-#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-    drawlist->osd_x0 = _st3m_osd_x0;
-    drawlist->osd_y0 = _st3m_osd_y0;
-    drawlist->osd_x1 = _st3m_osd_x1;
-    drawlist->osd_y1 = _st3m_osd_y1;
-#endif
     st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
     drawlist->mode = set_mode;
 
@@ -893,6 +887,13 @@ static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
 }
 
 static void st3m_gfx_pipe_put(void) {
+#if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
+    st3m_gfx_drawlist *drawlist = &drawlists[last_descno];
+    drawlist->osd_x0 = _st3m_osd_x0;
+    drawlist->osd_y0 = _st3m_osd_y0;
+    drawlist->osd_x1 = _st3m_osd_x1;
+    drawlist->osd_y1 = _st3m_osd_y1;
+#endif
     xQueueSend(user_ctx_rastq, &last_descno, portMAX_DELAY);
 }
 
@@ -958,24 +959,13 @@ void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1) {
     if (x0 < 0) x0 = 0;
     if (x0 > FLOW3R_BSP_DISPLAY_WIDTH) x0 = FLOW3R_BSP_DISPLAY_WIDTH;
 
-    st3m_gfx_drawlist *drawlist = &drawlists[last_descno];
-
     if ((x1 < x0) || (y1 < y0)) {
-        drawlist->osd_x0 = drawlist->osd_y0 = drawlist->osd_x1 =
-            drawlist->osd_y1 = 0;
+        _st3m_osd_x0 = _st3m_osd_y0 = _st3m_osd_x1 = _st3m_osd_y1 = 0;
     } else {
-        drawlist->osd_x0 = x0;
-        drawlist->osd_y0 = y0;
-        drawlist->osd_x1 = x1;
-        drawlist->osd_y1 = y1;
+        _st3m_osd_x0 = x0;
+        _st3m_osd_y0 = y0;
+        _st3m_osd_x1 = x1;
+        _st3m_osd_y1 = y1;
     }
-    drawlist->osd_y0 = y0;
-    drawlist->osd_x1 = x1;
-    drawlist->osd_y1 = y1;
-
-    _st3m_osd_x0 = drawlist->osd_x0;
-    _st3m_osd_y0 = drawlist->osd_y0;
-    _st3m_osd_x1 = drawlist->osd_x1;
-    _st3m_osd_y1 = drawlist->osd_y1;
 }
 #endif
