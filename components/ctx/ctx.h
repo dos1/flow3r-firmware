@@ -1,4 +1,4 @@
-/* ctx git commit: f7eb3a6e */
+/* ctx git commit: 8eb0cd33 */
 /* 
  * ctx.h is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2612,7 +2612,7 @@ void        ctx_string_append_float   (CtxString *string, float val);
   jklmnopqrstuvwxyz{|}~  */
 static const struct __attribute__ ((packed)) {uint8_t code; uint32_t a; uint32_t b;}
 ctx_font_ascii[]={
-{15, 0x0000a008, 0x000007a7},/* length:1959 CTX_SUBDIV:8 CTX_BAKE_FONT_SIZE:160 */
+{15, 0x2f2fa008, 0x000007a7},/* length:1959 CTX_SUBDIV:8 CTX_BAKE_FONT_SIZE:160 */
 {'(', 0x00000008, 0x00000001},/* Roboto*/
 {32, 0x6f626f52, 0x00006f74},
 {')', 0x00000008, 0x00000001},
@@ -13654,6 +13654,10 @@ ctx_fragment_image_yuv420_RGBA8_nearest (CtxRasterizer *rasterizer,
   x += 0.5f;
   y += 0.5f;
 
+#if CTX_DITHER
+  int scan = rasterizer->scanline / CTX_FULL_AA;
+#endif
+
   if (!src)
           return;
 
@@ -13721,11 +13725,9 @@ ctx_fragment_image_yuv420_RGBA8_nearest (CtxRasterizer *rasterizer,
       {
         *((uint32_t*)(rgba))= ctx_yuv_to_rgba32 (src[y+u],
                         src[u_offset+uv+u/2], src[v_offset+uv+u/2]);
-#if 0
 #if CTX_DITHER
-       ctx_dither_rgba_u8 (rgba, x, y, rasterizer->format->dither_red_blue,
+       ctx_dither_rgba_u8 (rgba, x+i, scan, rasterizer->format->dither_red_blue,
                            rasterizer->format->dither_green);
-#endif
 #endif
 
         ix += ideltax;
@@ -13746,11 +13748,9 @@ ctx_fragment_image_yuv420_RGBA8_nearest (CtxRasterizer *rasterizer,
 
         *((uint32_t*)(rgba))= ctx_yuv_to_rgba32 (src[y],
                         src[u_offset+uv], src[v_offset+uv]);
-#if 0
 #if CTX_DITHER
-       ctx_dither_rgba_u8 (rgba, x+i, y, rasterizer->format->dither_red_blue,
+       ctx_dither_rgba_u8 (rgba, x+i, scan, rasterizer->format->dither_red_blue,
                            rasterizer->format->dither_green);
-#endif
 #endif
 
         ix += ideltax;
