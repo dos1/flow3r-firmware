@@ -91,7 +91,7 @@ void flow3r_startup(void) {
     // Submit splash a couple of times to make sure we've fully flushed out the
     // initial framebuffer (both on-ESP and in-screen) noise before we turn on
     // the backlight.
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 5; i++) {
         st3m_gfx_splash("");
     }
     // Display should've flushed by now. Turn on backlight.
