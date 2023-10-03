@@ -132,8 +132,6 @@ soft_reset:
     machine_i2s_init0();
     #endif
 
-    st3m_mode_set(st3m_mode_kind_app, NULL);
-
     // run boot-up scripts
     pyexec_frozen_module("_boot.py");
     pyexec_file_if_exists("boot.py");
