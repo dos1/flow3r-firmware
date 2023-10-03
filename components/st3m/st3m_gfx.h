@@ -46,10 +46,10 @@ typedef enum {
     st3m_gfx_1bpp = 1,
     st3m_gfx_2bpp = 2,
     st3m_gfx_4bpp = 4,
-    st3m_gfx_8bpp = 8,
-    st3m_gfx_rgb332 = 9,
-    st3m_gfx_sepia = 10,
-    st3m_gfx_cool = 11,
+    st3m_gfx_8bpp = 8,    // bare 8bpp mode is grayscale
+    st3m_gfx_rgb332 = 9,  // variant of 8bpp mode using RGB
+    st3m_gfx_sepia = 10,  // grayscale rendering with sepia palette
+    st3m_gfx_cool = 11,   // grayscale rendering with cool palette
     st3m_gfx_palette = 15,
     // 16bpp modes have the lowest blit overhead - no osd for now
     st3m_gfx_16bpp = 16,
@@ -139,3 +139,15 @@ void st3m_gfx_splash(const char *text);
 // Draw the flow3r multi-coloured logo at coordinates x,y and with given
 // dimension (approx. bounding box size).
 void st3m_gfx_flow3r_logo(Ctx *ctx, float x, float y, float dim);
+
+// configure virtual viewport, the default values are 0, 0, 240, 240 which
+// also gives room for a copy of the fb for separate rasterize/blit in 16bpp
+//
+// with, height: width and height of virtual framebuffer
+//
+// changing the viewport should be done after setting the graphics mode - upon
+// graphics mode setting viewport is reset to 240, 240, 0,0,0,0
+void st3m_gfx_fbconfig(int width, int height, int blit_x, int blit_y);
+
+// get fbconfig values, arguments passed NULL ptrs are ignored.
+void st3m_gfx_get_fbconfig(int *width, int *height, int *blit_x, int *blit_y);

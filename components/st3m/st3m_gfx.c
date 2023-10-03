@@ -93,6 +93,9 @@ typedef struct {
     int osd_y1;
     int osd_x1;
 
+    int blit_x;  // upper left pixel in framebuffer coordinates
+    int blit_y;  //
+
     st3m_gfx_mode mode;
     uint8_t *blit_src;
 } st3m_gfx_drawlist;
@@ -120,9 +123,14 @@ static TaskHandle_t graphics_blit_task;
 
 static int _st3m_gfx_low_latency = 0;
 
+static int st3m_gfx_fb_width = 0;
+static int st3m_gfx_fb_height = 0;
+static int st3m_gfx_blit_x = 0;
+static int st3m_gfx_blit_y = 0;
+static int st3m_gfx_geom_dirty = 0;
+
 static inline int st3m_gfx_scale(st3m_gfx_mode mode) {
-    st3m_gfx_mode set_mode = mode ? mode : default_mode;
-    switch ((int)(set_mode & st3m_gfx_4x)) {
+    switch ((int)(mode & st3m_gfx_4x)) {
         case st3m_gfx_4x:
             return 4;
         case st3m_gfx_3x:
@@ -363,6 +371,8 @@ st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode) {
     else
         _st3m_gfx_low_latency = 0;
 
+    st3m_gfx_fbconfig(240, 240, 0, 0);
+
     return mode;
 }
 
@@ -379,7 +389,7 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride) {
         if (height) *height = 256;
         return st3m_pal;
     } else if (mode == st3m_gfx_default) {
-        if (stride) *stride = FLOW3R_BSP_DISPLAY_WIDTH * bpp / 8;
+        if (stride) *stride = st3m_gfx_fb_width * bpp / 8;
         if (width) *width = FLOW3R_BSP_DISPLAY_WIDTH;
         if (height) *height = FLOW3R_BSP_DISPLAY_HEIGHT;
         return ((uint8_t *)st3m_fb);
@@ -485,8 +495,10 @@ static void st3m_gfx_rast_task(void *_arg) {
         ctx_set_textureclock(osd_ctx, tc);
         ctx_set_textureclock(ctx, tc);
 #endif
-        if (prev_set_mode != set_mode) {
+        if (st3m_gfx_geom_dirty || (prev_set_mode != set_mode)) {
+            int was_geom_dirty = (prev_set_mode == set_mode);
             bits = _st3m_gfx_bpp(set_mode);
+            st3m_gfx_geom_dirty = 0;
 
 #if ST3M_GFX_BLIT_TASK
             if ((bits > 16))
@@ -494,33 +506,40 @@ static void st3m_gfx_rast_task(void *_arg) {
             else
                 direct_blit = 0;
 #endif
-            int stride = (bits * 240) / 8;
+
+            int stride = (bits * st3m_gfx_fb_width) / 8;
             switch (bits) {
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
                 case 1:
-                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
+                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0,
+                                          st3m_gfx_fb_width, st3m_gfx_fb_height,
                                           stride, CTX_FORMAT_GRAY1);
                     break;
                 case 2:
-                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
+                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0,
+                                          st3m_gfx_fb_width, st3m_gfx_fb_height,
                                           stride, CTX_FORMAT_GRAY2);
                     break;
                 case 4:
-                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
+                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0,
+                                          st3m_gfx_fb_width, st3m_gfx_fb_height,
                                           stride, CTX_FORMAT_GRAY4);
                     break;
                 case 8:
                 case 9:
                     if ((set_mode & 0xf) == 9)
-                        ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
-                                              stride, CTX_FORMAT_RGB332);
+                        ctx_rasterizer_reinit(
+                            fb_ctx, st3m_fb, 0, 0, st3m_gfx_fb_width,
+                            st3m_gfx_fb_height, stride, CTX_FORMAT_RGB332);
                     else
-                        ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
-                                              stride, CTX_FORMAT_GRAY8);
+                        ctx_rasterizer_reinit(
+                            fb_ctx, st3m_fb, 0, 0, st3m_gfx_fb_width,
+                            st3m_gfx_fb_height, stride, CTX_FORMAT_GRAY8);
                     break;
 #endif
                 case 16:
-                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0, 240, 240,
+                    ctx_rasterizer_reinit(fb_ctx, st3m_fb, 0, 0,
+                                          st3m_gfx_fb_width, st3m_gfx_fb_height,
                                           stride,
                                           CTX_FORMAT_RGB565_BYTESWAPPED);
                     break;
@@ -536,11 +555,12 @@ static void st3m_gfx_rast_task(void *_arg) {
                     break;
 #endif
             }
-            if ((set_mode & st3m_gfx_smart_redraw) == 0)
-                memset(st3m_fb, 0, sizeof(st3m_fb));
+            if ((set_mode & st3m_gfx_smart_redraw) == 0) {
+                if (!was_geom_dirty) memset(st3m_fb, 0, sizeof(st3m_fb));
+            }
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
             st3m_gfx_viewport_transform(osd_ctx, 1);
-            memset(st3m_fb2, 0, sizeof(st3m_fb2));
+            if (!was_geom_dirty) memset(st3m_fb2, 0, sizeof(st3m_fb2));
 #endif
             prev_set_mode = set_mode;
         }
@@ -568,7 +588,76 @@ static void st3m_gfx_rast_task(void *_arg) {
         } else {
             drawlist->blit_src = st3m_fb_copy;
             xSemaphoreTake(st3m_fb_copy_lock, portMAX_DELAY);
-            memcpy(st3m_fb_copy, st3m_fb, 240 * (240 * bits / 8));
+            int disp_stride = 240 * bits / 8;
+            if ((st3m_gfx_fb_width == 240) && (drawlist->blit_x == 0)) {
+                int blit_offset = st3m_gfx_blit_y * 240 * bits / 8;
+                int overlap = (st3m_gfx_blit_y + 240) - st3m_gfx_fb_height;
+
+                if (overlap > 0) {
+                    // vertical overlap, 2 memcpys
+                    int start_scans = 240 - overlap;
+                    memcpy(st3m_fb_copy, st3m_fb + blit_offset,
+                           start_scans * disp_stride);
+                    memcpy(st3m_fb_copy + start_scans * disp_stride, st3m_fb,
+                           overlap * disp_stride);
+                } else {  // best case
+                    memcpy(st3m_fb_copy, st3m_fb + blit_offset,
+                           240 * disp_stride);
+                }
+            } else {
+                int fb_stride = st3m_gfx_fb_width * bits / 8;
+                int scan_offset = drawlist->blit_x * bits / 8;
+                int scan_overlap = (drawlist->blit_x + 240) - st3m_gfx_fb_width;
+                if (scan_overlap <= 0) {  // only vertical wrap-around
+                    int blit_offset =
+                        (st3m_gfx_blit_y * 240 + drawlist->blit_x) * bits / 8;
+                    int overlap = (st3m_gfx_blit_y + 240) - st3m_gfx_fb_height;
+                    if (overlap <= 0) overlap = 0;
+
+                    int start_scans = 240 - overlap;
+                    for (int i = 0; i < start_scans; i++)
+                        memcpy(st3m_fb_copy + i * disp_stride,
+                               st3m_fb + blit_offset + i * fb_stride,
+                               disp_stride);
+                    for (int i = 0; i < overlap; i++)
+                        memcpy(st3m_fb_copy + (i + start_scans) * disp_stride,
+                               st3m_fb + (drawlist->blit_x * bits / 8) +
+                                   i * fb_stride,
+                               disp_stride);
+                } else {  // generic case, handles both horizontal and vertical
+                          // wrap-around
+                    int start_bit = 240 - scan_overlap;
+
+                    int blit_offset = (st3m_gfx_blit_y)*fb_stride;
+                    int overlap = (st3m_gfx_blit_y + 240) - st3m_gfx_fb_height;
+                    if (overlap <= 0) overlap = 0;
+
+                    int start_scans = 240 - overlap;
+                    int start_bytes = start_bit * bits / 8;
+                    int scan_overlap_bytes = scan_overlap * bits / 8;
+
+                    for (int i = 0; i < start_scans; i++)
+                        memcpy(
+                            st3m_fb_copy + i * disp_stride,
+                            st3m_fb + blit_offset + i * fb_stride + scan_offset,
+                            start_bytes);
+                    for (int i = 0; i < overlap; i++)
+                        memcpy(st3m_fb_copy + (i + start_scans) * disp_stride,
+                               st3m_fb + scan_offset + i * fb_stride,
+                               start_bytes);
+
+                    // second pass over scanlines, filling in second half (which
+                    // is wrapped to start of fb-scans)
+                    for (int i = 0; i < start_scans; i++)
+                        memcpy(st3m_fb_copy + i * disp_stride + start_bytes,
+                               st3m_fb + blit_offset + i * fb_stride,
+                               scan_overlap_bytes);
+                    for (int i = 0; i < overlap; i++)
+                        memcpy(st3m_fb_copy + (i + start_scans) * disp_stride +
+                                   start_bytes,
+                               st3m_fb + i * fb_stride, scan_overlap_bytes);
+                }
+            }
             xSemaphoreGive(st3m_fb_copy_lock);
             xSemaphoreGive(st3m_fb_lock);
             xQueueSend(user_ctx_blitq, &desc_no, portMAX_DELAY);
@@ -929,6 +1018,8 @@ static void st3m_gfx_pipe_put(void) {
     drawlist->osd_y0 = _st3m_osd_y0;
     drawlist->osd_x1 = _st3m_osd_x1;
     drawlist->osd_y1 = _st3m_osd_y1;
+    drawlist->blit_x = st3m_gfx_blit_x;
+    drawlist->blit_y = st3m_gfx_blit_y;
 #endif
     xQueueSend(user_ctx_rastq, &last_descno, portMAX_DELAY);
 }
@@ -1016,3 +1107,30 @@ void st3m_gfx_overlay_clip(int x0, int y0, int x1, int y1) {
     }
 }
 #endif
+
+void st3m_gfx_fbconfig(int width, int height, int blit_x, int blit_y) {
+    if (width <= 0) width = st3m_gfx_fb_width;
+    if (height <= 0) height = st3m_gfx_fb_height;
+    st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
+    int bits = st3m_gfx_bpp(set_mode);
+    if (width > CTX_MAX_SCANLINE_LENGTH) width = CTX_MAX_SCANLINE_LENGTH;
+    if ((width * height * bits) / 8 > (240 * 240 * 4))
+        height = 240 * 240 * 4 * 8 / (width * bits);
+    blit_x %= width;
+    blit_y %= height;
+
+    if ((st3m_gfx_fb_width != width) || (st3m_gfx_fb_height != height)) {
+        st3m_gfx_fb_width = width;
+        st3m_gfx_fb_height = height;
+        st3m_gfx_geom_dirty++;
+    }
+    st3m_gfx_blit_x = blit_x;
+    st3m_gfx_blit_y = blit_y;
+}
+
+void st3m_gfx_get_fbconfig(int *width, int *height, int *blit_x, int *blit_y) {
+    if (width) *width = st3m_gfx_fb_width;
+    if (height) *height = st3m_gfx_fb_height;
+    if (blit_x) *blit_x = st3m_gfx_blit_x;
+    if (blit_y) *blit_y = st3m_gfx_blit_y;
+}
