@@ -75,6 +75,7 @@ class ApplicationMenu(SimpleMenu):
         # set the default graphics mode, this is a no-op if
         # it is already set
         sys_display.set_mode(0)
+        sys_display.fbconfig(240, 240, 0, 0)
         leds.set_slew_rate(100)
         leds.set_gamma(1.0, 1.0, 1.0)
         leds.set_auto_update(False)

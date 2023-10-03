@@ -861,6 +861,7 @@ void st3m_gfx_show_textview(st3m_gfx_textview_t *tv) {
 
     Ctx *ctx = st3m_gfx_ctx(st3m_gfx_default);
 
+    st3m_gfx_fbconfig(240, 240, 0, 0);
     ctx_save(ctx);
 
     // Draw background.
