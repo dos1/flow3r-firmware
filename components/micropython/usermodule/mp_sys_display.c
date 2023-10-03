@@ -29,6 +29,13 @@ STATIC mp_obj_t mp_overlay_clip(size_t n_arge, const mp_obj_t *args) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_overlay_clip_obj, 4, 4,
                                            mp_overlay_clip);
 
+STATIC mp_obj_t mp_fbconfig(size_t n_arge, const mp_obj_t *args) {
+    st3m_gfx_fbconfig(mp_obj_get_int(args[0]), mp_obj_get_int(args[1]),
+                      mp_obj_get_int(args[2]), mp_obj_get_int(args[3]));
+    return mp_const_none;
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_fbconfig_obj, 4, 4, mp_fbconfig);
+
 STATIC mp_obj_t mp_set_backlight(mp_obj_t percent_in) {
     uint8_t percent = mp_obj_get_int(percent_in);
     flow3r_bsp_display_set_backlight(percent);
@@ -136,6 +143,7 @@ STATIC const mp_rom_map_elem_t mp_module_sys_display_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_set_palette), MP_ROM_PTR(&mp_set_palette_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_backlight), MP_ROM_PTR(&mp_set_backlight_obj) },
     { MP_ROM_QSTR(MP_QSTR_overlay_clip), MP_ROM_PTR(&mp_overlay_clip_obj) },
+    { MP_ROM_QSTR(MP_QSTR_fbconfig), MP_ROM_PTR(&mp_fbconfig_obj) },
 
     { MP_ROM_QSTR(MP_QSTR_default), MP_ROM_INT((int)st3m_gfx_default) },
     { MP_ROM_QSTR(MP_QSTR_rgb332), MP_ROM_INT((int)st3m_gfx_rgb332) },
