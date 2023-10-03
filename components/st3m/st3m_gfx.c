@@ -470,9 +470,7 @@ static void st3m_gfx_rast_task(void *_arg) {
             prev_set_mode = set_mode;
 
 #if ST3M_GFX_BLIT_TASK
-            if (((set_mode & st3m_gfx_low_latency) == st3m_gfx_low_latency) ||
-                ((set_mode & st3m_gfx_direct_ctx) == st3m_gfx_direct_ctx) ||
-                (bits > 16))
+            if ((bits > 16))
                 direct_blit = 1;
             else
                 direct_blit = 0;
