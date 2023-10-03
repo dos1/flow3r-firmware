@@ -597,14 +597,13 @@ class ChargingIcon(Icon):
     def __init__(self) -> None:
         super().__init__()
         self._charging = power.battery_charging
+        self._changed = True
 
     def visible(self) -> bool:
         if not power.has_battery:
-            # print("no battery")
             return False
         else:
-            # print("charging", self._charging)
-            return self._charging
+            return power.battery_charging
 
     def draw(self, ctx: Context) -> None:
             ctx.rgb(255, 255, 255)
@@ -620,14 +619,8 @@ class ChargingIcon(Icon):
             ctx.line_to(40, 35)
             ctx.stroke()
 
-        self._changed = False
-
     def think(self, ins: InputState, delta_ms: int) -> None:
-        charging = power.battery_charging
-        # print("charging", charging)
-        if charging != self._charging:
-            self._charging = charging
-            self._changed = True
+        self._charging = power.battery_charging
 
 class IconTray(Overlay):
     """

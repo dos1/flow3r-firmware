@@ -3,7 +3,7 @@ import time
 import sys_kernel
 from st3m import logging
 
-log = logging.Log(__name__, level=logging.INFO)
+log = logging.Log(__name__, level=logging.DEBUG)
 
 
 class Power:
@@ -43,6 +43,7 @@ class Power:
         if time.ticks_diff(ts, self._ts) > 2000:
             # Sampling takes time, don't do it too often
             log.debug("has battery: " + str(self._has_battery))
+            log.debug("is charging: " + str(self.battery_charging))
             self._battery_voltage = self._battery_voltage_sample()
             self._battery_percentage = self._approximate_battery_percentage()
             self._ts = ts
