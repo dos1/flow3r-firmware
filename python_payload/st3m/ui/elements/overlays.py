@@ -128,6 +128,10 @@ class Compositor(Responder):
         self._last_fps_string = ""
         self._clip_rect = Region()
         self._last_clip = Region()
+        self._display_mode = None
+        self._enabled: List[Responder] = []
+        self._last_enabled: List[Responder] = []
+        self._redraw_pending = 0
 
     def _enabled_overlays(self) -> List[Responder]:
         res: List[Responder] = []
@@ -147,18 +151,25 @@ class Compositor(Responder):
             or settings.onoff_show_fps.value
         ):
             return
-        overlays = self._enabled_overlays()
-        for i in range(len(overlays)):
-            overlays[i].think(ins, delta_ms)
+        self._enabled = self._enabled_overlays()
+        for i in range(len(self._enabled)):
+            self._enabled[i].think(ins, delta_ms)
 
     def draw(self, ctx: Context) -> None:
         self.main.draw(ctx)
-        if (sys_display.get_mode() & sys_display.osd) == 0:
+        display_mode = sys_display.get_mode()
+        redraw = False
+        if self._redraw_pending:
+            redraw = True
+            self._redraw_pending -= 1
+        if display_mode != self._display_mode:
+            self._redraw_pending = 2
+        self._display_mode = display_mode
+        if (display_mode & sys_display.osd) == 0:
             return
-        overlays = self._enabled_overlays()
         if settings.onoff_show_fps.value:
             fps_string = "{0:.1f}".format(sys_display.fps())
-            if fps_string != self._last_fps_string:
+            if redraw or fps_string != self._last_fps_string:
                 octx = sys_display.ctx(sys_display.osd)
                 self._last_fps_string = fps_string
                 self._clip_rect.set(-120, -120, 120, -96)
@@ -182,11 +193,18 @@ class Compositor(Responder):
                 sys_display.update(octx)
                 self._clip_rect.set_clip()
                 self._last_clip.copy(self._clip_rect)
+            self._last_enabled = []
         else:
             self._clip_rect.clear()
-            redraw = False
-            for i in range(len(overlays)):
-                redraw = overlays[i].needs_redraw(self._clip_rect) or redraw
+            for i in range(len(self._enabled)):
+                redraw = (
+                    self._enabled[i].needs_redraw(self._clip_rect)
+                    or redraw
+                    or self._enabled[i] not in self._last_enabled
+                )
+            for i in range(len(self._last_enabled)):
+                redraw = redraw or self._last_enabled[i] not in self._enabled
+            self._last_enabled = self._enabled
             if self._clip_rect.is_empty():
                 self._clip_rect.set_clip()
                 return
@@ -200,8 +218,8 @@ class Compositor(Responder):
             self._last_clip.add_region(self._clip_rect)
             self._last_clip.fill(octx)
             octx.restore()
-            for i in range(len(overlays)):
-                overlays[i].draw(octx)
+            for i in range(len(self._enabled)):
+                self._enabled[i].draw(octx)
             sys_display.update(octx)
             self._clip_rect.set_clip()
             self._last_clip.copy(self._clip_rect)
@@ -466,7 +484,7 @@ class Icon(Responder):
     """
 
     WIDTH: int = 25
-    _changed: bool = True
+    _changed: bool = False
 
     @abstractmethod
     def visible(self) -> bool:
@@ -485,15 +503,8 @@ class USBIcon(Icon):
 
     WIDTH: int = 30
 
-    def __init__(self):
-        self._visible = sys_kernel.usb_connected()
-
     def visible(self) -> bool:
-        visible = sys_kernel.usb_connected()
-        if self._visible != visible:
-            self._changed = True
-            self._visible = visible
-        return self._visible
+        return sys_kernel.usb_connected()
 
     def draw(self, ctx: Context) -> None:
         ctx.gray(1.0)
@@ -509,12 +520,6 @@ class USBIcon(Icon):
     def think(self, ins: InputState, delta_ms: int) -> None:
         pass
 
-    def changed(self) -> bool:
-        if self._changed:
-            self._changed = False
-            return True
-        return False
-
 
 class WifiIcon(Icon):
     WIDTH: int = 30
@@ -522,7 +527,6 @@ class WifiIcon(Icon):
     def __init__(self) -> None:
         super().__init__()
         self._rssi: float = -120
-        self._changed = True
 
     def visible(self) -> bool:
         return st3m.wifi.enabled()
@@ -558,7 +562,6 @@ class BatteryIcon(Icon):
         super().__init__()
         self._percent = 100.0
         self._charging = False
-        self._changed = False
 
     def visible(self) -> bool:
         return True
@@ -620,6 +623,7 @@ class IconTray(Overlay):
             WifiIcon(),
         ]
         self.visible: List[Icon] = []
+        self.last_visible: List[Icon] = []
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self.visible = [i for i in self.icons if i.visible()]
@@ -627,6 +631,7 @@ class IconTray(Overlay):
             self.visible[i].think(ins, delta_ms)
 
     def draw(self, ctx: Context) -> None:
+        self.last_visible = self.visible
         if not self.visible:
             return
         width = 0
@@ -645,6 +650,12 @@ class IconTray(Overlay):
         if self.visible:
             rect.add(-40, -120, 40, -88)
             for i in range(len(self.visible)):
-                if self.visible[i].changed():
+                if (
+                    self.visible[i].changed()
+                    or self.visible[i] not in self.last_visible
+                ):
+                    return True
+            for i in range(len(self.last_visible)):
+                if self.last_visible[i] not in self.visible:
                     return True
         return False
