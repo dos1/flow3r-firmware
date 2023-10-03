@@ -567,7 +567,6 @@ class BatteryIcon(Icon):
         return power.has_battery
 
     def draw(self, ctx: Context) -> None:
-
         if self._percent > 30:
             ctx.rgb(0.17, 0.55, 0.04)
         else:
@@ -583,7 +582,7 @@ class BatteryIcon(Icon):
         ctx.stroke()
         ctx.rectangle(100, -30, -20, 60)
         ctx.fill()
-        
+
         ctx.font = ctx.get_font_name(1)
         ctx.move_to(-72, 32)
         ctx.font_size = 100
@@ -592,8 +591,10 @@ class BatteryIcon(Icon):
     def think(self, ins: InputState, delta_ms: int) -> None:
         self._percent = power.battery_percentage
 
+
 class ChargingIcon(Icon):
     WIDTH: int = 20
+
     def __init__(self) -> None:
         super().__init__()
         self._charging = power.battery_charging
@@ -606,21 +607,22 @@ class ChargingIcon(Icon):
             return power.battery_charging
 
     def draw(self, ctx: Context) -> None:
-            ctx.rgb(255, 255, 255)
-            ctx.gray(1)
-            ctx.line_width = 20
-            ctx.move_to(10, -65)
-            ctx.line_to(-30, 20)
-            ctx.line_to(30, -20)
-            ctx.line_to(-10, 65)
-            ctx.line_to(-20, 35)
-            ctx.stroke()
-            ctx.move_to(-10, 65)
-            ctx.line_to(40, 35)
-            ctx.stroke()
+        ctx.rgb(255, 255, 255)
+        ctx.gray(1)
+        ctx.line_width = 20
+        ctx.move_to(10, -65)
+        ctx.line_to(-30, 20)
+        ctx.line_to(30, -20)
+        ctx.line_to(-10, 65)
+        ctx.line_to(-20, 35)
+        ctx.stroke()
+        ctx.move_to(-10, 65)
+        ctx.line_to(40, 35)
+        ctx.stroke()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         self._charging = power.battery_charging
+
 
 class IconTray(Overlay):
     """
@@ -635,7 +637,6 @@ class IconTray(Overlay):
             BatteryIcon(),
             USBIcon(),
             WifiIcon(),
-            
         ]
         self.visible: List[Icon] = []
         self.last_visible: List[Icon] = []

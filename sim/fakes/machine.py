@@ -6,8 +6,10 @@ class Pin:
 
     def __init__(self, _1, _2, pull=None):
         pass
+
     def value(self):
         return 0
+
 
 class ADC:
     ATTN_11DB = None
