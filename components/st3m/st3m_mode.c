@@ -88,10 +88,13 @@ void st3m_mode_set(st3m_mode_kind_t kind, const char *message) {
         _mode.message = NULL;
     }
 
+    if (_mode.kind != kind) {
+        st3m_media_stop();
+        st3m_gfx_flush(200);
+    }
+
     _mode.kind = kind;
     _mode.shown = false;
-
-    st3m_media_stop();
 
     if (kind == st3m_mode_kind_disk_flash) {
         _diskmode_flash();
@@ -142,7 +145,6 @@ void st3m_mode_update_display(bool *restartable) {
         case st3m_mode_kind_repl:
             if (!_mode.shown) {
                 _mode.shown = true;
-                st3m_gfx_flush(200);
                 const char *lines[] = {
                     "Send Ctrl-D over USB",
                     (st3m_io_app_button_is_left())
