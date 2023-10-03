@@ -245,7 +245,7 @@ class ViewManager(Responder):
 
             if self._transition >= 1.0:
                 self._transition = 1.0
-                if self._fully_drawn > 3:  # TODO: use actual pipeline depth
+                if self._fully_drawn > 1:
                     self._end_transition()
 
         if self._input.buttons.os.middle.pressed:
