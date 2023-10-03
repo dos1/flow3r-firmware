@@ -26,9 +26,6 @@ typedef enum {
     st3m_gfx_3x = 1 << 13,
     st3m_gfx_4x = st3m_gfx_2x | st3m_gfx_3x,
 
-    // do blitting in rasterization task, default is to
-    // blit in separate task if possible
-    st3m_gfx_blit_in_rast = 1 << 14,
     // 4 and 8bpp modes use the configured palette, the palette resides
     // in video ram and is lost upon mode change
     st3m_gfx_1bpp = 1,

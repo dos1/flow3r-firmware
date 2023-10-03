@@ -234,8 +234,6 @@ void st3m_gfx_set_default_mode(st3m_gfx_mode mode) {
             default_mode &= ~st3m_gfx_low_latency;
         else if (mode & st3m_gfx_direct_ctx)
             default_mode &= ~st3m_gfx_direct_ctx;
-        else if (mode & st3m_gfx_blit_in_rast)
-            default_mode &= ~st3m_gfx_blit_in_rast;
     } else if ((mode & (1 | 2 | 4 | 8 | 16 | 32)) == mode) {
         default_mode &= ~(1 | 2 | 4 | 8 | 16 | 32);
         default_mode |= mode;
@@ -256,8 +254,6 @@ void st3m_gfx_set_default_mode(st3m_gfx_mode mode) {
         default_mode |= st3m_gfx_lock;
     } else if (mode == st3m_gfx_direct_ctx) {
         default_mode |= st3m_gfx_direct_ctx;
-    } else if (mode == st3m_gfx_blit_in_rast) {
-        default_mode |= st3m_gfx_blit_in_rast;
     } else
         default_mode = mode;
 
@@ -474,17 +470,12 @@ static void st3m_gfx_rast_task(void *_arg) {
             prev_set_mode = set_mode;
 
 #if ST3M_GFX_BLIT_TASK
-            if ((set_mode & st3m_gfx_blit_in_rast) != 0) {
+            if (((set_mode & st3m_gfx_low_latency) == st3m_gfx_low_latency) ||
+                ((set_mode & st3m_gfx_direct_ctx) == st3m_gfx_direct_ctx) ||
+                (bits > 16))
                 direct_blit = 1;
-            } else {
-                if (((set_mode & st3m_gfx_low_latency) ==
-                     st3m_gfx_low_latency) ||
-                    ((set_mode & st3m_gfx_direct_ctx) == st3m_gfx_direct_ctx) ||
-                    (bits > 16))
-                    direct_blit = 1;
-                else
-                    direct_blit = 0;
-            }
+            else
+                direct_blit = 0;
 #endif
             int stride = (bits * 240) / 8;
             switch (bits) {
