@@ -4,8 +4,11 @@ import sys
 class Pin:
     IN = None
 
-    def __init__(self, _1, _2):
+    def __init__(self, _1, _2, pull=None):
         pass
+
+    def value(self):
+        return 0
 
 
 class ADC:

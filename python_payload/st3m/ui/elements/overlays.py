@@ -11,7 +11,7 @@ from st3m.goose import Dict, Enum, List, ABCBase, abstractmethod, Optional
 from st3m.utils import tau
 from st3m.ui.view import ViewManager
 from st3m.input import power
-from st3m.power import approximate_battery_percentage
+import st3m.power
 from ctx import Context
 import st3m.wifi
 
@@ -561,10 +561,10 @@ class BatteryIcon(Icon):
     def __init__(self) -> None:
         super().__init__()
         self._percent = 100.0
-        self._charging = False
+        self._changed = True
 
     def visible(self) -> bool:
-        return True
+        return power.has_battery
 
     def draw(self, ctx: Context) -> None:
         if self._percent > 30:
@@ -583,30 +583,45 @@ class BatteryIcon(Icon):
         ctx.rectangle(100, -30, -20, 60)
         ctx.fill()
 
-        if self._charging:
-            ctx.gray(1)
-            ctx.line_width = 20
-            ctx.move_to(10, -65 - 10)
-            ctx.line_to(-30, 20 - 10)
-            ctx.line_to(30, -20 - 10)
-            ctx.line_to(-10, 65 - 10)
-            ctx.line_to(-20, 35 - 10)
-            ctx.stroke()
-            ctx.move_to(-10, 65 - 10)
-            ctx.line_to(40, 35 - 10)
-            ctx.stroke()
-
-        self._changed = False
+        ctx.font = ctx.get_font_name(1)
+        ctx.move_to(-72, 32)
+        ctx.font_size = 100
+        ctx.rgb(255, 255, 255).text(str(self._percent))
 
     def think(self, ins: InputState, delta_ms: int) -> None:
-        percent = approximate_battery_percentage(power.battery_voltage)
-        charging = power.battery_charging
-        if percent != self._percent:
-            self._percent = percent
-            self._changed = True
-        if charging != self._charging:
-            self._charging = charging
-            self._changed = True
+        self._percent = power.battery_percentage
+
+
+class ChargingIcon(Icon):
+    WIDTH: int = 20
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._charging = power.battery_charging
+        self._changed = True
+
+    def visible(self) -> bool:
+        if not power.has_battery:
+            return False
+        else:
+            return power.battery_charging
+
+    def draw(self, ctx: Context) -> None:
+        ctx.rgb(255, 255, 255)
+        ctx.gray(1)
+        ctx.line_width = 20
+        ctx.move_to(10, -65)
+        ctx.line_to(-30, 20)
+        ctx.line_to(30, -20)
+        ctx.line_to(-10, 65)
+        ctx.line_to(-20, 35)
+        ctx.stroke()
+        ctx.move_to(-10, 65)
+        ctx.line_to(40, 35)
+        ctx.stroke()
+
+    def think(self, ins: InputState, delta_ms: int) -> None:
+        self._charging = power.battery_charging
 
 
 class IconTray(Overlay):
@@ -618,6 +633,7 @@ class IconTray(Overlay):
 
     def __init__(self) -> None:
         self.icons = [
+            ChargingIcon(),
             BatteryIcon(),
             USBIcon(),
             WifiIcon(),
