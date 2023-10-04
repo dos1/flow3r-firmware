@@ -274,6 +274,7 @@ static void st3m_gfx_init_palette(st3m_gfx_mode mode) {
             }
             break;
         case 4: {
+#if 0
             // ega palette
             int idx = 0;
             for (int i = 0; i < 2; i++)
@@ -284,6 +285,15 @@ static void st3m_gfx_init_palette(st3m_gfx_mode mode) {
                             st3m_pal[idx++] = (g * 127) * (i * 2);
                             st3m_pal[idx++] = (b * 127) * (i * 2);
                         }
+#else
+            // night-mode
+            for (int i = 0; i < 16; i++) {
+                st3m_pal[i * 3 + 0] = (i * 255) / 15;
+                st3m_pal[i * 3 + 1] = ((i * 255) / 15) / 3;
+                st3m_pal[i * 3 + 2] = ((i * 255) / 15) / 5;
+            }
+            break;
+#endif
         } break;
         case 8:  // grayscale
             for (int i = 0; i < 256; i++) {
