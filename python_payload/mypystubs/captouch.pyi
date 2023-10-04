@@ -65,7 +65,7 @@ class CaptouchPetalState(Protocol):
         """
         ...
     @property
-    def position(seld) -> Tuple[int, int]:
+    def position(self) -> Tuple[int, int]:
         """
         Polar coordinates of touch on petal in the form of a (distance, angle)
         tuple.
