@@ -33,8 +33,8 @@ class App(Application):
                 self.left_pressed = False
             elif self.right_pressed:
                 self.focused_widget += 1
-                if self.focused_widget > 7:
-                    self.focused_widget = 7
+                if self.focused_widget > 8:
+                    self.focused_widget = 8
                 self.right_pressed = False
         if self.widget_no == self.focused_widget and not self.active:
             ctx.rectangle(-130, int(self.y - self.font_size * 0.8), 260, self.font_size)
@@ -129,6 +129,7 @@ class App(Application):
         direct_ctx = (curmode & sys_display.direct_ctx) != 0
         lock = (curmode & sys_display.lock) != 0
         osd = (curmode & sys_display.osd) != 0
+        think_per_draw = (curmode & sys_display.EXPERIMENTAL_think_per_draw) != 0
         scale = 0
         if (curmode & sys_display.x4) == sys_display.x2:
             scale = 1
@@ -176,6 +177,7 @@ class App(Application):
         scale = self.draw_choice("scale", ["1x", "2x", "3x", "4x"], scale)
         low_latency = self.draw_boolean("low latency", low_latency)
         direct_ctx = self.draw_boolean("direct ctx", direct_ctx)
+        think_per_draw = self.draw_boolean("think per draw", think_per_draw)
         osd = self.draw_boolean("osd", osd)
         lock = self.draw_boolean("lock", lock)
         if direct_ctx:
@@ -209,6 +211,7 @@ class App(Application):
         mode += low_latency * sys_display.low_latency
         mode += direct_ctx * sys_display.direct_ctx
         mode += lock * sys_display.lock
+        mode += think_per_draw * sys_display.EXPERIMENTAL_think_per_draw
 
         if scale == 1:
             mode += sys_display.x2

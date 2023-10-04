@@ -223,18 +223,7 @@ void st3m_gfx_set_palette(uint8_t *pal_in, int count) {
 }
 
 void st3m_gfx_set_default_mode(st3m_gfx_mode mode) {
-    if (mode & st3m_gfx_unset) {
-        if (mode & st3m_gfx_lock)
-            default_mode &= ~st3m_gfx_lock;
-        else if (mode & st3m_gfx_4x)
-            default_mode &= ~st3m_gfx_4x;
-        else if (mode & st3m_gfx_osd)
-            default_mode &= ~st3m_gfx_osd;
-        else if (mode & st3m_gfx_low_latency)
-            default_mode &= ~st3m_gfx_low_latency;
-        else if (mode & st3m_gfx_direct_ctx)
-            default_mode &= ~st3m_gfx_direct_ctx;
-    } else if ((mode & (1 | 2 | 4 | 8 | 16 | 32)) == mode) {
+    if ((mode & (1 | 2 | 4 | 8 | 16 | 32)) == mode) {
         default_mode &= ~(1 | 2 | 4 | 8 | 16 | 32);
         default_mode |= mode;
     } else if (mode == st3m_gfx_2x) {
@@ -279,12 +268,13 @@ static void st3m_gfx_init_palette(st3m_gfx_mode mode) {
             break;
         case 2:
             for (int i = 0; i < 4; i++) {
-                st3m_pal[i * 3 + 0] = i * 63;
-                st3m_pal[i * 3 + 1] = i * 63;
-                st3m_pal[i * 3 + 2] = i * 63;
+                st3m_pal[i * 3 + 0] = (i * 255) / 3;
+                st3m_pal[i * 3 + 1] = (i * 255) / 3;
+                st3m_pal[i * 3 + 2] = (i * 255) / 3;
             }
             break;
-        case 4: {  // ega palette
+        case 4: {
+            // ega palette
             int idx = 0;
             for (int i = 0; i < 2; i++)
                 for (int r = 0; r < 2; r++)
@@ -899,10 +889,18 @@ void st3m_gfx_end_frame(Ctx *ctx) {
 }
 
 uint8_t st3m_gfx_pipe_available(void) {
+    st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
+    if ((set_mode & st3m_gfx_EXPERIMENTAL_think_per_draw) &&
+        (smoothed_fps > 13.0))
+        return 1;
     return uxQueueMessagesWaiting(user_ctx_freeq) > _st3m_gfx_low_latency;
 }
 
 uint8_t st3m_gfx_pipe_full(void) {
+    st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
+    if ((set_mode & st3m_gfx_EXPERIMENTAL_think_per_draw) &&
+        (smoothed_fps > 13.0))
+        return 0;
     return uxQueueSpacesAvailable(user_ctx_rastq) == 0;
 }
 

@@ -13,17 +13,29 @@ typedef enum {
     // become available for other bitdepths as grayscale rather than color
     // overlays.
 
+    // lock the graphics mode, this makes st3m_gfx_set_mode() a no-op
+    st3m_gfx_lock = 1 << 8,
+
     // directly manipulate target framebuffer instead of having
-    // separate rasterization task
-    st3m_gfx_direct_ctx = 1 << 7,
-    // enable osd compositing
-    st3m_gfx_osd = 1 << 8,
-    // shallower pipeline
-    st3m_gfx_low_latency = 1 << 9,
-    st3m_gfx_unset = 1 << 10,
-    st3m_gfx_lock = 1 << 11,
-    st3m_gfx_2x = 1 << 12,
-    st3m_gfx_3x = 1 << 13,
+    // separate rasterization task - this causes the rasterization overhead
+    // to occur in the micropython task rather than the graphics rasterization
+    // task.
+    st3m_gfx_direct_ctx = 1 << 9,
+
+    // enable osd compositing, for a small performance boost
+    st3m_gfx_osd = 1 << 10,
+
+    // shallower pipeline, prioritize short time from drawing until shown on
+    // screen over frame rate
+    st3m_gfx_low_latency = 1 << 11,
+
+    // boost FPS by always reporting readiness for drawing, this gets disabled
+    // dynamically if FPS falls <13fps
+    st3m_gfx_EXPERIMENTAL_think_per_draw = 1 << 12,
+
+    // pixel-doubling
+    st3m_gfx_2x = 1 << 13,
+    st3m_gfx_3x = 1 << 14,
     st3m_gfx_4x = st3m_gfx_2x | st3m_gfx_3x,
 
     // 4 and 8bpp modes use the configured palette, the palette resides
@@ -38,11 +50,11 @@ typedef enum {
     st3m_gfx_palette = 15,
     // 16bpp modes have the lowest blit overhead - no osd for now
     st3m_gfx_16bpp = 16,
-    // for pixel poking 24bpp might be a little faster than 32bpp
-    // for now there is no ctx drawing support in 24bpp mode.
     st3m_gfx_24bpp = 24,
-    // 32bpp modes - are faster at doing compositing, for solid text/fills
-    // 16bpp is probably faster.
+    // 32bpp modes - are slightly faster at doing compositing, but the memory
+    // overhead of higher bitdepths cancels out the overhead of converting back
+    // and forth between rgb565 and RGBA8, 24 and 32bit modes are here
+    // mostly because it leads to nicer math in python.
     st3m_gfx_32bpp = 32,
 } st3m_gfx_mode;
 
