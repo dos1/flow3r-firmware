@@ -16,6 +16,8 @@
 
 #define TAU360 0.017453292519943295
 
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+
 static const char *TAG = "st3m-leds";
 
 typedef struct {
@@ -66,7 +68,8 @@ static void set_single_led(uint8_t index, st3m_u8_rgb_t c) {
     flow3r_bsp_leds_set_pixel(index, c.r, c.g, c.b);
 }
 
-static uint16_t led_get_slew(uint16_t old, uint16_t new, uint16_t slew) {
+static uint16_t led_get_slew(uint16_t old, uint16_t new, uint16_t slew,
+                             uint16_t factor) {
     new = new << 8;
     if (slew == 255 || (old == new)) return new;
     int16_t bonus = ((int16_t)slew) - 225;
@@ -74,6 +77,7 @@ static uint16_t led_get_slew(uint16_t old, uint16_t new, uint16_t slew) {
     if (bonus > 0) {
         slew += 62 * bonus * bonus;
     }
+    slew = ((uint32_t)slew * factor) >> 8;
 
     if (new > old + slew) {
         return old + slew;
@@ -110,13 +114,21 @@ void st3m_leds_update_hardware() {
 
     for (int i = 0; i < 40; i++) {
         st3m_u8_rgb_t ret = state.target[i];
-        st3m_u16_rgb_t c;
         st3m_u16_rgb_t prev = state.slew_output[i];
-        c.r = led_get_slew(prev.r, ret.r, state.slew_rate);
-        c.g = led_get_slew(prev.g, ret.g, state.slew_rate);
-        c.b = led_get_slew(prev.b, ret.b, state.slew_rate);
-        if ((prev.r != c.r) || (prev.g != c.g) || (prev.b != c.b))
+        st3m_u16_rgb_t c = prev;
+        uint16_t diff_r = abs((int32_t)prev.r - (ret.r << 8u));
+        uint16_t diff_g = abs((int32_t)prev.g - (ret.g << 8u));
+        uint16_t diff_b = abs((int32_t)prev.b - (ret.b << 8u));
+        uint16_t max_diff = MAX(MAX(diff_r, diff_g), diff_b);
+        if (max_diff) {
+            c.r = led_get_slew(prev.r, ret.r, state.slew_rate,
+                               ((uint32_t)diff_r * 256) / max_diff);
+            c.g = led_get_slew(prev.g, ret.g, state.slew_rate,
+                               ((uint32_t)diff_g * 256) / max_diff);
+            c.b = led_get_slew(prev.b, ret.b, state.slew_rate,
+                               ((uint32_t)diff_b * 256) / max_diff);
             is_steady = false;
+        }
         state.slew_output[i] = c;
 
         c.r = ((uint32_t)c.r * state.brightness) >> 8;
