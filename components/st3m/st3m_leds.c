@@ -124,8 +124,8 @@ void st3m_leds_update_hardware() {
         c.b = ((uint32_t)c.b * state.brightness) >> 8;
 
         ret.r = state.gamma_red.lut[c.r >> 8];
-        ret.g = state.gamma_red.lut[c.g >> 8];
-        ret.b = state.gamma_red.lut[c.b >> 8];
+        ret.g = state.gamma_green.lut[c.g >> 8];
+        ret.b = state.gamma_blue.lut[c.b >> 8];
 
         if ((ret.r != state.ret_prev[i].r) || (ret.g != state.ret_prev[i].g) ||
             (ret.b != state.ret_prev[i].b)) {
