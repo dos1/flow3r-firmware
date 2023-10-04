@@ -6,7 +6,7 @@
 #define ST3M_PCM_BUF_SIZE (16384)
 
 static int st3m_pcm_gain = 4096;
-int st3m_pcm_queue_length(void) { return ST3M_PCM_BUF_SIZE - 2400; }
+int st3m_pcm_queue_length(void) { return ST3M_PCM_BUF_SIZE - 4000; }
 
 EXT_RAM_BSS_ATTR static int16_t st3m_pcm_buffer[ST3M_PCM_BUF_SIZE];
 static int st3m_pcm_w = 1;
