@@ -3,7 +3,7 @@ import time
 import sys_kernel
 from st3m import logging
 
-log = logging.Log(__name__, level=logging.DEBUG)
+log = logging.Log(__name__, level=logging.INFO)
 
 
 class Power:
