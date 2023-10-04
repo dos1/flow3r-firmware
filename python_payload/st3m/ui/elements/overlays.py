@@ -561,7 +561,6 @@ class BatteryIcon(Icon):
     def __init__(self) -> None:
         super().__init__()
         self._percent = 100.0
-        self._changed = True
 
     def visible(self) -> bool:
         return power.has_battery
@@ -588,8 +587,13 @@ class BatteryIcon(Icon):
         ctx.font_size = 100
         ctx.rgb(255, 255, 255).text(str(self._percent))
 
+        self._changed = False
+
     def think(self, ins: InputState, delta_ms: int) -> None:
-        self._percent = power.battery_percentage
+        percent = power.battery_percentage
+        if self._percent != percent:
+            self._changed = True
+            self._percent = percent
 
 
 class ChargingIcon(Icon):
@@ -598,7 +602,6 @@ class ChargingIcon(Icon):
     def __init__(self) -> None:
         super().__init__()
         self._charging = power.battery_charging
-        self._changed = True
 
     def visible(self) -> bool:
         if not power.has_battery:
@@ -620,8 +623,13 @@ class ChargingIcon(Icon):
         ctx.line_to(40, 35)
         ctx.stroke()
 
+        self._changed = False
+
     def think(self, ins: InputState, delta_ms: int) -> None:
-        self._charging = power.battery_charging
+        charging = power.battery_charging
+        if self._charging != charging:
+            self._changed = True
+            self._charging = charging
 
 
 class IconTray(Overlay):
