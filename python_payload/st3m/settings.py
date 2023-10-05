@@ -171,7 +171,7 @@ class NumberTunable(UnaryTunable):
     NumberTunable is a UnaryTunable that has a numeric value
     """
 
-    def __init__(self, name: str, key: int | float, default: Optional[str]) -> None:
+    def __init__(self, name: str, key: str, default: Optional[int | float]) -> None:
         super().__init__(name, key, default)
 
     def press(self, vm: Optional["ViewManager"]) -> None:
@@ -208,72 +208,72 @@ str_wifi_ssid = StringTunable("WiFi SSID", "system.wifi.ssid", "Camp2023-open")
 str_wifi_psk = ObfuscatedStringTunable("WiFi Password", "system.wifi.psk", None)
 str_hostname = StringTunable("Hostname", "system.hostname", "flow3r")
 
-num_volume_step_db = StringTunable(
+num_volume_step_db = NumberTunable(
     "Volume Change dB", "system.audio.volume_step_dB", 1.5
 )
-num_volume_repeat_step_db = StringTunable(
+num_volume_repeat_step_db = NumberTunable(
     "Volume Repeat Change dB", "system.audio.volume_repeat_step_dB", 2.5
 )
-num_volume_repeat_wait_ms = StringTunable(
+num_volume_repeat_wait_ms = NumberTunable(
     "Volume Repeat Wait Time ms", "system.audio.volume_repeat_wait_ms", 800
 )
-num_volume_repeat_ms = StringTunable(
+num_volume_repeat_ms = NumberTunable(
     "Volume Repeat Time ms", "system.audio.volume_repeat_ms", 300
 )
 
-num_speaker_startup_volume_db = StringTunable(
+num_speaker_startup_volume_db = NumberTunable(
     "Speaker Startup Volume dB", "system.audio.speaker_startup_volume_dB", -10
 )
-num_headphones_startup_volume_db = StringTunable(
+num_headphones_startup_volume_db = NumberTunable(
     "Headphones Startup Volume dB", "system.audio.headphones_startup_volume_dB", -10
 )
-num_headphones_min_db = StringTunable(
+num_headphones_min_db = NumberTunable(
     "Min Headphone Volume dB", "system.audio.headphones_min_dB", -45
 )
-num_speaker_min_db = StringTunable(
+num_speaker_min_db = NumberTunable(
     "Min Speaker Volume dB", "system.audio.speaker_min_dB", -40
 )
-num_headphones_max_db = StringTunable(
+num_headphones_max_db = NumberTunable(
     "Max Headphone Volume dB", "system.audio.headphones_max_dB", 3
 )
-num_speaker_max_db = StringTunable(
+num_speaker_max_db = NumberTunable(
     "Max Speaker Volume dB", "system.audio.speaker_max_dB", 14
 )
 
-onoff_speaker_eq_on = StringTunable("Speaker EQ On", "system.audio.speaker_eq_on", True)
-onoff_headset_mic_allowed = StringTunable(
+onoff_speaker_eq_on = OnOffTunable("Speaker EQ On", "system.audio.speaker_eq_on", True)
+onoff_headset_mic_allowed = OnOffTunable(
     "Headset Mic Allowed", "system.audio.headset_mic_allowed", True
 )
-onoff_onboard_mic_allowed = StringTunable(
+onoff_onboard_mic_allowed = OnOffTunable(
     "Onboard Mic Allowed", "system.audio.onboard_mic_allowed", True
 )
-onoff_line_in_allowed = StringTunable(
+onoff_line_in_allowed = OnOffTunable(
     "Line In Allowed", "system.audio.line_in_allowed", True
 )
-onoff_onboard_mic_to_speaker_allowed = StringTunable(
+onoff_onboard_mic_to_speaker_allowed = OnOffTunable(
     "Onboard Mic To Speaker Allowed",
     "system.audio.onboard_mic_to_speaker_allowed",
     False,
 )
 
-num_headset_mic_gain_db = StringTunable(
+num_headset_mic_gain_db = NumberTunable(
     "Headset Mic Gain dB", "system.audio.headset_mic_gain_dB", 0
 )
-num_onboard_mic_gain_db = StringTunable(
+num_onboard_mic_gain_db = NumberTunable(
     "Onboard Mic Gain dB", "system.audio.onboard_mic_gain_dB", 0
 )
-num_line_in_gain_db = StringTunable(
+num_line_in_gain_db = NumberTunable(
     "Line In Gain dB", "system.audio.line_in_gain_dB", 0
 )
 
-num_display_brightness = StringTunable(
+num_display_brightness = NumberTunable(
     "Display Brightness", "system.appearance.display_brightness", 100
 )
-num_leds_brightness = StringTunable(
+num_leds_brightness = NumberTunable(
     "LED Brightness", "system.appearance.leds_brightness", 70
 )
 
-num_leds_speed = StringTunable("LED Speed", "system.appearance.leds_speed", 235)
+num_leds_speed = NumberTunable("LED Speed", "system.appearance.leds_speed", 235)
 onoff_leds_random_menu = OnOffTunable(
     "Random Menu LEDs", "system.appearance.leds_random_menu", True
 )
