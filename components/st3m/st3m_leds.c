@@ -306,12 +306,7 @@ bool st3m_leds_get_auto_update() {
 
 void st3m_leds_set_gamma(float red, float green, float blue) {
     LOCK;
-    for (uint16_t i = 0; i < 256; i++) {
-        if (i == 0) {
-            state.gamma_red.lut[i] = 0;
-            state.gamma_green.lut[i] = 0;
-            state.gamma_blue.lut[i] = 0;
-        }
+    for (uint16_t i = 1; i < 256; i++) {
         float step = ((float)i) / 255.;
         state.gamma_red.lut[i] = (uint8_t)(254. * (powf(step, red)) + 1);
         state.gamma_green.lut[i] = (uint8_t)(254. * (powf(step, green)) + 1);
