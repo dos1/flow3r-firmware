@@ -704,7 +704,11 @@ bool bl00mbox_channel_bud_set_signal_value(uint8_t channel, uint32_t bud_index, 
     radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, bud_signal_index);
     if(sig == NULL) return false;
 
-    sig->value = value;
+    if(value == -32678){
+        sig->value = 0;
+    } else {
+        sig->value = value;
+    }
     bl00mbox_channel_event(channel);
     return true;
 }

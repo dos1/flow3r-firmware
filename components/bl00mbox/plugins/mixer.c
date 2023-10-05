@@ -19,8 +19,6 @@ void mixer_run(radspa_t * mixer, uint16_t num_samples, uint32_t render_pass_id){
         input_sigs[i] = radspa_signal_get_by_index(mixer, 2 + i);
     }
 
-    int32_t * dc_acc = mixer->plugin_data;
-
     static int32_t ret = 0;
     for(uint16_t i = 0; i < num_samples; i++){
         int16_t gain = radspa_signal_get_value(gain_sig, i, render_pass_id);
@@ -28,9 +26,6 @@ void mixer_run(radspa_t * mixer, uint16_t num_samples, uint32_t render_pass_id){
         for(uint8_t j = 0; j < num_inputs; j++){
             ret += radspa_signal_get_value(input_sigs[j], i, render_pass_id);
         }
-        // remove dc
-        (* dc_acc) = (ret + (* dc_acc)*1023) >> 10;
-        ret -= (* dc_acc);
         ret = radspa_clip(radspa_gain(ret, gain));
         radspa_signal_set_value(output_sig, i, ret);
     }
@@ -39,14 +34,12 @@ void mixer_run(radspa_t * mixer, uint16_t num_samples, uint32_t render_pass_id){
 radspa_t * mixer_create(uint32_t init_var){
     if(init_var == 0) init_var = 4;
     if(init_var > 127) init_var = 127;
-    radspa_t * mixer = radspa_standard_plugin_create(&mixer_desc, 2 + init_var, sizeof(int32_t), 0);
+    radspa_t * mixer = radspa_standard_plugin_create(&mixer_desc, 2 + init_var, 0, 0);
     if(mixer == NULL) return NULL;
     mixer->render = mixer_run;
     radspa_signal_set(mixer, 0, "output", RADSPA_SIGNAL_HINT_OUTPUT, 0);
     int16_t gain = RADSPA_SIGNAL_VAL_UNITY_GAIN/init_var;
     radspa_signal_set(mixer, 1, "gain", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_GAIN, gain);
     radspa_signal_set_group(mixer, init_var, 1, 2, "input", RADSPA_SIGNAL_HINT_INPUT, 0);
-    int32_t * dc_acc = mixer->plugin_data;
-    (* dc_acc) = 0;
     return mixer;
 }

@@ -133,6 +133,7 @@ void bl00mbox_channels_init(){
         chan->is_active = true;
         chan->is_free = true;
         chan->name = NULL;
+        chan->dc = 0;
     }
     is_initialized = true;
 }
@@ -167,81 +168,102 @@ void bl00mbox_audio_bud_render(bl00mbox_bud_t * bud){
     bud->render_pass_id = render_pass_id;
 }
 
-static void bl00mbox_audio_channel_render(bl00mbox_channel_t * chan, int16_t * out, bool adding){
-    if(render_pass_id == chan->render_pass_id) return;
+static bool bl00mbox_audio_channel_render(bl00mbox_channel_t * chan, int16_t * out, bool adding){
+    if(render_pass_id == chan->render_pass_id) return false;
     chan->render_pass_id = render_pass_id;
 
     bl00mbox_channel_root_t * root = chan->root_list;
 
     // early exit when no sources:
     if((root == NULL) || (!chan->is_active)){
-        if(adding) return; // nothing to do
-        memset(out, 0, full_buffer_len*sizeof(int16_t)); // mute
-        return;
+        return false;
     }
 
-    int32_t acc[256];
-    bool first = true;
+    int32_t acc[full_buffer_len];
+    bool acc_init = false;
 
     while(root != NULL){
         bl00mbox_audio_bud_render(root->con->source_bud);
-        if(first){
-            for(uint16_t i = 0; i < full_buffer_len; i++){
-                acc[i] = root->con->buffer[i];
+        if(root->con->buffer[1] == -32768){
+            if(!acc_init){
+                for(uint16_t i = 0; i < full_buffer_len; i++){
+                    acc[i] = root->con->buffer[0];
+                }
+                acc_init = true;
+            } else if(root->con->buffer[0]){
+                for(uint16_t i = 0; i < full_buffer_len; i++){
+                    acc[i] += root->con->buffer[0];
+                }
             }
         } else {
-            for(uint16_t i = 0; i < full_buffer_len; i++){ // replace this with proper ladspa-style adding function someday
-                acc[i] += root->con->buffer[i];
+            if(!acc_init){
+                for(uint16_t i = 0; i < full_buffer_len; i++){
+                    acc[i] = root->con->buffer[i];
+                }
+                acc_init = true;
+            } else {
+                for(uint16_t i = 0; i < full_buffer_len; i++){
+                    acc[i] += root->con->buffer[i];
+                }
             }
         }
-        first = false;
         root = root->next;
     }
 
     for(uint16_t i = 0; i < full_buffer_len; i++){
-        if(adding){
+        chan->dc = ((chan->dc * ((1<<10) - 1)) >> 10) + acc[i];
+        acc[i] = acc[i] - (chan->dc >> 10);
+    }
+
+    if(adding){
+        for(uint16_t i = 0; i < full_buffer_len; i++){
             out[i] = radspa_add_sat(radspa_mult_shift(acc[i], chan->volume), out[i]);
-        } else {
+        }
+    } else {
+        for(uint16_t i = 0; i < full_buffer_len; i++){
             out[i] = radspa_mult_shift(acc[i], chan->volume);
         }
     }
+    return true;
 }
 
-void bl00mbox_audio_render(int16_t * rx, int16_t * tx, uint16_t len){
-    if(!is_initialized){
-        memset(tx, 0, len*sizeof(int16_t)); // mute
-        return;
-    }
+bool _bl00mbox_audio_render(int16_t * rx, int16_t * tx, uint16_t len){
+    if(!is_initialized) return false;
 
     bl00mbox_audio_do_pointer_change();
     bl00mbox_channel_foreground = last_chan_event;
 
-    if(!bl00mbox_audio_run){
-        memset(tx, 0, len*sizeof(int16_t)); // mute
-        return;
-    }
+    if(!bl00mbox_audio_run) return false;
 
     render_pass_id++; // fresh pass, all relevant sources must be recomputed
     full_buffer_len = len/2;
     bl00mbox_line_in_interlaced = rx;
     int16_t acc[full_buffer_len];
+    bool acc_init = false;
     // system channel always runs non-adding
-    bl00mbox_audio_channel_render(&(channels[0]), acc, 0);
+    acc_init = bl00mbox_audio_channel_render(&(channels[0]), acc, acc_init) || acc_init;
 
     // re-rendering channels is ok, if render_pass_id didn't change it will just exit
-    bl00mbox_audio_channel_render(&(channels[bl00mbox_channel_foreground]), acc, 1);
+    acc_init = bl00mbox_audio_channel_render(&(channels[bl00mbox_channel_foreground]), acc, acc_init) || acc_init;
 
     // TODO: scales poorly if there's many channels
 #ifdef BL00MBOX_BACKGROUND_MUTE_OVERRIDE_ENABLE
     for(uint8_t i = 1; i < (BL00MBOX_CHANNELS); i++){
         if(bl00mbox_channel_background_mute_override[i]){
-            bl00mbox_audio_channel_render(&(channels[i]), acc, 1);
+            acc_init = bl00mbox_audio_channel_render(&(channels[i]), acc, acc_init) || acc_init;
         }
     }
 #endif
+
+    if(!acc_init) return false;
 
     for(uint16_t i = 0; i < full_buffer_len; i++){
         tx[2*i] = acc[i];
         tx[2*i+1] = acc[i];
     }
+    return true;
+}
+
+void bl00mbox_audio_render(int16_t * rx, int16_t * tx, uint16_t len){
+    if(!_bl00mbox_audio_render(rx, tx, len)) memset(tx, 0, len*sizeof(int16_t));
 }

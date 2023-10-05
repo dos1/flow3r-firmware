@@ -5,7 +5,8 @@
 
 typedef struct {
     int16_t track_fill;
-    int16_t trigger_hist;
+    int16_t stage_val_prev;
+    bool changed;
 } sequencer_track_data_t;
 
 typedef struct {
@@ -23,7 +24,6 @@ typedef struct {
     bool is_stopped;
     int16_t bpm_prev;
     int16_t beat_div_prev;
-    sequencer_track_data_t tracks[];
 } sequencer_data_t;
 
 

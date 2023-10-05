@@ -55,6 +55,7 @@ typedef struct{
     bool is_free;
     char * name;
     int32_t volume;
+    int32_t dc;
     struct _bl00mbox_channel_root_t * root_list; // list of all roots associated with channels
     uint32_t render_pass_id; // may be used by host to determine whether recomputation is necessary
     struct _bl00mbox_bud_t * buds; // linked list with all channel buds

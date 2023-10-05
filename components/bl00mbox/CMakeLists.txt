@@ -20,6 +20,8 @@ idf_component_register(
         plugins/distortion.c
         plugins/lowpass.c
         plugins/mixer.c
+        plugins/range_shifter.c
+        plugins/poly_squeeze.c
         plugins/slew_rate_limiter.c
         plugins/bl00mbox/bl00mbox_line_in.c
         radspa/radspa_helpers.c

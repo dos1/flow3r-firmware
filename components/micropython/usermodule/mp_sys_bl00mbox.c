@@ -68,7 +68,6 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_channel_get_free_obj, mp_channel_get_free);
 static mp_obj_t mp_channel_set_free(mp_obj_t index, mp_obj_t free) {
     return mp_obj_new_int(
         bl00mbox_channel_set_free(mp_obj_get_int(index), mp_obj_is_true(free)));
-    return mp_const_none;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_channel_set_free_obj, mp_channel_set_free);
 

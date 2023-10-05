@@ -73,11 +73,9 @@ class Signal:
         self._name = sys_bl00mbox.channel_bud_get_signal_name(
             plugin.channel_num, plugin.bud_num, signal_num
         )
-        mpx = sys_bl00mbox.channel_bud_get_signal_name_multiplex(
+        self._mpx = sys_bl00mbox.channel_bud_get_signal_name_multiplex(
             plugin.channel_num, plugin.bud_num, signal_num
         )
-        if mpx != (-1):
-            self._name += str(mpx)
         self._description = sys_bl00mbox.channel_bud_get_signal_description(
             plugin.channel_num, plugin.bud_num, signal_num
         )
@@ -96,6 +94,8 @@ class Signal:
         self._plugin._check_existence()
 
         ret = self.name
+        if self._mpx != -1:
+            ret += "[" + str(self._mpx) + "]"
         if len(self.unit):
             ret += " [" + self.unit + "]"
         ret += " [" + self.hints + "]: "
@@ -132,8 +132,11 @@ class Signal:
         if isinstance(self, SignalPitchMixin):
             ret += " / " + str(self.tone) + " semitones / " + str(self.freq) + "Hz"
 
-        if isinstance(self, SignalVolumeMixin):
-            ret += " / " + str(self.dB) + "dB / x" + str(self.mult)
+        if isinstance(self, SignalGainMixin):
+            if self.mult == 0:
+                ret += " / (mute)"
+            else:
+                ret += " / " + str(self.dB) + "dB / x" + str(self.mult)
 
         return ret
 
@@ -163,6 +166,57 @@ class Signal:
         return sys_bl00mbox.channel_bud_get_signal_value(
             self._plugin.channel_num, self._plugin.bud_num, self._signal_num
         )
+
+    @property
+    def _tone(self):
+        return (self.value - (32767 - 2400 * 6)) / 200
+
+    @_tone.setter
+    def _tone(self, val):
+        if isinstance(self, SignalInput):
+            if (type(val) == int) or (type(val) == float):
+                self.value = (32767 - 2400 * 6) + 200 * val
+            if type(val) == str:
+                self.value = helpers.note_name_to_sct(val)
+        else:
+            raise AttributeError("can't set output signal")
+
+    @property
+    def _freq(self):
+        tone = (self.value - (32767 - 2400 * 6)) / 200
+        return 440 * (2 ** (tone / 12))
+
+    @_freq.setter
+    def _freq(self, val):
+        if isinstance(self, SignalInput):
+            tone = 12 * math.log(val / 440, 2)
+            self.value = (32767 - 2400 * 6) + 200 * tone
+        else:
+            raise AttributeError("can't set output signal")
+
+    @property
+    def _dB(self):
+        if self.value == 0:
+            return -9999
+        return 20 * math.log((abs(self.value) / 4096), 10)
+
+    @_dB.setter
+    def _dB(self, val):
+        if isinstance(self, SignalInput):
+            self.value = int(4096 * (10 ** (val / 20)))
+        else:
+            raise AttributeError("can't set output signal")
+
+    @property
+    def _mult(self):
+        return self.value / 4096
+
+    @_mult.setter
+    def _mult(self, val):
+        if isinstance(self, SignalInput):
+            self.value = int(4096 * val)
+        else:
+            raise AttributeError("can't set output signal")
 
 
 class SignalOutput(Signal):
@@ -245,60 +299,73 @@ class SignalInput(Signal):
             cons += [_makeSignal(Plugin(Channel(chan), 0, bud_num=b), s)]
         return cons
 
-
-class SignalTriggerMixin:
-    def start(self, velocity=32767):
+    def _start(self, velocity=32767):
         if self.value > 0:
-            self.value = -velocity
+            self.value = -abs(velocity)
         else:
-            self.value = velocity
+            self.value = abs(velocity)
+
+    def _stop(self):
+        self.value = 0
+
+
+class SignalInputTriggerMixin:
+    def start(self, velocity=32767):
+        self._start(velocity)
 
     def stop(self):
-        self.value = 0
+        self._stop()
 
 
 class SignalPitchMixin:
     @property
     def tone(self):
-        return (self.value - (32767 - 2400 * 6)) / 200
+        return self._tone
 
     @tone.setter
     def tone(self, val):
-        if (type(val) == int) or (type(val) == float):
-            self.value = (32767 - 2400 * 6) + 200 * val
-        if type(val) == str:
-            self.value = helpers.note_name_to_sct(val)
+        self._tone = val
 
     @property
     def freq(self):
-        tone = (self.value - (32767 - 2400 * 6)) / 200
-        return 440 * (2 ** (tone / 12))
+        return self._freq
 
     @freq.setter
     def freq(self, val):
-        tone = 12 * math.log(val / 440, 2)
-        self.value = (32767 - 2400 * 6) + 200 * tone
+        self._freq = val
 
 
-class SignalVolumeMixin:
+class SignalGainMixin:
     @property
     def dB(self):
-        return 20 * math.log((self.value / 4096), 10)
+        return self._dB
 
     @dB.setter
     def dB(self, val):
-        self.value = int(4096 * (10 ** (val / 20)))
+        self._dB = val
 
     @property
     def mult(self):
-        return self.value / 4096
+        return self._mult
 
     @mult.setter
     def mult(self, val):
-        self.value = int(4096 * val)
+        self._mult = val
 
 
-class SignalInputTrigger(SignalInput, SignalTriggerMixin):
+class SignalOutputTrigger(SignalOutput):
+    pass
+
+
+class SignalOutputPitch(SignalOutput, SignalPitchMixin):
+    pass
+
+
+class SignalOutputGain(SignalOutput, SignalGainMixin):
+    pass
+
+
+class SignalInputTrigger(SignalInput, SignalInputTriggerMixin):
     pass
 
 
@@ -306,8 +373,61 @@ class SignalInputPitch(SignalInput, SignalPitchMixin):
     pass
 
 
-class SignalInputVolume(SignalInput, SignalVolumeMixin):
+class SignalInputGain(SignalInput, SignalGainMixin):
     pass
+
+
+class SignalMpxList:
+    def __init__(self):
+        self._list = []
+        self._setattr_allowed = False
+
+    def __len__(self):
+        return len(self._list)
+
+    def __getitem__(self, index):
+        return self._list[index]
+
+    def __setitem__(self, index, value):
+        try:
+            current_value = self._list[index]
+        except:
+            raise AttributeError("index does not exist")
+        if isinstance(current_value, Signal):
+            current_value.value = value
+        else:
+            raise AttributeError("signal does not exist")
+
+    def __iter__(self):
+        self._iter_index = 0
+        return self
+
+    def __next__(self):
+        self._iter_index += 1
+        if self._iter_index >= len(self._list):
+            raise StopIteration
+        else:
+            return self._list[self._iter_index]
+
+    def add_new_signal(self, signal, index):
+        self._setattr_allowed = True
+        index = int(index)
+        if len(self._list) <= index:
+            self._list += [None] * (1 + index - len(self._list))
+        self._list[index] = signal
+        self._setattr_allowed = False
+
+    def __setattr__(self, key, value):
+        """
+        current_value = getattr(self, key, None)
+        if isinstance(current_value, Signal):
+            current_value.value = value
+            return
+        """
+        if key == "_setattr_allowed" or getattr(self, "_setattr_allowed", True):
+            super().__setattr__(key, value)
+        else:
+            raise AttributeError("signal does not exist")
 
 
 class SignalList:
@@ -319,31 +439,57 @@ class SignalList:
             hints = sys_bl00mbox.channel_bud_get_signal_hints(
                 plugin.channel_num, plugin.bud_num, signal_num
             )
-            if hints & 2:
-                signal = SignalOutput(plugin, signal_num)
-                signal._hints = "output"
-            elif hints & 1:
-                if hints & 4:
+            if hints & 4:
+                if hints & 1:
                     signal = SignalInputTrigger(plugin, signal_num)
                     signal._hints = "input/trigger"
-                elif hints & 32:
+                elif hints & 2:
+                    signal = SignalOutputTrigger(plugin, signal_num)
+                    signal._hints = "output/trigger"
+            elif hints & 32:
+                if hints & 1:
                     signal = SignalInputPitch(plugin, signal_num)
                     signal._hints = "input/pitch"
-                elif hints & 8:
-                    signal = SignalInputVolume(plugin, signal_num)
-                    signal._hints = "input/volume"
-                else:
+                elif hints & 2:
+                    signal = SignalOutputPitch(plugin, signal_num)
+                    signal._hints = "output/pitch"
+            elif hints & 8:
+                if hints & 1:
+                    signal = SignalInputGain(plugin, signal_num)
+                    signal._hints = "input/gain"
+                elif hints & 2:
+                    signal = SignalOutputGain(plugin, signal_num)
+                    signal._hints = "input/gain"
+            else:
+                if hints & 1:
                     signal = SignalInput(plugin, signal_num)
                     signal._hints = "input"
+                elif hints & 2:
+                    signal = SignalOutput(plugin, signal_num)
+                    signal._hints = "output"
             self._list += [signal]
-            setattr(self, signal.name.split(" ")[0], signal)
+            name = signal.name.split(" ")[0]
+            if signal._mpx == -1:
+                setattr(self, name, signal)
+            else:
+                # <LEGACY SUPPORT>
+                setattr(self, name + str(signal._mpx), signal)
+                # </LEGACY SUPPORT>
+                current_list = getattr(self, name, None)
+                if not isinstance(current_list, SignalMpxList):
+                    setattr(self, name, SignalMpxList())
+                getattr(self, name, None).add_new_signal(signal, signal._mpx)
+        self._setattr_allowed = False
 
     def __setattr__(self, key, value):
         current_value = getattr(self, key, None)
         if isinstance(current_value, Signal):
             current_value.value = value
             return
-        super().__setattr__(key, value)
+        elif getattr(self, "_setattr_allowed", True):
+            super().__setattr__(key, value)
+        else:
+            raise AttributeError("signal does not exist")
 
 
 class Plugin:

@@ -29,15 +29,55 @@ inline int16_t radspa_signal_get_value(radspa_signal_t * sig, int16_t index, uin
             radspa_host_request_buffer_render(sig->buffer);
             sig->render_pass_id = render_pass_id;
         }
+        if(sig->buffer[1] == -32768) return sig->buffer[0];
         return sig->buffer[index];
-    } else {
-        return sig->value;
+    }
+    return sig->value;
+}
+
+inline void radspa_signal_set_value(radspa_signal_t * sig, int16_t index, int32_t val){
+    if(sig->buffer != NULL){
+        sig->buffer[index] = radspa_clip(val);
+    } else if(!index){
+        sig->value = radspa_clip(val);
     }
 }
 
-inline void radspa_signal_set_value(radspa_signal_t * sig, int16_t index, int16_t val){
-    if(sig->buffer != NULL) sig->buffer[index] = val;
-    if(!index) sig->value = val;
+inline void radspa_signal_set_value_check_const(radspa_signal_t * sig, int16_t index, int32_t val){
+    if(sig->buffer == NULL){
+        if(!index) sig->value = radspa_clip(val);
+        return;
+    }
+    val = radspa_clip(val);
+    if(index == 0){
+        sig->buffer[0] = val;
+    } else if(index == 1){
+        if(val == sig->buffer[0]) sig->buffer[1] = -32768;
+    } else {
+        if((sig->buffer[1] == -32768) && (val != sig->buffer[0])) sig->buffer[1] = sig->buffer[0];
+        sig->buffer[index] = val;
+    }
+}
+
+inline void radspa_signal_set_const_value(radspa_signal_t * sig, int32_t val){
+    if(sig->buffer == NULL){
+        sig->value = radspa_clip(val);
+    } else {
+        sig->buffer[0] = radspa_clip(val);
+        sig->buffer[1] = -32768;
+    }
+}
+
+inline int16_t radspa_signal_get_const_value(radspa_signal_t * sig, uint32_t render_pass_id){
+    if(sig->buffer != NULL){
+        if(sig->render_pass_id != render_pass_id){
+            radspa_host_request_buffer_render(sig->buffer);
+            sig->render_pass_id = render_pass_id;
+        }
+        if(sig->buffer[1] == -32768) return sig->buffer[0];
+        return -32768;
+    }
+    return sig->value;
 }
 
 // get signal struct from a signal index

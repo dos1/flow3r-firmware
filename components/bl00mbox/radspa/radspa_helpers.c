@@ -2,7 +2,10 @@
 #include "radspa_helpers.h"
 
 extern inline int16_t radspa_signal_get_value(radspa_signal_t * sig, int16_t index, uint32_t render_pass_id);
-extern inline void radspa_signal_set_value(radspa_signal_t * sig, int16_t index, int16_t value);
+extern inline int16_t radspa_signal_get_const_value(radspa_signal_t * sig, uint32_t render_pass_id);
+extern inline void radspa_signal_set_value(radspa_signal_t * sig, int16_t index, int32_t value);
+extern inline void radspa_signal_set_value_check_const(radspa_signal_t * sig, int16_t index, int32_t value);
+extern inline void radspa_signal_set_const_value(radspa_signal_t * sig, int32_t value);
 extern inline int16_t radspa_clip(int32_t a);
 extern inline int16_t radspa_add_sat(int32_t a, int32_t b);
 extern inline int32_t radspa_mult_shift(int32_t a, int32_t b);

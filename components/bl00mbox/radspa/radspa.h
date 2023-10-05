@@ -81,6 +81,7 @@ typedef struct _radspa_signal_t{
     int16_t * buffer;
     // static value to be used when buffer is NULL for input signals only
     int16_t value;
+    // when the signal has last requested to render its source
     uint32_t render_pass_id;
     // linked list pointer
     struct _radspa_signal_t * next;
@@ -124,27 +125,28 @@ inline int32_t radspa_mult_shift(int32_t a, int32_t b){ return radspa_clip((a*b)
 inline int32_t radspa_gain(int32_t a, int32_t b){ return radspa_clip((a*b)>>12); }
 
 inline int16_t radspa_trigger_start(int16_t velocity, int16_t * hist){
-    int16_t ret = ((* hist) > 0) ? -velocity : velocity;
-    (* hist) = ret;
-    return ret;
+    if(!velocity) velocity = 1;
+    if(velocity == -32768) velocity = 1;
+    if(velocity < 0) velocity = -velocity;
+    (* hist) = ((* hist) > 0) ? -velocity : velocity;
+    return * hist;
 }
 
 inline int16_t radspa_trigger_stop(int16_t * hist){
     (* hist) = 0;
-    return 0;
+    return * hist;
 }
 
 inline int16_t radspa_trigger_get(int16_t trigger_signal, int16_t * hist){
-    int16_t ret = 0;
-    if((!trigger_signal) && (* hist)){ //stop
-        ret = -1;
-    } else if(trigger_signal > 0 ){
-        if((* hist) <= 0) ret = trigger_signal;
-    } else if(trigger_signal < 0 ){
-        if((* hist) >= 0) ret = -trigger_signal;
-    }
+    if((* hist) == trigger_signal) return 0;
     (* hist) = trigger_signal;
-    return ret;
+    if(!trigger_signal){
+        return  -1;
+    } else if(trigger_signal < 0 ){
+        return -trigger_signal;
+    } else {
+        return trigger_signal;
+    }
 }
 
 /* REQUIREMENTS

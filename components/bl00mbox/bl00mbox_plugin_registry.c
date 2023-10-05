@@ -101,6 +101,8 @@ radspa_descriptor_t * bl00mbox_plugin_registry_get_id_from_index(uint32_t index)
 #include "mixer.h"
 #include "multipitch.h"
 #include "slew_rate_limiter.h"
+#include "range_shifter.h"
+#include "poly_squeeze.h"
 #include "bl00mbox_line_in.h"
 
 void bl00mbox_plugin_registry_init(void){
@@ -117,6 +119,8 @@ void bl00mbox_plugin_registry_init(void){
     plugin_add(&noise_burst_desc);
     plugin_add(&distortion_desc);
     plugin_add(&mixer_desc);
+    plugin_add(&range_shifter_desc);
+    plugin_add(&poly_squeeze_desc);
     plugin_add(&slew_rate_limiter_desc);
     plugin_add(&multipitch_desc);
     plugin_add(&bl00mbox_line_in_desc);
