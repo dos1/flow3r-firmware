@@ -76,6 +76,10 @@ class ApplicationMenu(SimpleMenu):
         # it is already set
         sys_display.set_mode(0)
         leds.set_slew_rate(100)
+        leds.set_gamma(1.0, 1.0, 1.0)
+        leds.set_auto_update(False)
+        leds.set_brightness(settings.num_leds_brightness.value)
+        sys_display.set_backlight(settings.num_display_brightness.value)
         led_patterns.set_menu_colors()
         # media.stop()
 
@@ -201,13 +205,15 @@ def run_main() -> None:
     leds.set_brightness(settings.num_leds_brightness.value)
     sys_display.set_backlight(settings.num_display_brightness.value)
 
+    leds.set_slew_rate(235)
+    leds.set_gamma(1.0, 1.0, 1.0)
+    leds.set_auto_update(False)
+
     leds.set_rgb(0, 255, 0, 0)
     leds.update()
     bundles = BundleManager()
     bundles.update()
 
-    leds.set_rgb(0, 0, 0, 0)
-    leds.update()
     led_patterns.set_menu_colors()
     leds.set_slew_rate(20)
     leds.update()
