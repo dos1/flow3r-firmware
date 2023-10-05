@@ -59,3 +59,7 @@ def set_auto_update(b: int):
 
 def set_brightness(b: float):
     pass
+
+
+def set_gamma(r: float, g: float, b: float):
+    pass
