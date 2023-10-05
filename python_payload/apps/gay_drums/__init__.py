@@ -727,6 +727,8 @@ class GayDrums(Application):
         self._render_list += [(self.draw_background, None)]
 
     def on_exit_done(self):
+        if not self.blm:
+            return
         self._bpm_saved = self.bpm
         self._steps_saved = self.steps
         self._save_settings()
