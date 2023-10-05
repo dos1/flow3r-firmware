@@ -2,8 +2,8 @@ from st3m.application import Application, ApplicationContext
 from st3m.input import InputState
 from st3m.goose import Optional
 from st3m.ui.view import ViewManager
-from st3m.settings import SETTINGS_JSON_FILE
 from st3m.utils import save_file_if_changed, sd_card_plugged
+import st3m.settings
 import st3m.wifi
 from ctx import Context
 import network
@@ -194,28 +194,10 @@ class WifiApp(Application):
         self._nearby_wlans = known_wlans + unknown_wlans
         print(self._nearby_wlans)
 
-    def update_settings_json(self, ssid: str, psk: str) -> None:
-        # weirdo case
-        if os.path.exists(SETTINGS_JSON_FILE):
-            with open(SETTINGS_JSON_FILE) as f:
-                settings_json = json.load(f)
-        else:
-            settings_json = {"system": {}}
-
-        if "wifi" not in settings_json["system"]:
-            settings_json["system"]["wifi"] = {
-                "enabled": True,
-                "ssid": "Camp2023-open",
-                "psk": None,
-            }
-        # clean up old config
-        if "camp_wifi_enabled" in settings_json["system"]:
-            del settings_json["system"]["camp_wifi_enabled"]
-
-        settings_json["system"]["wifi"]["ssid"] = ssid
-        settings_json["system"]["wifi"]["psk"] = psk
-
-        save_file_if_changed(SETTINGS_JSON_FILE, json.dumps(settings_json))
+    def update_settings(self, ssid: str, psk: str) -> None:
+        st3m.settings.str_wifi_ssid.set_value(ssid)
+        st3m.settings.str_wifi_psk.set_value(psk)
+        st3m.settings.save_all()
 
     def add_wlan_to_config_json(self, ssid: str, psk: str) -> None:
         self._wifi_config["networks"][ssid] = {"psk": psk}
@@ -328,7 +310,7 @@ class WifiApp(Application):
                 self._is_connecting = False
 
                 if self._current_ssid:
-                    self.update_settings_json(self._current_ssid, self._current_psk)
+                    self.update_settings(self._current_ssid, self._current_psk)
                     if self._current_ssid not in self._wifi_config["networks"]:
                         self.add_wlan_to_config_json(
                             self._current_ssid, self._current_psk
