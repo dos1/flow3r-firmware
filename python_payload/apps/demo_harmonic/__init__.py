@@ -378,8 +378,6 @@ class HarmonicApp(Application):
             self.hue_change = True
 
     def draw(self, ctx: Context) -> None:
-        if self.blm is None:
-            return
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
         ctx.line_width = 4
         ctx.get_font_name(4)
