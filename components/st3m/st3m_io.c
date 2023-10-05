@@ -15,10 +15,21 @@ static const char *TAG = "st3m-io";
 static bool _app_button_left = true;
 static SemaphoreHandle_t _mu = NULL;
 
+static st3m_tripos _left_button_state;
+static st3m_tripos _right_button_state;
+
 static void _update_button_state() {
     esp_err_t ret = flow3r_bsp_spio_update();
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "update failed: %s", esp_err_to_name(ret));
+    }
+    st3m_tripos state = flow3r_bsp_spio_left_button_get();
+    if (state) {
+        _left_button_state = state;
+    }
+    state = flow3r_bsp_spio_right_button_get();
+    if (state) {
+        _right_button_state = state;
     }
 }
 
@@ -39,17 +50,25 @@ bool st3m_io_app_button_is_left(void) {
 
 st3m_tripos st3m_io_app_button_get() {
     if (st3m_io_app_button_is_left()) {
-        return flow3r_bsp_spio_left_button_get();
+        st3m_tripos state = _left_button_state;
+        _left_button_state = flow3r_bsp_spio_left_button_get();
+        return state;
     } else {
-        return flow3r_bsp_spio_right_button_get();
+        st3m_tripos state = _right_button_state;
+        _right_button_state = flow3r_bsp_spio_right_button_get();
+        return state;
     }
 }
 
 st3m_tripos st3m_io_os_button_get() {
     if (st3m_io_app_button_is_left()) {
-        return flow3r_bsp_spio_right_button_get();
+        st3m_tripos state = _right_button_state;
+        _right_button_state = flow3r_bsp_spio_right_button_get();
+        return state;
     } else {
-        return flow3r_bsp_spio_left_button_get();
+        st3m_tripos state = _left_button_state;
+        _left_button_state = flow3r_bsp_spio_left_button_get();
+        return state;
     }
 }
 
