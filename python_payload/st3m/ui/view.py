@@ -209,11 +209,11 @@ class ViewManager(Responder):
 
         self._transitioning = False
 
-        if self._incoming is not None:
-            self._incoming.on_enter_done()
         if self._outgoing is not None:
             self._outgoing.on_exit_done()
             self._outgoing = None
+        if self._incoming is not None:
+            self._incoming.on_enter_done()
 
     def _perform_pending(self):
         if not self._pending:
