@@ -204,7 +204,7 @@ onoff_wifi = OnOffTunable("Enable WiFi on Boot", "system.wifi.enabled", False)
 onoff_wifi_preference = OnOffTunable(
     "Let apps change WiFi", "system.wifi.allow_apps_to_change_wifi", True
 )
-str_wifi_ssid = StringTunable("WiFi SSID", "system.wifi.ssid", "Camp2023-open")
+str_wifi_ssid = StringTunable("WiFi SSID", "system.wifi.ssid", None)
 str_wifi_psk = ObfuscatedStringTunable("WiFi Password", "system.wifi.psk", None)
 str_hostname = StringTunable("Hostname", "system.hostname", "flow3r")
 
