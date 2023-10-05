@@ -132,7 +132,7 @@ class UnaryTunable(Tunable):
         k = path[-1]
         d = reduce(_get, path[:-1], d)
         if k in d:
-            self.value = d[k]
+            self.set_value(d[k])
         else:
             self.set_value(self._default)
 
