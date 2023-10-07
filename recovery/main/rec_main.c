@@ -293,7 +293,7 @@ void app_main(void) {
     _cur_menu = &_main_menu;
 
     st3m_gfx_init();
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 5; i++) {
         st3m_gfx_splash("");
     }
     flow3r_bsp_display_set_backlight(100);
