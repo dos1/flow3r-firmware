@@ -28,7 +28,8 @@ static const char *TAG = "flow3r-recovery";
 static menu_t *_cur_menu = NULL;
 static menu_t _main_menu;
 static menu_t _list_menu;
-static menu_t _diskmode_menu;
+static menu_t _diskmode_flash_menu;
+static menu_t _diskmode_sd_menu;
 static menu_t _erasedone_menu;
 
 static menu_entry_t _list_menu_entries[];
@@ -44,7 +45,7 @@ static image_entry_t image_list[64];
 static void _main_reboot(void) { esp_restart(); }
 
 static void _main_disk_mode_flash(void) {
-    _cur_menu = &_diskmode_menu;
+    _cur_menu = &_diskmode_flash_menu;
     _cur_menu->selected = 0;
 
     if (!_usb_initialized) {
@@ -57,7 +58,7 @@ static void _main_disk_mode_flash(void) {
 }
 
 static void _main_disk_mode_sd(void) {
-    _cur_menu = &_diskmode_menu;
+    _cur_menu = &_diskmode_sd_menu;
     _cur_menu->selected = 0;
 
     if (!_usb_initialized) {
@@ -258,10 +259,17 @@ static menu_entry_t _diskmode_menu_entries[] = {
     { .label = "Exit", .enter = _diskmode_exit },
 };
 
-static menu_t _diskmode_menu = {
+static menu_t _diskmode_flash_menu = {
     .help =
         "Connect the badge to a PC to\naccess the internal flash\nFAT32 "
         "partition.",
+    .entries = _diskmode_menu_entries,
+    .entries_count = 1,
+    .selected = 0,
+};
+
+static menu_t _diskmode_sd_menu = {
+    .help = "Connect the badge to a PC to\naccess the SD card.",
     .entries = _diskmode_menu_entries,
     .entries_count = 1,
     .selected = 0,
