@@ -7,29 +7,30 @@ idf_component_register(
         bl00mbox_user.c
         bl00mbox_plugin_registry.c
         bl00mbox_radspa_requirements.c
-        plugins/osc_fm.c
-        plugins/env_adsr.c
-        plugins/ampliverter.c
-        plugins/sampler.c
-        plugins/delay.c
-        plugins/flanger.c
-        plugins/multipitch.c
-        plugins/sequencer.c
-        plugins/noise.c
-        plugins/noise_burst.c
-        plugins/distortion.c
-        plugins/lowpass.c
-        plugins/mixer.c
-        plugins/range_shifter.c
-        plugins/poly_squeeze.c
-        plugins/slew_rate_limiter.c
-        plugins/bl00mbox/bl00mbox_line_in.c
+        radspa/standard_plugin_lib/osc_fm.c
+        radspa/standard_plugin_lib/env_adsr.c
+        radspa/standard_plugin_lib/ampliverter.c
+        radspa/standard_plugin_lib/sampler.c
+        radspa/standard_plugin_lib/delay.c
+        radspa/standard_plugin_lib/flanger.c
+        radspa/standard_plugin_lib/multipitch.c
+        radspa/standard_plugin_lib/sequencer.c
+        radspa/standard_plugin_lib/noise.c
+        radspa/standard_plugin_lib/noise_burst.c
+        radspa/standard_plugin_lib/distortion.c
+        radspa/standard_plugin_lib/lowpass.c
+        radspa/standard_plugin_lib/mixer.c
+        radspa/standard_plugin_lib/range_shifter.c
+        radspa/standard_plugin_lib/poly_squeeze.c
+        radspa/standard_plugin_lib/slew_rate_limiter.c
+        plugins/bl00mbox_specific/bl00mbox_line_in.c
         radspa/radspa_helpers.c
         extern/xoroshiro64star.c
     INCLUDE_DIRS
         include
         plugins
-        plugins/bl00mbox
+        plugins/bl00mbox_specific
         radspa
+        radspa/standard_plugin_lib
         extern
 )
