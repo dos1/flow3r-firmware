@@ -42,12 +42,13 @@ radspa_signal_t * radspa_signal_get_by_index(radspa_t * plugin, uint16_t signal_
     return ret;
 }
 
-void radspa_signal_set(radspa_t * plugin, uint8_t signal_index, char * name, uint32_t hints, int16_t value){
+radspa_signal_t * radspa_signal_set(radspa_t * plugin, uint8_t signal_index, char * name, uint32_t hints, int16_t value){
     radspa_signal_t * sig = radspa_signal_get_by_index(plugin, signal_index);
-    if(sig == NULL) return;
+    if(sig == NULL) return NULL;
     sig->name = name;
     sig->hints = hints;
     sig->value = value;
+    return sig;
 }
 
 void radspa_signal_set_description(radspa_t * plugin, uint8_t signal_index, char * description){
@@ -56,16 +57,17 @@ void radspa_signal_set_description(radspa_t * plugin, uint8_t signal_index, char
     sig->description = description;
 }
 
-void radspa_signal_set_group(radspa_t * plugin, uint8_t group_len, uint8_t step, uint8_t signal_index, char * name,
+radspa_signal_t * radspa_signal_set_group(radspa_t * plugin, uint8_t group_len, uint8_t step, uint8_t signal_index, char * name,
                                     uint32_t hints, int16_t value){
     for(uint8_t i = 0; i < group_len; i++){
         radspa_signal_t * sig = radspa_signal_get_by_index(plugin, signal_index + i * step);
-        if(sig == NULL) return;
+        if(sig == NULL) return NULL;
         sig->name = name;
         sig->hints = hints;
         sig->value = value;
         sig->name_multiplex = i;
     }
+    return radspa_signal_get_by_index(plugin, signal_index);
 }
 
 void radspa_signal_set_group_description(radspa_t * plugin, uint8_t group_len, uint8_t step, uint8_t signal_index,

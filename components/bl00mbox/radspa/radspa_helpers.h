@@ -5,8 +5,8 @@
 // adds signal to plugin instance struct. typically used to initiate a plugin instance.
 int16_t radspa_signal_add(radspa_t * plugin, char * name, uint32_t hints, int16_t value);
 // as above, but sets parameters of an already existing signal with at list position signal_index
-void radspa_signal_set(radspa_t * plugin, uint8_t signal_index, char * name, uint32_t hints, int16_t value);
-void radspa_signal_set_group(radspa_t * plugin, uint8_t group_len, uint8_t step, uint8_t signal_index, char * name,
+radspa_signal_t * radspa_signal_set(radspa_t * plugin, uint8_t signal_index, char * name, uint32_t hints, int16_t value);
+radspa_signal_t * radspa_signal_set_group(radspa_t * plugin, uint8_t group_len, uint8_t step, uint8_t signal_index, char * name,
                                     uint32_t hints, int16_t value);
 void radspa_signal_set_description(radspa_t * plugin, uint8_t signal_index, char * description);
 void radspa_signal_set_group_description(radspa_t * plugin, uint8_t group_len, uint8_t step, uint8_t signal_index,
@@ -68,6 +68,8 @@ inline void radspa_signal_set_const_value(radspa_signal_t * sig, int32_t val){
     }
 }
 
+#define RADSPA_SIGNAL_NONCONST -32768
+
 inline int16_t radspa_signal_get_const_value(radspa_signal_t * sig, uint32_t render_pass_id){
     if(sig->buffer != NULL){
         if(sig->render_pass_id != render_pass_id){
@@ -75,7 +77,7 @@ inline int16_t radspa_signal_get_const_value(radspa_signal_t * sig, uint32_t ren
             sig->render_pass_id = render_pass_id;
         }
         if(sig->buffer[1] == -32768) return sig->buffer[0];
-        return -32768;
+        return RADSPA_SIGNAL_NONCONST;
     }
     return sig->value;
 }

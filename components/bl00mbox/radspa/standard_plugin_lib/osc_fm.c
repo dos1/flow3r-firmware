@@ -20,11 +20,19 @@ radspa_t * osc_fm_create(uint32_t init_var){
     radspa_t * osc_fm = radspa_standard_plugin_create(&osc_fm_desc, OSC_FM_NUM_SIGNALS, sizeof(osc_fm_data_t), 0);
     osc_fm->render = osc_fm_run;
     radspa_signal_set(osc_fm, OSC_FM_OUTPUT, "output", RADSPA_SIGNAL_HINT_OUTPUT, 0);
-    radspa_signal_set(osc_fm, OSC_FM_PITCH, "pitch", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_SCT, 18367);
+    radspa_signal_set(osc_fm, OSC_FM_PITCH, "pitch", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_SCT, RADSPA_SIGNAL_VAL_SCT_A440);
     radspa_signal_set(osc_fm, OSC_FM_WAVEFORM, "waveform", RADSPA_SIGNAL_HINT_INPUT, -16000);
     radspa_signal_set(osc_fm, OSC_FM_LIN_FM, "lin_fm", RADSPA_SIGNAL_HINT_INPUT, 0);
-    radspa_signal_set(osc_fm, OSC_FM_PITCH_THRU, "fm_pitch_thru", RADSPA_SIGNAL_HINT_OUTPUT | RADSPA_SIGNAL_HINT_SCT, 18367);
-    radspa_signal_set(osc_fm, OSC_FM_PITCH_OFFSET, "fm_pitch_offset", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_SCT, 18367);
+    radspa_signal_set(osc_fm, OSC_FM_PITCH_THRU, "fm_pitch_thru", RADSPA_SIGNAL_HINT_OUTPUT | RADSPA_SIGNAL_HINT_SCT, RADSPA_SIGNAL_VAL_SCT_A440);
+    radspa_signal_set(osc_fm, OSC_FM_PITCH_OFFSET, "fm_pitch_offset", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_SCT, RADSPA_SIGNAL_VAL_SCT_A440);
+
+    osc_fm_data_t * data = osc_fm->plugin_data;
+    data->output_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_OUTPUT);
+    data->pitch_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_PITCH);
+    data->waveform_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_WAVEFORM);
+    data->lin_fm_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_LIN_FM);
+    data->fm_pitch_thru_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_PITCH_THRU);
+    data->fm_pitch_offset_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_PITCH_OFFSET);
     return osc_fm;
 }
 
@@ -35,7 +43,7 @@ static inline int16_t triangle(int32_t saw){
     return saw * 2 + 32767;
 }
 
-static inline int16_t waveshaper(int16_t saw, int16_t shape){
+static inline int16_t waveshaper(int32_t saw, int16_t shape){
     int32_t tmp = saw;
     uint8_t sh = ((uint16_t) shape) >> 14;
     sh = (sh + 2)%4;
@@ -69,44 +77,52 @@ static inline int16_t waveshaper(int16_t saw, int16_t shape){
 }
 
 void osc_fm_run(radspa_t * osc_fm, uint16_t num_samples, uint32_t render_pass_id){
-    osc_fm_data_t * plugin_data = osc_fm->plugin_data;
-    radspa_signal_t * output_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_OUTPUT);
-    radspa_signal_t * pitch_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_PITCH);
-    radspa_signal_t * waveform_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_WAVEFORM);
-    radspa_signal_t * lin_fm_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_LIN_FM);
+    osc_fm_data_t * data = osc_fm->plugin_data;
 
-    radspa_signal_t * fm_pitch_thru_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_PITCH_THRU);
-    if(fm_pitch_thru_sig->buffer != NULL){
-        radspa_signal_t * fm_pitch_offset_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_PITCH_OFFSET);
-        int32_t thru_acc = 0;
-        for(uint16_t i = 0; i < num_samples; i++){
-            thru_acc = radspa_signal_get_value(pitch_sig, i, render_pass_id);
-            thru_acc += radspa_signal_get_value(fm_pitch_offset_sig, i, render_pass_id);
-            thru_acc = radspa_clip(thru_acc);
-            radspa_signal_set_value(fm_pitch_thru_sig, i, thru_acc);
+    int16_t pitch_const = radspa_signal_get_const_value(data->pitch_sig, render_pass_id);
+    int16_t fm_pitch_offset_const = radspa_signal_get_const_value(data->fm_pitch_offset_sig, render_pass_id);
+    int16_t wave_const = radspa_signal_get_const_value(data->waveform_sig, render_pass_id);
+    int16_t lin_fm_const = radspa_signal_get_const_value(data->lin_fm_sig, render_pass_id);
+
+    int16_t pitch = pitch_const;
+    int32_t fm_pitch_offset = fm_pitch_offset_const;
+    int16_t wave = wave_const;
+    int32_t lin_fm = lin_fm_const;
+
+    if(pitch_const != -32768){
+        if(pitch != data->prev_pitch){
+            data->incr = radspa_sct_to_rel_freq(pitch, 0);
+            data->prev_pitch = pitch;
         }
-    };
+    }
 
-    if(output_sig->buffer == NULL) return;
+    bool fm_thru_const = (pitch_const != -32768) && (fm_pitch_offset_const != -32768);
 
-    int16_t ret = 0;
+    if(fm_thru_const) radspa_signal_set_const_value(data->fm_pitch_thru_sig, pitch_const + fm_pitch_offset_const - RADSPA_SIGNAL_VAL_SCT_A440);
+
     for(uint16_t i = 0; i < num_samples; i++){
-        int16_t pitch = radspa_signal_get_value(pitch_sig, i, render_pass_id);
-        int16_t wave = radspa_signal_get_value(waveform_sig, i, render_pass_id);
-        int32_t lin_fm = radspa_signal_get_value(lin_fm_sig, i, render_pass_id);
-
-        if(pitch != plugin_data->prev_pitch){
-            plugin_data->incr = radspa_sct_to_rel_freq(pitch, 0);
-            plugin_data->prev_pitch = pitch;
+        if(pitch_const == -32768){
+            pitch = radspa_signal_get_value(data->pitch_sig, i, render_pass_id);
+            if(pitch != data->prev_pitch){
+                data->incr = radspa_sct_to_rel_freq(pitch, 0);
+                data->prev_pitch = pitch;
+            }
         }
-        plugin_data->counter += plugin_data->incr;
+
+        if(wave_const == -32768) wave = radspa_signal_get_value(data->waveform_sig, i, render_pass_id);
+        if(lin_fm_const == -32768) lin_fm = radspa_signal_get_value(data->lin_fm_sig, i, render_pass_id);
+
+        data->counter += data->incr;
         if(lin_fm){
-            plugin_data->counter += lin_fm * (plugin_data->incr >> 15);
+            data->counter += lin_fm * (data->incr >> 15);
         }
 
-        int32_t tmp = (plugin_data->counter) >> 16;
+        int32_t tmp = (data->counter) >> 16;
         tmp = tmp - 32767;
-        ret = waveshaper(tmp, wave);
-        radspa_signal_set_value(output_sig, i, ret);
+        tmp = waveshaper(tmp, wave);
+        radspa_signal_set_value(data->output_sig, i, tmp);
+
+        if(fm_pitch_offset_const == -32768) fm_pitch_offset = radspa_signal_get_value(data->fm_pitch_offset_sig, i, render_pass_id);
+        if(!fm_thru_const) radspa_signal_set_value(data->fm_pitch_thru_sig, i, pitch + fm_pitch_offset - RADSPA_SIGNAL_VAL_SCT_A440);
     }
 }

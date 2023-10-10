@@ -441,14 +441,14 @@ bool bl00mbox_channel_disconnect_signal_from_output_mixer(uint8_t channel, uint3
         rt_prev = rt;
         rt = rt->next;
     }
-    if(rt != NULL){
-        if(rt_prev == NULL){
-            bl00mbox_audio_waitfor_pointer_change(&(chan->root_list), rt->next);
-        } else {
-            bl00mbox_audio_waitfor_pointer_change(&(rt_prev->next), rt->next);
-        }
-        free(rt);
+    if(rt == NULL) return false; // root doesn't exist
+
+    if(rt_prev == NULL){
+        bl00mbox_audio_waitfor_pointer_change(&(chan->root_list), rt->next);
+    } else {
+        bl00mbox_audio_waitfor_pointer_change(&(rt_prev->next), rt->next);
     }
+    free(rt);
 
     if(conn->subs != NULL){
         bl00mbox_connection_subscriber_t * seek = conn->subs;

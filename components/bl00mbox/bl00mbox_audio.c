@@ -211,8 +211,15 @@ static bool bl00mbox_audio_channel_render(bl00mbox_channel_t * chan, int16_t * o
     }
 
     for(uint16_t i = 0; i < full_buffer_len; i++){
-        chan->dc = ((chan->dc * ((1<<10) - 1)) >> 10) + acc[i];
-        acc[i] = acc[i] - (chan->dc >> 10);
+        // flip around for rounding towards zero/mulsh boost
+        bool invert = chan->dc < 0;
+        if(invert) chan->dc = -chan->dc;
+        chan->dc = ((uint64_t) chan->dc * (((1<<12) - 1)<<20)) >> 32;
+        if(invert) chan->dc = -chan->dc;
+
+        chan->dc += acc[i];
+
+        acc[i] -= (chan->dc >> 12);
     }
 
     if(adding){

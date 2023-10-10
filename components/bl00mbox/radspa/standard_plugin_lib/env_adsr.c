@@ -47,6 +47,17 @@ radspa_t * env_adsr_create(uint32_t init_var){
     data->attack_prev_ms = -1;
     data->sustain_prev = -1;
     data->decay_prev_ms = -1;
+    data->env_counter_prev = 0;
+    data->env_pre_gain = 0;
+
+    data->output_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_OUTPUT);
+    data->input_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_INPUT);
+    data->trigger_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_TRIGGER);
+    data->attack_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_ATTACK);
+    data->decay_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_DECAY);
+    data->sustain_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_SUSTAIN);
+    data->release_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_RELEASE);
+    data->gain_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_GAIN);
 
     return env_adsr;
 }
@@ -67,47 +78,80 @@ static inline uint32_t env_adsr_time_ms_to_val_rise(int16_t time_ms, uint32_t va
 
 void env_adsr_run(radspa_t * env_adsr, uint16_t num_samples, uint32_t render_pass_id){
     env_adsr_data_t * data = env_adsr->plugin_data;
-    radspa_signal_t * output_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_OUTPUT);
-    if(output_sig->buffer == NULL) return;
-    radspa_signal_t * input_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_INPUT);
-    radspa_signal_t * trigger_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_TRIGGER);
-    radspa_signal_t * attack_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_ATTACK);
-    radspa_signal_t * decay_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_DECAY);
-    radspa_signal_t * sustain_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_SUSTAIN);
-    radspa_signal_t * release_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_RELEASE);
-    radspa_signal_t * gain_sig = radspa_signal_get_by_index(env_adsr, ENV_ADSR_GAIN);
+    int16_t trigger_const = radspa_signal_get_const_value(data->trigger_sig, render_pass_id);
 
-    int16_t env = 0;
+    bool idle = data->env_phase == ENV_ADSR_PHASE_OFF;
+    if((trigger_const != RADSPA_SIGNAL_NONCONST) && idle){
+        int16_t tmp = data->trigger_prev;
+        if(!radspa_trigger_get(trigger_const, &tmp)){
+            radspa_signal_set_const_value(data->output_sig, 0);
+            return;
+        }
+    }
+
+    int16_t trigger = trigger_const;
+
+    int16_t attack = radspa_signal_get_value(data->attack_sig, 0, render_pass_id);
+    int16_t decay = radspa_signal_get_value(data->decay_sig, 0, render_pass_id);
+    int32_t sustain = radspa_signal_get_value(data->sustain_sig, 0, render_pass_id);
+    int16_t release = radspa_signal_get_value(data->release_sig, 0, render_pass_id);
+    int32_t gain = radspa_signal_get_value(data->gain_sig, 0, render_pass_id);
+
+    if(data->attack_prev_ms != attack){
+        data->attack_raw = env_adsr_time_ms_to_val_rise(attack, UINT32_MAX, ENV_ADSR_UNDERSAMPLING);
+        data->attack_prev_ms = attack;
+    }
+
+    data->sustain = ((uint32_t) sustain) << 17UL;
+
+    if((data->decay_prev_ms != decay) || (data->sustain_prev != data->sustain)){
+        data->decay_raw = env_adsr_time_ms_to_val_rise(decay, UINT32_MAX - data->sustain, ENV_ADSR_UNDERSAMPLING);
+        data->decay_prev_ms = decay;
+        data->sustain_prev = data->sustain;
+    }
+
+    if(data->release_prev_ms != release){
+        data->release_raw = env_adsr_time_ms_to_val_rise(release, data->release_init_val, ENV_ADSR_UNDERSAMPLING);
+        data->release_prev_ms = release;
+    }
+
+    int32_t env = 0;
+
     for(uint16_t i = 0; i < num_samples; i++){
         int16_t ret = 0;
 
-        int16_t trigger = radspa_signal_get_value(trigger_sig, i, render_pass_id);
-        int16_t vel = radspa_trigger_get(trigger, &(data->trigger_prev));
+        if((trigger_const == RADSPA_SIGNAL_NONCONST) || (!i)){
+            if(trigger_const == RADSPA_SIGNAL_NONCONST) trigger = radspa_signal_get_value(data->trigger_sig, i, render_pass_id);
 
-        if(vel < 0){ // stop
-            if(data->env_phase != ENV_ADSR_PHASE_OFF){
-                data->env_phase = ENV_ADSR_PHASE_RELEASE;
-                data->release_init_val = data->env_counter;
+            int16_t vel = radspa_trigger_get(trigger, &(data->trigger_prev));
+
+            if(vel < 0){ // stop
+                if(data->env_phase != ENV_ADSR_PHASE_OFF){
+                    data->env_phase = ENV_ADSR_PHASE_RELEASE;
+                    data->release_init_val = data->env_counter;
+                    data->release_raw = env_adsr_time_ms_to_val_rise(release, data->release_init_val, ENV_ADSR_UNDERSAMPLING);
+                }
+            } else if(vel > 0 ){ // start
+                data->env_phase = ENV_ADSR_PHASE_ATTACK;
+                data->velocity = ((uint32_t) vel) << 17;
+                if(idle){
+                    for(uint16_t j = 0; j < i; j++){
+                        radspa_signal_set_value(data->output_sig, j, 0);
+                    }
+                    idle = false;
+                }
             }
-        } else if(vel > 0 ){ // start
-            data->env_phase = ENV_ADSR_PHASE_ATTACK;
-            data->velocity = vel;
         }
+
+        if(idle) continue;
 
         if(!(i%(1<<ENV_ADSR_UNDERSAMPLING))){
             uint32_t tmp;
-            int16_t time_ms;
             switch(data->env_phase){
                 case ENV_ADSR_PHASE_OFF:
                     data->env_counter = 0;;
                     break;
                 case ENV_ADSR_PHASE_ATTACK:
-                    time_ms = radspa_signal_get_value(attack_sig, i, render_pass_id);
-                    if(data->attack_prev_ms != time_ms){
-                        data->attack_raw = env_adsr_time_ms_to_val_rise(time_ms, UINT32_MAX, ENV_ADSR_UNDERSAMPLING);
-                        data->attack_prev_ms = time_ms;
-                    }
-
                     tmp = data->env_counter + data->attack_raw;
                     if(tmp < data->env_counter){ // overflow
                         tmp = ~((uint32_t) 0); // max out
@@ -116,13 +160,6 @@ void env_adsr_run(radspa_t * env_adsr, uint16_t num_samples, uint32_t render_pas
                     data->env_counter = tmp;
                     break;
                 case ENV_ADSR_PHASE_DECAY:
-                    data->sustain = radspa_signal_get_value(sustain_sig, i, render_pass_id) << 17UL;
-                    time_ms = radspa_signal_get_value(decay_sig, i, render_pass_id);
-                    if((data->decay_prev_ms != time_ms) || (data->sustain_prev != data->sustain)){
-                        data->decay_raw = env_adsr_time_ms_to_val_rise(time_ms, UINT32_MAX - data->sustain, ENV_ADSR_UNDERSAMPLING);
-                        data->decay_prev_ms = time_ms;
-                        data->sustain_prev = data->sustain;
-                    }
                     tmp = data->env_counter - data->decay_raw;
                     if(tmp > data->env_counter){ // underflow
                         tmp = 0; //bottom out
@@ -137,17 +174,10 @@ void env_adsr_run(radspa_t * env_adsr, uint16_t num_samples, uint32_t render_pas
 
                     break;
                 case ENV_ADSR_PHASE_SUSTAIN:
-                    data->sustain = radspa_signal_get_value(sustain_sig, i, render_pass_id) << 17UL;
                     if(data->sustain == 0) data->env_phase = ENV_ADSR_PHASE_OFF;
                     data->env_counter = data->sustain;
                     break;
                 case ENV_ADSR_PHASE_RELEASE:
-                    time_ms = radspa_signal_get_value(release_sig, i, render_pass_id);
-                    if((data->release_prev_ms != time_ms) || (data->release_init_val_prev != data->release_init_val)){
-                        data->release_raw = env_adsr_time_ms_to_val_rise(time_ms, data->release_init_val, ENV_ADSR_UNDERSAMPLING);
-                        data->release_prev_ms = time_ms;
-                        data->release_init_val_prev = data->release_init_val;;
-                    }
                     tmp = data->env_counter - data->release_raw;
                     if(tmp > data->env_counter){ // underflow
                         tmp = 0; //bottom out
@@ -156,17 +186,22 @@ void env_adsr_run(radspa_t * env_adsr, uint16_t num_samples, uint32_t render_pas
                     data->env_counter = tmp;
                     break;
             }
-            env = data->env_counter >> 17;
-            env = (env * (env + 1)) >> 15;
-
-            int32_t gain = radspa_signal_get_value(gain_sig, i, render_pass_id);
-            env  = (env * gain) >> 12;
-            env  = (env * data->velocity) >> 15;
+            if(data->env_counter != data->env_counter_prev){
+                int32_t tmp;
+                tmp = data->env_counter >> 17;
+                tmp = (tmp * (tmp + 1)) >> 11;
+                data->env_pre_gain = tmp;
+                data->env_counter_prev = data->env_counter;
+            }
+            env = (data->env_pre_gain * gain) >> 16;
+            env = ((uint64_t) env * data->velocity) >> 32;
         }
         if(env){
-            int16_t input = radspa_signal_get_value(input_sig, i, render_pass_id);
+            int16_t input = radspa_signal_get_value(data->input_sig, i, render_pass_id);
             ret = radspa_mult_shift(env, input);
         }
-        radspa_signal_set_value(output_sig, i, ret);
+        radspa_signal_set_value(data->output_sig, i, ret);
     }
+
+    if(idle) radspa_signal_set_const_value(data->output_sig, 0);
 }
