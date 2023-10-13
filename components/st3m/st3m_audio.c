@@ -335,6 +335,8 @@ static void _audio_input_set_source(st3m_audio_input_source_t source) {
                 flow3r_bsp_audio_input_source_headset_mic);
             break;
         default:
+            flow3r_bsp_audio_input_set_source(
+                flow3r_bsp_audio_input_source_none);
             break;
     }
 }
