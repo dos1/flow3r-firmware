@@ -104,15 +104,18 @@ class ScalarApp(Application):
 
         for i in range(len(self.oscs)):
             self.oscs[i].signals.waveform = 0
-            self.envs[i].signals.decay = 500
 
             # soft flute
             # self.envs[i].signals.attack = 150
+            # self.envs[i].signals.sustain = 32767
+            # self.envs[i].signals.release = 200
+            # self.envs[i].signals.decay = 500
             # hard flute
             self.envs[i].signals.attack = 69
-
-            self.envs[i].signals.sustain = 32767
+            self.envs[i].signals.sustain = 25125
             self.envs[i].signals.release = 200
+            self.envs[i].signals.decay = 121
+
             self.oscs[i].signals.lin_fm = self.noise_fm_lp.signals.output
             self.oscs[i].signals.output = self.envs[i].signals.input
             self.synth_mixer.signals.input[i] = self.envs[i].signals.output
@@ -125,7 +128,7 @@ class ScalarApp(Application):
         self.noise_mixer.signals.gain = 4096
 
         self.noise_fm_lp.signals.input = self.noise_src.signals.output
-        self.noise_fm_lp.signals.gain = 300
+        self.noise_fm_lp.signals.gain = 420
         self.noise_fm_lp.signals.freq = 200
 
         self.noise_vol_osc.signals.pitch.freq = 0.13
