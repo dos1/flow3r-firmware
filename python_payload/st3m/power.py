@@ -30,67 +30,8 @@ class Power:
         self._battery_voltage = self._battery_voltage_sample()
         self._prev_battery_percentages = [1, 1, 1]
         self._battery_percentage = 1
-        # speeding up the process to get an intial settled value because recursion is hard
-        for i in range(5):
-            self._approximate_battery_percentage()
-        self._ts = time.ticks_ms()
-
-    def _battery_voltage_sample(self) -> float:
-        return self._adc.read_uv() * 2 / 1e6
-
-    def _update(self) -> None:
-        ts = time.ticks_ms()
-        if time.ticks_diff(ts, self._ts) > 2000:
-            # Sampling takes time, don't do it too often
-            log.debug("has battery: " + str(self._has_battery))
-            log.debug("is charging: " + str(self.battery_charging))
-            self._battery_voltage = self._battery_voltage_sample()
-            self._battery_percentage = self._approximate_battery_percentage()
-            self._ts = ts
-
-    @property
-    def battery_voltage(self) -> float:
-        self._update()
-        return self._battery_voltage
-
-    @property
-    def has_battery(self) -> bool:
-        return self._has_battery
-
-    @property
-    def battery_charging(self) -> bool:
-        """
-        True if the battery is currently being charged.
-        """
-        return sys_kernel.battery_charging()
-
-    @property
-    def battery_percentage(self) -> int:
-        self._update()
-        return self._battery_percentage
-
-    def _approximate_battery_percentage(self) -> int:
-        """
-        Returns approximate battery percentage ([0,100]) based on battery voltage.
-        """
-        if not self._has_battery:
-            return 100
-
-        percentage = 0
-        num_samples = 10
-        voltage_readings = []
-        for i in range(num_samples):
-            voltage_readings.append(self._battery_voltage_sample())
-
-        voltage_readings.sort()
-        voltage = voltage_readings[int(num_samples / 2)]
-
-        # print(voltage)
-
-        if voltage > 4.120:
-            percentage = 100
         # LUT created from Joulescope measurement of "official" 2Ah Battery at 650mW discharge at 26°C and decimated from ~42k samples
-        batLUT = [
+        self._batLUT = [
             (99, 4.114),
             (98, 4.109),
             (97, 4.091),
@@ -195,24 +136,86 @@ class Power:
             (0, 0),
         ]
 
-        for i in range(len(batLUT)):
-            if voltage >= batLUT[i][1]:
-                percentage = batLUT[i][0]
+        # speeding up the process to get an intial settled value because recursion is hard
+        for i in range(5):
+            self._approximate_battery_percentage()
+        self._ts = time.ticks_ms()
+
+    def _battery_voltage_sample(self) -> float:
+        return self._adc.read_uv() * 2 / 1e6
+
+    def _update(self) -> None:
+        ts = time.ticks_ms()
+        if time.ticks_diff(ts, self._ts) > 10000:
+            # Sampling takes time, don't do it too often
+            # log.debug("has battery: " + str(self._has_battery))
+            # log.debug("is charging: " + str(self.battery_charging))
+            self._battery_voltage = self._battery_voltage_sample()
+            self._battery_percentage = self._approximate_battery_percentage()
+            self._ts = ts
+
+    @property
+    def battery_voltage(self) -> float:
+        self._update()
+        return self._battery_voltage
+
+    @property
+    def has_battery(self) -> bool:
+        return self._has_battery
+
+    @property
+    def battery_charging(self) -> bool:
+        """
+        True if the battery is currently being charged.
+        """
+        return sys_kernel.battery_charging()
+
+    @property
+    def battery_percentage(self) -> int:
+        self._update()
+        return self._battery_percentage
+
+    def _approximate_battery_percentage(self) -> int:
+        """
+        Returns approximate battery percentage ([0,100]) based on battery voltage.
+        """
+        if not self._has_battery:
+            return 100
+
+        percentage = 0
+        voltage_readings = []
+        for i in range(5):
+            voltage_readings.append(self._adc.read_uv() * 2 / 1e6)
+
+        voltage_readings.sort()
+        # take median
+        voltage = voltage_readings[2]
+
+        # print(voltage)
+
+        if voltage > 4.120:
+            percentage = 100
+
+        for i in range(len(self._batLUT)):
+            if voltage >= self._batLUT[i][1]:
+                percentage = self._batLUT[i][0]
                 break
 
         self._prev_battery_percentages.pop(0)
         self._prev_battery_percentages.append(percentage)
-        log.debug("percentage: " + str(percentage) + " %")
-        log.debug("prev: " + str(self._prev_battery_percentages) + " %")
+        # log.debug("percentage: " + str(percentage) + " %")
+        # log.debug("prev: " + str(self._prev_battery_percentages) + " %")
         percent_list = self._prev_battery_percentages
 
         # avoid division by zero in weird edge cases
-        if (sum(percent_list) == 0) or (percent_list[0] == 0):
+        listsum = sum(percent_list)
+        if (listsum == 0) or (percent_list[0] == 0):
             return 0
 
-        for i in range(len(percent_list)):
-            if sum(percent_list) / percent_list[0] == len(percent_list):
+        for i in range(3):
+            if listsum / percent_list[0] == 3:
                 # all values are the same, we settled on a value (might be the same as before but that's ok)
+                # print("check if new valid value/the end: "+str(time.ticks_diff(time.ticks_us(), ts)))
                 return percentage
             else:
                 # we're still settling on a value, return previously settled value
