@@ -97,8 +97,8 @@ class BundleMetadata:
        [app]
        # Required, displayed in the menu.
        name = "Name of the application"
-       # One of "Apps", "Badge", "Music". Picks which menu the bundle's class
-       # will be loadable from.
+       # One of "Apps", "Badge", "Music", "Games", "Media". Picks which menu
+       # the bundle's class will be loadable from.
        menu = "Apps"
 
        [entry]
@@ -147,8 +147,10 @@ class BundleMetadata:
         if "menu" not in app or type(app["menu"]) != str:
             raise BundleMetadataBroken("missing app.menu key")
         self.menu = app["menu"]
-        if self.menu not in ["Apps", "Music", "Badge", "Hidden"]:
-            raise BundleMetadataBroken("app.menu must be either Apps, Music or Badge")
+        if self.menu not in ["Apps", "Music", "Badge", "Games", "Media", "Hidden"]:
+            raise BundleMetadataBroken(
+                "app.menu must be either Apps, Music, Badge, Games or Media"
+            )
 
         version = 0
         if t.get("metadata") is not None:
@@ -218,7 +220,7 @@ class BundleMetadata:
         """
         Returns MenuItemAppLauch entries for this bundle for a given menu kind.
 
-        Kind is one of 'Apps', 'Badge', 'Music'.
+        Kind is one of 'Apps', 'Badge', 'Music', 'Games', 'Media'.
         """
         if self.menu != kind:
             return []

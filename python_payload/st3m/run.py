@@ -247,6 +247,8 @@ def run_main() -> None:
         [
             MenuItemForeground("Badge", _make_bundle_menu(bundles, "Badge")),
             MenuItemForeground("Music", _make_bundle_menu(bundles, "Music")),
+            MenuItemForeground("Media", _make_bundle_menu(bundles, "Media")),
+            MenuItemForeground("Games", _make_bundle_menu(bundles, "Games")),
             MenuItemForeground("Apps", _make_bundle_menu(bundles, "Apps")),
             MenuItemForeground("System", menu_system),
         ],
