@@ -94,13 +94,13 @@ class ApplicationMenu(SimpleMenu):
         leds.update()
 
 
-def _make_bundle_menu(mgr: BundleManager, kind: str) -> SimpleMenu:
-    entries: List[MenuItem] = [MenuItemBack()]
+def _get_bundle_menu_entries(mgr: BundleManager, kind: str) -> List[MenuItem]:
+    entries: List[MenuItem] = []
     ids = sorted(mgr.bundles.keys(), key=str.lower)
     for id in ids:
         bundle = mgr.bundles[id]
         entries += bundle.menu_entries(kind)
-    return ApplicationMenu(entries)
+    return entries
 
 
 def _make_compositor(reactor: Reactor, vm: ViewManager) -> overlays.Compositor:
@@ -243,16 +243,14 @@ def run_main() -> None:
             MenuItemAction("Reboot", machine.reset),
         ],
     )
-    menu_main = SunMenu(
-        [
-            MenuItemForeground("Badge", _make_bundle_menu(bundles, "Badge")),
-            MenuItemForeground("Music", _make_bundle_menu(bundles, "Music")),
-            MenuItemForeground("Media", _make_bundle_menu(bundles, "Media")),
-            MenuItemForeground("Games", _make_bundle_menu(bundles, "Games")),
-            MenuItemForeground("Apps", _make_bundle_menu(bundles, "Apps")),
-            MenuItemForeground("System", menu_system),
-        ],
-    )
+    categories = [
+        MenuItemForeground(kind, ApplicationMenu([MenuItemBack()] + entries))
+        for kind in ["Badge", "Music", "Media", "Apps", "Games"]
+        if (entries := _get_bundle_menu_entries(bundles, kind))
+    ]
+    categories.append(MenuItemForeground("System", menu_system))
+    menu_main = SunMenu(categories)
+
     if override_main_app is not None:
         requested = [b for b in bundles.bundles.values() if b.name == override_main_app]
         if len(requested) > 1:
