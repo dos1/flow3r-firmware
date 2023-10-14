@@ -103,8 +103,10 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_get_obj, mp_get);
 
 STATIC mp_obj_t mp_get_string(mp_obj_t key) {
     char *str = st3m_media_get_string(mp_obj_str_get_str(key));
-    if (!str) return 0;
-    return mp_obj_new_str(str, strlen(str));
+    if (!str) return mp_const_none;
+    mp_obj_t obj = mp_obj_new_str(str, strlen(str));
+    free(str);
+    return obj;
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_1(mp_get_string_obj, mp_get_string);
 
