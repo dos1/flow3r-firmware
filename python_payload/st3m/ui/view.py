@@ -100,6 +100,17 @@ class ViewTransition(ABCBase):
         pass
 
 
+class ViewTransitionNone(ViewTransition):
+    """
+    Immediate transition with no animation.
+    """
+
+    def draw(
+        self, ctx: Context, transition: float, incoming: Responder, outgoing: Responder
+    ) -> None:
+        incoming.draw(ctx)
+
+
 class ViewTransitionBlend(ViewTransition):
     """
     Transition from one view to another by opacity blending.
