@@ -51,6 +51,8 @@ EXT_RAM_BSS_ATTR static uint8_t
     st3m_fb_copy[FLOW3R_BSP_DISPLAY_WIDTH * FLOW3R_BSP_DISPLAY_HEIGHT * 2];
 #endif
 
+EXT_RAM_BSS_ATTR static uint8_t scratch[40 * 1024];
+
 // Get a free drawlist ctx to draw into.
 //
 // ticks_to_wait can be used to limit the time to wait for a free ctx
@@ -70,6 +72,7 @@ static const char *TAG = "st3m-gfx";
 
 static st3m_gfx_mode _st3m_gfx_mode = st3m_gfx_default + 1;
 
+static Ctx *ctx = NULL;
 // each frame buffer has an associated rasterizer context
 static Ctx *fb_ctx = NULL;
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
@@ -162,7 +165,10 @@ static Ctx *st3m_gfx_ctx_int(st3m_gfx_mode mode) {
 #endif
     Ctx *ctx = st3m_gfx_drawctx_free_get(1000);
 
-    if (set_mode & st3m_gfx_direct_ctx) return fb_ctx;
+    if (set_mode & st3m_gfx_direct_ctx) {
+        if (set_mode & st3m_gfx_smart_redraw) return ctx;
+        return fb_ctx;
+    }
 
     if (!ctx) return NULL;
     return ctx;
@@ -248,6 +254,11 @@ void st3m_gfx_set_default_mode(st3m_gfx_mode mode) {
         default_mode |= st3m_gfx_direct_ctx;
     } else
         default_mode = mode;
+
+    if (default_mode & st3m_gfx_smart_redraw) {
+        default_mode &= ~63;
+        default_mode |= 16;
+    }
 
     if (default_mode & st3m_gfx_lock) {
         default_mode &= ~st3m_gfx_lock;
@@ -461,8 +472,7 @@ static void st3m_gfx_rast_task(void *_arg) {
 
     while (true) {
         int desc_no = 0;
-
-        ctx_set_textureclock(fb_ctx, ctx_textureclock(fb_ctx) + 1);
+        int tc = ctx_textureclock(fb_ctx) + 1;
         xQueueReceiveNotifyStarved(user_ctx_rastq, &desc_no,
                                    "rast task starved (user_ctx)!");
         st3m_gfx_drawlist *drawlist = &drawlists[desc_no];
@@ -470,12 +480,13 @@ static void st3m_gfx_rast_task(void *_arg) {
 
         xSemaphoreTake(st3m_fb_lock, portMAX_DELAY);
 
+        ctx_set_textureclock(fb_ctx, tc);
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-        ctx_set_textureclock(osd_ctx, ctx_textureclock(fb_ctx));
+        ctx_set_textureclock(osd_ctx, tc);
+        ctx_set_textureclock(ctx, tc);
 #endif
         if (prev_set_mode != set_mode) {
             bits = _st3m_gfx_bpp(set_mode);
-            prev_set_mode = set_mode;
 
 #if ST3M_GFX_BLIT_TASK
             if ((bits > 16))
@@ -525,22 +536,27 @@ static void st3m_gfx_rast_task(void *_arg) {
                     break;
 #endif
             }
-            memset(st3m_fb, 0, sizeof(st3m_fb));
+            if ((set_mode & st3m_gfx_smart_redraw) == 0)
+                memset(st3m_fb, 0, sizeof(st3m_fb));
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
             st3m_gfx_viewport_transform(osd_ctx, 1);
             memset(st3m_fb2, 0, sizeof(st3m_fb2));
 #endif
+            prev_set_mode = set_mode;
         }
 
         if ((set_mode & st3m_gfx_direct_ctx) == 0) {
-            // ctx_start_frame(fb_ctx);
-            ctx_save(fb_ctx);
-            ctx_render_ctx(drawlist->user_ctx, fb_ctx);
+            if ((set_mode & st3m_gfx_smart_redraw)) {
+                ctx_start_frame(ctx);
+                ctx_render_ctx(drawlist->user_ctx, ctx);
+                ctx_end_frame(ctx);
+            } else {
+                ctx_save(fb_ctx);
+                ctx_render_ctx(drawlist->user_ctx, fb_ctx);
+                ctx_restore(fb_ctx);
+            }
             ctx_drawlist_clear(drawlist->user_ctx);
-            ctx_restore(fb_ctx);
-            // ctx_end_frame(fb_ctx);
         }
-
 #if ST3M_GFX_BLIT_TASK
         if (direct_blit) {
 #endif
@@ -561,7 +577,7 @@ static void st3m_gfx_rast_task(void *_arg) {
 
         st3m_counter_rate_sample(&rast_rate);
         float rate = 1000000.0 / st3m_counter_rate_average(&rast_rate);
-        smoothed_fps = smoothed_fps * 0.75 + 0.25 * rate;
+        smoothed_fps = smoothed_fps * 0.6 + 0.4 * rate;
     }
 }
 
@@ -804,6 +820,15 @@ void st3m_gfx_show_textview(st3m_gfx_textview_t *tv) {
     st3m_gfx_end_frame(ctx);
 }
 
+static void set_pixels_ctx(Ctx *ctx, void *user_data, int x, int y, int w,
+                           int h, void *buf, int buf_size) {
+    uint16_t *src = buf;
+    for (int scan = y; scan < y + h; scan++) {
+        uint16_t *dst = (uint16_t *)&st3m_fb[(scan * 240 + x) * 2];
+        for (int u = 0; u < w; u++) *(dst++) = *(src++);
+    }
+}
+
 void st3m_gfx_init(void) {
     // Make sure we're not being re-initialized.
 
@@ -825,6 +850,12 @@ void st3m_gfx_init(void) {
     st3m_fb_lock = xSemaphoreCreateMutex();
     st3m_fb_copy_lock = xSemaphoreCreateMutex();
 
+    ctx = ctx_new_cb(FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
+                     CTX_FORMAT_RGB565_BYTESWAPPED, set_pixels_ctx, NULL, NULL,
+                     NULL, sizeof(scratch), scratch,
+                     CTX_FLAG_HASH_CACHE | CTX_FLAG_KEEP_DATA);
+    assert(ctx != NULL);
+
     // Setup rasterizers for frame buffer formats
     fb_ctx = ctx_new_for_framebuffer(
         st3m_fb, FLOW3R_BSP_DISPLAY_WIDTH, FLOW3R_BSP_DISPLAY_HEIGHT,
@@ -840,6 +871,9 @@ void st3m_gfx_init(void) {
 
     ctx_set_texture_source(osd_ctx, fb_ctx);
     ctx_set_texture_cache(osd_ctx, fb_ctx);
+    ctx_set_texture_source(ctx, fb_ctx);
+    ctx_set_texture_cache(ctx, fb_ctx);
+
 #endif
 
     // Setup user_ctx descriptor.
@@ -876,6 +910,12 @@ static Ctx *st3m_gfx_drawctx_free_get(TickType_t ticks_to_wait) {
     if (set_mode & st3m_gfx_direct_ctx) {
         while (!uxSemaphoreGetCount(st3m_fb_lock)) vTaskDelay(0);
 
+        if ((set_mode & st3m_gfx_smart_redraw)) {
+            ctx_start_frame(ctx);
+            ctx_save(ctx);
+            return ctx;
+        }
+
         return fb_ctx;
     }
 
@@ -902,6 +942,10 @@ void st3m_gfx_end_frame(Ctx *ctx) {
         return;
     }
 #endif
+    st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
+    if ((set_mode & st3m_gfx_smart_redraw) && (set_mode & st3m_gfx_direct_ctx))
+        ctx_end_frame(ctx);
+
     st3m_gfx_pipe_put();
 }
 

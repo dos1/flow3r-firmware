@@ -38,6 +38,9 @@ typedef enum {
     st3m_gfx_3x = 1 << 14,
     st3m_gfx_4x = st3m_gfx_2x | st3m_gfx_3x,
 
+    // keep track of what is drawn and only redraw the bounding box
+    st3m_gfx_smart_redraw = 1 << 15,
+
     // 4 and 8bpp modes use the configured palette, the palette resides
     // in video ram and is lost upon mode change
     st3m_gfx_1bpp = 1,

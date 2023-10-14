@@ -146,6 +146,8 @@ STATIC const mp_rom_map_elem_t mp_module_sys_display_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_lock), MP_ROM_INT((int)st3m_gfx_lock) },
     { MP_ROM_QSTR(MP_QSTR_EXPERIMENTAL_think_per_draw),
       MP_ROM_INT((int)st3m_gfx_EXPERIMENTAL_think_per_draw) },
+    { MP_ROM_QSTR(MP_QSTR_smart_redraw),
+      MP_ROM_INT((int)st3m_gfx_smart_redraw) },
     { MP_ROM_QSTR(MP_QSTR_x2), MP_ROM_INT((int)st3m_gfx_2x) },
     { MP_ROM_QSTR(MP_QSTR_x3), MP_ROM_INT((int)st3m_gfx_3x) },
     { MP_ROM_QSTR(MP_QSTR_x4), MP_ROM_INT((int)st3m_gfx_4x) },
