@@ -41,6 +41,29 @@ typedef struct {
 static void mpg1_on_video(plm_t *player, plm_frame_t *frame, void *user);
 static void mpg1_on_audio(plm_t *player, plm_samples_t *samples, void *user);
 
+static void mpg1_set(st3m_media *media, const char *key, float value) {
+    mpg1_state *self = (void *)media;
+    if (strcmp(key, "scale") == 0) {
+        self->scale = value;
+    } else if (strcmp(key, "grayscale") == 0) {
+        self->color = !value;
+    } else if (strcmp(key, "smoothing") == 0) {
+        self->smoothing = value;
+    }
+}
+
+static float mpg1_get(st3m_media *media, const char *key) {
+    mpg1_state *self = (void *)media;
+    if (strcmp(key, "scale") == 0) {
+        return self->scale;
+    } else if (strcmp(key, "grayscale") == 0) {
+        return !self->color;
+    } else if (strcmp(key, "smoothing") == 0) {
+        return self->smoothing;
+    }
+    return -1;
+}
+
 static void mpg1_think(st3m_media *media, float ms_elapsed) {
     mpg1_state *self = (void *)media;
     float elapsed_time = ms_elapsed / 1000.0;
@@ -164,6 +187,8 @@ st3m_media *st3m_media_load_mpg1(const char *path) {
     self->control.draw = mpg1_draw;
     self->control.think = mpg1_think;
     self->control.destroy = mpg1_destroy;
+    self->control.get = mpg1_get;
+    self->control.set = mpg1_set;
 
     self->old_mode = st3m_gfx_get_mode();
     st3m_gfx_set_mode(16 | st3m_gfx_osd | st3m_gfx_EXPERIMENTAL_think_per_draw |

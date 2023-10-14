@@ -88,6 +88,16 @@ static void mp3_fetch_data(mp3_state *mp3) {
     }
 }
 
+static char *mp3_get_string(st3m_media *media, const char *key) {
+    mp3_state *self = (void *)media;
+    if (strcmp(key, "artist") == 0) {
+        return strdup(self->artist);
+    } else if (strcmp(key, "title") == 0) {
+        return strdup(self->title);
+    }
+    return NULL;
+}
+
 static void mp3_draw(st3m_media *media, Ctx *ctx) {
     mp3_state *self = (void *)media;
 
@@ -235,6 +245,7 @@ st3m_media *st3m_media_load_mp3(const char *path) {
     self->control.draw = mp3_draw;
     self->control.think = mp3_think;
     self->control.destroy = mp3_destroy;
+    self->control.get_string = mp3_get_string;
     self->samplerate = 44100;
     self->buffer_size = 32 * 1024;
     self->scroll_pos = 0;
