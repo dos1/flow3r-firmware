@@ -47,6 +47,12 @@ class Reader(ActionView):
             self.is_loading = False
             self.is_media = True
             media.load(self.path)
+            if (
+                not media.has_video()
+                and not media.has_audio()
+                and not media.is_visual()
+            ):
+                self.has_error = True
         elif self._check_file():
             self._read_file()
             self.is_loading = False
@@ -124,8 +130,9 @@ class Reader(ActionView):
         ctx.move_to(0, -10)
         ctx.text("Can't read file")
 
-        ctx.move_to(0, 20)
-        ctx.text("(Not UTF-8?)")
+        if not self.is_media:
+            ctx.move_to(0, 20)
+            ctx.text("(Not UTF-8?)")
 
         ctx.restore()
 
@@ -144,7 +151,11 @@ class Reader(ActionView):
         ctx.restore()
 
     def _draw_media(self, ctx: Context) -> None:
-        media.draw(ctx)
+        if media.is_visual():
+            media.draw(ctx)
+        elif media.has_audio():
+            ctx.gray(1.0)
+            ctx.scope()
 
     def _back(self) -> None:
         if self.is_media:
@@ -170,7 +181,7 @@ class Reader(ActionView):
             return False
 
     def _is_media(self) -> bool:
-        for ext in [".mp3", ".mod"]:
+        for ext in [".mp3", ".mod", ".mpg", ".gif"]:
             if self.path.lower().endswith(ext):
                 return True
         return False
