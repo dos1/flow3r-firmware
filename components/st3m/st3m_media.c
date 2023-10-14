@@ -102,7 +102,7 @@ char *st3m_media_get_string(const char *key) {
 }
 
 float st3m_media_get(const char *key) {
-    if (!audio_media || !audio_media->get_string) return -1.0f;
+    if (!audio_media || !audio_media->get) return -1.0f;
     return audio_media->get(audio_media, key);
 }
 
