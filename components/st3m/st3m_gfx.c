@@ -458,12 +458,11 @@ static void st3m_gfx_rast_task(void *_arg) {
     while (true) {
         int desc_no = 0;
 
-        st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
         ctx_set_textureclock(fb_ctx, ctx_textureclock(fb_ctx) + 1);
         xQueueReceiveNotifyStarved(user_ctx_rastq, &desc_no,
                                    "rast task starved (user_ctx)!");
         st3m_gfx_drawlist *drawlist = &drawlists[desc_no];
-        drawlist->mode = set_mode;
+        st3m_gfx_mode set_mode = drawlist->mode;
 
         xSemaphoreTake(st3m_fb_lock, portMAX_DELAY);
 
