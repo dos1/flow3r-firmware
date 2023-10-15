@@ -90,7 +90,11 @@ char *st3m_media_get_string(const char *key);
 float st3m_media_get(const char *key);
 // set a decoder specific floating point value
 // example posible/or already used values:
-//    "scale"       0.0 - 1.0  - how large part of the screen to take up
+//
 //    "grayscale"   0 or 1     - drop color bits for performance
-//    "smoothing"   0 or 1     - enable smooth texture scaling
+//
+// some keys are global and stored outside codecs, they can be queried
+// and set both by apps and codecs:
+//
+//    "zoom"        0.0 - 2.0  - how large part of the screen to take up
 void st3m_media_set(const char *key, float value);

@@ -14,7 +14,7 @@
 #include "freertos/task.h"
 #define ST3M_PCM_BUF_SIZE (16384)
 
-static st3m_media *audio_media = NULL;
+static st3m_media *media_item = NULL;
 #ifdef CONFIG_FLOW3R_CTX_FLAVOUR_FULL
 
 static TaskHandle_t media_task;
@@ -26,18 +26,18 @@ static void st3m_media_task(void *_arg) {
     while (!media_pending_destroy) {
         TickType_t lastwake = waketime;
         vTaskDelayUntil(&waketime, 20 / portTICK_PERIOD_MS);
-        if (audio_media->think)
-            audio_media->think(audio_media,
-                               (waketime - lastwake) * portTICK_PERIOD_MS);
+        if (media_item->think)
+            media_item->think(media_item,
+                              (waketime - lastwake) * portTICK_PERIOD_MS);
     }
-    if (audio_media->destroy) audio_media->destroy(audio_media);
-    audio_media = NULL;
+    if (media_item->destroy) media_item->destroy(media_item);
+    media_item = NULL;
     media_pending_destroy = false;
     vTaskDelete(NULL);
 }
 
 void st3m_media_stop(void) {
-    if (!audio_media) return;
+    if (!media_item) return;
     media_pending_destroy = true;
     while (media_pending_destroy) {
         vTaskDelay(10);
@@ -45,44 +45,44 @@ void st3m_media_stop(void) {
 }
 
 void st3m_media_pause(void) {
-    if (!audio_media) return;
-    audio_media->paused = 1;
+    if (!media_item) return;
+    media_item->paused = 1;
 }
 
 void st3m_media_play(void) {
-    if (!audio_media) return;
-    audio_media->paused = 0;
+    if (!media_item) return;
+    media_item->paused = 0;
 }
 
 int st3m_media_is_playing(void) {
-    if (!audio_media) return 0;
-    return !audio_media->paused;
+    if (!media_item) return 0;
+    return !media_item->paused;
 }
 
 float st3m_media_get_duration(void) {
-    if (!audio_media) return 0;
-    return audio_media->duration;
+    if (!media_item) return 0;
+    return media_item->duration;
 }
 
 float st3m_media_get_position(void) {
-    if (!audio_media) return 0;
-    return audio_media->position;
+    if (!media_item) return 0;
+    return media_item->position;
 }
 
 float st3m_media_get_time(void) {
-    if (!audio_media) return 0;
-    if (audio_media->time <= 0) return audio_media->time;
-    return audio_media->time - st3m_pcm_queued() / 48000.0 / 2.0;
+    if (!media_item) return 0;
+    if (media_item->time <= 0) return media_item->time;
+    return media_item->time - st3m_pcm_queued() / 48000.0 / 2.0;
 }
 
 void st3m_media_seek(float position) {
-    if (!audio_media) return;
-    audio_media->seek = position;
+    if (!media_item) return;
+    media_item->seek = position;
 }
 
 void st3m_media_seek_relative(float time) {
-    if (!audio_media) return;
-    st3m_media_seek((audio_media->position * audio_media->duration) + time);
+    if (!media_item) return;
+    st3m_media_seek((media_item->position * media_item->duration) + time);
 }
 
 void st3m_media_set_volume(float volume) { st3m_pcm_set_volume(volume); }
@@ -90,25 +90,44 @@ void st3m_media_set_volume(float volume) { st3m_pcm_set_volume(volume); }
 float st3m_media_get_volume(void) { return st3m_pcm_get_volume(); }
 
 void st3m_media_draw(Ctx *ctx) {
-    if (audio_media && audio_media->draw) audio_media->draw(audio_media, ctx);
+    if (media_item && media_item->draw) media_item->draw(media_item, ctx);
 }
 
 void st3m_media_think(float ms) { (void)ms; }
 
 char *st3m_media_get_string(const char *key) {
-    if (!audio_media) return NULL;
-    if (!audio_media->get_string) return NULL;
-    return audio_media->get_string(audio_media, key);
+    if (!media_item) return NULL;
+    if (!media_item->get_string) return NULL;
+    return media_item->get_string(media_item, key);
 }
 
+static float _st3m_media_zoom = 1.0f;
+static float _st3m_media_cx = 0.0f;
+static float _st3m_media_cy = 0.0f;
+
 float st3m_media_get(const char *key) {
-    if (!audio_media || !audio_media->get) return -1.0f;
-    return audio_media->get(audio_media, key);
+    if (!strcmp(key, "zoom")) return _st3m_media_zoom;
+    if (!strcmp(key, "cx")) return _st3m_media_cx;
+    if (!strcmp(key, "cy")) return _st3m_media_cy;
+    if (!media_item || !media_item->get) return -1.0f;
+    return media_item->get(media_item, key);
 }
 
 void st3m_media_set(const char *key, float value) {
-    if (!audio_media || !audio_media->set) return;
-    return audio_media->set(audio_media, key, value);
+    if (!strcmp(key, "zoom")) {
+        _st3m_media_zoom = value;
+        return;
+    }
+    if (!strcmp(key, "cx")) {
+        _st3m_media_cx = value;
+        return;
+    }
+    if (!strcmp(key, "cy")) {
+        _st3m_media_cy = value;
+        return;
+    }
+    if (!media_item || !media_item->set) return;
+    return media_item->set(media_item, key, value);
 }
 
 st3m_media *st3m_media_load_mpg1(const char *path);
@@ -156,25 +175,25 @@ int st3m_media_load(const char *path, bool paused) {
 #if 1
     if (!strncmp(path, "http://", 7)) {
         st3m_media_stop();
-        audio_media = st3m_media_load_mp3(path);
+        media_item = st3m_media_load_mp3(path);
     } else if (stat(path, &statbuf)) {
         st3m_media_stop();
-        audio_media = st3m_media_load_txt(path);
+        media_item = st3m_media_load_txt(path);
     } else if (strstr(path, ".mp3") == strrchr(path, '.')) {
         st3m_media_stop();
-        audio_media = st3m_media_load_mp3(path);
+        media_item = st3m_media_load_mp3(path);
     } else
 #endif
 #if 1
         if (strstr(path, ".mpg")) {
         st3m_media_stop();
-        audio_media = st3m_media_load_mpg1(path);
+        media_item = st3m_media_load_mpg1(path);
     } else
 #endif
 #if 1
         if ((strstr(path, ".mod") == strrchr(path, '.'))) {
         st3m_media_stop();
-        audio_media = st3m_media_load_mod(path);
+        media_item = st3m_media_load_mod(path);
     } else
 #endif
         if ((strstr(path, ".json") == strrchr(path, '.')) ||
@@ -183,15 +202,15 @@ int st3m_media_load(const char *path, bool paused) {
             (strstr(path, ".toml") == strrchr(path, '.')) ||
             (strstr(path, ".py") == strrchr(path, '.'))) {
         st3m_media_stop();
-        audio_media = st3m_media_load_txt(path);
+        media_item = st3m_media_load_txt(path);
     }
 
-    if (!audio_media) {
-        audio_media = st3m_media_load_txt(path);
+    if (!media_item) {
+        media_item = st3m_media_load_txt(path);
     }
 
-    audio_media->volume = 4096;
-    audio_media->paused = paused;
+    media_item->volume = 4096;
+    media_item->paused = paused;
 
     BaseType_t res =
         xTaskCreatePinnedToCore(st3m_media_task, "media", 16384, NULL,
