@@ -622,6 +622,10 @@ static inline uint16_t ctx_565_pack(uint8_t red, uint8_t green, uint8_t blue,
 extern uint8_t st3m_pal[256 * 3];
 EXT_RAM_BSS_ATTR static uint16_t st3m_pal16[256];
 
+// https://pippin.gimp.org/a_dither/
+#define a_dither(x, y, divisor) \
+    ((((((x) + (y)*236) * 119) & 255) - 127) / divisor)
+
 static void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
                                  int pix_count) {
     int scale = blit->scale;
@@ -949,11 +953,41 @@ static void flow3r_bsp_prep_blit(flow3r_bsp_gc9a01_blit_t *blit,
                         temp_blit[o++] = ctx_565_pack(
                             fb[i * 3 + 0], fb[i * 3 + 1], fb[i * 3 + 2], 1);
                     break;
-                case 32:
-                    for (unsigned int i = start_off; i < end_off; i++)
-                        temp_blit[o++] = ctx_565_pack(
-                            fb[i * 4 + 0], fb[i * 4 + 1], fb[i * 4 + 2], 1);
-                    break;
+                case 32: {
+                    int x = start_off % 240;
+                    int y = start_off / 240;
+                    uint8_t *src = (uint8_t *)&fb[start_off * 4];
+                    for (unsigned int i = start_off; i < end_off; i++) {
+                        uint8_t rgba[4];
+                        {
+                            int val = src[0] + a_dither(x, y, 32);
+                            if (val < 0) val = 0;
+                            if (val > 255) val = 255;
+                            rgba[0] = val;
+                        }
+                        {
+                            int val = src[1] + a_dither(x, y, 16);
+                            if (val < 0) val = 0;
+                            if (val > 255) val = 255;
+                            rgba[1] = val;
+                        }
+                        {
+                            int val = src[2] + a_dither(x, y, 32);
+                            if (val < 0) val = 0;
+                            if (val > 255) val = 255;
+                            rgba[2] = val;
+                        }
+
+                        temp_blit[o++] =
+                            ctx_565_pack(rgba[0], rgba[1], rgba[2], 1);
+                        src += 4;
+                        x++;
+                        if (x == 240) {
+                            x = 0;
+                            y++;
+                        }
+                    }
+                } break;
             }
         }
     }
