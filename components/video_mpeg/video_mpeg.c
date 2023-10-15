@@ -25,8 +25,6 @@ typedef struct {
     int frame_drop;
     int sample_rate;
     int frame_no;
-    int prev_frame_no;
-    int prev_prev_frame_no;
     // last decoded frame contained chroma samples
     // this allows us to take a grayscale fast-path
     unsigned last_frame_chroma : 1;
@@ -73,6 +71,7 @@ static void mpg1_think(st3m_media *media, float ms_elapsed) {
 static inline int memcpy_chroma(uint8_t *restrict target, uint8_t *restrict src,
                                 int count) {
     int ret = 0;
+    // TODO : do 4bytes at a time
     for (int i = 0; i < count; i++) {
         uint8_t val = src[i];
         target[i] = val;
@@ -92,13 +91,14 @@ static void mpg1_on_video(plm_t *mpeg, plm_frame_t *frame, void *user) {
 
     if (self->color) {
         /* copy u and v components */
-        self->last_frame_chroma = memcpy_chroma(
-            self->frame_data + frame->y.width * frame->y.height, frame->cb.data,
-            (frame->y.width / 2) * (frame->y.height / 2));
-        self->last_frame_chroma = memcpy_chroma(
-            self->frame_data + frame->y.width * frame->y.height +
-                (frame->y.width / 2) * (frame->y.height / 2),
-            frame->cr.data, (frame->y.width / 2) * (frame->y.height / 2));
+        self->last_frame_chroma =
+            memcpy_chroma(self->frame_data + frame->y.width * frame->y.height,
+                          frame->cb.data,
+                          (frame->y.width / 2) * (frame->y.height / 2)) |
+            memcpy_chroma(self->frame_data + frame->y.width * frame->y.height +
+                              (frame->y.width / 2) * (frame->y.height / 2),
+                          frame->cr.data,
+                          (frame->y.width / 2) * (frame->y.height / 2));
     }
 }
 
@@ -117,11 +117,9 @@ static void mpg1_draw(st3m_media *media, Ctx *ctx) {
             float scale = dim / mpg1->width;
             float scaleh = dim / mpg1->height;
             if (scaleh < scale) scale = scaleh;
-            char eid[16];
-            sprintf(eid, "%i", mpg1->frame_no);
-            if (mpg1->frame_no != mpg1->prev_frame_no) {
-                if (mpg1->frame_no <
-                    20) {  // ensure we've filled at least some complete frames
+            {
+                if (mpg1->frame_no < 20) {  // ensure we've filled at least some
+                                            // complete frames with background
                     ctx_rectangle(ctx, -120, -120, 240, 240);
                     ctx_gray(ctx, 0.0);
                     ctx_fill(ctx);
@@ -131,7 +129,7 @@ static void mpg1_draw(st3m_media *media, Ctx *ctx) {
                               (dim - mpg1->height * scale) / 2.0);
                 ctx_scale(ctx, scale, scale);
                 ctx_rectangle(ctx, 0, 2, dim, dim - 1);
-                ctx_define_texture(ctx, eid, mpg1->width, mpg1->height,
+                ctx_define_texture(ctx, "!video", mpg1->width, mpg1->height,
                                    mpg1->width,
                                    mpg1->last_frame_chroma ? CTX_FORMAT_YUV420
                                                            : CTX_FORMAT_GRAY8,
@@ -139,13 +137,6 @@ static void mpg1_draw(st3m_media *media, Ctx *ctx) {
                 ctx_image_smoothing(ctx, mpg1->smoothing);
                 ctx_compositing_mode(ctx, CTX_COMPOSITE_COPY);
                 ctx_fill(ctx);
-                char eid[16];
-                sprintf(eid, "%i", mpg1->prev_prev_frame_no);
-                ctx_drop_eid(ctx, eid);
-                mpg1->prev_prev_frame_no = mpg1->prev_frame_no;
-                mpg1->prev_frame_no = mpg1->frame_no;
-            } else {
-                // do nothing, keep display contents
             }
         } else {
             ctx_rgb(ctx, 0.2, 0.3, 0.4);
@@ -171,7 +162,6 @@ st3m_media *st3m_media_load_mpg1(const char *path) {
     self->plm = plm_create_with_filename(path);
     self->color = 1;
     self->last_frame_chroma = 0;
-    self->prev_frame_no = 255;  // anything but 0
     self->scale = 0.75;
     self->audio = 1;
     self->video = 1;
