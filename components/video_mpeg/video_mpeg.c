@@ -27,7 +27,7 @@ typedef struct {
     int frame_no;
     // last decoded frame contained chroma samples
     // this allows us to take a grayscale fast-path
-    unsigned last_frame_chroma : 1;
+    unsigned had_chroma : 1;
     unsigned color : 1;
     // whether we smooth the video when scaling it up
     unsigned smoothing : 1;
@@ -90,15 +90,20 @@ static void mpg1_on_video(plm_t *mpeg, plm_frame_t *frame, void *user) {
     memcpy(self->frame_data, frame->y.data, frame->y.width * frame->y.height);
 
     if (self->color) {
-        /* copy u and v components */
-        self->last_frame_chroma =
-            memcpy_chroma(self->frame_data + frame->y.width * frame->y.height,
-                          frame->cb.data,
-                          (frame->y.width / 2) * (frame->y.height / 2)) |
-            memcpy_chroma(self->frame_data + frame->y.width * frame->y.height +
-                              (frame->y.width / 2) * (frame->y.height / 2),
-                          frame->cr.data,
-                          (frame->y.width / 2) * (frame->y.height / 2));
+        void *dst_cb = self->frame_data + frame->y.width * frame->y.height;
+        void *dst_cr = dst_cb + (frame->y.width / 2) * (frame->y.height / 2);
+        int chroma_len = (frame->y.width / 2) * (frame->y.height / 2);
+        if (((self->frame_no & 63) == 0)) self->had_chroma = 0;
+        if ((!self->had_chroma) &&
+            ((self->frame_no < 60) || ((self->frame_no & 63) == 0))) {
+            /* copy u and v components */
+            self->had_chroma |=
+                memcpy_chroma(dst_cb, frame->cb.data, chroma_len) |
+                memcpy_chroma(dst_cr, frame->cr.data, chroma_len);
+        } else if (self->had_chroma) {
+            memcpy(dst_cb, frame->cb.data, chroma_len);
+            memcpy(dst_cr, frame->cr.data, chroma_len);
+        }
     }
 }
 
@@ -129,11 +134,10 @@ static void mpg1_draw(st3m_media *media, Ctx *ctx) {
                               (dim - mpg1->height * scale) / 2.0);
                 ctx_scale(ctx, scale, scale);
                 ctx_rectangle(ctx, 0, 2, dim, dim - 1);
-                ctx_define_texture(ctx, "!video", mpg1->width, mpg1->height,
-                                   mpg1->width,
-                                   mpg1->last_frame_chroma ? CTX_FORMAT_YUV420
-                                                           : CTX_FORMAT_GRAY8,
-                                   mpg1->frame_data, NULL);
+                ctx_define_texture(
+                    ctx, "!video", mpg1->width, mpg1->height, mpg1->width,
+                    mpg1->had_chroma ? CTX_FORMAT_YUV420 : CTX_FORMAT_GRAY8,
+                    mpg1->frame_data, NULL);
                 ctx_image_smoothing(ctx, mpg1->smoothing);
                 ctx_compositing_mode(ctx, CTX_COMPOSITE_COPY);
                 ctx_fill(ctx);
@@ -161,7 +165,7 @@ st3m_media *st3m_media_load_mpg1(const char *path) {
 
     self->plm = plm_create_with_filename(path);
     self->color = 1;
-    self->last_frame_chroma = 0;
+    self->had_chroma = 0;
     self->scale = 0.75;
     self->audio = 1;
     self->video = 1;
