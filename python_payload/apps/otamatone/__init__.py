@@ -117,6 +117,7 @@ class Otamatone(Application):
         self._osc.signals.waveform = 20000
         self._osc.signals.attack = 1
         self._osc.signals.decay = 0
+        self._osc.signals.sustain = 32767
 
         # Built custom square wave (low duty cycle)
         table_len = 129
@@ -140,6 +141,7 @@ class Otamatone(Application):
             self._blm.clear()
             self._blm.free = True
         self._blm = None
+        self._intensity = 0
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
@@ -188,13 +190,15 @@ class Otamatone(Application):
             wah_ctrl = 1
         wah_ctrl *= -1
 
-        if petal.whole.down:
+        if petal.whole.pressed:
+            self._osc.signals.trigger.start()
+
+        if petal.whole.down or petal.whole.pressed:
             if self._intensity < 1.0:
                 self._intensity += 0.1 * (delta_ms / 20)
             self._osc.signals.pitch.tone = ctrl * 12
-            self._osc.signals.trigger.start()
 
-        if petal.whole.up:
+        if petal.whole.released:
             self._intensity = 0
             self._osc.signals.trigger.stop()
 
