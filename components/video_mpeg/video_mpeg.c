@@ -30,8 +30,6 @@ typedef struct {
     // this allows us to take a grayscale fast-path
     unsigned had_chroma : 1;
     unsigned color : 1;
-    // whether we smooth the video when scaling it up
-    unsigned smoothing : 1;
     unsigned video : 1;
     unsigned audio : 1;
     unsigned loop : 1;
@@ -47,8 +45,6 @@ static void mpg1_set(st3m_media *media, const char *key, float value) {
         self->scale = value;
     } else if (strcmp(key, "grayscale") == 0) {
         self->color = !value;
-    } else if (strcmp(key, "smoothing") == 0) {
-        self->smoothing = value;
     }
 }
 
@@ -58,8 +54,6 @@ static float mpg1_get(st3m_media *media, const char *key) {
         return self->scale;
     } else if (strcmp(key, "grayscale") == 0) {
         return !self->color;
-    } else if (strcmp(key, "smoothing") == 0) {
-        return self->smoothing;
     }
     return -1;
 }
@@ -162,7 +156,7 @@ static void mpg1_draw(st3m_media *media, Ctx *ctx) {
                     ctx, "!video", mpg1->width, mpg1->height, mpg1->width,
                     mpg1->had_chroma ? CTX_FORMAT_YUV420 : CTX_FORMAT_GRAY8,
                     mpg1->frame_data, NULL);
-                ctx_image_smoothing(ctx, mpg1->smoothing);
+                ctx_image_smoothing(ctx, false);
                 ctx_compositing_mode(ctx, CTX_COMPOSITE_COPY);
                 ctx_fill(ctx);
             }
@@ -202,7 +196,6 @@ st3m_media *st3m_media_load_mpg1(const char *path) {
     self->loop = 0;
     self->width = 0;
     self->height = 0;
-    self->smoothing = 0;
     self->frame_drop = 1;
     if ((!self->plm) || (plm_get_width(self->plm) == 0)) {
         printf("Couldn't open %s", path);
