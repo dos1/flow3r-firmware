@@ -26,6 +26,7 @@ typedef struct {
     int sample_rate;
     int frame_no;
     int old_mode;
+    int set_mode;
     // last decoded frame contained chroma samples
     // this allows us to take a grayscale fast-path
     unsigned had_chroma : 1;
@@ -33,7 +34,6 @@ typedef struct {
     unsigned video : 1;
     unsigned audio : 1;
     unsigned loop : 1;
-    float scale;
 } mpg1_state;
 
 static void mpg1_on_video(plm_t *player, plm_frame_t *frame, void *user);
@@ -41,18 +41,14 @@ static void mpg1_on_audio(plm_t *player, plm_samples_t *samples, void *user);
 
 static void mpg1_set(st3m_media *media, const char *key, float value) {
     mpg1_state *self = (void *)media;
-    if (strcmp(key, "scale") == 0) {
-        self->scale = value;
-    } else if (strcmp(key, "grayscale") == 0) {
+    if (strcmp(key, "grayscale") == 0) {
         self->color = !value;
     }
 }
 
 static float mpg1_get(st3m_media *media, const char *key) {
     mpg1_state *self = (void *)media;
-    if (strcmp(key, "scale") == 0) {
-        return self->scale;
-    } else if (strcmp(key, "grayscale") == 0) {
+    if (strcmp(key, "grayscale") == 0) {
         return !self->color;
     }
     return -1;
@@ -134,22 +130,34 @@ static void mpg1_draw(st3m_media *media, Ctx *ctx) {
     mpg1_state *mpg1 = (mpg1_state *)media;
 
     {
-        float dim = 240 * mpg1->scale;
-
         if (mpg1->video) {
+            float zoom = st3m_media_get("zoom");
+            float cx = st3m_media_get("cx");
+            float cy = st3m_media_get("cy");
+            float dim = 240 * zoom;
+            int want_mode = 16 | st3m_gfx_osd;
+            if (zoom >= 0.9 && !mpg1->control.paused)
+                want_mode |= st3m_gfx_EXPERIMENTAL_think_per_draw | st3m_gfx_2x;
+            if (mpg1->set_mode != want_mode) {
+                st3m_gfx_set_mode(want_mode);
+                mpg1->set_mode = want_mode;
+            }
             float scale = dim / mpg1->width;
             float scaleh = dim / mpg1->height;
             if (scaleh < scale) scale = scaleh;
             {
-                if (mpg1->frame_no < 20) {  // ensure we've filled at least some
-                                            // complete frames with background
+                if (mpg1->frame_no < 20 && (cx == 0.0f) && (cy == 0.0f)) {
+                    // ensure we've filled at least some complete frames with
+                    // background we do not do this when center of video is not
+                    // center of screen, anticipating that we are used as an
+                    // overlay
                     ctx_rectangle(ctx, -120, -120, 240, 240);
                     ctx_gray(ctx, 0.0);
                     ctx_fill(ctx);
                 }
                 ctx_translate(ctx, -dim / 2, -dim / 2);
-                ctx_translate(ctx, (dim - mpg1->width * scale) / 2.0,
-                              (dim - mpg1->height * scale) / 2.0);
+                ctx_translate(ctx, (dim - mpg1->width * scale) / 2.0 + cx,
+                              (dim - mpg1->height * scale) / 2.0 + cy);
                 ctx_scale(ctx, scale, scale);
                 ctx_rectangle(ctx, 0, 2, dim, dim - 1);
                 ctx_define_texture(
@@ -169,7 +177,7 @@ static void mpg1_draw(st3m_media *media, Ctx *ctx) {
 
 static void mpg1_destroy(st3m_media *media) {
     mpg1_state *self = (void *)media;
-    st3m_gfx_set_mode(self->old_mode);
+    if (self->old_mode != self->set_mode) st3m_gfx_set_mode(self->old_mode);
     plm_destroy(self->plm);
     free(self->frame_data);
     free(self);
@@ -185,12 +193,9 @@ st3m_media *st3m_media_load_mpg1(const char *path) {
     self->control.set = mpg1_set;
 
     self->old_mode = st3m_gfx_get_mode();
-    st3m_gfx_set_mode(16 | st3m_gfx_osd | st3m_gfx_EXPERIMENTAL_think_per_draw |
-                      st3m_gfx_2x);
     self->plm = plm_create_with_filename(path);
     self->color = 1;
     self->had_chroma = 0;
-    self->scale = 1.0;
     self->audio = 1;
     self->video = 1;
     self->loop = 0;
