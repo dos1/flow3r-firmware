@@ -117,8 +117,8 @@ static TaskHandle_t graphics_blit_task;
 
 static int _st3m_gfx_low_latency = 0;
 
-static inline int st3m_gfx_scale(void) {
-    st3m_gfx_mode set_mode = _st3m_gfx_mode ? _st3m_gfx_mode : default_mode;
+static inline int st3m_gfx_scale(st3m_gfx_mode mode) {
+    st3m_gfx_mode set_mode = mode ? mode : default_mode;
     switch ((int)(set_mode & st3m_gfx_4x)) {
         case st3m_gfx_4x:
             return 4;
@@ -169,7 +169,7 @@ static Ctx *st3m_gfx_ctx_int(st3m_gfx_mode mode) {
 }
 
 static void st3m_gfx_viewport_transform(Ctx *ctx, int reset) {
-    int scale = st3m_gfx_scale();
+    int scale = st3m_gfx_scale(_st3m_gfx_mode);
     int32_t offset_x = FLOW3R_BSP_DISPLAY_WIDTH / 2 / scale;
     int32_t offset_y = FLOW3R_BSP_DISPLAY_HEIGHT / 2 / scale;
     if (reset)
@@ -180,7 +180,7 @@ static void st3m_gfx_viewport_transform(Ctx *ctx, int reset) {
 }
 
 static void st3m_gfx_start_frame(Ctx *ctx) {
-    int scale = st3m_gfx_scale();
+    int scale = st3m_gfx_scale(_st3m_gfx_mode);
     if (scale > 1) {
         ctx_rectangle(ctx, -120, -120, 240, 240);
         ctx_clip(ctx);
@@ -385,7 +385,7 @@ uint8_t *st3m_gfx_fb(st3m_gfx_mode mode, int *width, int *height, int *stride) {
         return st3m_fb2;
     }
 
-    int scale = st3m_gfx_scale();
+    int scale = st3m_gfx_scale(set_mode);
     if (stride) *stride = FLOW3R_BSP_DISPLAY_WIDTH * bpp / 8;
     if (width) *width = FLOW3R_BSP_DISPLAY_WIDTH / scale;
     if (height) *height = FLOW3R_BSP_DISPLAY_HEIGHT / scale;
@@ -404,7 +404,7 @@ static void st3m_gfx_blit(st3m_gfx_drawlist *drawlist) {
 
     xSemaphoreTake(st3m_fb_copy_lock, portMAX_DELAY);
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
-    int scale = st3m_gfx_scale();
+    int scale = st3m_gfx_scale(set_mode);
     int osd_x0 = drawlist->osd_x0, osd_x1 = drawlist->osd_x1,
         osd_y0 = drawlist->osd_y0, osd_y1 = drawlist->osd_y1;
 
