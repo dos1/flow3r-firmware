@@ -135,7 +135,7 @@ class Reader(ActionView):
 
     def _back(self) -> None:
         dir = os.path.dirname(self.path) + "/"
-        self.update_path(dir)
+        self.update_path(dir, os.path.basename(self.path))
         self.navigate("browser")
 
     def _read_file(self) -> None:

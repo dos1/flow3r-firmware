@@ -1,7 +1,7 @@
 import os
 import uos
 import stat
-from st3m.goose import Callable, Generator
+from st3m.goose import Callable, Generator, Optional
 from st3m.input import InputState
 from ctx import Context
 
@@ -30,6 +30,7 @@ class Browser(ActionView):
         path: str,
         navigate: Callable[[str], None],
         update_path: Callable[[str], None],
+        selected: Optional[str] = None,
     ) -> None:
         super().__init__()
 
@@ -38,6 +39,7 @@ class Browser(ActionView):
         self._delete_require_release = False
 
         self.path = path
+        self.selected = selected
         self.navigate = navigate
         self.update_path = update_path
 
@@ -114,14 +116,19 @@ class Browser(ActionView):
                 print(f"Failed to create entry for {name}: {e}")
 
     def _scan_path(self) -> None:
-        self.current_pos = 0
+        dir = os.listdir(self.path)
 
-        self.dir_entries = list(self._get_dir_entry(os.listdir(self.path)))
+        self.current_pos = 0
+        if self.selected and self.selected in dir:
+            self.current_pos = dir.index(self.selected)
+
+        self.dir_entries = list(self._get_dir_entry(dir))
 
         self._update_position()
 
-    def _change_path(self, path: str) -> None:
+    def _change_path(self, path: str, selected: Optional[str] = None) -> None:
         self.path = path
+        self.selected = selected
         self._scan_path()
         self.up_enabled = self.path != "/"
 
@@ -129,7 +136,7 @@ class Browser(ActionView):
         if up_action is not None:
             up_action.enabled = self.up_enabled
 
-        self.update_path(self.path)
+        self.update_path(self.path, selected)
         self._update_actions()
 
     def _select(self) -> None:
@@ -178,10 +185,10 @@ class Browser(ActionView):
 
         segments = self.path[1:-1].split("/")
         if len(segments) == 1:
-            self._change_path("/")
+            self._change_path("/", segments[-1])
         else:
-            segments.pop()
-            self._change_path("/" + "/".join(segments) + "/")
+            selected = segments.pop()
+            self._change_path("/" + "/".join(segments) + "/", selected)
 
     def _update_actions(self) -> None:
         self.actions = [
