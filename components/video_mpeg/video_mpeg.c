@@ -25,6 +25,7 @@ typedef struct {
     int frame_drop;
     int sample_rate;
     int frame_no;
+    int old_mode;
     // last decoded frame contained chroma samples
     // this allows us to take a grayscale fast-path
     unsigned had_chroma : 1;
@@ -151,6 +152,7 @@ static void mpg1_draw(st3m_media *media, Ctx *ctx) {
 
 static void mpg1_destroy(st3m_media *media) {
     mpg1_state *self = (void *)media;
+    st3m_gfx_set_mode(self->old_mode);
     plm_destroy(self->plm);
     free(self->frame_data);
     free(self);
@@ -163,10 +165,13 @@ st3m_media *st3m_media_load_mpg1(const char *path) {
     self->control.think = mpg1_think;
     self->control.destroy = mpg1_destroy;
 
+    self->old_mode = st3m_gfx_get_mode();
+    st3m_gfx_set_mode(16 | st3m_gfx_osd | st3m_gfx_EXPERIMENTAL_think_per_draw |
+                      st3m_gfx_2x);
     self->plm = plm_create_with_filename(path);
     self->color = 1;
     self->had_chroma = 0;
-    self->scale = 0.75;
+    self->scale = 1.0;
     self->audio = 1;
     self->video = 1;
     self->loop = 0;
