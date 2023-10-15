@@ -60,7 +60,24 @@ class Reader(ActionView):
             self.has_error = True
             self.is_loading = False
 
-        controls = not self.has_error and not self.is_media
+        self._update_actions()
+
+    def _update_actions(self):
+        controls = not self.has_error
+
+        if self.is_media:
+            self.actions = [
+                None,
+                Action(
+                    icon="\ue034" if media.is_playing() else "\ue037",
+                    label="Pause",
+                    enabled=controls,
+                ),
+                Action(icon="\ue8b6", label="Zoom", enabled=False),
+                Action(icon="\ue5c4", label="Back"),
+                Action(icon="\ue042", label="Rewind", enabled=controls),
+            ]
+            return
 
         self.actions = [
             None,
@@ -81,12 +98,23 @@ class Reader(ActionView):
         elif self.input.captouch.petals[4].whole.pressed:
             self.zoom_enabled = not self.zoom_enabled
 
+        if self.is_media:
+            if self.input.captouch.petals[2].whole.pressed:
+                if media.is_playing():
+                    media.pause()
+                else:
+                    media.play()
+                self._update_actions()
+            elif self.input.captouch.petals[8].whole.pressed:
+                media.seek(0)
+
         # TODO: Use "joystick-style" input for scrolling
-        self.scroll_x.update(self.input.captouch.petals[8].gesture, delta_ms)
-        self.scroll_y.update(self.input.captouch.petals[2].gesture, delta_ms)
-        x = self.scroll_x.position[0] * 0.2
-        y = self.scroll_y.position[0] * 0.2
-        self.viewport_offset = (x - 80, y - 80)
+        if not self.is_media:
+            self.scroll_x.update(self.input.captouch.petals[8].gesture, delta_ms)
+            self.scroll_y.update(self.input.captouch.petals[2].gesture, delta_ms)
+            x = self.scroll_x.position[0] * 0.2
+            y = self.scroll_y.position[0] * 0.2
+            self.viewport_offset = (x - 80, y - 80)
 
     def draw(self, ctx: Context) -> None:
         utils.fill_screen(ctx, theme.BACKGROUND)
