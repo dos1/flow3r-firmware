@@ -334,8 +334,6 @@ static void st3m_gfx_init_palette(st3m_gfx_mode mode) {
 
 st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode) {
     if ((mode == _st3m_gfx_mode) || (0 != (default_mode & st3m_gfx_lock))) {
-        st3m_gfx_init_palette(
-            mode);  // we say it is a no-op but reset the palette
         return (mode ? mode : default_mode);
     }
 
@@ -345,8 +343,6 @@ st3m_gfx_mode st3m_gfx_set_mode(st3m_gfx_mode mode) {
         mode = default_mode | st3m_gfx_low_latency;
     else if (mode == st3m_gfx_osd)
         mode = default_mode | st3m_gfx_osd;
-
-    st3m_gfx_init_palette(mode);
 
     _st3m_gfx_mode = (mode == default_mode) ? st3m_gfx_default : mode;
 
@@ -402,6 +398,12 @@ static void st3m_gfx_blit(st3m_gfx_drawlist *drawlist) {
     uint8_t *blit_src = drawlist->blit_src;
     int bits = _st3m_gfx_bpp(set_mode);
 
+    static st3m_gfx_mode prev_mode;
+
+    if (set_mode != prev_mode) {
+        st3m_gfx_init_palette(set_mode);
+    }
+
     xSemaphoreTake(st3m_fb_copy_lock, portMAX_DELAY);
 #if CONFIG_FLOW3R_CTX_FLAVOUR_FULL
     int scale = st3m_gfx_scale(set_mode);
@@ -428,6 +430,8 @@ static void st3m_gfx_blit(st3m_gfx_drawlist *drawlist) {
         flow3r_bsp_display_send_fb(blit_src, bits);
     }
     xSemaphoreGive(st3m_fb_copy_lock);
+
+    prev_mode = set_mode;
 }
 
 #if ST3M_GFX_BLIT_TASK
