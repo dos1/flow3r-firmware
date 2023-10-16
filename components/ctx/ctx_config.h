@@ -85,6 +85,7 @@
 #define CTX_ENABLE_GRAY4                1
 #define CTX_STB_IMAGE                   1
 #define STBI_ONLY_PNG
+#define STBI_ONLY_GIF
 #define STBI_ONLY_JPEG
 
 #else

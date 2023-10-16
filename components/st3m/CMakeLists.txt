@@ -45,6 +45,7 @@ idf_component_register(
         audio_mod
         audio_mp3
         video_mpeg
+        video_gif
         bl00mbox
 )
 

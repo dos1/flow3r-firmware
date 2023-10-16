@@ -132,6 +132,7 @@ void st3m_media_set(const char *key, float value) {
 
 st3m_media *st3m_media_load_mpg1(const char *path);
 st3m_media *st3m_media_load_mod(const char *path);
+st3m_media *st3m_media_load_gif(const char *path);
 st3m_media *st3m_media_load_mp3(const char *path);
 st3m_media *st3m_media_load_txt(const char *path);
 st3m_media *st3m_media_load_bin(const char *path);
@@ -172,7 +173,6 @@ static int file_get_contents(const char *path, uint8_t **contents,
 
 int st3m_media_load(const char *path, bool paused) {
     struct stat statbuf;
-#if 1
     if (!strncmp(path, "http://", 7)) {
         st3m_media_stop();
         media_item = st3m_media_load_mp3(path);
@@ -182,25 +182,20 @@ int st3m_media_load(const char *path, bool paused) {
     } else if (strstr(path, ".mp3") == strrchr(path, '.')) {
         st3m_media_stop();
         media_item = st3m_media_load_mp3(path);
-    } else
-#endif
-#if 1
-        if (strstr(path, ".mpg")) {
+    } else if (strstr(path, ".mpg")) {
         st3m_media_stop();
         media_item = st3m_media_load_mpg1(path);
-    } else
-#endif
-#if 1
-        if ((strstr(path, ".mod") == strrchr(path, '.'))) {
+    } else if (strstr(path, ".gif")) {
+        st3m_media_stop();
+        media_item = st3m_media_load_gif(path);
+    } else if ((strstr(path, ".mod") == strrchr(path, '.'))) {
         st3m_media_stop();
         media_item = st3m_media_load_mod(path);
-    } else
-#endif
-        if ((strstr(path, ".json") == strrchr(path, '.')) ||
-            (strstr(path, ".txt") == strrchr(path, '.')) ||
-            (strstr(path, "/README") == strrchr(path, '/')) ||
-            (strstr(path, ".toml") == strrchr(path, '.')) ||
-            (strstr(path, ".py") == strrchr(path, '.'))) {
+    } else if ((strstr(path, ".json") == strrchr(path, '.')) ||
+               (strstr(path, ".txt") == strrchr(path, '.')) ||
+               (strstr(path, "/README") == strrchr(path, '/')) ||
+               (strstr(path, ".toml") == strrchr(path, '.')) ||
+               (strstr(path, ".py") == strrchr(path, '.'))) {
         st3m_media_stop();
         media_item = st3m_media_load_txt(path);
     }

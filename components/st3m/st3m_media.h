@@ -96,5 +96,6 @@ float st3m_media_get(const char *key);
 // some keys are global and stored outside codecs, they can be queried
 // and set both by apps and codecs:
 //
-//    "zoom"        0.0 - 2.0  - how large part of the screen to take up
+//    "zoom"        0.0 - 1.0  - how large part of display video cover
+//    "cx" "cy"     -120 - 120 - where to put the center of video textures
 void st3m_media_set(const char *key, float value);
