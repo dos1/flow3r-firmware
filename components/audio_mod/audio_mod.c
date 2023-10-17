@@ -55,6 +55,11 @@ static void mod_think(st3m_media *media, float ms_elapsed) {
     mod_state *self = (void *)media;
     if (self->control.paused) return;
 
+    if (self->control.seek == 0) {
+        pocketmod_init(&self->pocketmod, self->data, self->size, 48000);
+        self->control.seek = -1;
+    }
+
     int samples_needed = (ms_elapsed / 1000.0) * 48000;
     if (samples_needed > 1000) samples_needed = 1000;
 
