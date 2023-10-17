@@ -175,6 +175,12 @@ static void gif_think(st3m_media *media, float ms_elapsed) {
     gif_state *gif = (gif_state *)media;
     if (st3m_media_is_playing()) gif->delay -= ms_elapsed * 10;
 
+    if (gif->control.seek == 0) {
+        gif_init(gif);
+        gif->delay = 0;
+        gif->control.seek = -1;
+    }
+
     if (gif->delay <= 0) {
         gif->delay = gif_load_frame(gif);
         if (gif->delay < 0) {
