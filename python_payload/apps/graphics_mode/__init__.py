@@ -236,9 +236,12 @@ class App(Application):
     def think(self, ins, delta_ms):
         super().think(ins, delta_ms)
         self.delta_ms += delta_ms
-        if self.input.buttons.app.right.pressed:
+        if (
+            self.input.buttons.app.right.pressed
+            or self.input.buttons.app.right.repeated
+        ):
             self.right_pressed = True
-        if self.input.buttons.app.left.pressed:
+        if self.input.buttons.app.left.pressed or self.input.buttons.app.left.repeated:
             self.left_pressed = True
         if self.input.buttons.app.middle.pressed:
             self.select_pressed = True
