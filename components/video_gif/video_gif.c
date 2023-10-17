@@ -173,7 +173,7 @@ static void gif_draw(st3m_media *media, Ctx *ctx) {
 
 static void gif_think(st3m_media *media, float ms_elapsed) {
     gif_state *gif = (gif_state *)media;
-    if (st3m_media_is_playing()) gif->delay -= ms_elapsed * 10;
+    if (st3m_media_is_playing()) gif->delay -= ms_elapsed;
 
     if (gif->control.seek == 0) {
         gif_init(gif);
