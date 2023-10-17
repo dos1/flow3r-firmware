@@ -99,11 +99,11 @@ static stbi_io_callbacks clbk = { read_cb, skip_cb, eof_cb };
 
 static void gif_stop(gif_state *gif);
 
-static int gif_init(gif_state *gif, const char *path) {
-    if (gif->path) {
+static int gif_init(gif_state *gif) {
+    if (gif->file) {
         gif_stop(gif);
     }
-    gif->file = fopen(path, "rb");
+    gif->file = fopen(gif->path, "rb");
     if (!gif->file) return -1;
     gif->width = -1;
     gif->height = -1;
@@ -114,13 +114,12 @@ static int gif_init(gif_state *gif, const char *path) {
     memset(&gif->s, 0, sizeof(gif->s));
     memset(&gif->g, 0, sizeof(gif->g));
     stbi__start_callbacks(&gif->s, &clbk, (void *)gif);
-    gif->path = strdup(path);
     return 0;
 }
 
 static int gif_load_frame(gif_state *gif) {
     int c;
-    if (!gif->path) return -1;
+    if (!gif->file) return -1;
 
     gif->pixels = stbi__gif_load_next(&gif->s, &gif->g, &c, 4, 0);
     if (gif->pixels == (uint8_t *)&gif->s) {
@@ -135,9 +134,7 @@ static int gif_load_frame(gif_state *gif) {
 }
 
 static void gif_stop(gif_state *gif) {
-    if (!gif->path) return;
-    free(gif->path);
-    gif->path = NULL;
+    if (!gif->file) return;
     fclose(gif->file);
     gif->file = NULL;
     if (gif->g.out) {
@@ -156,16 +153,6 @@ static void gif_stop(gif_state *gif) {
 
 static void gif_draw(st3m_media *media, Ctx *ctx) {
     gif_state *gif = (gif_state *)media;
-    char *path = strdup(gif->path);
-    if (gif->delay <= 0) {
-        gif->delay = gif_load_frame(gif);
-        if (gif->delay < 0) {
-            gif_init(gif, path);
-            gif->delay = gif_load_frame(gif);
-        } else if (gif->delay == 0)
-            gif->delay = 100;
-    }
-    free(path);
     if (!gif->pixels) return;
     ctx_save(ctx);
     ctx_rectangle(ctx, -120, -120, 240, 240);
@@ -187,11 +174,21 @@ static void gif_draw(st3m_media *media, Ctx *ctx) {
 static void gif_think(st3m_media *media, float ms_elapsed) {
     gif_state *gif = (gif_state *)media;
     if (st3m_media_is_playing()) gif->delay -= ms_elapsed * 10;
+
+    if (gif->delay <= 0) {
+        gif->delay = gif_load_frame(gif);
+        if (gif->delay < 0) {
+            gif_init(gif);
+            gif->delay = gif_load_frame(gif);
+        }
+        if (gif->delay == 0) gif->delay = 100;
+    }
 }
 
 static void gif_destroy(st3m_media *media) {
     gif_state *gif = (gif_state *)media;
     gif_stop(gif);
+    free(gif->path);
     free(media);
 }
 
@@ -204,8 +201,9 @@ st3m_media *st3m_media_load_gif(const char *path) {
     gif->control.destroy = gif_destroy;
     gif->control.has_video = true;
     gif->control.is_visual = true;
-    if (gif_init(gif, path) != 0) {
-        free(gif);
+    gif->path = strdup(path);
+    if (gif_init(gif) != 0) {
+        gif_destroy((st3m_media *)gif);
         return NULL;
     }
 
