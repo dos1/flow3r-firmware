@@ -52,6 +52,18 @@ class App(Application):
         media.load(self._filename)
         self._playing = True
 
+    def next_source(self):
+        self._stream_no += 1
+        if self._stream_no >= len(self._streams):
+            self._stream_no = len(self._streams) - 1
+        self.load_stream()
+
+    def previous_source(self):
+        self._stream_no -= 1
+        if self._stream_no < 0:
+            self._stream_no = 0
+        self.load_stream()
+
     def think(self, ins, delta_ms):
         super().think(ins, delta_ms)
         self._connecting = st3m.wifi.is_connecting()
@@ -60,18 +72,46 @@ class App(Application):
         if self._connected and not self._playing:
             self.load_stream()
 
-        if self.input.buttons.app.right.pressed or (
-            media.get_position() >= media.get_duration() and media.get_duration() > 0
-        ):
-            self._stream_no += 1
-            if self._stream_no >= len(self._streams):
-                self._stream_no = len(self._streams) - 1
-            self.load_stream()
+        if media.get_position() >= media.get_duration() and media.get_duration() > 0:
+            self.next_source()
+
+        if self.input.buttons.app.right.pressed:
+            self.right_down_time = 0
+        if self.input.buttons.app.right.released:
+            if self.right_down_time < 300:
+                self.next_source()
+        if self.input.buttons.app.right.down:
+            self.right_down_time += delta_ms
+            if self.right_down_time > 600:
+                dur = media.get_duration()
+                pos = media.get_position()
+                if dur > 1.0:
+                    if dur < 300:
+                        media.seek((pos / dur) + 0.1)
+                    else:
+                        media.seek((pos / dur) + 0.05)
+                else:
+                    media.seek(pos + 0.1)
+                self.right_down_time = 300
         if self.input.buttons.app.left.pressed:
-            self._stream_no -= 1
-            if self._stream_no < 0:
-                self._stream_no = 0
-            self.load_stream()
+            self.left_down_time = 0
+        if self.input.buttons.app.left.released:
+            if self.left_down_time < 300:
+                self.previous_source()
+        if self.input.buttons.app.left.down:
+            self.left_down_time += delta_ms
+            if self.left_down_time > 600:
+                dur = media.get_duration()
+                pos = media.get_position()
+                if dur > 1.0:
+                    if dur < 300:
+                        media.seek((pos / dur) - 0.1)
+                    else:
+                        media.seek((pos / dur) - 0.05)
+                else:
+                    media.seek(pos - 0.1)
+                self.left_down_time = 300
+
         if self.input.buttons.app.middle.pressed:
             if self._streaming and not self._connected:
                 st3m.wifi.run_wifi_settings(self.vm)
