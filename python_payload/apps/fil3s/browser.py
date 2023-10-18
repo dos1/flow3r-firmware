@@ -1,6 +1,7 @@
 import os
 import uos
 import stat
+import math
 from st3m.goose import Callable, Generator, Optional
 from st3m.input import InputState
 from ctx import Context
@@ -37,6 +38,8 @@ class Browser(ActionView):
         self._delete_held_for = 0.0
         self._delete_hold_time = 1.5
         self._delete_require_release = False
+
+        self._scroll_pos = 0.0
 
         self.path = path
         self.selected = selected
@@ -75,12 +78,17 @@ class Browser(ActionView):
         ctx.text(self.current_entry[1])
 
         ctx.font_size = 24
-        ctx.move_to(0, 20)
         ctx.font = "Camp Font 3"
+        xpos = 0.0
+        if (width := ctx.text_width(self.current_entry[0])) > 220:
+            xpos = math.sin(self._scroll_pos) * (width - 220) / 2
+        ctx.move_to(xpos, 20)
         ctx.text(self.current_entry[0])
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
+
+        self._scroll_pos += delta_ms / 1000
 
         # Handle delete petal being held down
         if ins.captouch.petals[0].pressed:
@@ -222,5 +230,6 @@ class Browser(ActionView):
             ]
             and self.select_enabled
         )
+        self._scroll_pos = math.pi / 2
 
         self._update_actions()
