@@ -31,10 +31,15 @@ static void st3m_media_task(void *_arg) {
         vTaskDelayUntil(&wake_time, 20 / portTICK_PERIOD_MS);
         if (media_item->think) {
             if (xSemaphoreTake(media_lock, portMAX_DELAY)) {
+                bool seeking = media_item->seek != -1;
                 ticks = xTaskGetTickCount();
                 media_item->think(media_item,
                                   (ticks - last_think) * portTICK_PERIOD_MS);
                 last_think = ticks;
+                if (seeking && media_item->seek == -1) {
+                    // don't count seeking time into delta
+                    last_think = xTaskGetTickCount();
+                }
                 xSemaphoreGive(media_lock);
             }
         }
