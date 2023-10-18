@@ -1,7 +1,7 @@
 with import ./pkgs.nix;
 
 pkgs.dockerTools.buildImage {
-  name = "registry.k0.hswaw.net/q3k/flow3r-build";
+  name = "registry.gitlab.com/flow3r-badge/flow3r-build";
   copyToRoot = pkgs.buildEnv {
     name = "image-root";
     paths = with pkgs; [
