@@ -92,6 +92,7 @@ float st3m_media_get_time(void) {
 
 void st3m_media_seek(float position) {
     if (!media_item) return;
+    if (position < 0.0) position = 0.0f;
     media_item->seek = position;
 }
 
