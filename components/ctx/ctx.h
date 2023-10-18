@@ -1,4 +1,4 @@
-/* ctx git commit: 5d36c3d4 */
+/* ctx git commit: 886adf2e */
 /* 
  * ctx.h is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36143,7 +36143,7 @@ const char* ctx_texture_init (Ctx           *ctx,
         return ctx->texture[i].eid;
       }
       if (ctx->texture[i].data == NULL 
-          ||   (ctx->texture_cache->frame - ctx->texture[i].frame >= 2))
+          ||   (ctx->texture_cache->frame - ctx->texture[i].frame >= 1))
         id = i;
     }
   } else
@@ -36151,8 +36151,12 @@ const char* ctx_texture_init (Ctx           *ctx,
     for (int i = 0; i <  CTX_MAX_TEXTURES; i++)
     {
       if (ctx->texture[i].data == NULL 
-          || (ctx->texture_cache->frame - ctx->texture[i].frame > 2))
+          || (ctx->texture_cache->frame - ctx->texture[i].frame > 1) ||
+          ctx->texture[i].eid[0]=='?')
+      {
         id = i;
+        break;
+      }
     }
   }
   //int bpp = ctx_pixel_format_bits_per_pixel (format);
@@ -53072,7 +53076,7 @@ void ctx_drop_eid (Ctx *ctx, const char *eid)
         ctx->texture[i].eid  &&
         !ctx_strcmp (ctx->texture[i].eid, eid))
     {
-      ctx->texture[i].eid[0]++;
+      ctx->texture[i].eid[0]='?';
     }
   }
 }
@@ -53283,7 +53287,7 @@ void
 ctx_texture_load (Ctx *ctx, const char *path, int *tw, int *th, char *reid)
 {
   const char *eid = path;
-  if (strstr (path, "svg"))return;
+  if (strstr (path, ".svg") == strrchr(path, '.'))return;
   char ascii[41]="";
   int eid_len = ctx_strlen (eid);
   if (eid_len > 50)
