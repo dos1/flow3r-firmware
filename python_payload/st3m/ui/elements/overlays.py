@@ -163,7 +163,7 @@ class Compositor(Responder):
             redraw = True
             self._redraw_pending -= 1
         if display_mode != self._display_mode:
-            self._redraw_pending = 2
+            self._redraw_pending = 4
         self._display_mode = display_mode
         if (display_mode & sys_display.osd) == 0:
             return
