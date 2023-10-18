@@ -64,10 +64,6 @@ static void mpg1_think(st3m_media *media, float ms_elapsed) {
         self->control.seek = -1;
     }
 
-    if (elapsed_time > 1.0 / 25.0) {
-        elapsed_time = 1.0 / 25.0;
-    }
-
     if (self->control.paused) elapsed_time = 0;
 
     // Seek or advance decode
