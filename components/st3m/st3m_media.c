@@ -11,6 +11,7 @@
 #include "esp_task.h"
 #include "esp_timer.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "freertos/task.h"
 #define ST3M_PCM_BUF_SIZE (16384)
 
@@ -19,19 +20,32 @@ static st3m_media *media_item = NULL;
 
 static TaskHandle_t media_task;
 static bool media_pending_destroy = false;
+static SemaphoreHandle_t media_lock;
 
 static void st3m_media_task(void *_arg) {
     (void)_arg;
-    TickType_t waketime = xTaskGetTickCount();
+    TickType_t wake_time = xTaskGetTickCount();
+    TickType_t last_think = wake_time;
     while (!media_pending_destroy) {
-        TickType_t lastwake = waketime;
-        vTaskDelayUntil(&waketime, 20 / portTICK_PERIOD_MS);
-        if (media_item->think)
-            media_item->think(media_item,
-                              (waketime - lastwake) * portTICK_PERIOD_MS);
+        TickType_t ticks;
+        vTaskDelayUntil(&wake_time, 20 / portTICK_PERIOD_MS);
+        if (media_item->think) {
+            if (xSemaphoreTake(media_lock, portMAX_DELAY)) {
+                ticks = xTaskGetTickCount();
+                media_item->think(media_item,
+                                  (ticks - last_think) * portTICK_PERIOD_MS);
+                last_think = ticks;
+                xSemaphoreGive(media_lock);
+            }
+        }
+        // don't starve lower priority tasks if think takes a long time
+        if ((xTaskGetTickCount() - wake_time) * portTICK_PERIOD_MS > 10) {
+            vTaskDelay(10 / portTICK_PERIOD_MS);
+        }
     }
     if (media_item->destroy) media_item->destroy(media_item);
     media_item = NULL;
+    vSemaphoreDelete(media_lock);
     media_pending_destroy = false;
     vTaskDelete(NULL);
 }
@@ -106,7 +120,12 @@ void st3m_media_set_volume(float volume) { st3m_pcm_set_volume(volume); }
 float st3m_media_get_volume(void) { return st3m_pcm_get_volume(); }
 
 void st3m_media_draw(Ctx *ctx) {
-    if (media_item && media_item->draw) media_item->draw(media_item, ctx);
+    if (media_item && media_item->draw) {
+        if (xSemaphoreTake(media_lock, portMAX_DELAY)) {
+            media_item->draw(media_item, ctx);
+            xSemaphoreGive(media_lock);
+        }
+    }
 }
 
 void st3m_media_think(float ms) { (void)ms; }
@@ -222,6 +241,8 @@ bool st3m_media_load(const char *path, bool paused) {
 
     media_item->volume = 4096;
     media_item->paused = paused;
+
+    media_lock = xSemaphoreCreateMutex();
 
     BaseType_t res =
         xTaskCreatePinnedToCore(st3m_media_task, "media", 16384, NULL,
