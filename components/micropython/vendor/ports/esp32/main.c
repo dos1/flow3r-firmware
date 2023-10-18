@@ -63,7 +63,7 @@
 #endif
 
 // MicroPython runs as a task under FreeRTOS
-#define MP_TASK_PRIORITY        (ESP_TASK_PRIO_MIN + 2)
+#define MP_TASK_PRIORITY        (ESP_TASK_PRIO_MIN + 1)
 #define MP_TASK_STACK_SIZE      (16 * 1024)
 
 // Set the margin for detecting stack overflow, depending on the CPU architecture.
