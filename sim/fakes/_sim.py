@@ -1,3 +1,4 @@
+import ctx
 import math
 import os
 import time
@@ -250,6 +251,56 @@ class ButtonsInput(Input):
     COLOR_IDLE = (0x20, 0x20, 0x20, 0xFF)
 
 
+class GravityInput(Input):
+    POSITIONS = [
+        (56, 120 - 32),
+        (24, 120),
+        (56, 120 + 32),
+        (88, 120),
+    ]
+    KEYS = [
+        pygame.K_w,
+        pygame.K_a,
+        pygame.K_s,
+        pygame.K_d,
+    ]
+    ACC = [
+        (-1, 0),
+        (0, -1),
+        (1, 0),
+        (0, 1),
+    ]
+    MARKER_SIZE = 40
+    COLOR_HELD = (0x80, 0x80, 0x80, 0xFF)
+    COLOR_HOVER = (0x40, 0x40, 0x40, 0xFF)
+    COLOR_IDLE = (0x20, 0x20, 0x20, 0xFF)
+    TILT_POS = [56, 120]
+    TILT_SIZE = 10
+    TILT_COLOR = (0x40, 0x40, 0xFF, 0xFF)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.acc = (0, 0)
+        self._old_pos = self.TILT_POS
+
+    def process_event(self, ev):
+        """Each WASD key press adds a bit of acceleration in the given direction."""
+        res = super().process_event(ev)
+        # self.acc = (0, 0)
+        if not res:
+            return res
+        if self._mouse_held is not None:
+            self.acc = self.ACC[self._mouse_held]
+
+        return True
+
+    def render(self, surface, acc):
+        pygame.draw.circle(surface, (0, 0, 0, 0xFF), self._old_pos, self.TILT_SIZE)
+        super().render(surface)
+        self._old_pos = (self.TILT_POS[0] + acc[1] * 2, self.TILT_POS[1] + acc[0] * 2)
+        pygame.draw.circle(surface, self.TILT_COLOR, self._old_pos, self.TILT_SIZE // 2)
+
+
 class Simulation:
     """
     Simulation implements the state and logic of the on-host pygame-based badge
@@ -309,6 +360,8 @@ class Simulation:
         self.led_state = [(0, 0, 0) for _ in self.LED_POSITIONS]
         self.petals = PetalsInput()
         self.buttons = ButtonsInput()
+        self.grav = GravityInput()
+        self.acc = [0, 0]
         # Timestamp of last GUI render. Used by the lazy render GUI
         # functionality.
         self.last_gui_render = None
@@ -358,10 +411,15 @@ class Simulation:
                 self._petal_surface_dirty = True
             if self.buttons.process_event(ev):
                 self._petal_surface_dirty = True
+            if self.grav.process_event(ev):
+                self._petal_surface_dirty = True
+                self.acc[0] += self.grav.acc[0]
+                self.acc[1] += self.grav.acc[1]
 
     def _render_petal_markers(self, surface):
         self.petals.render(surface)
         self.buttons.render(surface)
+        self.grav.render(surface, self.acc)
 
     def _render_leds(self, surface):
         for pos, state in zip(self.LED_POSITIONS, self.led_state):
@@ -464,9 +522,6 @@ class Simulation:
 
 
 _sim = Simulation()
-
-
-import ctx
 
 
 class FramebufferManager:

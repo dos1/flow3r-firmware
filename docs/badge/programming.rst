@@ -731,9 +731,9 @@ The flow3r badge firmware repository comes with a Python-based simulator which
 allows you to run the Python part of :ref:`st3m` on your local computer, using
 Python, Pygame and wasmer.
 
-Currently the simulator supports the display, LEDs, the buttons and some static
-input values from the accelerometer, gyroscope, temperature sensor and pressure
-sensor.
+Currently the simulator supports the display, LEDs, the buttons, accelerometer
+(in 2D) and some static input values from the gyroscope, temperature sensor and
+pressure sensor.
 
 It does **not** support any audio API, and in fact currently doesn't even stub
 out the relevant API methods, so it will crash when attempting to run any Music
@@ -782,4 +782,9 @@ to ``sim/config.py`` and adjusting it to personal preference.
 The simulators apps live in ``python_payload/apps`` copy you app folder in there
 and it will appear in the simulators menu system.
 
-*TODO: make simulator directly run a bundle on startup when requested*
+If you want to start an app directly, simply give its name (the ``[app] -> name`` in
+``flow3r.toml``) as an argument:
+
+::
+
+    $ venv/bin/python sim/run.py Worms

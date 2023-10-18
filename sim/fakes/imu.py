@@ -1,11 +1,13 @@
 from typing import Tuple
 
+import _sim
+
 
 def acc_read() -> Tuple[float, float, float]:
     """
     Returns current x, y, z accelerations in m/s**2.
     """
-    return (1.0, 2.0, 3.0)
+    return (_sim._sim.acc[0], _sim._sim.acc[1], 3.0)
 
 
 def gyro_read() -> Tuple[float, float, float]:
