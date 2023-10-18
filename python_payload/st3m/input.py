@@ -405,8 +405,9 @@ class Touchable:
         self._pressed = petal.pressed
 
         if not self._pressed:
-            if not self._prev_pressed:
+            if not self._prev_pressed or self._start is None:
                 self._state = self.UP
+                self._start = None
             else:
                 self._state = self.ENDED
             return
