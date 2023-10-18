@@ -1,0 +1,25 @@
+From 69047951dbbbef4930414eecd167ff394e1a4cc0 Mon Sep 17 00:00:00 2001
+From: ave <ave@ave.zone>
+Date: Tue, 19 Sep 2023 12:32:46 +0200
+Subject: [PATCH] disable TRIM for now
+
+---
+ components/fatfs/src/ffconf.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/components/fatfs/src/ffconf.h b/components/fatfs/src/ffconf.h
+index a735bd6f94be..993e5c62b619 100644
+--- a/components/fatfs/src/ffconf.h
++++ b/components/fatfs/src/ffconf.h
+@@ -233,7 +233,7 @@
+ /  f_fdisk function. 0x100000000 max. This option has no effect when FF_LBA64 == 0. */
+ 
+ 
+-#define FF_USE_TRIM		1
++#define FF_USE_TRIM		0
+ /* This option switches support for ATA-TRIM. (0:Disable or 1:Enable)
+ /  To enable Trim function, also CTRL_TRIM command should be implemented to the
+ /  disk_ioctl() function. */
+-- 
+2.41.0
+

@@ -175,6 +175,8 @@ stdenv.mkDerivation rec {
   patches = [
     ./rack-off-me-nix-mate.patch
     ../../../third_party/b03c8912c73fa59061d97a2f5fd5acddcc3fa356.patch
+    ../../../third_party/b6aa59f1626ef6b438eb15edf2391195a519cbfe.patch
+    ../../../third_party/69047951dbbbef4930414eecd167ff394e1a4cc0.patch
   ];
 
   installPhase = ''
