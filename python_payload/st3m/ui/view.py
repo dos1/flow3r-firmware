@@ -66,11 +66,13 @@ class BaseView(View):
         self.vm: Optional["ViewManager"] = None
 
     def on_enter(self, vm: Optional["ViewManager"]) -> None:
-        self.input._ignore_pressed()
+        if self.input:
+            self.input._ignore_pressed()
         self.vm = vm
 
     def think(self, ins: InputState, delta_ms: int) -> None:
-        self.input.think(ins, delta_ms)
+        if self.input:
+            self.input.think(ins, delta_ms)
 
     def is_active(self) -> bool:
         if not self.vm:
