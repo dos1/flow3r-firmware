@@ -42,7 +42,7 @@ class ShoegazeApp(Application):
         self._spinny = -0.5
         self._gaze_counter = 0
         self._rand_counter = 0
-        self._rand_limit = 16
+        self._rand_limit = 512
         self._rand_rot = 0.0
         self.delay_on = True
         self.organ_on = False
@@ -160,12 +160,6 @@ class ShoegazeApp(Application):
 
     def draw(self, ctx: Context) -> None:
         ctx.text_align = ctx.CENTER
-        self._rand_counter += 1
-        if self._rand_counter > self._rand_limit:
-            self._rand_counter = 0
-            self._rand_rot = 0.01 * float(random.getrandbits(3))
-        if self._rand_counter == 1:
-            self._rand_limit = 2 + random.getrandbits(3)
 
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
         ctx.font = ctx.get_font_name(5)
@@ -219,6 +213,12 @@ class ShoegazeApp(Application):
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
+
+        self._rand_counter += delta_ms
+        if self._rand_counter > self._rand_limit:
+            self._rand_counter = 0
+            self._rand_rot = 0.01 * float(random.getrandbits(3))
+            self._rand_limit = (4 + random.getrandbits(3)) * 66.6
 
         y = ins.imu.acc[0]
         x = ins.imu.acc[1]
