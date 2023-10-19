@@ -100,7 +100,7 @@ class GayDrums(Application):
                 raise  # ignore file not found
 
     def _save_settings(self):
-        default_path = self._app_ctx.bundle_path + "/gay_drums-default.json"
+        default_path = self.app_ctx.bundle_path + "/gay_drums-default.json"
         settings_path = "/flash/gay_drums.json"
         settings = self._try_load_settings(default_path)
         assert settings is not None, "failed to load default settings"
@@ -124,7 +124,7 @@ class GayDrums(Application):
             self._file_settings = settings
 
     def _load_settings(self):
-        default_path = self._app_ctx.bundle_path + "/gay_drums-default.json"
+        default_path = self.app_ctx.bundle_path + "/gay_drums-default.json"
         settings_path = "/flash/gay_drums.json"
 
         settings = self._try_load_settings(default_path)

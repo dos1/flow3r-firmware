@@ -82,7 +82,7 @@ class ScalarApp(Application):
         self._update_leds()
 
     def _load_settings(self) -> None:
-        default_path = self._app_ctx.bundle_path + "/scalar-default.json"
+        default_path = self.app_ctx.bundle_path + "/scalar-default.json"
         settings_path = "/flash/scalar.json"
 
         settings = self._try_load_settings(default_path)

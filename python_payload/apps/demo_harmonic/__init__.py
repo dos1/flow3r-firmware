@@ -288,7 +288,7 @@ class HarmonicApp(Application):
                 raise  # ignore file not found
 
     def _save_settings(self):
-        default_path = self._app_ctx.bundle_path + "/harmonic_demo-default.json"
+        default_path = self.app_ctx.bundle_path + "/harmonic_demo-default.json"
         settings_path = "/flash/harmonic_demo.json"
         settings = self._try_load_settings(default_path)
         assert settings is not None, "failed to load default settings"
@@ -322,7 +322,7 @@ class HarmonicApp(Application):
             self._file_settings = settings
 
     def _load_settings(self):
-        default_path = self._app_ctx.bundle_path + "/harmonic_demo-default.json"
+        default_path = self.app_ctx.bundle_path + "/harmonic_demo-default.json"
         settings_path = "/flash/harmonic_demo.json"
 
         settings = self._try_load_settings(default_path)

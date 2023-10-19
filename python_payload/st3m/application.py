@@ -61,7 +61,7 @@ def setup_for_app(app_ctx: Optional[ApplicationContext]) -> None:
 
 class Application(BaseView):
     def __init__(self, app_ctx: ApplicationContext) -> None:
-        self._app_ctx = app_ctx
+        self.app_ctx = self._app_ctx = app_ctx
         super().__init__()
 
 

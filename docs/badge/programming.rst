@@ -686,7 +686,7 @@ it should pick up your new application.
 Handling assets
 ^^^^^^^^^^^^^^^
 
-Using `Application` also gives you access to the `ApplicationContext` as ``self._app_ctx``,
+Using `Application` also gives you access to the `ApplicationContext` as ``self.app_ctx``,
 which for example gives you a way to find out the base path of your app in ``app_ctx.bundle_path``
 or its bundle metadata in ``app_ctx.bundle_metadata``. It's very important not to hardcode
 paths to your assets and use `bundle_path` instead, because applications can be installed
@@ -705,7 +705,7 @@ could look like this:
     class MyDemo(Application):
         def draw(self, ctx: Context) -> None:
             # Draw a image file
-            ctx.image(f"{self._app_ctx.bundle_path}/image.png", -120, -120, 240, 240)
+            ctx.image(f"{self.app_ctx.bundle_path}/image.png", -120, -120, 240, 240)
 
     if __name__ == '__main__':
         # Continue to make runnable via mpremote run.
