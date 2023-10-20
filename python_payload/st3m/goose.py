@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
     from typing import (
         List,
+        Set,
         Optional,
         Tuple,
         Dict,
@@ -44,6 +45,7 @@ else:
     try:
         from typing import (
             List,
+            Set,
             Optional,
             Tuple,
             Dict,
@@ -58,6 +60,7 @@ else:
     except ImportError:
         # We're in Micropython.
         List = None
+        Set = None
         Optional = None
         Tuple = None
         Dict = None
@@ -77,6 +80,7 @@ __all__ = [
     "ABCBase",
     "abstractmethod",
     "List",
+    "Set",
     "Optional",
     "Enum",
     "Tuple",
