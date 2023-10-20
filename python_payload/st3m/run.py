@@ -1,5 +1,5 @@
 from st3m.reactor import Reactor, Responder
-from st3m.goose import List, Optional
+from st3m.goose import List, Set, Optional
 from st3m.ui.menu import (
     MenuItem,
     MenuItemBack,
@@ -93,6 +93,13 @@ class ApplicationMenu(SimpleMenu):
         # doing stuff during the transition
         self._restore_sys_defaults()
         leds.update()
+
+
+def _get_bundle_menu_kinds(mgr: BundleManager) -> Set[str]:
+    kinds: Set[str] = set()
+    for bundle in mgr.bundles.values():
+        kinds.update(bundle.menu_kinds())
+    return kinds
 
 
 def _get_bundle_menu_entries(mgr: BundleManager, kind: str) -> List[MenuItem]:
@@ -244,9 +251,16 @@ def run_main() -> None:
             MenuItemAction("Reboot", machine.reset),
         ],
     )
+
+    app_kinds = _get_bundle_menu_kinds(bundles)
+    menu_categories = ["Badge", "Music", "Media", "Apps", "Games"]
+    for kind in app_kinds:
+        if kind not in ["Hidden", "System"] and kind not in menu_categories:
+            menu_categories.append(kind)
+
     categories = [
         MenuItemForeground(kind, ApplicationMenu([MenuItemBack()] + entries))
-        for kind in ["Badge", "Music", "Media", "Apps", "Games"]
+        for kind in menu_categories
         if (entries := _get_bundle_menu_entries(bundles, kind))
     ]
     categories.append(MenuItemForeground("System", menu_system))
