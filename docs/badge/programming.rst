@@ -654,7 +654,7 @@ Together with the Python code this file forms a so called bundle
 
     [app]
     name = "My Demo"
-    menu = "Apps"
+    category = "Apps"
 
     [entry]
     class = "MyDemo"

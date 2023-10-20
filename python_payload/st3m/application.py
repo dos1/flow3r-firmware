@@ -99,7 +99,7 @@ class BundleMetadata:
        name = "Name of the application"
        # One of "Apps", "Badge", "Music", "Games", "Media". Picks which menu
        # the bundle's class will be loadable from.
-       menu = "Apps"
+       category = "Apps"
 
        [entry]
        # Required for app to actually load. Defines the name of the class that
@@ -144,13 +144,12 @@ class BundleMetadata:
         if "name" not in app or type(app["name"]) != str:
             raise BundleMetadataBroken("missing app.name key")
         self.name = app["name"]
-        if "menu" not in app or type(app["menu"]) != str:
-            raise BundleMetadataBroken("missing app.menu key")
-        self.menu = app["menu"]
-        if self.menu not in ["Apps", "Music", "Badge", "Games", "Media", "Hidden"]:
-            raise BundleMetadataBroken(
-                "app.menu must be either Apps, Music, Badge, Games or Media"
-            )
+        if "category" not in app or type(app["category"]) != str:
+            if "menu" not in app or type(app["menu"]) != str:
+                raise BundleMetadataBroken("missing app.category key")
+            self.menu = app["menu"]
+        else:
+            self.menu = app["category"]
 
         version = 0
         if t.get("metadata") is not None:
@@ -216,11 +215,15 @@ class BundleMetadata:
 
         raise BundleMetadataBroken("no valid entry method specified")
 
+    def menu_kinds(self) -> List[str]:
+        """
+        Returns a list of menu kinds this bundle places its entries in.
+        """
+        return [self.menu]
+
     def menu_entries(self, kind: str) -> List["MenuItemAppLaunch"]:
         """
         Returns MenuItemAppLauch entries for this bundle for a given menu kind.
-
-        Kind is one of 'Apps', 'Badge', 'Music', 'Games', 'Media'.
         """
         if self.menu != kind:
             return []
