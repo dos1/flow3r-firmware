@@ -28,8 +28,8 @@ class Power:
 
         self._adc = machine.ADC(self._adc_pin, atten=machine.ADC.ATTN_11DB)
         self._battery_voltage = self._battery_voltage_sample()
-        self._prev_battery_percentages = [1, 1, 1]
-        self._battery_percentage = 1
+        self._prev_battery_percentages = [-1, -1, -1]
+        self._battery_percentage = -1
         # LUT created from Joulescope measurement of "official" 2Ah Battery at 650mW discharge at 26°C and decimated from ~42k samples
         self._batLUT = [
             (99, 4.114),
@@ -138,7 +138,7 @@ class Power:
 
         # speeding up the process to get an intial settled value because recursion is hard
         for i in range(5):
-            self._approximate_battery_percentage()
+            self._battery_percentage = self._approximate_battery_percentage()
         self._ts = time.ticks_ms()
 
     def _battery_voltage_sample(self) -> float:
@@ -206,6 +206,9 @@ class Power:
         # log.debug("percentage: " + str(percentage) + " %")
         # log.debug("prev: " + str(self._prev_battery_percentages) + " %")
         percent_list = self._prev_battery_percentages
+
+        if -1 in percent_list:
+            return percentage
 
         # avoid division by zero in weird edge cases
         listsum = sum(percent_list)
