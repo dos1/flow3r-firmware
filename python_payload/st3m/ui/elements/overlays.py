@@ -560,7 +560,7 @@ class BatteryIcon(Icon):
 
     def __init__(self) -> None:
         super().__init__()
-        self._percent = 100.0
+        self._percent = 100
 
     def visible(self) -> bool:
         return power.has_battery
