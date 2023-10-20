@@ -18,10 +18,10 @@ class Power:
         # with no battery will be pulled down from the voltage divider
         # current too low with 1M for ADC so need to check via GPIO
         bat_read = 0
-        for i in range(5):
+        for i in range(10):
             time.sleep(0.002)
             bat_read += self._adc_pin.value()
-        if bat_read > 4:
+        if bat_read > 9:
             self._has_battery = True
         else:
             self._has_battery = False
