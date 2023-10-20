@@ -1,6 +1,6 @@
 [app]
 name = "Worms"
-menu = "Apps"
+category = "Apps"
 
 [entry]
 class = "AppWorms"

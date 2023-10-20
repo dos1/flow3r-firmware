@@ -1,6 +1,6 @@
 [app]
 name = "Captouch Demo"
-menu = "Apps"
+category = "Apps"
 
 [entry]
 class = "App"

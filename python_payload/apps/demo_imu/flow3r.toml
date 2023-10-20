@@ -1,6 +1,6 @@
 [app]
 name = "IMU Demo"
-menu = "Apps"
+category = "Apps"
 
 [entry]
 class = "IMUDemo"

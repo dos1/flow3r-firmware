@@ -1,6 +1,6 @@
 [app]
 name = "chord organ"
-menu = "Music"
+category = "Music"
 
 [entry]
 class = "HarmonicApp"

@@ -1,6 +1,6 @@
 [app]
 name = "Nick"
-menu = "Badge"
+category = "Badge"
 
 [entry]
 class = "NickApp"

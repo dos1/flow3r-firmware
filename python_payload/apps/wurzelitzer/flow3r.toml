@@ -1,6 +1,6 @@
 [app]
 name = "Wurzelitzer"
-menu = "Media"
+category = "Media"
 wifi_preference = true
 
 [metadata]

@@ -1,6 +1,6 @@
 [app]
 name = "Check for Updates"
-menu = "Hidden"
+category = "Hidden"
 wifi_preference = true
 
 [entry]

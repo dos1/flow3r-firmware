@@ -1,6 +1,6 @@
 [app]
 name = "Clouds"
-menu = "Badge"
+category = "Badge"
 
 [metadata]
 author = "Flow3r Badge Authors"

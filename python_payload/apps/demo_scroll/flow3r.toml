@@ -1,6 +1,6 @@
 [app]
 name = "Scroll Demo"
-menu = "Apps"
+category = "Apps"
 
 [entry]
 class = "ScrollDemo"

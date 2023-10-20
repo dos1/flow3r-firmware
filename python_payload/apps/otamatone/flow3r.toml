@@ -1,6 +1,6 @@
 [app]
 name = "Otamatone"
-menu = "Music"
+category = "Music"
 
 [entry]
 class = "Otamatone"

@@ -1,6 +1,6 @@
 [app]
 name = "Files"
-menu = "Apps"
+category = "Apps"
 
 [entry]
 class = "Fil3sApp"

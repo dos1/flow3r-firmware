@@ -1,6 +1,6 @@
 [app]
 name = "Graphics Mode"
-menu = "Hidden"
+category = "Hidden"
 
 [metadata]
 author = "Flow3r Badge Authors"

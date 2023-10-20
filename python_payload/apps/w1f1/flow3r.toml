@@ -1,6 +1,6 @@
 [app]
 name = "WiFi"
-menu = "Hidden"
+category = "Hidden"
 
 [entry]
 class = "WifiApp"

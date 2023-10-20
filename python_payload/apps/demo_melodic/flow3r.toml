@@ -1,6 +1,6 @@
 [app]
 name = "melodic demo"
-menu = "Music"
+category = "Music"
 
 [entry]
 class = "MelodicApp"

@@ -1,6 +1,6 @@
 [app]
 name = "Audio Passthrough"
-menu = "Media"
+category = "Media"
 
 [entry]
 class = "AudioPassthrough"
