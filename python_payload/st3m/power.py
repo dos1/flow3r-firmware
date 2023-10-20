@@ -32,6 +32,7 @@ class Power:
         self._battery_percentage = -1
         # LUT created from Joulescope measurement of "official" 2Ah Battery at 650mW discharge at 26°C and decimated from ~42k samples
         self._batLUT = [
+            (100, 4.120),
             (99, 4.114),
             (98, 4.109),
             (97, 4.091),
@@ -192,9 +193,6 @@ class Power:
         voltage = voltage_readings[2]
 
         # print(voltage)
-
-        if voltage > 4.120:
-            percentage = 100
 
         for i in range(len(self._batLUT)):
             if voltage >= self._batLUT[i][1]:
