@@ -15,9 +15,16 @@ class App(Application):
         self.scroll_pos = 0.0
         self.scroll = CapScrollController()
         self.content = "fnord"
-        self.font_size = 17
+        self.font_size = 12
+        self.line_numbers = True
+        self.wrap_word = True
+        self.bg_dirty = True
         # self.load_path("/flash/sys/apps/text/__init__.py")
         # self.load_path("/flash/sys/st3m/run.py")
+
+        # if app_ctx.arguments:
+        #  self.load_path(app_ctx.arguments[0])
+        # else:
         self.load_path("/flash/sys/apps/text/LGPL")
 
     def on_enter(self, vm):
@@ -32,24 +39,53 @@ class App(Application):
                 self.lines.append(self.curline)
             self.curline = ""
             return
-        for b in self.contents[self.layout_i]:
-            if len(self.curline) > self.cols:
-                self.line_no.append("")
-                self.lines.append(self.curline)
-                self.curline = b
-            elif b == "\n":
-                self.lines.append(self.curline)
-                self.line += 1
-                self.line_no.append(str(self.line))
-                self.curline = ""
-            else:
-                self.curline += b
+
+        if self.wrap_word:
+            for b in self.contents[self.layout_i]:
+                if b == " ":
+                    if len(self.curline + " " + self.curword) > self.cols:
+                        self.lines.append(self.curline)
+                        self.curline = self.curword
+                        self.line_no.append("")
+                    else:
+                        self.curline += " " + self.curword
+                    self.curword = ""
+                elif b == "\n":
+                    if len(self.curline + " " + self.curword) > self.cols:
+                        self.lines.append(self.curline)
+                        self.line_no.append("")
+                        self.lines.append(self.curword)
+                    else:
+                        self.lines.append(self.curline + " " + self.curword)
+                    self.curword = ""
+                    self.curline = ""
+                    self.line += 1
+                    self.line_no.append(str(self.line))
+                else:
+                    self.curword += b
+        else:
+            for b in self.contents[self.layout_i]:
+                if len(self.curline) > self.cols:
+                    self.line_no.append("")
+                    self.lines.append(self.curline)
+                    self.curline = b
+                elif b == "\n":
+                    self.lines.append(self.curline)
+                    self.line += 1
+                    self.line_no.append(str(self.line))
+                    self.curline = ""
+                else:
+                    self.curline += b
         self.layout_i += 1
 
     def relayout(self):
-        self.x0 = self.font_size * 1.9
+        if self.line_numbers:
+            self.x0 = self.font_size * 1.9
+        else:
+            self.x0 = self.font_size * 1
         self.cols = int((240 - self.x0) / self.font_size * 1.9)
 
+        self.bg_dirty = True
         self.viewport_lines = int(240 / self.font_size + 8)
         self.viewport_height = self.font_size * self.viewport_lines
         self.scroll.position = (0.0, 0.0)
@@ -59,6 +95,7 @@ class App(Application):
             self.drawn.append(-1)
         self.layout_i = 0
         self.curline = ""
+        self.curword = ""
         self.line = 1
         sys_display.fbconfig(240, self.viewport_height, 0, 0)
         self.lines = []
@@ -108,18 +145,21 @@ class App(Application):
                 ctx.gray(1)
 
                 ctx.move_to(self.x0, y + self.font_size * 0.8).text(self.lines[no])
-                ctx.save()
-                ctx.text_align = ctx.RIGHT
-                ctx.gray(0.5)
-                ctx.move_to(self.x0 - 4, y + self.font_size * 0.8).text(
-                    self.line_no[no]
-                )
-                ctx.restore()
+                if self.line_numbers:
+                    ctx.save()
+                    ctx.text_align = ctx.RIGHT
+                    ctx.gray(0.5)
+                    ctx.move_to(self.x0 - 4, y + self.font_size * 0.8).text(
+                        self.line_no[no]
+                    )
+                    ctx.restore()
 
     def draw(self, ctx):
         if self.vm.transitioning:
-            ctx.gray(0).rectangle(-120, -120, 240, 480).fill()
             return
+        if self.bg_dirty:
+            ctx.gray(0).rectangle(-120, -120, 240, 480).fill()
+            self.bg_dirty = False
         _, self.scroll_pos = self.scroll.position
         self.scroll_pos = (self.scroll_pos * -2) - 100
 
@@ -134,7 +174,7 @@ class App(Application):
         )
         self.layout_iter()
 
-        first_line = int((self.offset + self.scan) / self.font_size)
+        first_line = int((self.offset + self.scan) / self.font_size) - 1
         for i in range(240 / self.font_size + 2):
             self.drawline(ctx, first_line + i)
 
