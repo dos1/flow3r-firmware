@@ -123,31 +123,33 @@ class SpaceScreen(Screen):
             return "{:.2f}MiB".format(byte_count / MiB)
 
     def draw(self, ctx: Context) -> None:
+        ctx.font = "Camp Font 2"
         ctx.text_align = ctx.MIDDLE
-        ctx.font = "Arimo Regular"
-        ctx.font_size = 25
+        ctx.font_size = 30
 
         # Flash
-        ctx.move_to(0, -45)
+        ctx.move_to(0, -36)
         ctx.text("Flash")
 
         self._draw_percentage_bar(
             ctx,
             -65,
-            -40,
+            -29,
             130,
-            10,
+            6,
             (0, 0, 0),
             (1, 1, 1),
             self.flash_used_percentage,
         )
+        ctx.font = "Camp Font 3"
         ctx.font_size = 15
-        ctx.move_to(0, -15)
+        ctx.move_to(0, -8)
         ctx.text(self.flash_text)
 
         # SD
-        ctx.font_size = 25
-        ctx.move_to(0, 25)
+        ctx.font_size = 30
+        ctx.move_to(0, 21)
+        ctx.font = "Camp Font 2"
         if self.sd_plugged:
             ctx.text("SD Card")
         else:
@@ -156,15 +158,16 @@ class SpaceScreen(Screen):
         self._draw_percentage_bar(
             ctx,
             -65,
-            30,
+            28,
             130,
-            10,
+            6,
             (0, 0, 0),
             (1, 1, 1),
             self.sd_used_percentage,
         )
+        ctx.font = "Camp Font 3"
         ctx.font_size = 15
-        ctx.move_to(0, 55)
+        ctx.move_to(0, 49)
         ctx.text(self.sd_text)
 
 
@@ -300,13 +303,13 @@ class About(BaseView):
 
             # Draw arrows.
             if self._can_left(ix):
-                ctx.move_to(-105, 20)
+                ctx.move_to(-105, 15)
                 ctx.font = "Material Icons"
                 ctx.font_size = 30
                 ctx.text_align = ctx.MIDDLE
                 ctx.text("\ue5c4")
             if self._can_right(ix):
-                ctx.move_to(105, 20)
+                ctx.move_to(105, 15)
                 ctx.font = "Material Icons"
                 ctx.font_size = 30
                 ctx.text_align = ctx.MIDDLE
