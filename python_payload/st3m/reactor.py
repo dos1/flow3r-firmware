@@ -147,20 +147,19 @@ class Reactor:
         self._top.think(hr, delta)
 
         # Draw!
-        if self._ctx is None and sys_display.pipe_available():
-            self._ctx = sys_display.ctx(0)
-            if self._ctx is not None:
+        if sys_display.pipe_available() and not sys_display.pipe_full():
+            ctx = sys_display.ctx(0)
+            if ctx is not None:
                 if self._last_ctx_get is not None:
                     diff = start - self._last_ctx_get
                     self.stats.record_render_time(diff)
                 self._last_ctx_get = start
 
-                self._ctx.save()
-                self._top.draw(self._ctx)
-                self._ctx.restore()
-        if self._ctx is not None and not sys_display.pipe_full():
-            sys_display.update(self._ctx)
-            self._ctx = None
+                ctx.save()
+                self._top.draw(ctx)
+                ctx.restore()
+
+                sys_display.update(ctx)
 
         # Share!
         if ftop.run(delta):
