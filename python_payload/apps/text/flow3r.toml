@@ -1,0 +1,8 @@
+[app]
+name = "LGPL"
+menu = "Apps"
+
+[metadata]
+author = "Flow3r Badge Authors"
+license = "ISC"
+url = "https://git.flow3r.garden/flow3r/flow3r-firmware"
