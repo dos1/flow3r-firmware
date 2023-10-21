@@ -183,7 +183,7 @@ static Ctx *st3m_gfx_ctx_int(st3m_gfx_mode mode) {
 }
 
 static void st3m_gfx_viewport_transform(Ctx *ctx, int reset) {
-    int scale = st3m_gfx_scale(_st3m_gfx_mode);
+    int scale = st3m_gfx_scale(_st3m_gfx_mode ? _st3m_gfx_mode : default_mode);
     int32_t offset_x = FLOW3R_BSP_DISPLAY_WIDTH / 2 / scale;
     int32_t offset_y = FLOW3R_BSP_DISPLAY_HEIGHT / 2 / scale;
     if (reset)
