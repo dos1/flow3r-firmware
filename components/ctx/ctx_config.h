@@ -16,30 +16,25 @@
 #endif
 #endif
 
-
-// set this to 1 to keep framebuffer in internal memory 
-// wifi does not seem to want to work then
-#define CTX_ST3M_FB_INTERNAL_RAM      0
 // set this to 1 for faster 8bpp mode - with some glitching
 #define CTX_NATIVE_GRAYA8             0
 
 // this might also limit max texture sizes, increasing it
 // causes performance drop, so kept just above what we need
 
+
 #define CTX_DITHER                         1
 #define CTX_PROTOCOL_U8_COLOR              1
 #define CTX_LIMIT_FORMATS                  1
 #define CTX_32BIT_SEGMENTS                 0
 #define CTX_RASTERIZER                     1
-#define CTX_RASTERIZER_AA                  5
+#define CTX_RASTERIZER_AA                  3
 #define CTX_ENABLE_RGB565                  1
 #define CTX_ENABLE_RGB565_BYTESWAPPED      1
 #define CTX_COMPOSITING_GROUPS             0
-#define CTX_ENABLE_CM                      0
 #define CTX_ALWAYS_USE_NEAREST_FOR_SCALE1  1
 #define CTX_EVENTS                         0
 #define CTX_FORCE_INLINES                  0
-#define CTX_RAW_KB_EVENTS                  0
 #define CTX_THREADS                        0
 #define CTX_TILED                          0
 #define CTX_BAREMETAL                      1
