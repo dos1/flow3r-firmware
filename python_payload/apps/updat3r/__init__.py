@@ -6,6 +6,7 @@ from ctx import Context
 import sys_kernel
 import urequests
 import math
+import sys
 from st3m.ui.view import ViewManager
 import st3m.wifi
 
@@ -51,6 +52,7 @@ class UpdaterApp(Application):
             not st3m.wifi.is_connected()
             and not st3m.wifi.is_connecting()
             and not self.fetched_version
+            and not self.vm.transitioning
         ):
             ctx.move_to(0, 40)
             ctx.text("press the app button to")
@@ -74,6 +76,8 @@ class UpdaterApp(Application):
         self.filename = None
         self.use_dev_version = False
         self.download_percentage = 0
+
+        self._download_error = False
 
         self._sd_present = sd_card_plugged()
         self._sd_failed = False
@@ -180,11 +184,17 @@ class UpdaterApp(Application):
             not self.fetched_version
             and st3m.wifi.is_connected()
             and not self.vm.transitioning
+            and not self._download_error
         ):
-            req = urequests.get("https://flow3r.garden/api/releases.json")
-            self.fetched_version = req.json()
-            req.close()
-            self.change_selected_version()
+            try:
+                req = urequests.get("https://flow3r.garden/api/releases.json")
+                self.fetched_version = req.json()
+                req.close()
+                self.change_selected_version()
+            except Exception as e:
+                self._state_text = "download error :("
+                self._download_error = True
+                sys.print_exception(e)
 
         if self.download_instance is not None:
             try:
