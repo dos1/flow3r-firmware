@@ -5213,12 +5213,10 @@ static inline CtxList *ctx_list_find_custom (CtxList *list,
 #define CTX_ENABLE_CMYK         1
 #endif
 
-/* enable color management, slightly increases CtxColor struct size, can
+/* enable color management, slightly increases CtxColor struct size, should
  * be disabled for microcontrollers.
  */
-#ifndef CTX_ENABLE_CM
-#define CTX_ENABLE_CM           1
-#endif
+
 
 #ifndef CTX_EVENTS
 #define CTX_EVENTS              1
@@ -5748,6 +5746,14 @@ static inline CtxList *ctx_list_find_custom (CtxList *list,
 
 #ifndef CTX_BAREMETAL
 #define CTX_BAREMETAL 0
+#endif
+
+#ifndef CTX_ENABLE_CM
+#if CTX_BAREMETAL
+#define CTX_ENABLE_CM           0
+#else
+#define CTX_ENABLE_CM           1
+#endif
 #endif
 
 #if CTX_IMPLEMENTATION
@@ -20839,13 +20845,10 @@ static inline int ctx_rasterizer_add_point (CtxRasterizer *rasterizer, int x1, i
   return ctx_edgelist_add_single (&rasterizer->edge_list, (CtxEntry*)&entry);
 }
 
-static uint32_t ctx_rasterizer_poly_to_edges (CtxRasterizer *rasterizer)
+static void ctx_rasterizer_poly_to_edges (CtxRasterizer *rasterizer)
 {
   unsigned int count = rasterizer->edge_list.count;
-  if (CTX_UNLIKELY (count == 0))
-     return 0;
   CtxSegment *entry = (CtxSegment*)&rasterizer->edge_list.entries[0];
-  //CtxSegment *entry = &(((CtxSegment*)(rasterizer->edge_list.entries)))[0];
   for (unsigned int i = 0; i < count; i++)
     {
       if (entry->data.s16[3] < entry->data.s16[1])
@@ -20856,7 +20859,6 @@ static uint32_t ctx_rasterizer_poly_to_edges (CtxRasterizer *rasterizer)
         }
       entry++;
     }
-  return 0;
 }
 
 static inline void ctx_rasterizer_finish_shape (CtxRasterizer *rasterizer)
@@ -21311,8 +21313,7 @@ ctx_rasterizer_fill (CtxRasterizer *rasterizer)
 
     ctx_rasterizer_finish_shape (rasterizer);
 
-    uint32_t hash = ctx_rasterizer_poly_to_edges (rasterizer);
-    if (hash){};
+    ctx_rasterizer_poly_to_edges (rasterizer);
 
     {
     ctx_rasterizer_rasterize_edges (rasterizer, rasterizer->state->gstate.fill_rule);
