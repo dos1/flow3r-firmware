@@ -33,6 +33,9 @@ class Screen(Responder):
     def think(self, ins: InputState, delta_ms: int) -> None:
         pass
 
+    def update(self) -> None:
+        pass
+
 
 class HeroScreen(Screen):
     """
@@ -74,6 +77,9 @@ class SpaceScreen(Screen):
     """
 
     def __init__(self) -> None:
+        pass
+
+    def update(self) -> None:
         flash_statvfs = os.statvfs("/flash")
         flash_free = flash_statvfs[1] * flash_statvfs[3]
         flash_total = flash_statvfs[1] * flash_statvfs[2]
@@ -202,6 +208,11 @@ class About(BaseView):
         self.screen_ix = 0
         self.screen_ix_anim = 0.0
         super().__init__()
+
+    def on_enter(self, vm: Optional["ViewManager"]) -> None:
+        super().__init__(vm)
+        for screen in self.screens:
+            screen.update()
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
