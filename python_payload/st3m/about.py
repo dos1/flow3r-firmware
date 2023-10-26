@@ -210,7 +210,7 @@ class About(BaseView):
         super().__init__()
 
     def on_enter(self, vm: Optional["ViewManager"]) -> None:
-        super().__init__(vm)
+        super().on_enter(vm)
         for screen in self.screens:
             screen.update()
 
