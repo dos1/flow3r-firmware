@@ -911,7 +911,7 @@ void st3m_gfx_show_textview(st3m_gfx_textview_t *tv) {
 }
 
 static void set_pixels_ctx(Ctx *ctx, void *user_data, int x, int y, int w,
-                           int h, void *buf, int buf_size) {
+                           int h, void *buf) {
     uint16_t *src = buf;
     for (int scan = y; scan < y + h; scan++) {
         uint16_t *dst = (uint16_t *)&st3m_fb[(scan * 240 + x) * 2];

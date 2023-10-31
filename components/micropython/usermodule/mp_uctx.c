@@ -551,8 +551,8 @@ MP_DEFINE_CONST_FUN_OBJ_2(mp_ctx_tinyvg_draw_obj, mp_ctx_tinyvg_draw);
 /* CTX API functions }}} */
 
 static void mp_ctx_set_pixels(Ctx *ctx, void *user_data, int x_in, int y_in,
-                              int width_in, int height_in, void *buf_in,
-                              int buf_size) {
+                              int width_in, int height_in, void *buf_in) {
+    int buf_size = width_in * height_in * 2;  // XXX : not valid for non-16bpp!
     mp_obj_t args[5] = { mp_obj_new_int(x_in), mp_obj_new_int(y_in),
                          mp_obj_new_int(width_in), mp_obj_new_int(height_in),
                          mp_obj_new_memoryview(BYTEARRAY_TYPECODE, buf_size,
