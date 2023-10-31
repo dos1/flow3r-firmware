@@ -112,7 +112,7 @@ void st3m_scope_draw(Ctx *ctx) {
     //
     // decimate == 2 -> every second sample is drawn (240/2 == 120 line segments
     // are drawn). Looks good enough.
-    size_t decimate = 2;
+    size_t decimate = 1;
 
     int x = -120;
     int y = scope.read_buffer[0] >> shift;
@@ -123,5 +123,8 @@ void st3m_scope_draw(Ctx *ctx) {
         ctx_line_to(ctx, x, y);
     }
 
+    ctx_save(ctx);
+    ctx_line_width(ctx, -1.0f);
     ctx_stroke(ctx);
+    ctx_restore(ctx);
 }
