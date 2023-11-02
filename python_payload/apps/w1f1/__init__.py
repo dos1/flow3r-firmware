@@ -31,10 +31,13 @@ class WifiApp(Application):
         self._nearby_wlans = []
         self._status_text = "scanning"
         self._error_text = ""
+        self._wifi_config = {}
         self._wlan_offset = 0
         self._is_connecting = False
         self._waiting_for_password = False
         self._password_model = TextInputModel("")
+
+        self.attempt_load_wifi_config(self.WIFI_CONFIG_FILE)
 
         # Copy config to flash from SD card if we don't have one on flash
         if (
@@ -43,11 +46,9 @@ class WifiApp(Application):
             and not os.path.exists(self.WIFI_CONFIG_FILE)
         ):
             copy_across_devices(self.WIFI_CONFIG_FILE_SD, self.WIFI_CONFIG_FILE)
+            self.attempt_load_wifi_config(self.WIFI_CONFIG_FILE)
 
-        if os.path.exists(self.WIFI_CONFIG_FILE):
-            with open(self.WIFI_CONFIG_FILE) as f:
-                self._wifi_config = json.load(f)
-        else:
+        if not self._wifi_config:
             self._wifi_config = {
                 "config_version": 2,
                 "networks": {
@@ -56,6 +57,21 @@ class WifiApp(Application):
                 },
             }
             self.save_config_json()
+
+    def attempt_load_wifi_config(self, config_path):
+        if os.path.exists(config_path):
+            try:
+                with open(config_path) as f:
+                    self._wifi_config = json.load(f)
+            except ValueError:
+                broken_filename = f"{config_path}.broken"
+                print(
+                    "FYI: Your wifi config file has a syntax error "
+                    f"and has been moved to {broken_filename}."
+                )
+                if os.path.exists(broken_filename):
+                    os.remove(broken_filename)
+                os.rename(config_path, broken_filename)
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
