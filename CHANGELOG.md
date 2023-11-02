@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+
+## [1.3.0] - 2023-11-?
 ### Added
 - Added the `Audio Passthrough` app for toggling audio passthrough through
   line-in/mic to speaker or lineout.
@@ -36,6 +38,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - graphics: flags for 2x 3x and 4x pixel doubling, low-latency and direct-ctx modes.
 - graphics: clipped and composited overlay buffer
 - graphics: allow a graphics state depth of up to 10 (`ctx.save()` `ctx.restore()`)
+- battery: Main menu shows a charge percentage estimate based on real battery characterization
 
 ### Changed
 - Changed the st3m\_tar logic to only update files on flash after an update
