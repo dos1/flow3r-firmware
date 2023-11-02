@@ -46,7 +46,19 @@ class WifiApp(Application):
 
         if os.path.exists(self.WIFI_CONFIG_FILE):
             with open(self.WIFI_CONFIG_FILE) as f:
-                self._wifi_config = json.load(f)
+                try:
+                    self._wifi_config = json.load(f)
+                except ValueError as e:
+                    print("Error loading wifi config:", str(e))
+                    print("Writing default config")
+                    self._wifi_config = {
+                        "config_version": 2,
+                        "networks": {
+                            "Example SSID": {"psk": "Example PSK"},
+                            "Camp2023-open": {"psk": None},
+                        },
+                    }
+                    self.save_config_json()
         else:
             self._wifi_config = {
                 "config_version": 2,
