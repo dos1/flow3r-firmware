@@ -37,7 +37,6 @@ def azimuth(vec):
 
 def relative_altitude(pascal, celsius):
     # https://en.wikipedia.org/wiki/Hypsometric_equation
-    # assumes average pressure at sea level
     return (celsius + 273.15) * (287 / 9.81) * math.log(101325 / pascal, math.e)
 
 
@@ -113,7 +112,7 @@ class App(Application):
                 if delta > 3.14:
                     delta -= 6.28
                 elif delta < -3.14:
-                    delta = 6.28
+                    delta += 6.28
                 self.rotate += (1 - damp) * delta
             else:
                 self.rotate *= damp
@@ -173,7 +172,11 @@ class App(Application):
         self.pressure = ins.imu.pressure
         self.battery_voltage = ins.battery_voltage
         self.temperature = ins.temperature
-        self.altitude = relative_altitude(self.pressure, self.temperature)
+
+        # not using actual temperature here since keeping rel. altitude
+        # identical when going on a balcony outweighs the extra outdoors
+        # precision in our opinion
+        self.altitude = relative_altitude(self.pressure, 15)
 
         self.acc = tuple(ins.imu.acc)
         self.gyro = tuple(ins.imu.gyro)
