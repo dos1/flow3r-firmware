@@ -12,7 +12,7 @@ import time
 import json
 import os
 
-from st3m.ui import colours
+blm = bl00mbox.Channel("Scalar")
 
 
 class Scale:
@@ -50,7 +50,6 @@ UI_SCALE = 2
 UI_MODE = 3
 UI_OFFSET = 4
 UI_SELECT = 5
-UI_SOUND = 6
 DOUBLE_TAP_THRESH_MS = 500
 
 
@@ -59,108 +58,28 @@ class ScalarApp(Application):
         super().__init__(app_ctx)
 
         self._load_settings()
+
         self._ui_state = UI_PLAY
         self._ui_mid_prev_time = 0
         self._ui_cap_prev = captouch.read()
+        self._color_intensity = 0.0
         self._scale_key = 0
         self._scale_offset = 0
         self._scale_mode = 0
         self._scale_index = 0
-        self._synth_sound_index = 0
-        self._synth_sounds = ["flute", "slow flute", "tri", "square", "saw"]
         self._scale: Scale = self._scales[0]
-        self.blm = None
-        self._synths_active = [False for _ in range(10)]
+        self._synths = [blm.new(bl00mbox.patches.tinysynth) for i in range(10)]
 
-    @property
-    def _synth_sound_name(self):
-        return self._synth_sounds[self._synth_sound_index]
+        for synth in self._synths:
+            synth.signals.decay = 500
+            synth.signals.waveform = 0
+            synth.signals.attack = 50
+            synth.signals.volume = 0.3 * 32767
+            synth.signals.sustain = 0.6 * 32767
+            synth.signals.release = 800
+            synth.signals.output = blm.mixer
 
-    def _build_synth(self):
-        if self.blm is not None:
-            return
-
-        self.blm = bl00mbox.Channel("Scalar")
-        self.blm.volume = 32767
-        self.noise_src = self.blm.new(bl00mbox.plugins.noise)
-        self.noise_env = self.blm.new(bl00mbox.plugins.env_adsr)
-        self.noise_lp = self.blm.new(bl00mbox.plugins.lowpass)
-        self.noise_fm_lp = self.blm.new(bl00mbox.plugins.lowpass)
-        self.noise_mixer = self.blm.new(bl00mbox.plugins.mixer, 2)
-        self.noise_vol_osc = self.blm.new(bl00mbox.plugins.osc_fm)
-        self.noise_vol_osc2 = self.blm.new(bl00mbox.plugins.osc_fm)
-        self.noise_vol_amp = self.blm.new(bl00mbox.plugins.ampliverter)
-
-        self.oscs = [self.blm.new(bl00mbox.plugins.osc_fm) for i in range(10)]
-        self.envs = [self.blm.new(bl00mbox.plugins.env_adsr) for i in range(10)]
-        self.synth_mixer = self.blm.new(bl00mbox.plugins.mixer, 10)
-        self.synth_delay = self.blm.new(bl00mbox.plugins.delay)
-        self.synth_lp = self.blm.new(bl00mbox.plugins.lowpass)
-        self.synth_comb = self.blm.new(bl00mbox.plugins.flanger)
-        self.synth_delay.signals.input = self.synth_mixer.signals.output
-        self.synth_delay.signals.time = 69
-        self.synth_delay.signals.level = 6969
-        self.synth_delay.signals.feedback = 420
-        self.synth_comb.signals.manual = self.noise_vol_amp.signals.output
-        # self.synth_comb.signals.manual.tone = -24
-        self.synth_comb.signals.mix = -8000
-        self.synth_comb.signals.input = self.synth_delay.signals.output
-        self.synth_lp.signals.input = self.synth_comb.signals.output
-        self.synth_lp.signals.output = self.blm.mixer
-        self.synth_lp.signals.freq = 2100
-        self.synth_lp.signals.reso = 500
-        self.synth_lp.signals.gain = 16000
-
-        for i in range(len(self.oscs)):
-            self.oscs[i].signals.waveform = 0
-
-            # soft flute
-            # self.envs[i].signals.attack = 150
-            # self.envs[i].signals.sustain = 32767
-            # self.envs[i].signals.release = 200
-            # self.envs[i].signals.decay = 500
-            # hard flute
-            self.envs[i].signals.attack = 69
-            self.envs[i].signals.sustain = 25125
-            self.envs[i].signals.release = 200
-            self.envs[i].signals.decay = 121
-
-            self.oscs[i].signals.lin_fm = self.noise_fm_lp.signals.output
-            self.oscs[i].signals.output = self.envs[i].signals.input
-            self.synth_mixer.signals.input[i] = self.envs[i].signals.output
-
-        self.noise_lp.signals.input = self.noise_src.signals.output
-        self.noise_lp.signals.gain.mult = -0.8
-        self.noise_lp.signals.freq = 5000
-        self.noise_mixer.signals.input0 = self.noise_lp.signals.output
-        self.noise_mixer.signals.input1 = self.noise_src.signals.output
-        self.noise_mixer.signals.gain = 4096
-
-        self.noise_fm_lp.signals.input = self.noise_src.signals.output
-        self.noise_fm_lp.signals.gain = 350
-        self.noise_fm_lp.signals.freq = 200
-
-        self.noise_vol_osc.signals.pitch.freq = 0.13
-        self.noise_vol_osc.signals.waveform = -32767
-        self.noise_vol_osc2.signals.pitch.freq = 0.69
-        self.noise_vol_osc2.signals.lin_fm = self.noise_vol_osc.signals.output
-        self.noise_vol_osc2.signals.waveform = -32767
-        self.noise_vol_amp.signals.input = self.noise_vol_osc2.signals.output
-        self.noise_vol_amp.signals.bias = 33
-        self.noise_vol_amp.signals.gain = 15
-
-        # soft flute
-        # self.noise_env.signals.attack = 100
-        # self.noise_env.signals.sustain = 20000
-        # hard flute
-        self.noise_env.signals.attack = 30
-        self.noise_env.signals.sustain = 15000
-
-        self.noise_env.signals.decay = 150
-        self.noise_env.signals.release = 50
-        self.noise_env.signals.gain = self.noise_vol_amp.signals.output
-        self.noise_env.signals.input = self.noise_lp.signals.output
-        self.noise_env.signals.output = self.blm.mixer
+        self._update_leds()
 
     def _load_settings(self) -> None:
         default_path = self.app_ctx.bundle_path + "/scalar-default.json"
@@ -193,12 +112,8 @@ class ScalarApp(Application):
             outfile.write(infile.read())
 
     def _update_leds(self) -> None:
-        hue = (
-            6.28
-            / 12
-            * ((self._scale_key % 12) + (self._scale_index / len(self._scales)))
-        )
-        leds.set_all_rgb(*colours.hsv_to_rgb(hue, 1, 0.7))
+        hue = 30 * (self._scale_key % 12) + (30 / len(self._scales)) * self._scale_index
+        leds.set_all_hsv(hue, 1, 0.2)
         leds.update()
 
     def _set_key(self, i: int) -> None:
@@ -223,108 +138,16 @@ class ScalarApp(Application):
         i = i % len(self._scale.notes)
         self._scale_offset = i
 
-    def _set_sound(self, i: int) -> None:
-        i = i % len(self._synth_sounds)
-        self._synth_sound_index = i
-        if self._synth_sound_name == "flute":
-            for i in range(len(self.oscs)):
-                self.oscs[i].signals.waveform = 0
-                self.envs[i].signals.attack = 69
-                self.envs[i].signals.sustain = 25125
-                self.envs[i].signals.release = 200
-                self.envs[i].signals.decay = 121
-            self.noise_env.signals.attack = 30
-            self.noise_env.signals.sustain = 15000
-            self.noise_fm_lp.signals.gain = 350
-            self.noise_vol_amp.signals.bias = 33
-            self.noise_vol_amp.signals.gain = 15
-            self.synth_delay.signals.level = 6969
-            self.synth_comb.signals.mix = -8000
-            self.synth_lp.signals.freq = 2100
-            self.synth_lp.signals.reso = 500
-            self.synth_lp.signals.gain = 16000
-
-        elif self._synth_sound_name == "slow flute":
-            for i in range(len(self.oscs)):
-                self.oscs[i].signals.waveform = 0
-                self.envs[i].signals.attack = 150
-                self.envs[i].signals.sustain = 32767
-                self.envs[i].signals.release = 200
-                self.envs[i].signals.decay = 500
-            self.noise_env.signals.attack = 100
-            self.noise_env.signals.sustain = 20000
-            self.noise_fm_lp.signals.gain = 350
-            self.noise_vol_amp.signals.bias = 33
-            self.noise_vol_amp.signals.gain = 15
-            self.synth_delay.signals.level = 6969
-            self.synth_comb.signals.mix = -8000
-            self.synth_lp.signals.freq = 2100
-            self.synth_lp.signals.reso = 500
-            self.synth_lp.signals.gain = 16000
-
-        elif self._synth_sound_name == "tri":
-            for i in range(len(self.oscs)):
-                self.oscs[i].signals.waveform = -1
-                self.envs[i].signals.attack = 20
-                self.envs[i].signals.sustain = 32767
-                self.envs[i].signals.release = 200
-                self.envs[i].signals.decay = 500
-            self.noise_fm_lp.signals.gain = 0
-            self.noise_vol_amp.signals.bias = 0
-            self.noise_vol_amp.signals.gain = 0
-            self.synth_delay.signals.level = 0
-            self.synth_comb.signals.mix = 0
-            self.synth_lp.signals.freq = 15000
-            self.synth_lp.signals.reso = 500
-            self.synth_lp.signals.gain = 16000
-
-        elif self._synth_sound_name == "square":
-            for i in range(len(self.oscs)):
-                self.oscs[i].signals.waveform = 0
-                self.envs[i].signals.attack = 20
-                self.envs[i].signals.sustain = 32767
-                self.envs[i].signals.release = 200
-                self.envs[i].signals.decay = 500
-            self.noise_fm_lp.signals.gain = 0
-            self.noise_vol_amp.signals.bias = 0
-            self.noise_vol_amp.signals.gain = 0
-            self.synth_delay.signals.level = 0
-            self.synth_comb.signals.mix = 0
-            self.synth_lp.signals.freq = 8000
-            self.synth_lp.signals.reso = 500
-            self.synth_lp.signals.gain = 6000
-
-        elif self._synth_sound_name == "saw":
-            for i in range(len(self.oscs)):
-                self.oscs[i].signals.waveform = 20000
-                self.envs[i].signals.attack = 20
-                self.envs[i].signals.sustain = 32767
-                self.envs[i].signals.release = 200
-                self.envs[i].signals.decay = 500
-            self.noise_fm_lp.signals.gain = 0
-            self.noise_vol_amp.signals.bias = 0
-            self.noise_vol_amp.signals.gain = 0
-            self.synth_delay.signals.level = 0
-            self.synth_comb.signals.mix = 0
-            self.synth_lp.signals.freq = 8000
-            self.synth_lp.signals.reso = 500
-            self.synth_lp.signals.gain = 8000
-
     def _key_name(self) -> str:
         return note_names[self._scale_key % 12]
 
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
         self._load_settings()
-        self._update_leds()
-        self._build_synth()
 
     def on_exit(self) -> None:
-        super().on_exit()
-        if self.blm is not None:
-            self.blm.clear()
-            self.blm.free = True
-            self.blm = None
+        for synth in self._synths:
+            synth.signals.trigger.stop()
 
     def draw(self, ctx: Context) -> None:
         ctx.rgb(0, 0, 0)
@@ -400,12 +223,10 @@ class ScalarApp(Application):
             draw_dot(4, 90)
             if self._ui_labels:
                 draw_text(4, 75, "OFFSET")
-        if self._ui_state == UI_SOUND or self._ui_state == UI_SELECT:
+        if self._ui_state == UI_SELECT:
             draw_dot(0, 90)
             if self._ui_labels:
-                draw_text(0, 75, "SOUND", inv=True)
-            ctx.move_to(0, 40)
-            ctx.text(str(self._synth_sound_name))
+                draw_text(0, 75, "PLAY", inv=True)
 
         draw_tri(self._scale_offset, 110)
         if self._scale_mode != 0:
@@ -418,8 +239,8 @@ class ScalarApp(Application):
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
 
-        if self.blm is None:
-            return
+        if self._color_intensity > 0:
+            self._color_intensity -= self._color_intensity / 20
 
         if self.input.buttons.app.middle.pressed:
             mid_time = time.ticks_ms()
@@ -457,24 +278,15 @@ class ScalarApp(Application):
                 self._set_offset(self._scale_offset - 1)
             if self.input.buttons.app.right.pressed:
                 self._set_offset(self._scale_offset + 1)
-        elif self._ui_state == UI_SOUND:
-            if self.input.buttons.app.left.pressed:
-                self._set_sound(self._synth_sound_index - 1)
-            if self.input.buttons.app.right.pressed:
-                self._set_sound(self._synth_sound_index + 1)
 
         cts = captouch.read()
         for i in range(10):
-            press_event = (
-                cts.petals[i].pressed and not self._ui_cap_prev.petals[i].pressed
-            )
-            release_event = (
-                not cts.petals[i].pressed and self._ui_cap_prev.petals[i].pressed
-            )
+            pressed = cts.petals[i].pressed and not self._ui_cap_prev.petals[i].pressed
+            released = not cts.petals[i].pressed and self._ui_cap_prev.petals[i].pressed
             if self._ui_state == UI_SELECT:
-                if press_event:
+                if pressed:
                     if i == 0:
-                        self._ui_state = UI_SOUND
+                        self._ui_state = UI_PLAY
                     elif i == 8:
                         self._ui_state = UI_KEY
                     elif i == 2:
@@ -485,21 +297,16 @@ class ScalarApp(Application):
                         self._ui_state = UI_OFFSET
             else:
                 half_step_up = int(self.input.buttons.app.middle.down)
-                if press_event:
-                    self.oscs[i].signals.pitch.tone = (
+                if pressed:
+                    self._synths[i].signals.pitch.tone = (
                         self._scale_key
                         + self._scale.note(i - self._scale_offset, self._scale_mode)
                         + half_step_up
                     )
-                    if not any(self._synths_active):
-                        self.noise_env.signals.trigger.start()
-                    self.envs[i].signals.trigger.start()
-                    self._synths_active[i] = True
-                elif release_event:
-                    self.envs[i].signals.trigger.stop()
-                    self._synths_active[i] = False
-                    if not any(self._synths_active):
-                        self.noise_env.signals.trigger.stop()
+                    self._synths[i].signals.trigger.start()
+                    self._color_intensity = 1.0
+                elif released:
+                    self._synths[i].signals.trigger.stop()
         self._ui_cap_prev = cts
 
 
