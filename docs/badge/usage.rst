@@ -191,6 +191,11 @@ Worms
 
 Touch petals for worms!
 
+Sensors
+^^^^^^^
+
+Shows output of several system sensors. LED hue changes with smoothed relative altitude and goes full circle on a 1m difference. Screen rotates to an upright position if flow3r is not in a horizontal position. The sensor data shown on the display is purposefully unfiltered to reflect the expected noise floor when using the low level API calls. If no battery detected the battery voltage field shows garbage.
+
 .. _usage_system:
 
 System
