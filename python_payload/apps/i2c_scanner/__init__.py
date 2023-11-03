@@ -24,15 +24,33 @@ class I2CScanner(Application):
         ctx.font = ctx.get_font_name(1)
         # Draw a black background
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
+        ctx.text_align = ctx.MIDDLE
 
         ctx.font_size = 16
+        ctx.rgb(1, 1, 1)
+        ctx.move_to(0, -60).text("I2C Device Scanner")
 
         ctx.rgb(0.7, 0.7, 0.7)
-        ctx.text_align = ctx.MIDDLE
-        ctx.move_to(0, -62).text("Press OK to Re-Scan")
-        ctx.move_to(0, -42).text("Found Devices:")
-        for i, d in enumerate(self._devices):
-            ctx.move_to(0, -24 + (i * 12)).text(hex(d))
+        ctx.font_size = 14
+        yOffset = 18
+        yStart = -30
+        ctx.move_to(0, yStart).text("Attach a device to the Qwiic port")
+        ctx.font_size = 16
+        ctx.move_to(0, yStart + yOffset * 1).text("Press OK to Re-Scan")
+
+        if len(self._devices) == 0:
+            ctx.rgb(0.7, 0.0, 0.0)
+            ctx.move_to(0, yStart + (3 * yOffset)).text("No Devices Found")
+        else:
+            ctx.rgb(0.0, 0.7, 0.0)
+            ctx.move_to(0, yStart + (3 * yOffset)).text(
+                "Found %d Devices: " % len(self._devices)
+            )
+            devices_str = ""
+            for d in self._devices:
+                devices_str += hex(d) + " "
+
+            ctx.move_to(0, yStart + (4 * yOffset)).text(devices_str)
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
