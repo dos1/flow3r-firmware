@@ -129,6 +129,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed `Comic Mono` missing in the simulator.
 - Fixed initialization orientation of display and transform initialization for
   ctx contexts, (this enables arbitrary transformations to images and gradients.)
+- Fixed broken anti-aliasing for compressed side of curved strokes.
 - Fixed cleanup at exit for firmware apps
 - Fixed sequencer bug in bl00mbox
 - Fixed reset of graphics subsystem upon entering REPL / using mpremote.
