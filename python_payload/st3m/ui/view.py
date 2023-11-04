@@ -212,7 +212,7 @@ class ViewManager(Responder):
         self._input = InputController()
 
         self._first_think = False
-        self._fully_drawn = 0
+        self._fully_drawn = False
 
         self._outgoing_wants_to_think = False
 
@@ -235,7 +235,7 @@ class ViewManager(Responder):
         self._transitioning = True
         self._transition = 0.0
         self._first_think = True
-        self._fully_drawn = 0
+        self._fully_drawn = False
         self._direction = self._pending_direction
         self._overriden_vt = self._pending_vt
         self._outgoing = self._incoming
@@ -258,7 +258,7 @@ class ViewManager(Responder):
 
             if self._transition >= 1.0:
                 self._transition = 1.0
-                if self._fully_drawn > 1:
+                if self._fully_drawn:
                     self._end_transition()
 
         if self._input.buttons.os.middle.pressed:
@@ -284,7 +284,7 @@ class ViewManager(Responder):
                 return
 
             if self._transition >= 1.0:
-                self._fully_drawn += 1
+                self._fully_drawn = True
                 ctx.save()
                 self._incoming.draw(ctx)
                 ctx.restore()
