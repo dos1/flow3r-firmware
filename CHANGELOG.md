@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added the `w1f1` app for managing wifi access to Settings, incorporates
   an in-progress cap-touch multi-tap keyboard (`k3yboard`).
 - Added the `Scalar` app in `Music` category for playing scales.
-- Added the 'Mandelbrot' app, which illustrates how one can do direct
+- Added the `Mandelbrot` app, which illustrates how one can do direct
   framebuffer access and control 8bpp palettized modes from python.
 - Added configuration of audio adjustments and startup dB level to `settings.json`.
 - Added configuration of wifi credentials + hostname via `settings.json`
@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added an error screen to the `Nick` app when `nick.json` is invalid.
 - Added `urequests` and `uos` support in the simulator.
 - Added audio/video media framework, and `Wurzelitzer` app as a small jukebox
-  frontend - currently supporting mp3 audio, mpeg1 video and protracker
+  frontend - currently supporting mp3 audio, mpeg1 video, GIF and protracker
   .mod files.
 - Added exporting of built firmwares as part of CI.
 - Added basic implementation of `os.statvfs()` to fetch full/available
@@ -36,9 +36,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - graphics: direct framebuffer access.
 - graphics: palette setting in 1,2,4 and 8bpp graphics modes.
 - graphics: flags for 2x 3x and 4x pixel doubling, low-latency and direct-ctx modes.
+- graphics: experimental smart redraw mode
 - graphics: clipped and composited overlay buffer
 - graphics: allow a graphics state depth of up to 10 (`ctx.save()` `ctx.restore()`)
+- graphics: virtual framebuffer with scrolling
 - battery: Main menu shows a charge percentage estimate based on real battery characterization
+- Added basic media playback in the `fil3s` app.
+- Added a delete button to `fil3s`/Files app to allow for deleting files,
+  folders and apps on-device.
+- Added new menu categories, `Media` and `Games`, and made category handling more robust
+  to correctly handle introducing new categories in the future.
+- Added configuration UI for audio, appearance and graphics settings.
+- Added configurable LED patterns for the main menu.
+- Added "restore defaults" option in the settings menu.
+- Added wah modulation in `Otamatone`.
+- Added several API functions for `ViewManager` to make complex view handling in apps
+  easier and robust.
+- Added firmware update app, `updat3r`.
+- Added storage information in `About` app.
+- Added audio equalization for built-in speakers.
+- Added a function to retrieve scope data for manual drawing/processing.
+- Added I2C scanner app.
+- Added sensor demo app.
+- Added `CONFIG_DEBUG_GDB_ENABLED` flag for easy debugging over USB JTAG.
+- Added saving/restoring state to several apps.
+- Added variable sequence length support in `gay drums`.
 
 ### Changed
 - Changed the st3m\_tar logic to only update files on flash after an update
@@ -51,7 +73,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Changed the audio adjustment logic, and added support for holding down the
   shoulder to keep increasing/decreasing level.
 - Improved download reliability of the `gr33nhouse` app by adding chunked
-  downloads, some `gc.collect()` calls and an error screen.
+  downloads, some `gc.collect()` calls, progress bar and an error screen.
 - Settings are now automatically loaded and saved when entering and leaving
   the settings page.
 - Moved the `Clouds` app to the `Badge` menu and updated it to use IMU data.
@@ -78,11 +100,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   in many cases.
 - When running apps through REPL mode (with `mpremote` etc), multi-view apps
   are now properly handled and don't restart whenever OS shoulder is pressed.
-- Added a delete button to `fil3s`/Files app to allow for deleting files,
-  folders and apps on-device.
 - A multitude of built-in apps now scroll names to fit the screen.
 - Apps are now sorted and deduplicated by display name, not by folder name.
 - Improved handedness in buttons.
+- `harmonic demo` turned into a fully-featured `chord organ`
+- `menu` key in `flow3r.toml` has been replaced with `category`. The old key can still
+  be used to maintain backwards compatibility with older firmwares.
+- Backported recent improvements for micropython's garbage collection to make it faster.
+- `shoegaze` can now use chords configured in `chord organ`.
+- Changed the priority of additional threads spawned by micropython to be equal to its
+  main thread's priority.
+- Apps that require Wi-Fi connection can directly take the user to Wi-Fi settings.
+- Changed the default app installation directory on flash to `/flash/apps`.
+- `gr33nhouse` now installs apps on SD card if available.
+- Increased the frequency of LED animations.
+- Changed the way LED colors are blended when using slew rates lower than 255 to be
+  more in line with color perception.
+- Rearranged system menu.
+- Made system indicator icons bigger.
+- Removed CCCamp's Wi-Fi settings from the default config.
 
 ### Fixed
 - Fixed `tiny sampler` keeping the microphone active after app exit.
@@ -96,6 +132,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed cleanup at exit for firmware apps
 - Fixed sequencer bug in bl00mbox
 - Fixed reset of graphics subsystem upon entering REPL / using mpremote.
+- Fixed multitude of issues with transition animations.
+- Fixed lost captouch and button presses when they're shorter than a think cycle.
+- Fixed `ScrollController`'s handling of high delta values.
+- Fixed many crashes in `fil3s` app.
+- Fixed a crash in `CapScrollController`.
+- Fixed gamma LUT setting for LEDs.
+- Fixed bl00mbox channels leaking on micropython's soft reboot.
+- Fixed importing bl00mbox's fake stub in the simulator.
+- Performance fixes for bl00mbox.
+- Fixed troubles with deleting files on some SD cards (like the bundled one).
+- Fixed the default I2C1 pins in micropython's I2C interface.
+- Fixed large files being truncated when installing apps via `gr33nhouse`.
 
 
 ## [1.2.0] - 2023-08-18
