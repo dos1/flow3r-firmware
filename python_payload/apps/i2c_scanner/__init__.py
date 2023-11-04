@@ -12,12 +12,16 @@ class I2CScanner(Application):
         super().__init__(app_ctx)
         self.input = InputController()
         self.qwiic = I2C(1, freq=400000)
+        self._pending_scan = False
+
+    def scan(self):
         self._devices = self.qwiic.scan()
         print("Found Devices:")
         print(self._devices)
 
     def on_enter(self, vm):
         super().on_enter(vm)
+        self._devices = None
 
     def draw(self, ctx: Context) -> None:
         # Get the default font
@@ -38,7 +42,10 @@ class I2CScanner(Application):
         ctx.font_size = 16
         ctx.move_to(0, yStart + yOffset * 1).text("Press OK to Re-Scan")
 
-        if len(self._devices) == 0:
+        if self._devices is None:
+            ctx.move_to(0, yStart + (3 * yOffset)).text("Scanning...")
+            self._pending_scan = True
+        elif len(self._devices) == 0:
             ctx.rgb(0.7, 0.0, 0.0)
             ctx.move_to(0, yStart + (3 * yOffset)).text("No Devices Found")
         else:
@@ -56,7 +63,11 @@ class I2CScanner(Application):
         super().think(ins, delta_ms)
 
         if self.input.buttons.app.middle.pressed:
-            self._devices = self.qwiic.scan()
+            self._devices = None
+
+        if self._pending_scan and not self.vm.transitioning:
+            self.scan()
+            self._pending_scan = False
 
 
 # For running with `mpremote run`:
