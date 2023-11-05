@@ -1,7 +1,7 @@
 from st3m.input import InputState
 from st3m.goose import Optional, List
 from st3m.ui import colours
-from st3m.utils import sd_card_plugged
+from st3m.utils import sd_card_plugged, reload_app_list
 import urequests
 import gzip
 from utarfile import TarFile, DIRTYPE
@@ -84,13 +84,12 @@ class DownloadView(BaseView):
             text_to_draw = "Extracting..."
             self._state = 4
         elif self._state == 5:
-            # Done
-            ctx.move_to(0, -30)
-            ctx.text("All done...")
-            ctx.gray(0.75)
-            ctx.font_size = 22
-            text_to_draw = "The app will be\navailable after reboot"
+            # Updating app list
+            text_to_draw = "Updating\napps list..."
         elif self._state == 6:
+            # Done
+            text_to_draw = "Installation\nsuccessful!"
+        elif self._state == -1:
             # Errored
             ctx.move_to(0, -30)
             ctx.text("Oops...")
@@ -157,7 +156,7 @@ class DownloadView(BaseView):
                 gc.collect()
                 self.response = None
                 self.error_message = "Out of Memory\n(app too big?)"
-                self._state = 6
+                self._state = -1
                 return
             except Exception as e:
                 fail_reason = f"Exception:\n{str(e)}"
@@ -166,7 +165,7 @@ class DownloadView(BaseView):
             if self._try >= 3:
                 self.response = None
                 self.error_message = fail_reason
-                self._state = 6
+                self._state = -1
 
         elif self._state == 4:
             if self.response is None:
@@ -182,7 +181,7 @@ class DownloadView(BaseView):
                 gc.collect()
                 self.response = None
                 self.error_message = "Out of Memory\n(app too big?)"
-                self._state = 6
+                self._state = -1
                 return
 
             app_folder = self._get_app_folder(len(tar))
@@ -190,7 +189,7 @@ class DownloadView(BaseView):
                 gc.collect()
                 self.response = None
                 self.error_message = f"Not Enough Space\nSD/flash lack:\n{len(tar)}b"
-                self._state = 6
+                self._state = -1
                 return
 
             if not os.path.exists(app_folder):
@@ -216,3 +215,6 @@ class DownloadView(BaseView):
                         while data := f.read():
                             of.write(data)
             self._state = 5
+        elif self._state == 5:
+            reload_app_list(self.vm)
+            self._state = 6
