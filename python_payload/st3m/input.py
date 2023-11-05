@@ -72,46 +72,50 @@ class InputState:
     If you want to detect edges, use the stateful InputController.
     """
 
-    def __init__(
-        self,
-        captouch: captouch.CaptouchState,
-        buttons: InputButtonState,
-        imu: IMUState,
-        temperature: float,
-        battery_voltage: float,
-    ) -> None:
-        # self.petal_pads = petal_pads
-        self.captouch = captouch
-        self.buttons = buttons
-        self.imu = imu
-        self.temperature = temperature
-        self.battery_voltage = battery_voltage
+    def __init__(self) -> None:
+        self._captouch = None
+        self._buttons = None
+        self._imu = None
+        self._temperature = None
+        self._battery_voltage = None
+        self._pressure = None
 
-    @classmethod
-    def gather(cls) -> "InputState":
-        """
-        Build InputState from current hardware state. Should only be used by the
-        Reactor.
-        """
-        cts = captouch.read()
-        app = sys_buttons.get_app()
-        os = sys_buttons.get_os()
-        app_is_left = sys_buttons.app_is_left()
-        buttons = InputButtonState(app, os, app_is_left)
+    @property
+    def captouch(self):
+        if self._captouch is None:
+            self._captouch = captouch.read()
+        return self._captouch
 
-        acc = imu.acc_read()
-        gyro = imu.gyro_read()
-        pressure, temperature = imu.pressure_read()
-        imu_state = IMUState(acc, gyro, pressure)
+    @property
+    def buttons(self):
+        if self._buttons is None:
+            app = sys_buttons.get_app()
+            os = sys_buttons.get_os()
+            app_is_left = sys_buttons.app_is_left()
+            self._buttons = InputButtonState(app, os, app_is_left)
+        return self._buttons
 
-        battery_voltage = power.battery_voltage
-        return InputState(
-            cts,
-            buttons,
-            imu_state,
-            temperature,
-            battery_voltage,
-        )
+    @property
+    def imu(self):
+        if self._imu is None:
+            acc = imu.acc_read()
+            gyro = imu.gyro_read()
+            if self._pressure is None:
+                self._pressure, self._temperature = imu.pressure_read()
+            self._imu = IMUState(acc, gyro, self._pressure)
+        return self._imu
+
+    @property
+    def battery_voltage(self):
+        if self._battery_voltage is None:
+            self._battery_voltage = power.battery_voltage
+        return self._battery_voltage
+
+    @property
+    def temperature(self):
+        if self._temperature is None:
+            self._pressure, self._temperature = imu.pressure_read()
+        return self._temperature
 
 
 class RepeatSettings:
@@ -463,14 +467,38 @@ class Touchable:
 class PetalState:
     def __init__(self, ix: int) -> None:
         self.ix = ix
-        self.whole = Pressable(False)
-        self.pressure = 0
-        self.gesture = Touchable()
+        self._whole = Pressable(False)
+        self._gesture = Touchable()
+        self._whole_updated = False
+        self._gesture_updated = False
+        self._ts = None
+        self._petal = None
 
     def _update(self, ts: int, petal: captouch.CaptouchPetalState) -> None:
-        self.whole._update(ts, petal.pressed)
-        self.pressure = petal.pressure
-        self.gesture._update(ts, petal)
+        self._ts = ts
+        self._petal = petal
+        self._whole_updated = False
+        self._gesture_updated = False
+
+    @property
+    def whole(self):
+        if self._petal and not self._whole_updated:
+            self._whole._update(self._ts, self._petal.pressed)
+            self._whole_updated = True
+        return self._whole
+
+    @property
+    def pressure(self):
+        if not self._petal:
+            return 0
+        return self._petal.pressure
+
+    @property
+    def gesture(self):
+        if self._petal and not self._gesture_updated:
+            self._gesture._update(self._ts, self._petal)
+            self._gesture_updated = True
+        return self._gesture
 
 
 class CaptouchState:
@@ -481,17 +509,27 @@ class CaptouchState:
     socket, then the numbering continues clockwise.
     """
 
-    __slots__ = "petals"
-
     def __init__(self) -> None:
-        self.petals = [PetalState(i) for i in range(10)]
+        self._petals = [PetalState(i) for i in range(10)]
+        self._ins = None
+        self._ts = None
+        self._updated = False
 
     def _update(self, ts: int, ins: InputState) -> None:
-        for i, petal in enumerate(self.petals):
-            petal._update(ts, ins.captouch.petals[i])
+        self._ins = ins
+        self._ts = ts
+        self._updated = False
+
+    @property
+    def petals(self):
+        if self._ins and not self._updated:
+            for i, petal in enumerate(self._petals):
+                petal._update(self._ts, self._ins.captouch.petals[i])
+            self._updated = True
+        return self._petals
 
     def _ignore_pressed(self) -> None:
-        for petal in self.petals:
+        for petal in self._petals:
             petal.whole._ignore_pressed()
 
 

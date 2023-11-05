@@ -141,7 +141,7 @@ class Reactor:
         # upcoming input api refactor
         captouch.refresh_events()
 
-        hr = InputState.gather()
+        hr = InputState()
 
         # Think!
         self._top.think(hr, delta)
