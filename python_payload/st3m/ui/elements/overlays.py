@@ -127,7 +127,7 @@ class Compositor(Responder):
         }
         self._last_fps_string = ""
         self._clip_rect = Region()
-        self._last_clip = Region()
+        self._last_clip = Region(-120, -120, 120, 120)
         self._display_mode = None
         self._enabled: List[Responder] = []
         self._last_enabled: List[Responder] = []
