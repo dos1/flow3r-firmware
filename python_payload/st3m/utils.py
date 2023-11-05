@@ -150,11 +150,18 @@ def reload_app_list(vm: "ViewManager"):
     # Only reload app list if we have an app list we can reload
     if not vm._history or ("SunMenu" not in str(type(vm._history[0]))):
         return
-    # Delete anything but SunMenu from ViewManager history,
-    # making it so that we don't exit to an outdated ApplicationMenu
-    # TODO: maybe just pop ApplicationMenus
-    vm._history = [vm._history[0]]
+
+    # Actually reload the sunmenu itself
     vm._history[0].reload_menu()
+
+    # Delete now-potentially-outdated "ApplicationMenu"s
+    # from ViewManager history
+    new_history = []
+    for history_item in vm._history:
+        if "ApplicationMenu" not in str(type(history_item)):
+            new_history.append(history_item)
+    print("Replacing VM history", vm._history, "with", new_history)
+    vm._history = new_history
 
 
 tau = math.pi * 2
