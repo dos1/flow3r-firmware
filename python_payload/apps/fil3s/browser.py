@@ -171,6 +171,7 @@ class Browser(ActionView):
     def on_exit(self) -> None:
         if self.app_list_outdated:
             reload_app_list(self.vm)
+            self.vm.pop()
         super().on_exit()
 
     def _delete(self) -> None:
