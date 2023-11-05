@@ -33,3 +33,7 @@ def ctx(foo):
 
 def set_backlight(a):
     pass
+
+
+def fbconfig(*args, **kwargs):
+    pass
