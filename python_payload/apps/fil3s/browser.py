@@ -4,6 +4,7 @@ import stat
 import math
 from st3m.goose import Callable, Generator, Optional
 from st3m.input import InputState
+from st3m.utils import reload_app_list
 from ctx import Context
 
 from .common.action_view import Action
@@ -25,6 +26,7 @@ class Browser(ActionView):
     select_enabled: bool = True
     current_pos = 0
     current_entry: tuple[str, str]
+    app_list_outdated: bool = False
 
     def __init__(
         self,
@@ -166,12 +168,24 @@ class Browser(ActionView):
             print(f"Failed to open {new_path}: {e}")
             self._change_path(old_path)
 
+    def on_exit(self) -> None:
+        if self.app_list_outdated:
+            reload_app_list(self.vm)
+        super().on_exit()
+
     def _delete(self) -> None:
         if not self.delete_enabled:
             return
 
         name = self.dir_entries[self.current_pos][0]
         path = self.path + name
+
+        if self.path in [
+            "/flash/sys/apps/",
+            "/flash/apps/",
+            "/sd/apps/",
+        ]:
+            self.app_list_outdated = True
 
         try:
             if utils.is_dir(path):
