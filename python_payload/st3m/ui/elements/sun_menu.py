@@ -76,8 +76,6 @@ def _get_bundle_menu_entries(mgr: BundleManager, kind: str) -> List[MenuItem]:
     for id in ids:
         bundle = mgr.bundles[id]
         entries += bundle.menu_entries(kind)
-        if bundle.menu_entries(kind):
-            print(id, kind)
     return entries
 
 
@@ -103,12 +101,14 @@ class SunMenu(MenuController):
             self._bundles = bundles
         else:
             self._bundles = BundleManager()
+            self._bundles.update()
 
-        self.reload_menu()
+        self.reload_menu(reload_bundles=False)
 
-    def reload_menu(self) -> None:
-        self._bundles.bundles = {}
-        self._bundles.update()
+    def reload_menu(self, reload_bundles: bool = True) -> None:
+        if reload_bundles:
+            self._bundles.bundles = {}
+            self._bundles.update()
         self.rebuild_menu()
         super().__init__(self._items)
 
