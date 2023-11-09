@@ -249,3 +249,18 @@ Reboot
 ^^^^^^
 
 Reboot flow3r.
+
+.. _usage_troubleshooting:
+
+Troubleshooting
+---------------
+
+Captouch doesn't register inputs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+At this point in time the captouch driver is silently calibrated once during every boot. This calibration expects no petals to be pressed, so if you hold flow3r in such a way that a press should be registered during calibration the petal will function poorly during this boot cycle. From experimental data we have found that similar effects are present when flow3r is face-up on a couch or similar surface. This is all in all not ideal, we're planning to add explicit calibration and persistent data storage in a future firmware release. For now we personally find it easiest to boot the badge while holding it from the back with one hand or while it is lying on a non-couchy surface. Apologies for the inconvenience. PS: Fingertips just so curling around the edge of the badge to get a proper grip is usually not an issue.
+
+Captouch of petal 5 seems to be only working in the lower half
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This not a defect but a driver peculiarity and will be fixed in the future.
