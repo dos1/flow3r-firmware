@@ -37,10 +37,11 @@
 //     touch. Top petals have two degrees of freedom, bottom petals have a
 //     single degree of freedom (distance from center).
 
-#include "st3m_ringbuffer.h"
-
 // NOTE: keep the enum definitions below in-sync with flow3r_bsp_captouch.h, as
 // they are converted by numerical value internally.
+
+#include <stdbool.h>
+#include <stdint.h>
 
 // One of the four possible touch points (pads) on a petal. Top petals have
 // base/cw/ccw. Bottom petals have base/tip.
@@ -66,8 +67,8 @@ typedef enum {
 
 // State of capacitive touch for a petal's pad.
 typedef struct {
-    // Raw data ringbuffer.
-    st3m_ringbuffer_t rb;
+    // Raw data.
+    uint16_t raw;
     // Whether the pad is currently being touched. Calculated from ringbuffer
     // data.
     bool pressed;
@@ -82,6 +83,8 @@ typedef struct {
 
 // State of capacitive touch for a petal.
 typedef struct {
+    bool press_event_new;
+    bool fresh;
     // Is this a top or bottom petal?
     st3m_petal_kind_t kind;
 
@@ -108,8 +111,11 @@ typedef struct {
     //
     // Arbitrary units around (0, 0).
     // TODO(q3k): normalize and document.
-    float pos_distance;
-    float pos_angle;
+
+    // note moon2: changed these back to int16, no idea what was the motivation
+    // here, there wasn't even a division to warrant it.
+    int32_t pos_distance;
+    int32_t pos_angle;
 } st3m_petal_state_t;
 
 typedef struct {
