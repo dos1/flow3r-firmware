@@ -1,5 +1,6 @@
-import st3m.run, st3m.wifi, media, os, ctx
+import st3m.run, st3m.wifi, media, uos, ctx
 from st3m.application import Application
+from st3m.utils import sd_card_plugged
 
 RADIOSTATIONS = [
     "http://radio-paralax.de:8000/",
@@ -16,14 +17,15 @@ class App(Application):
     def __init__(self, app_ctx):
         super().__init__(app_ctx)
         self._streams = RADIOSTATIONS.copy()
-        for entry in os.ilistdir("/sd/"):
-            if entry[1] == 0x8000:
-                if (
-                    entry[0].endswith(".mp3")
-                    or entry[0].endswith(".mod")
-                    or entry[0].endswith(".mpg")
-                ):
-                    self._streams.append("/sd/" + entry[0])
+        if sd_card_plugged():
+            for entry in uos.ilistdir("/sd/"):
+                if entry[1] == 0x8000:
+                    if (
+                        entry[0].endswith(".mp3")
+                        or entry[0].endswith(".mod")
+                        or entry[0].endswith(".mpg")
+                    ):
+                        self._streams.append("/sd/" + entry[0])
         if len(self._streams) > len(RADIOSTATIONS):
             # skip radio stations, they are available by going back
             self._stream_no = len(RADIOSTATIONS)
