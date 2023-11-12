@@ -527,7 +527,7 @@ _sim = Simulation()
 class FramebufferManager:
     def __init__(self):
         self._free = []
-        for _ in range(2):
+        for _ in range(1):
             fb, c = ctx._wasm.ctx_new_for_framebuffer(240, 240)
             ctx._wasm.ctx_apply_transform(c, 1, 0, 120, 0, 1, 120, 0, 0, 1)
             self._free.append((fb, c))
