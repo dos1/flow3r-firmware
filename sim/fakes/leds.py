@@ -1,4 +1,6 @@
 from _sim import _sim
+from sys_colors import hsv_to_rgb
+from math import tau
 
 import pygame
 
@@ -30,11 +32,7 @@ def set_all_rgb(r, g, b):
 
 
 def set_hsv(ix, h, s, v):
-    color = pygame.Color(0)
-    h = int(h)
-    h = h % 360
-    color.hsva = (h, s * 100, v * 100, 1.0)
-    set_rgb(ix, color.r / 255, color.g / 255, color.b / 255)
+    set_rgb(ix, *hsv_to_rgb(h / 360 * tau, s, v))
 
 
 def set_all_hsv(h, s, v):
