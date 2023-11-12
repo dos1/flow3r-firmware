@@ -83,6 +83,8 @@ class Input:
         if ev.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
+        if ev.type == pygame.USEREVENT:
+            _sim.render_gui_lazy()
 
         if prev_hover != self._mouse_hover:
             return True

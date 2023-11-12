@@ -43,7 +43,7 @@ def set_slew_rate(b: int):
 
 def update():
     _sim.leds_update()
-    _sim.render_gui_lazy()
+    pygame.event.post(pygame.event.Event(pygame.USEREVENT, {}))
 
 
 def set_auto_update(b: int):
