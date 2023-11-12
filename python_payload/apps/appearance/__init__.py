@@ -4,6 +4,7 @@ from st3m import settings
 import leds
 import sys_display
 from st3m.ui import colours, led_patterns
+from ctx import Context
 
 
 class App(Application):

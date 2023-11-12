@@ -1,5 +1,6 @@
 from st3m.application import Application
 import math, random, sys_display
+from ctx import Context
 
 
 class App(Application):

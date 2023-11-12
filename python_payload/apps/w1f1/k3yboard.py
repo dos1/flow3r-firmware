@@ -6,7 +6,7 @@ from ctx import Context
 import st3m.run
 from st3m import Responder, InputState
 from st3m.application import Application, ApplicationContext
-from st3m.goose import ABCBase, Enum
+from st3m.goose import ABCBase, Enum, Optional
 from st3m.ui.view import BaseView, ViewManager
 from st3m.utils import tau
 
@@ -57,7 +57,7 @@ class TextInputModel(Model):
     def input_right(self) -> str:
         return self._input_right
 
-    def move_cursor(self, direction: self.CursorDirection) -> None:
+    def move_cursor(self, direction: "TextInputModel.CursorDirection") -> None:
         """
         Moves the cursor one step in specified direction. Any pending input will be committed beforehand.
         """
