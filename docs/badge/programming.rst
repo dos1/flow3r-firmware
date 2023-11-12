@@ -735,9 +735,8 @@ Currently the simulator supports the display, LEDs, the buttons, accelerometer
 (in 2D) and some static input values from the gyroscope, temperature sensor and
 pressure sensor.
 
-It does **not** support any audio API, and in fact currently doesn't even stub
-out the relevant API methods, so it will crash when attempting to run any Music
-app. It also does not support positional captouch APIs.
+It does **not** support most of the audio APIs. It also does not support
+positional captouch APIs.
 
 To set the simulator up, clone the repository and prepare a Python virtual
 environment with the required packages:
