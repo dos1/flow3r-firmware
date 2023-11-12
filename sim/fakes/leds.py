@@ -4,13 +4,16 @@ import pygame
 
 
 def set_rgb(ix, r, g, b):
-    if r > 255:
-        r = 255
-    if g > 255:
-        g = 255
-    if b > 255:
-        b = 255
-    _sim.set_led_rgb(ix, r, g, b)
+    if r > 1:
+        r /= 255
+    if g > 1:
+        g /= 255
+    if b > 1:
+        b /= 255
+    r = min(1.0, max(0.0, r))
+    g = min(1.0, max(0.0, g))
+    b = min(1.0, max(0.0, b))
+    _sim.set_led_rgb(ix, pow(r, 1 / 2.2), pow(g, 1 / 2.2), pow(b, 1 / 2.2))
 
 
 def get_rgb(ix):
@@ -31,17 +34,7 @@ def set_hsv(ix, h, s, v):
     h = int(h)
     h = h % 360
     color.hsva = (h, s * 100, v * 100, 1.0)
-    r, g, b = color.r, color.g, color.b
-    r *= 255
-    if r > 255:
-        r = 255
-    g *= 255
-    if g > 255:
-        g = 255
-    b *= 255
-    if b > 255:
-        b = 255
-    _sim.set_led_rgb(ix, r, g, b)
+    set_rgb(ix, color.r / 255, color.g / 255, color.b / 255)
 
 
 def set_slew_rate(b: int):

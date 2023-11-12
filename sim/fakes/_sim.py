@@ -512,7 +512,7 @@ class Simulation:
         self._render_oled(self._oled_surface, fb)
 
     def set_led_rgb(self, ix, r, g, b):
-        self.led_state_buf[ix] = (r, g, b)
+        self.led_state_buf[ix] = (r * 255, g * 255, b * 255)
 
     def leds_update(self):
         for i, s in enumerate(_sim.led_state_buf):
