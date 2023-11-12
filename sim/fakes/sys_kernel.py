@@ -35,3 +35,20 @@ def i2c_scan():
 
 def battery_charging():
     return True
+
+
+def firmware_version():
+    return "v0-dev"
+
+
+def hardware_version():
+    return "simulator"
+
+
+class FakeSchedulerSnapshot:
+    def __init__(self):
+        self.tasks = []
+
+
+def scheduler_snapshot():
+    return FakeSchedulerSnapshot()

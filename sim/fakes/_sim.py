@@ -25,6 +25,23 @@ SCREENSHOT = False
 SCREENSHOT_DELAY = 5
 
 
+def path_replace(p):
+    simpath = "/tmp/flow3r-sim"
+    projectpath = os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    )
+    if p.startswith("/flash/sys"):
+        p = p[len("/flash/sys") :]
+        p = projectpath + "/python_payload" + p
+        return p
+    if p.startswith("/flash"):
+        p = p[len("/flash") :]
+        p = simpath + p
+        return p
+
+    return p
+
+
 class Input:
     """
     Input implements an input overlay (for petals or buttons) that can be

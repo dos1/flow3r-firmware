@@ -135,6 +135,14 @@ class Context:
         self._emit(f"textBaseline {v}")
 
     @property
+    def compositing_mode(self):
+        return None
+
+    @compositing_mode.setter
+    def compositing_mode(self, v):
+        self._emit(f"compositingMode {v}")
+
+    @property
     def line_width(self):
         return None
 

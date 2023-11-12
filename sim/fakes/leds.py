@@ -37,8 +37,17 @@ def set_hsv(ix, h, s, v):
     set_rgb(ix, color.r / 255, color.g / 255, color.b / 255)
 
 
+def set_all_hsv(h, s, v):
+    for i in range(40):
+        set_hsv(i, h, s, v)
+
+
 def set_slew_rate(b: int):
     pass  # Better a no-op than not implemented at all.
+
+
+def get_slew_rate():
+    return 255
 
 
 def update():

@@ -1,6 +1,12 @@
 _volume = 0
 _muted = False
 
+INPUT_SOURCE_NONE = None
+INPUT_SOURCE_AUTO = None
+INPUT_SOURCE_HEADSET_MIC = None
+INPUT_SOURCE_LINE_IN = None
+INPUT_SOURCE_ONBOARD_MIC = None
+
 
 def set_volume_dB(v: float) -> None:
     global _volume
@@ -13,7 +19,7 @@ def get_volume_dB() -> float:
 
 
 def get_volume_relative() -> float:
-    return 0
+    return (_volume + 47) / (47 + 14)
 
 
 def headphones_set_volume_dB(v: float) -> None:
@@ -124,4 +130,20 @@ def line_in_get_allowed() -> bool:
 
 
 def onboard_mic_to_speaker_get_allowed() -> bool:
+    return False
+
+
+def input_thru_set_source(source):
+    pass
+
+
+def input_thru_get_source():
+    return None
+
+
+def input_engines_get_source_avail(source):
+    return False
+
+
+def headset_mic_get_allowed():
     return False

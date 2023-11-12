@@ -22,6 +22,14 @@ class ADC:
         return 3.8e6 / 2
 
 
+class I2C:
+    def __init__(self, chan, freq=None):
+        pass
+
+    def scan(self):
+        return []
+
+
 def reset():
     print("beep boop i have reset")
     sys.exit(0)
