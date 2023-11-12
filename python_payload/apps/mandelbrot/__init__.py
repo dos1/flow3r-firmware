@@ -37,7 +37,7 @@ class App(Application):
             if y < height:
                 zy = y * (self.yb - self.ya) / (height - 1) + self.ya
                 inners = 0
-                for x in range(width / 2):
+                for x in range(width // 2):
                     zx = x * (self.xb - self.xa) / (width - 1) + self.xa
                     z = zy + zx * 1j
                     c = z
