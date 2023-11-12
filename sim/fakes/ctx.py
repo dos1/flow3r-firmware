@@ -106,9 +106,13 @@ class Context:
     END = "end"
     MIDDLE = "middle"
     BEVEL = "bevel"
+    NONE = "none"
+    COPY = "copy"
 
     def __init__(self, _ctx):
         self._ctx = _ctx
+        self._font_size = 0
+        self._line_width = 0
 
     @property
     def image_smoothing(self):
@@ -136,7 +140,7 @@ class Context:
 
     @property
     def compositing_mode(self):
-        return None
+        return Context.NONE
 
     @compositing_mode.setter
     def compositing_mode(self, v):
@@ -144,10 +148,11 @@ class Context:
 
     @property
     def line_width(self):
-        return None
+        return self._line_width
 
     @line_width.setter
     def line_width(self, v):
+        self._line_width = v
         self._emit(f"lineWidth {v:.3f}")
 
     @property
@@ -160,10 +165,11 @@ class Context:
 
     @property
     def font_size(self):
-        return None
+        return self._font_size
 
     @font_size.setter
     def font_size(self, v):
+        self._font_size = v
         self._emit(f"fontSize {v:.3f}")
 
     @property
@@ -174,23 +180,42 @@ class Context:
     def global_alpha(self, v):
         self._emit(f"globalAlpha {v:.3f}")
 
+    @property
+    def x(self):
+        return 0
+
+    @property
+    def y(self):
+        return 0
+
     def _emit(self, text):
         _wasm.ctx_parse(self._ctx, text)
 
+    def logo(self, x, y, r):
+        return self
+
     def move_to(self, x, y):
-        self._emit(f"moveTo {int(x)} {int(y)}")
+        self._emit(f"moveTo {x:.3f} {y:.3f}")
         return self
 
     def curve_to(self, a, b, c, d, e, f):
-        self._emit(f"curveTo {int(a)} {int(b)} {int(c)} {int(d)}")
+        self._emit(f"curveTo {a:.3f} {b:.3f} {c:.3f} {d:.3f} {e:.3f} {f:.3f}")
+        return self
+
+    def quad_to(self, a, b, c, d):
+        self._emit(f"quadTo {a:.3f} {b:.3f} {c:.3f} {d:.3f}")
         return self
 
     def rel_move_to(self, x, y):
-        self._emit(f"relMoveTo {int(x)} {int(y)}")
+        self._emit(f"relMoveTo {x:.3f} {y:.3f}")
         return self
 
     def rel_curve_to(self, a, b, c, d, e, f):
-        self._emit(f"relCurveTo {int(a)} {int(b)} {int(c)} {int(d)}")
+        self._emit(f"relCurveTo {a:.3f} {b:.3f} {c:.3f} {d:.3f} {e:.3f} {f:.3f}")
+        return self
+
+    def rel_quad_to(self, a, b, c, d):
+        self._emit(f"relQuadTo {a:.3f} {b:.3f} {c:.3f} {d:.3f}")
         return self
 
     def close_path(self):
@@ -198,7 +223,7 @@ class Context:
         return self
 
     def translate(self, x, y):
-        self._emit(f"translate {int(x)} {int(y)}")
+        self._emit(f"translate {x:.3f} {y:.3f}")
         return self
 
     def scale(self, x, y):
@@ -206,7 +231,11 @@ class Context:
         return self
 
     def line_to(self, x, y):
-        self._emit(f"lineTo {int(x)} {int(y)}")
+        self._emit(f"lineTo {x:.3f} {y:.3f}")
+        return self
+
+    def rel_line_to(self, x, y):
+        self._emit(f"relLineTo {x:.3f} {y:.3f}")
         return self
 
     def rotate(self, v):
@@ -244,7 +273,7 @@ class Context:
 
     def round_rectangle(self, x, y, width, height, radius):
         self._emit(
-            f"roundRectangle {int(x)} {int(y)} {int(width)} {int(height)} {radius}"
+            f"roundRectangle {x:.3f} {y:.3f} {width:.3f} {height:.3f} {radius:.3f}"
         )
         return self
 
@@ -287,7 +316,12 @@ class Context:
         )
         return self
 
-    def add_stop(self, pos, red, green, blue, alpha):
+    def linear_gradient(self, x0, y0, x1, y1):
+        self._emit(f"linearGradient {x0:.3f} {y0:.3f} {x1:.3f} {y1:.3f}")
+        return self
+
+    def add_stop(self, pos, color, alpha):
+        red, green, blue = color
         if red > 1.0 or green > 1.0 or blue > 1.0:
             red /= 255.0
             green /= 255.0
@@ -310,9 +344,13 @@ class Context:
         )
         return self
 
+    def begin_path(self):
+        self._emit(f"beginPath")
+        return self
+
     def arc(self, x, y, radius, arc_from, arc_to, direction):
         self._emit(
-            f"arc {int(x)} {int(y)} {int(radius)} {arc_from:.4f} {arc_to:.4f} {1 if direction else 0}"
+            f"arc {x:.3f} {y:.3f} {radius:.3f} {arc_from:.4f} {arc_to:.4f} {1 if direction else 0}"
         )
         return self
 
@@ -320,7 +358,8 @@ class Context:
         return _wasm.ctx_text_width(self._ctx, text)
 
     def clip(self):
-        return
+        self._emit(f"clip")
+        return self
 
     def get_font_name(self, i):
         return [
@@ -340,10 +379,7 @@ class Context:
         self.move_to(x, 0)
         for i in range(240):
             x2 = x + i
-            y2 = math.sin(i / 10) * 80
+            y2 = math.sin(i / 10) * 60
             self.line_to(x2, y2)
-        self.line_to(130, 0)
-        self.line_to(130, 130)
-        self.line_to(-130, 130)
-        self.line_to(-130, 0)
+        self.stroke()
         return self

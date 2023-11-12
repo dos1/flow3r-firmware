@@ -147,3 +147,19 @@ def input_engines_get_source_avail(source):
 
 def headset_mic_get_allowed():
     return False
+
+
+def input_engines_get_source():
+    return None
+
+
+def input_thru_get_mute():
+    return False
+
+
+def input_thru_set_mute(mute):
+    pass
+
+
+def input_engines_set_source(source):
+    pass
