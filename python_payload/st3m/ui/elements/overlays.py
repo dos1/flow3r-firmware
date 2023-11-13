@@ -672,7 +672,7 @@ class IconTray(Overlay):
 
     def needs_redraw(self, rect: Region) -> bool:
         if self.visible:
-            rect.add(-40, -120, 40, -88)
+            rect.add(-50, -120, 50, -88)
             for i in range(len(self.visible)):
                 if (
                     self.visible[i].changed()
