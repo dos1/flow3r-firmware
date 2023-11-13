@@ -29,6 +29,10 @@ try:
 except ImportError:
     print("Warning: `requests` is missing so no `urequests` mock will exist")
 
+try:
+    import mad
+except ImportError:
+    print("Warning: `mad` is missing, MP3 support in `media` mock will be limited")
 
 sys_path_orig = sys.path
 
