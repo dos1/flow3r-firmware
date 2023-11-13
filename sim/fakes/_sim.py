@@ -546,10 +546,22 @@ _sim = Simulation()
 class FramebufferManager:
     def __init__(self):
         self._free = []
+
+        # Significant difference between on-device Ctx and simulation Ctx: we
+        # render to a BRGA8 (24bpp color + 8bpp alpha) buffer instead of 16bpp
+        # RGB565 like the device does. This allows us to directly blit the ctx
+        # framebuffer into pygame's surfaces, which is a _huge_ speed benefit
+        # (difference between ~10FPS and 500+FPS!).
+
         for _ in range(1):
-            fb, c = ctx._wasm.ctx_new_for_framebuffer(240, 240)
+            fb, c = ctx._wasm.ctx_new_for_framebuffer(240, 240, 240 * 4, ctx.RGBA8)
             ctx._wasm.ctx_apply_transform(c, 1, 0, 120, 0, 1, 120, 0, 0, 1)
             self._free.append((fb, c))
+
+        self._overlay = ctx._wasm.ctx_new_for_framebuffer(240, 240, 240 * 4, ctx.RGBA8)
+        ctx._wasm.ctx_apply_transform(self._overlay[1], 1, 0, 120, 0, 1, 120, 0, 0, 1)
+
+        self._output = ctx._wasm.ctx_new_for_framebuffer(240, 240, 240 * 4, ctx.BGRA8)
 
     def get(self):
         if len(self._free) == 0:
@@ -562,8 +574,42 @@ class FramebufferManager:
     def put(self, fb, ctx):
         self._free.append((fb, ctx))
 
+    def get_overlay(self):
+        return self._overlay
+
+    def get_output(self, fbp):
+        return self._output
+
+    def draw(self, fb):
+        ctx._wasm.ctx_define_texture(
+            self._output[1], "!fb", 240, 240, 240 * 4, ctx.RGBA8, fb, 0
+        )
+        ctx._wasm.ctx_parse(self._output[1], "compositingMode copy")
+        ctx._wasm.ctx_draw_texture(self._output[1], "!fb", 0, 0, 240, 240)
+
+        if overlay_clip[2] and overlay_clip[3]:
+            ctx._wasm.ctx_define_texture(
+                self._output[1],
+                "!overlay",
+                240,
+                240,
+                240 * 4,
+                ctx.RGBA8,
+                self._overlay[0],
+                0,
+            )
+            ctx._wasm.ctx_parse(self._output[1], "compositingMode sourceOver")
+            ctx._wasm.ctx_draw_texture(self._output[1], "!overlay", 0, 0, 240, 240)
+
 
 fbm = FramebufferManager()
+overlay_ctxs = []
+overlay_clip = (0, 0, 240, 240)
+
+
+def set_overlay_clip(x, y, x2, y2):
+    global overlay_clip
+    overlay_clip = (x, y, x2 - x, y2 - y)
 
 
 def get_ctx():
@@ -573,19 +619,32 @@ def get_ctx():
 
 def get_overlay_ctx():
     dctx = ctx._wasm.ctx_new_drawlist(240, 240)
+    overlay_ctxs.append(dctx)
     return ctx.Context(dctx)
 
 
 def display_update(subctx):
     _sim.process_events()
+
+    if subctx._ctx in overlay_ctxs:
+        overlay_ctxs.remove(subctx._ctx)
+        fbp, c = fbm.get_overlay()
+        ctx._wasm.ctx_render_ctx(subctx._ctx, c)
+        ctx._wasm.ctx_destroy(subctx._ctx)
+        return
+
     fbp, c = fbm.get()
+
     if fbp is None:
         return
 
     ctx._wasm.ctx_render_ctx(subctx._ctx, c)
     ctx._wasm.ctx_destroy(subctx._ctx)
 
-    fb = ctx._wasm._i.exports.memory.uint8_view(fbp)
+    fbm.draw(fbp)
+
+    fb = ctx._wasm._i.exports.memory.uint8_view(fbm.get_output(fbp)[0])
+
     _sim.render_display(fb)
     _sim.render_gui_now()
 

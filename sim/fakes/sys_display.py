@@ -9,12 +9,8 @@ def pipe_available():
     return True
 
 
-def overlay_clip(x0, y0, x1, y1):
-    pass
-
-
 def get_mode():
-    return 0
+    return osd
 
 
 def set_mode(no):
@@ -40,10 +36,13 @@ def fps():
 update = _sim.display_update
 get_ctx = _sim.get_ctx
 get_overlay_ctx = _sim.get_overlay_ctx
+overlay_clip = _sim.set_overlay_clip
 osd = 256
 
 
 def ctx(foo):
+    if foo == osd:
+        return _sim.get_overlay_ctx()
     return _sim.get_ctx()
 
 

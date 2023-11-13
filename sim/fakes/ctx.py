@@ -46,20 +46,14 @@ class Wasm:
         self._i.exports.ctx_parse(ctx, p)
         self.free(p)
 
-    def ctx_new_for_framebuffer(self, width, height):
+    def ctx_new_for_framebuffer(self, width, height, stride, format):
         """
         Call ctx_new_for_framebuffer, but also first allocate the underlying
         framebuffer and return it alongside the Ctx*.
         """
-        fb = self.malloc(width * height * 4)
-        # Significant difference between on-device Ctx and simulation Ctx: we
-        # render to a BRGA8 (24bpp color + 8bpp alpha) buffer instead of 16bpp
-        # RGB565 like the device does. This allows us to directly blit the ctx
-        # framebuffer into pygame's surfaces, which is a _huge_ speed benefit
-        # (difference between ~10FPS and 500+FPS!).
-        BRGA8 = 5
+        fb = self.malloc(stride * height)
         return fb, self._i.exports.ctx_new_for_framebuffer(
-            fb, width, height, width * 4, BRGA8
+            fb, width, height, stride, format
         )
 
     def ctx_new_drawlist(self, width, height):
@@ -68,6 +62,29 @@ class Wasm:
     def ctx_apply_transform(self, ctx, *args):
         args = [float(a) for a in args]
         return self._i.exports.ctx_apply_transform(ctx, *args)
+
+    def ctx_define_texture(self, ctx, eid, *args):
+        s = eid.encode("utf-8")
+        slen = len(s) + 1
+        p = self.malloc(slen)
+        mem = self._i.exports.memory.uint8_view(p)
+        mem[0 : slen - 1] = s
+        mem[slen - 1] = 0
+        res = self._i.exports.ctx_define_texture(ctx, p, *args)
+        self.free(p)
+        return res
+
+    def ctx_draw_texture(self, ctx, eid, *args):
+        s = eid.encode("utf-8")
+        slen = len(s) + 1
+        p = self.malloc(slen)
+        mem = self._i.exports.memory.uint8_view(p)
+        mem[0 : slen - 1] = s
+        mem[slen - 1] = 0
+        args = [float(a) for a in args]
+        res = self._i.exports.ctx_draw_texture(ctx, p, *args)
+        self.free(p)
+        return res
 
     def ctx_text_width(self, ctx, text):
         s = text.encode("utf-8")
@@ -383,3 +400,8 @@ class Context:
             self.line_to(x2, y2)
         self.stroke()
         return self
+
+
+RGBA8 = 4
+BGRA8 = 5
+RGB565_BYTESWAPPED = 7
