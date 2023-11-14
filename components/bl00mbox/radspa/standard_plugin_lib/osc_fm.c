@@ -2,8 +2,8 @@
 
 radspa_descriptor_t osc_fm_desc = {
     .name = "osc_fm",
-    .id = 420,
-    .description = "simple audio band oscillator with classic waveforms and linear fm input",
+    .id = 4202,
+    .description = "[DEPRECATED, replacement: osc] simple audio band oscillator with classic waveforms and linear fm input",
     .create_plugin_instance = osc_fm_create,
     .destroy_plugin_instance = radspa_standard_plugin_destroy
 };
@@ -33,6 +33,7 @@ radspa_t * osc_fm_create(uint32_t init_var){
     data->lin_fm_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_LIN_FM);
     data->fm_pitch_thru_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_PITCH_THRU);
     data->fm_pitch_offset_sig = radspa_signal_get_by_index(osc_fm, OSC_FM_PITCH_OFFSET);
+    data->waveform_sig->unit = "{SINE:-32767} {TRI:-10922} {SQUARE:10922} {SAW:32767}";
     return osc_fm;
 }
 

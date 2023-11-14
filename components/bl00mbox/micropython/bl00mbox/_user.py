@@ -61,9 +61,37 @@ class ChannelMixer:
             s = sys_bl00mbox.channel_get_signal_by_mixer_list_pos(
                 self._channel.channel_num, i
             )
-            sig = Signal(Plugin(self._channel, 0, bud_num=b), s)
+            sig = Signal(bl00mbox._plugins._make_new_plugin(self._channel, 0, b), s)
             ret += [sig]
         return ret
+
+
+class ValueSwitch:
+    def __init__(self, plugin, signal_num):
+        self._plugin = plugin
+        self._signal_num = signal_num
+
+    def __setattr__(self, key, value):
+        if getattr(self, "_locked", False):
+            if not value:
+                return
+            val = getattr(self, key, None)
+            if val is None:
+                return
+            sys_bl00mbox.channel_bud_set_signal_value(
+                self._plugin.channel_num,
+                self._plugin.bud_num,
+                self._signal_num,
+                int(val),
+            )
+        else:
+            super().__setattr__(key, value)
+
+    def get_value_name(self, val):
+        d = dict((k, v) for k, v in self.__dict__.items() if not k.startswith("_"))
+        for k, v in d.items():
+            if v == val:
+                return k
 
 
 class Signal:
@@ -82,6 +110,26 @@ class Signal:
         self._unit = sys_bl00mbox.channel_bud_get_signal_unit(
             plugin.channel_num, plugin.bud_num, signal_num
         )
+        constants = {}
+        another_round = True
+        while another_round:
+            another_round = False
+            for k, char in enumerate(self._unit):
+                if char == "{":
+                    for j, stopchar in enumerate(self._unit[k:]):
+                        if stopchar == "}":
+                            const = self._unit[k + 1 : k + j].split(":")
+                            constants[const[0]] = int(const[1])
+                            self._unit = self._unit[:k] + self._unit[k + j + 1 :]
+                            break
+                    another_round = True
+                    break
+        if constants:
+            self._unit = self._unit.strip()
+            self.switch = ValueSwitch(plugin, signal_num)
+            for key in constants:
+                setattr(self.switch, key, constants[key])
+            self.switch._locked = True
         self._hints = ""
 
     def __repr__(self):
@@ -96,20 +144,37 @@ class Signal:
         ret = self.name
         if self._mpx != -1:
             ret += "[" + str(self._mpx) + "]"
+
         if len(self.unit):
             ret += " [" + self.unit + "]"
+
         ret += " [" + self.hints + "]: "
+
         conret = []
         direction = " <?> "
+        val = self.value
         if isinstance(self, SignalInput):
             direction = " <= "
             if len(self.connections):
-                ret += str(self.connections[0].value)
-            else:
-                ret += str(self.value)
+                val = self.connections[0].value
         elif isinstance(self, SignalOutput):
             direction = " => "
-            ret += str(self.value)
+
+        ret += str(val)
+
+        if getattr(self, "switch", None) is not None:
+            value_name = self.switch.get_value_name(val)
+            if value_name is not None:
+                ret += " (" + value_name.lower() + ")"
+
+        if isinstance(self, SignalPitchMixin):
+            ret += " / " + str(self.tone) + " semitones / " + str(self.freq) + "Hz"
+
+        if isinstance(self, SignalGainMixin):
+            if self.mult == 0:
+                ret += " / (mute)"
+            else:
+                ret += " / " + str(self.dB) + "dB / x" + str(self.mult)
 
         for con in self.connections:
             if isinstance(con, Signal):
@@ -128,15 +193,6 @@ class Signal:
             ret += "\n"
             nl += "  "
         ret += nl.join(conret)
-
-        if isinstance(self, SignalPitchMixin):
-            ret += " / " + str(self.tone) + " semitones / " + str(self.freq) + "Hz"
-
-        if isinstance(self, SignalGainMixin):
-            if self.mult == 0:
-                ret += " / (mute)"
-            else:
-                ret += " / " + str(self.dB) + "dB / x" + str(self.mult)
 
         return ret
 
@@ -248,7 +304,11 @@ class SignalOutput(Signal):
                 chan, bud_num, sig, i
             )
             if (s >= 0) and (b > 0):
-                cons += [_makeSignal(Plugin(Channel(chan), 0, bud_num=b), s)]
+                cons += [
+                    _makeSignal(
+                        bl00mbox._plugins._make_new_plugin(Channel(chan), 0, b), s
+                    )
+                ]
             elif s == -1:
                 cons += [ChannelMixer(Channel(chan))]
         return cons
@@ -296,7 +356,9 @@ class SignalInput(Signal):
         b = sys_bl00mbox.channel_get_source_bud(chan, bud, sig)
         s = sys_bl00mbox.channel_get_source_signal(chan, bud, sig)
         if (s >= 0) and (b > 0):
-            cons += [_makeSignal(Plugin(Channel(chan), 0, bud_num=b), s)]
+            cons += [
+                _makeSignal(bl00mbox._plugins._make_new_plugin(Channel(chan), 0, b), s)
+            ]
         return cons
 
     def _start(self, velocity=32767):
@@ -492,112 +554,6 @@ class SignalList:
             raise AttributeError("signal does not exist")
 
 
-class Plugin:
-    def __init__(self, channel, plugin_id, init_var=0, bud_num=None):
-        self._channel_num = channel.channel_num
-        if bud_num == None:
-            self._plugin_id = plugin_id
-            self._bud_num = sys_bl00mbox.channel_new_bud(
-                self.channel_num, self.plugin_id, init_var
-            )
-            if self._bud_num == None:
-                raise Bl00mboxError("plugin init failed")
-        else:
-            self._bud_num = bud_num
-            self._check_existence()
-            self._name = sys_bl00mbox.channel_bud_get_plugin_id(
-                self.channel_num, self.bud_num
-            )
-        self._name = sys_bl00mbox.channel_bud_get_name(self.channel_num, self.bud_num)
-        self._signals = SignalList(self)
-
-    def __repr__(self):
-        self._check_existence()
-        ret = "[plugin " + str(self.bud_num) + "] " + self.name
-        for sig in self.signals._list:
-            ret += "\n  " + "\n  ".join(sig._no_desc().split("\n"))
-        return ret
-
-    def __del__(self):
-        self._check_existence()
-        sys_bl00mbox.channel_delete_bud(self.channel_num, self.bud_num)
-
-    def _check_existence(self):
-        if not sys_bl00mbox.channel_bud_exists(self.channel_num, self.bud_num):
-            raise Bl00mboxError("plugin has been deleted")
-
-    @property
-    def channel_num(self):
-        return self._channel_num
-
-    @property
-    def plugin_id(self):
-        return self._plugin_id
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def bud_num(self):
-        return self._bud_num
-
-    @property
-    def signals(self):
-        return self._signals
-
-    @property
-    def table(self):
-        ret = []
-        for x in range(
-            sys_bl00mbox.channel_bud_get_table_len(self.channel_num, self.bud_num)
-        ):
-            ret += [
-                sys_bl00mbox.channel_bud_get_table_value(
-                    self.channel_num, self.bud_num, x
-                )
-            ]
-        return ret
-
-    @table.setter
-    def table(self, stuff):
-        max_len = sys_bl00mbox.channel_bud_get_table_len(self.channel_num, self.bud_num)
-        if len(stuff) > max_len:
-            stuff = stuff[:max_len]
-        for x, y in enumerate(stuff):
-            sys_bl00mbox.channel_bud_set_table_value(
-                self.channel_num, self.bud_num, x, y
-            )
-
-    @property
-    def table_pointer(self):
-        pointer = sys_bl00mbox.channel_bud_get_table_pointer(
-            self.channel_num, self.bud_num
-        )
-        max_len = sys_bl00mbox.channel_bud_get_table_len(self.channel_num, self.bud_num)
-        return (pointer, max_len)
-
-    @property
-    def table_bytearray(self):
-        pointer, max_len = self.table_pointer
-        bytes_len = max_len * 2
-        return uctypes.bytearray_at(pointer, bytes_len)
-
-    @property
-    def table_int16_array(self):
-        pointer, max_len = self.table_pointer
-        descriptor = {"table": (0 | uctypes.ARRAY, max_len | uctypes.INT16)}
-        struct = uctypes.struct(pointer, descriptor)
-        return struct.table
-
-    @property
-    def table_uint32_array(self):
-        pointer, max_len = self.table_pointer
-        descriptor = {"table": (0 | uctypes.ARRAY, (max_len // 2) | uctypes.UINT32)}
-        struct = uctypes.struct(pointer, descriptor)
-        return struct.table
-
-
 class Channel:
     def __init__(self, name=None):
         if name == None:
@@ -659,16 +615,13 @@ class Channel:
             self.clear()
         sys_bl00mbox.channel_set_free(self.channel_num, val)
 
-    def _new_plugin(self, thing, init_var=None):
-        plugin_init_var = 0
-        if (type(init_var) == int) or (type(init_var) == float):
-            plugin_init_var = int(init_var)
-        plugin = None
-        if isinstance(thing, bl00mbox._plugins._Plugin):
-            plugin = Plugin(self, thing.plugin_id, plugin_init_var)
-        if type(thing) == int:
-            plugin = Plugin(self, thing, plugin_init_var)
-        return plugin
+    def _new_plugin(self, thing, *args, **kwargs):
+        if isinstance(thing, bl00mbox._plugins._PluginDescriptor):
+            return bl00mbox._plugins._make_new_plugin(
+                self, thing.plugin_id, None, *args, **kwargs
+            )
+        else:
+            raise TypeError("not a plugin")
 
     @staticmethod
     def print_overview():
@@ -692,18 +645,18 @@ class Channel:
         if type(thing) == type:
             if issubclass(thing, bl00mbox.patches._Patch):
                 return thing(self, *args, **kwargs)
-        if isinstance(thing, bl00mbox._plugins._Plugin) or (type(thing) == int):
+        if isinstance(thing, bl00mbox._plugins._PluginDescriptor) or (
+            type(thing) == int
+        ):
             return self._new_plugin(thing, *args, **kwargs)
 
     @property
     def plugins(self):
-        plugins = []
-
+        ret = []
         for i in range(sys_bl00mbox.channel_buds_num(self.channel_num)):
             b = sys_bl00mbox.channel_get_bud_by_list_pos(self.channel_num, i)
-            plugin = Plugin(self, 0, bud_num=b)
-            plugins += [plugin]
-        return plugins
+            ret += [bl00mbox._plugins._make_new_plugin(self, 0, b)]
+        return ret
 
     @property
     def channel_num(self):

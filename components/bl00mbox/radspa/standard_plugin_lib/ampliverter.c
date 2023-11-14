@@ -5,8 +5,8 @@
 radspa_t * ampliverter_create(uint32_t init_var);
 radspa_descriptor_t ampliverter_desc = {
     .name = "ampliverter",
-    .id = 69,
-    .description = "saturating multiplication and addition",
+    .id = 68,
+    .description = "[DEPRECATED, replaced by `mixer` or `range_shifter`] saturating multiplication and addition",
     .create_plugin_instance = ampliverter_create,
     // with this we can only use radspa_standard_plugin_create to allocate memory.
     // this restricts data layout flexibility for large buffers, but in return it offers

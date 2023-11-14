@@ -3,7 +3,7 @@
 radspa_descriptor_t poly_squeeze_desc = {
     .name = "poly_squeeze",
     .id = 172,
-    .description = "Multiplexes a number of triggerand pitch inputs into a lesser number of trigger pitch output pairs. "
+    .description = "Multiplexes a number of trigger and pitch inputs into a lesser number of trigger pitch output pairs. "
                    "The latest triggered inputs are forwarded to the output. If such an input receives a stop trigger it is disconnected "
                    "from its output. If another inputs is in triggered state but not forwarded at the same time it will be connected to that "
                    "output and the output is triggered. Pitch is constantly streamed to the outputs if they are connected, else the last "
@@ -13,13 +13,13 @@ radspa_descriptor_t poly_squeeze_desc = {
     .destroy_plugin_instance = radspa_standard_plugin_destroy
 };
 
-
+#define NUM_MPX 2
 // mpx block 1
-#define POLY_SQUEEZE_TRIGGER_INPUT 0
-#define POLY_SQUEEZE_PITCH_INPUT 1
+#define TRIGGER_INPUT 0
+#define PITCH_INPUT 1
 // mpx block 2
-#define POLY_SQUEEZE_TRIGGER_OUTPUT 0
-#define POLY_SQUEEZE_PITCH_OUTPUT 1
+#define TRIGGER_OUTPUT 0
+#define PITCH_OUTPUT 1
 
 static void assign_note_voices(poly_squeeze_data_t * data){
     poly_squeeze_note_t * note = data->active_notes_top;
@@ -49,7 +49,6 @@ static void assign_note_voices(poly_squeeze_data_t * data){
                     voice = v;
                     break;
                 }
-                
             }
             note->voice = voice;
         }
@@ -122,52 +121,38 @@ void poly_squeeze_run(radspa_t * poly_squeeze, uint16_t num_samples, uint32_t re
     poly_squeeze_input_t * inputs = (void *) (&(notes[data->num_notes]));
     poly_squeeze_voice_t * voices = (void *) (&(inputs[data->num_inputs]));
 
-    radspa_signal_t * trigger_input_sigs[data->num_inputs];
-    radspa_signal_t * pitch_input_sigs[data->num_inputs];
-    radspa_signal_t * trigger_output_sigs[data->num_voices];
-    radspa_signal_t * pitch_output_sigs[data->num_voices];
-
     for(uint8_t j = 0; j < data->num_inputs; j++){
-        trigger_input_sigs[j] = radspa_signal_get_by_index(poly_squeeze, POLY_SQUEEZE_TRIGGER_INPUT + 2*j);
-        pitch_input_sigs[j] = radspa_signal_get_by_index(poly_squeeze, POLY_SQUEEZE_PITCH_INPUT + 2*j);
-    }
-    for(uint8_t j = 0; j < data->num_voices; j++){
-        trigger_output_sigs[j] = radspa_signal_get_by_index(poly_squeeze, POLY_SQUEEZE_TRIGGER_OUTPUT + 2*(data->num_inputs+j));
-        pitch_output_sigs[j] = radspa_signal_get_by_index(poly_squeeze, POLY_SQUEEZE_PITCH_OUTPUT + 2*(data->num_inputs+j));
-    }
-
-    for(uint16_t i = 0; i < num_samples; i++){
-        for(uint8_t j = 0; j < data->num_inputs; j++){
-            notes[j].pitch = radspa_signal_get_value(pitch_input_sigs[j], i, render_pass_id);
-            int16_t trigger_in = radspa_trigger_get(radspa_signal_get_value(trigger_input_sigs[j], i, render_pass_id),
-                    &(inputs[j].trigger_in_hist));
-
-            if(trigger_in > 0){
-                notes[j].vol = trigger_in;
-                int8_t voice = put_note_on_top(data, &(notes[j]));
-                if(voice >= 0) voice_start(&(voices[voice]), notes[j].pitch, notes[j].vol);
-            } else if(trigger_in < 0){
-                int8_t voice = free_note(data, &(notes[j]));
-                if(voice >= 0){
-                    poly_squeeze_note_t * note = get_note_with_voice(data, voice);
-                    if(note == NULL){
-                        voice_stop(&(voices[voice]));
-                    } else {
-                        voice_start(&(voices[voice]), note->pitch, note->vol);
-                    }
+        uint16_t pitch_index;
+        int16_t trigger_in = radspa_trigger_get_const(&poly_squeeze->signals[TRIGGER_INPUT * NUM_MPX*j],
+                                &inputs[j].trigger_in_hist, &pitch_index, num_samples, render_pass_id);
+        notes[j].pitch = radspa_signal_get_value(&poly_squeeze->signals[PITCH_INPUT + NUM_MPX*j], pitch_index, render_pass_id);
+        // should order events by pitch index some day maybe
+        if(trigger_in > 0){
+            notes[j].vol = trigger_in;
+            int8_t voice = put_note_on_top(data, &(notes[j]));
+            if(voice >= 0) voice_start(&(voices[voice]), notes[j].pitch, notes[j].vol);
+        } else if(trigger_in < 0){
+            int8_t voice = free_note(data, &(notes[j]));
+            if(voice >= 0){
+                poly_squeeze_note_t * note = get_note_with_voice(data, voice);
+                if(note == NULL){
+                    voice_stop(&(voices[voice]));
+                } else {
+                    voice_start(&(voices[voice]), note->pitch, note->vol);
                 }
             }
         }
-        for(uint8_t j = 0; j < data->num_inputs; j++){
-            if((notes[j].voice != -1) && (notes[j].voice < data->num_voices)){
-                voices[notes[j].voice].pitch_out = notes[j].pitch;
-            }
+    }
+    for(uint8_t j = 0; j < data->num_inputs; j++){
+        if((notes[j].voice != -1) && (notes[j].voice < data->num_voices)){
+            voices[notes[j].voice].pitch_out = notes[j].pitch;
         }
-        for(uint8_t j = 0; j < data->num_voices; j++){
-            radspa_signal_set_value_check_const(trigger_output_sigs[j], i, voices[j].trigger_out);
-            radspa_signal_set_value_check_const(pitch_output_sigs[j], i, voices[j].pitch_out);
-            voices[j]._start_trigger = voices[j].trigger_out;
-        }
+    }
+    for(uint8_t j = 0; j < data->num_voices; j++){
+        uint8_t k = data->num_inputs + j;
+        radspa_signal_set_const_value(&poly_squeeze->signals[TRIGGER_OUTPUT + NUM_MPX * k], voices[j].trigger_out);
+        radspa_signal_set_const_value(&poly_squeeze->signals[PITCH_OUTPUT + NUM_MPX * k], voices[j].pitch_out);
+        voices[j]._start_trigger = voices[j].trigger_out;
     }
 }
 
@@ -184,7 +169,7 @@ radspa_t * poly_squeeze_create(uint32_t init_var){
 
     uint8_t num_notes = num_inputs;
 
-    uint32_t num_signals = num_voices * 2 + num_inputs * 2;
+    uint32_t num_signals = num_voices * NUM_MPX + num_inputs * NUM_MPX;
     size_t data_size = sizeof(poly_squeeze_data_t);
     data_size += sizeof(poly_squeeze_voice_t) * num_voices;
     data_size += sizeof(poly_squeeze_note_t) * num_notes;
@@ -194,13 +179,13 @@ radspa_t * poly_squeeze_create(uint32_t init_var){
 
     poly_squeeze->render = poly_squeeze_run;
 
-    radspa_signal_set_group(poly_squeeze, num_inputs, 2, POLY_SQUEEZE_TRIGGER_INPUT, "trigger_in",
+    radspa_signal_set_group(poly_squeeze, num_inputs, NUM_MPX, TRIGGER_INPUT, "trigger_in",
             RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_TRIGGER, 0);
-    radspa_signal_set_group(poly_squeeze, num_inputs, 2, POLY_SQUEEZE_PITCH_INPUT, "pitch_in",
+    radspa_signal_set_group(poly_squeeze, num_inputs, NUM_MPX, PITCH_INPUT, "pitch_in",
             RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_SCT, RADSPA_SIGNAL_VAL_SCT_A440);
-    radspa_signal_set_group(poly_squeeze, num_voices, 2, POLY_SQUEEZE_TRIGGER_OUTPUT + 2*num_inputs, "trigger_out",
+    radspa_signal_set_group(poly_squeeze, num_voices, NUM_MPX, TRIGGER_OUTPUT + NUM_MPX*num_inputs, "trigger_out",
             RADSPA_SIGNAL_HINT_OUTPUT | RADSPA_SIGNAL_HINT_TRIGGER, 0);
-    radspa_signal_set_group(poly_squeeze, num_voices, 2, POLY_SQUEEZE_PITCH_OUTPUT + 2*num_inputs, "pitch_out",
+    radspa_signal_set_group(poly_squeeze, num_voices, NUM_MPX, PITCH_OUTPUT + NUM_MPX*num_inputs, "pitch_out",
             RADSPA_SIGNAL_HINT_OUTPUT | RADSPA_SIGNAL_HINT_SCT, RADSPA_SIGNAL_VAL_SCT_A440);
 
     poly_squeeze_data_t * data = poly_squeeze->plugin_data;

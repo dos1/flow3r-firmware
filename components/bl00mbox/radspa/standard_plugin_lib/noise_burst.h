@@ -6,6 +6,8 @@ typedef struct {
     int32_t counter;
     int32_t limit;
     int16_t trigger_prev;    
+    int16_t last_out;
+    bool hold;
 } noise_burst_data_t;
 
 extern radspa_descriptor_t noise_burst_desc;

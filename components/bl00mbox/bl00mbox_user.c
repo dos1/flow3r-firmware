@@ -3,14 +3,7 @@
 
 // get signal struct from a signal index
 radspa_signal_t * bl00mbox_signal_get_by_index(radspa_t * plugin, uint16_t signal_index){
-    radspa_signal_t * ret = NULL;
-    if(plugin == NULL) return ret;
-    ret = plugin->signals;
-    for(uint16_t i = 0; i < signal_index; i++){
-        ret = ret->next;
-        if(ret == NULL) break;
-    }
-    return ret;
+    return &(plugin->signals[signal_index]);
 }
 
 static uint64_t bl00mbox_bud_index = 1;
@@ -281,9 +274,11 @@ bl00mbox_bud_t * bl00mbox_channel_new_bud(uint8_t channel, uint32_t id, uint32_t
     radspa_t * plugin = desc->create_plugin_instance(init_var);
     if(plugin == NULL){ free(bud); return NULL; }
 
+    bud->init_var = init_var;
     bud->plugin = plugin;
     bud->channel = channel;
-    //TODO: look for empty indices
+    bud->is_being_rendered = false;
+    //TODO: look for empty indices? maybe?
     bud->index = bl00mbox_bud_index;
     bl00mbox_bud_index++;
     bud->chan_next = NULL;
@@ -648,6 +643,14 @@ uint32_t bl00mbox_channel_bud_get_plugin_id(uint8_t channel, uint32_t bud_index)
     return bud->plugin->descriptor->id;
 }
 
+uint32_t bl00mbox_channel_bud_get_init_var(uint8_t channel, uint32_t bud_index){
+    bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
+    if(chan == NULL) return false;
+    bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
+    if(bud == NULL) return false;
+    return bud->init_var;
+}
+
 uint16_t bl00mbox_channel_bud_get_num_signals(uint8_t channel, uint32_t bud_index){
     bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
     if(chan == NULL) return false;
@@ -703,6 +706,7 @@ bool bl00mbox_channel_bud_set_signal_value(uint8_t channel, uint32_t bud_index, 
     if(bud == NULL) return false;
     radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, bud_signal_index);
     if(sig == NULL) return false;
+    while(bud->is_being_rendered) {};
 
     if(value == -32678){
         sig->value = 0;
@@ -715,16 +719,18 @@ bool bl00mbox_channel_bud_set_signal_value(uint8_t channel, uint32_t bud_index, 
 
 int16_t bl00mbox_channel_bud_get_signal_value(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index){
     bl00mbox_channel_t * chan = bl00mbox_get_channel(channel);
-    if(chan == NULL) return false;
+    if(chan == NULL) return -32768;
     bl00mbox_bud_t * bud = bl00mbox_channel_get_bud_by_index(channel, bud_index);
-    if(bud == NULL) return false;
+    if(bud == NULL) return -32768;
     radspa_signal_t * sig = bl00mbox_signal_get_by_index(bud->plugin, bud_signal_index);
-    if(sig == NULL) return false;
+    if(sig == NULL) return -32768;
+    while(bud->is_being_rendered) {};
 
-    if((sig->hints & RADSPA_SIGNAL_HINT_OUTPUT) && (sig->buffer != NULL)){
+    if(sig->buffer != NULL){
         return sig->buffer[0];
+    } else {
+        return sig->value;
     }
-    return sig->value;
 }
 
 uint32_t bl00mbox_channel_bud_get_signal_hints(uint8_t channel, uint32_t bud_index, uint32_t bud_signal_index){
@@ -745,6 +751,7 @@ bool bl00mbox_channel_bud_set_table_value(uint8_t channel, uint32_t bud_index, u
     if(bud == NULL) return false;
     if(bud->plugin->plugin_table == NULL) return false;
     if(table_index >= bud->plugin->plugin_table_len) return false;
+    while(bud->is_being_rendered) {};
     bud->plugin->plugin_table[table_index] = value;
     bl00mbox_channel_event(channel);
     return true;
@@ -757,6 +764,7 @@ int16_t bl00mbox_channel_bud_get_table_value(uint8_t channel, uint32_t bud_index
     if(bud == NULL) return false;
     if(bud->plugin->plugin_table == NULL) return false;
     if(table_index >= bud->plugin->plugin_table_len) return false;
+    while(bud->is_being_rendered) {};
     return bud->plugin->plugin_table[table_index];
 }
 

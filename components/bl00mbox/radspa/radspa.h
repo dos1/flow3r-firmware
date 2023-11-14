@@ -43,10 +43,6 @@
 #define RADSPA_SIGNAL_HINT_TRIGGER (1<<2)
 #define RADSPA_SIGNAL_HINT_GAIN (1<<3)
 #define RADSPA_SIGNAL_HINT_SCT (1<<5)
-#define RADSPSA_SIGNAL_HINT_REDUCED_RANGE (1<<6)
-#define RADSPSA_SIGNAL_HINT_POS_SHIFT (1<<7)
-// 6 bit number, 0 for non-stepped, else number of steps
-#define RADSPSA_SIGNAL_HINT_STEPPED_LSB (1<<8)
 
 #define RADSPA_SIGNAL_VAL_SCT_A440 (INT16_MAX - 6*2400)
 #define RADSPA_SIGNAL_VAL_UNITY_GAIN (1<<12)
@@ -83,16 +79,10 @@ typedef struct _radspa_signal_t{
     int16_t value;
     // when the signal has last requested to render its source
     uint32_t render_pass_id;
-    // linked list pointer
-    struct _radspa_signal_t * next;
 } radspa_signal_t;
 
 typedef struct _radspa_t{
     const radspa_descriptor_t * descriptor;
-
-    // linked list of all i/o signals of the module and length of list
-    radspa_signal_t * signals; 
-    uint8_t len_signals;
     
     // renders all signal outputs for num_samples if render_pass_id has changed
     // since the last call, else does nothing.
@@ -101,53 +91,17 @@ typedef struct _radspa_t{
     // stores id number of render pass.
     uint32_t render_pass_id;
 
+    // init var that was used for creating the plugin. if the plugin needs to modify the value to
+    // a valid range it may do so at any point in time.
+    uint32_t init_var;
 
     void * plugin_data; // internal data for the plugin to use. should not be accessed from outside.
     uint32_t plugin_table_len;
     int16_t * plugin_table;
+
+    uint8_t len_signals;
+    radspa_signal_t signals[]; 
 } radspa_t;
-
-
-/* SIGNAL HELPERS
- */
-
-inline int16_t radspa_clip(int32_t a){
-    if(a > 32767){
-         return 32767;
-    } else if(a < -32767){
-         return -32767;
-    }
-    return a;
-}
-
-inline int16_t radspa_add_sat(int32_t a, int32_t b){ return radspa_clip(a+b); }
-inline int32_t radspa_mult_shift(int32_t a, int32_t b){ return radspa_clip((a*b)>>15); }
-inline int32_t radspa_gain(int32_t a, int32_t b){ return radspa_clip((a*b)>>12); }
-
-inline int16_t radspa_trigger_start(int16_t velocity, int16_t * hist){
-    if(!velocity) velocity = 1;
-    if(velocity == -32768) velocity = 1;
-    if(velocity < 0) velocity = -velocity;
-    (* hist) = ((* hist) > 0) ? -velocity : velocity;
-    return * hist;
-}
-
-inline int16_t radspa_trigger_stop(int16_t * hist){
-    (* hist) = 0;
-    return * hist;
-}
-
-inline int16_t radspa_trigger_get(int16_t trigger_signal, int16_t * hist){
-    if((* hist) == trigger_signal) return 0;
-    (* hist) = trigger_signal;
-    if(!trigger_signal){
-        return  -1;
-    } else if(trigger_signal < 0 ){
-        return -trigger_signal;
-    } else {
-        return trigger_signal;
-    }
-}
 
 /* REQUIREMENTS
  * Hosts must provide implementations for the following functions:

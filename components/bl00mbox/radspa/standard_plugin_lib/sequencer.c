@@ -1,7 +1,7 @@
 #include "sequencer.h"
 
 radspa_descriptor_t sequencer_desc = {
-    .name = "_sequencer",
+    .name = "sequencer",
     .id = 56709,
     .description =  "sequencer that can output triggers or general control signals, best enjoyed through the "
                     "'sequencer' patch.\ninit_var: 1st byte (lsb): number of tracks, 2nd byte: number of steps"

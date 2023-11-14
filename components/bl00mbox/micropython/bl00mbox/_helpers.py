@@ -11,7 +11,7 @@ def terminal_scope(
     fun=None,
     fun_ms=None,
 ):
-    """give it a signal and show it on terminal uwu"""
+    """give it a signal and show it on terminal"""
     if signal_max <= signal_min:
         return
     ms_counter = 0
@@ -24,15 +24,19 @@ def terminal_scope(
                 if fun_ms <= fun_counter:
                     fun()
                     fun_counter = fun_counter % fun_ms
-        val = int((width * (signal.value - signal_min)) / (signal_max - signal_min))
-        if val > width:
-            val = width
-        if val < 0:
-            val = 0
+        raw_val = signal.value
         ret = f"{ms_counter:06d}"
-        ret += " [" + "X" * val + "." * (width - val) + "]"
-        percent = int(100 * val / width)
-        ret += f" {percent:02d}%"
+        if raw_val == -32768:
+            ret += " [" + "?" * width + "] INVALID"
+        else:
+            val = int((width * (raw_val - signal_min)) / (signal_max - signal_min))
+            if val > width:
+                val = width
+            if val < 0:
+                val = 0
+            ret += " [" + "X" * val + "." * (width - val) + "]"
+            percent = int(100 * val / width)
+            ret += f" {percent:02d}%"
         print(ret)
         time.sleep_ms(delay_ms)
         ms_counter += delay_ms

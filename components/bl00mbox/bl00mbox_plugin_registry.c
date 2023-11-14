@@ -88,10 +88,12 @@ radspa_descriptor_t * bl00mbox_plugin_registry_get_id_from_index(uint32_t index)
  */
 
 #include "osc_fm.h"
+#include "osc.h"
 #include "env_adsr.h"
 #include "ampliverter.h"
 #include "delay.h"
 #include "lowpass.h"
+#include "filter.h"
 #include "sequencer.h"
 #include "sampler.h"
 #include "flanger.h"
@@ -107,21 +109,25 @@ radspa_descriptor_t * bl00mbox_plugin_registry_get_id_from_index(uint32_t index)
 
 void bl00mbox_plugin_registry_init(void){
     if(bl00mbox_plugin_registry_is_initialized) return;
-    plugin_add(&osc_fm_desc);
-    plugin_add(&ampliverter_desc);
-    plugin_add(&env_adsr_desc);   
-    plugin_add(&delay_desc);   
-    plugin_add(&lowpass_desc);   
+    plugin_add(&osc_desc);
+    plugin_add(&filter_desc);
     plugin_add(&sequencer_desc);
     plugin_add(&sampler_desc);
+    plugin_add(&multipitch_desc);
+    plugin_add(&bl00mbox_line_in_desc);
+    plugin_add(&distortion_desc);
+    plugin_add(&mixer_desc);
     plugin_add(&flanger_desc);
     plugin_add(&noise_desc);
     plugin_add(&noise_burst_desc);
-    plugin_add(&distortion_desc);
-    plugin_add(&mixer_desc);
+    plugin_add(&env_adsr_desc);   
+    plugin_add(&delay_desc);   
+
     plugin_add(&range_shifter_desc);
     plugin_add(&poly_squeeze_desc);
     plugin_add(&slew_rate_limiter_desc);
-    plugin_add(&multipitch_desc);
-    plugin_add(&bl00mbox_line_in_desc);
+    plugin_add(&ampliverter_desc);
+
+    plugin_add(&osc_fm_desc);
+    plugin_add(&lowpass_desc);   
 }

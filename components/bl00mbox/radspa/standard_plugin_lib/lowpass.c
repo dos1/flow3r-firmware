@@ -3,8 +3,8 @@
 radspa_t * lowpass_create(uint32_t init_var);
 radspa_descriptor_t lowpass_desc = {
     .name = "lowpass",
-    .id = 69420,
-    .description = "2nd order lowpass lowpass, runs rly sluggish rn, sowy",
+    .id = 694202,
+    .description = "[DEPRECATED, replacement: filter]",
     .create_plugin_instance = lowpass_create,
     .destroy_plugin_instance = radspa_standard_plugin_destroy
 };

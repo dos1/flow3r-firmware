@@ -7,6 +7,7 @@ idf_component_register(
         bl00mbox_user.c
         bl00mbox_plugin_registry.c
         bl00mbox_radspa_requirements.c
+        radspa/standard_plugin_lib/osc.c
         radspa/standard_plugin_lib/osc_fm.c
         radspa/standard_plugin_lib/env_adsr.c
         radspa/standard_plugin_lib/ampliverter.c
@@ -19,6 +20,7 @@ idf_component_register(
         radspa/standard_plugin_lib/noise_burst.c
         radspa/standard_plugin_lib/distortion.c
         radspa/standard_plugin_lib/lowpass.c
+        radspa/standard_plugin_lib/filter.c
         radspa/standard_plugin_lib/mixer.c
         radspa/standard_plugin_lib/range_shifter.c
         radspa/standard_plugin_lib/poly_squeeze.c

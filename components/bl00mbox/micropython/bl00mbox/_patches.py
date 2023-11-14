@@ -104,32 +104,38 @@ class sampler(_Patch):
     requires a wave file (str) or max sample length in milliseconds (int). default path: /sys/samples/
     """
 
+    # DEPRECATED
+    _READ_HEAD_POS = 0 // 2
+    _WRITE_HEAD_POS = 2 // 2
+    _SAMPLE_START = 4 // 2
+    _SAMPLE_LEN = 6 // 2
+    _SAMPLE_RATE = 8 // 2
+    _STATUS = 10
+    _BUFFER = 11
+
     def __init__(self, chan, init_var):
         # init can be filename to load into ram
         super().__init__(chan)
-        self.buffer_offset_i16 = 9
+        self.buffer_offset_i16 = 11
         self._filename = ""
         if type(init_var) == str:
-            filename = init_var
-            f = wave.open(self._convert_filename(filename), "r")
-
-            self._len_frames = f.getnframes()
             self.plugins.sampler = chan.new(
-                bl00mbox.plugins._sampler_ram, self.memory_len
+                bl00mbox.plugins.sampler, self._convert_filename(init_var)
             )
-
-            f.close()
-            self.load(filename)
         else:
-            self._len_frames = int(48 * init_var)
-            self.plugins.sampler = chan.new(
-                bl00mbox.plugins._sampler_ram, self.memory_len
-            )
+            self.plugins.sampler = chan.new(bl00mbox.plugins.sampler, init_var)
 
-        self.signals.trigger = self.plugins.sampler.signals.trigger
-        self.signals.output = self.plugins.sampler.signals.output
-        self.signals.rec_in = self.plugins.sampler.signals.rec_in
-        self.signals.rec_trigger = self.plugins.sampler.signals.rec_trigger
+        self.signals.trigger = self.plugins.sampler.signals.playback_trigger
+        self.signals.output = self.plugins.sampler.signals.playback_output
+        self.signals.rec_in = self.plugins.sampler.signals.record_input
+        self.signals.rec_trigger = self.plugins.sampler.signals.record_trigger
+
+        # terrible backwards compatibility hack, never do that IRL
+        del self.plugins.sampler.signals._setattr_allowed
+        self.plugins.sampler.signals.pitch_shift = (
+            self.plugins.sampler.signals.playback_speed
+        )
+        self.plugins.sampler.signals._setattr_allowed = True
 
     def _convert_filename(self, filename):
         # TODO: waht if filename doesn't exist?
@@ -142,73 +148,20 @@ class sampler(_Patch):
 
     def load(self, filename):
         filename = self._convert_filename(filename)
-        if not os.path.exists(filename):
-            return False
         try:
-            f = wave.open(filename, "r")
-            assert f.getsampwidth() == 2
-            assert f.getnchannels() in (1, 2)
-            assert f.getcomptype() == "NONE"
+            self.plugins.sampler.load(filename)
         except:
+            # no proper exception catching bc backwards compat
             return False
-
-        frames = f.getnframes()
-        if frames > self.memory_len:
-            frames = self.memory_len
-        self.sample_len = frames
-
-        self.sample_rate = f.getframerate()
-
-        BUFFER_SIZE = int(48000 * 2.5)
-
-        if f.getnchannels() == 1:
-            # fast path for mono
-            table = self.plugins.sampler.table_bytearray
-            for i in range(
-                2 * self.buffer_offset_i16,
-                (self.sample_len + self.buffer_offset_i16) * 2,
-                BUFFER_SIZE * 2,
-            ):
-                table[i : i + BUFFER_SIZE * 2] = f.readframes(BUFFER_SIZE)
-        else:
-            # somewhat fast path for stereo
-            table = self.plugins.sampler.table_int16_array
-            for i in range(
-                self.buffer_offset_i16,
-                self.sample_len + self.buffer_offset_i16,
-                BUFFER_SIZE,
-            ):
-                frame = f.readframes(BUFFER_SIZE)
-                for j in range(0, len(frame) // 4):
-                    value = int.from_bytes(frame[4 * j : 4 * j + 2], "little")
-                    table[i + j] = value
-        f.close()
         return True
 
     def save(self, filename, overwrite=False):
         filename = self._convert_filename(filename)
-        if os.path.exists(filename):
-            if overwrite:
-                os.remove(filename)
-            else:
-                return False
-        f = wave.open(filename, "w")
-        f.setnchannels(1)
-        f.setsampwidth(2)
-        f.setframerate(self.sample_rate)
-        start = self._offset_index(0)
-        end = self._offset_index(self.sample_len)
-        print("start: " + str(start))
-        print("end: " + str(end))
-        print("memory_len: " + str(self.memory_len))
-
-        table = self.plugins.sampler.table_bytearray
-        if end > start:
-            f.writeframes(table[2 * start : 2 * end])
-        else:
-            f.writeframes(table[2 * start :])
-            f.writeframes(table[2 * self.buffer_offset_i16 : 2 * end])
-        f.close()
+        try:
+            self.plugins.sampler.save(filename)
+        except:
+            # no proper exception catching bc backwards compat
+            return False
         return True
 
     def _offset_index(self, index):
@@ -220,79 +173,54 @@ class sampler(_Patch):
 
     @property
     def memory_len(self):
-        return self._len_frames
-
-    def _decode_uint32(self, pos):
-        table = self.plugins.sampler.table_int16_array
-        lsb = table[pos]
-        msb = table[pos + 1]
-        if lsb < 0:
-            lsb += 65536
-        if msb < 0:
-            msb += 65536
-        return lsb + (msb * (1 << 16))
-
-    def _encode_uint32(self, pos, num):
-        if num >= (1 << 32):
-            num = (1 << 32) - 1
-        if num < 0:
-            num = 0
-        msb = (num // (1 << 16)) & 0xFFFF
-        lsb = num & 0xFFFF
-        if lsb > 32767:
-            lsb -= 65536
-        if msb > 32767:
-            msb -= 65536
-        table = self.plugins.sampler.table_int16_array
-        table[pos] = lsb
-        table[pos + 1] = msb
+        return self.plugins.sampler.buffer_length
 
     @property
     def read_head_position(self):
         table = self.plugins.sampler.table_uint32_array
-        return table[0]
+        return table[self._READ_HEAD_POS]
 
     @read_head_position.setter
     def read_head_position(self, val):
         if val >= self.memory_len:
             val = self.memory_len - 1
         table = self.plugins.sampler.table_uint32_array
-        table[0] = int(val)
+        table[self._READ_HEAD_POS] = int(val)
 
     @property
     def sample_start(self):
         table = self.plugins.sampler.table_uint32_array
-        return table[1]
+        return table[self._SAMPLE_START]
 
     @sample_start.setter
     def sample_start(self, val):
         if val >= self.memory_len:
             val = self.memory_len - 1
         table = self.plugins.sampler.table_uint32_array
-        table[1] = int(val)
+        table[self._SAMPLE_START] = int(val)
 
     @property
     def sample_len(self):
         table = self.plugins.sampler.table_uint32_array
-        return table[2]
+        return table[self._SAMPLE_LEN]
 
     @sample_len.setter
     def sample_len(self, val):
         if val > self.memory_len:
             val = self.memory_len
         table = self.plugins.sampler.table_uint32_array
-        table[2] = int(val)
+        table[self._SAMPLE_LEN] = int(val)
 
     @property
     def sample_rate(self):
         table = self.plugins.sampler.table_uint32_array
-        return table[3]
+        return table[self._SAMPLE_RATE]
 
     @sample_rate.setter
     def sample_rate(self, val):
         table = self.plugins.sampler.table_uint32_array
         if val < 0:
-            table[3] = int(val)
+            table[self._SAMPLE_RATE] = int(val)
 
     @property
     def filename(self):
@@ -303,9 +231,10 @@ class sampler(_Patch):
         """
         returns true once after a record cycle has been completed. useful for checking whether a save is necessary if nothing else has modified the table.
         """
-
-        if self.plugins.sampler_table[8]:
-            self.plugins.sampler_table[8] = 0
+        a = self.plugins.sampler_table[10]
+        if a & (1 << 4) & 0xFF:
+            a = a & ~(1 << 4) & 0xFF
+            self.plugins.sampler_table[10] = a
             return True
         return False
 
@@ -316,8 +245,8 @@ class sequencer(_Patch):
         self.num_steps = num_steps
         self.num_tracks = num_tracks
         init_var = (self.num_steps * 256) + (self.num_tracks)  # magic
+        self.plugins.seq = chan.new(bl00mbox.plugins.sequencer, init_var)
 
-        self.plugins.seq = chan.new(bl00mbox.plugins._sequencer, init_var)
         self.signals.bpm = self.plugins.seq.signals.bpm
         self.signals.beat_div = self.plugins.seq.signals.beat_div
         self.signals.step = self.plugins.seq.signals.step
@@ -339,9 +268,9 @@ class sequencer(_Patch):
         )
         ret += (
             " step: "
-            + str(self.signals.step.value)
+            + str(self.signals.step.value - self.signals.step_start.value)
             + "/"
-            + str(self.signals.step_len.value)
+            + str(self.signals.step_end.value - self.signals.step_start.value)
         )
         ret += "\n  [tracks]"
         """
@@ -387,6 +316,7 @@ class sequencer(_Patch):
 
 
 class fuzz(_Patch):
+    # DEPRECATED
     def __init__(self, chan):
         super().__init__(chan)
         self.plugins.dist = chan.new(bl00mbox.plugins._distortion)
@@ -460,6 +390,7 @@ class karplus_strong(_Patch):
         self.signals.output = self.plugins.flanger.signals.output
 
         self.signals.level = self.plugins.flanger.signals.level
+        self.signals.decay = self.plugins.flanger.signals.decay
         self.decay = 1000
 
     @property

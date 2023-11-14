@@ -71,7 +71,9 @@ bool bl00mbox_audio_do_pointer_change(){
 }
 
 void bl00mbox_channel_event(uint8_t chan){
+#ifdef BL00MBOX_AUTO_FOREGROUNDING
     last_chan_event = chan;
+#endif
 }
 
 bl00mbox_channel_t * bl00mbox_get_channel(uint8_t channel_index){
@@ -85,7 +87,7 @@ uint8_t bl00mbox_channel_get_foreground_index(){
 
 void bl00mbox_channel_set_foreground_index(uint8_t channel_index){
     if(channel_index >= BL00MBOX_CHANNELS) return;
-    bl00mbox_channel_foreground = channel_index;
+    last_chan_event = channel_index;
 }
 
 bool bl00mbox_channel_get_free(uint8_t channel_index){
@@ -164,8 +166,13 @@ int16_t bl00mbox_channel_get_volume(uint8_t chan){
 
 void bl00mbox_audio_bud_render(bl00mbox_bud_t * bud){
     if(bud->render_pass_id == render_pass_id) return;
+#ifdef BL00MBOX_LOOPS_ENABLE
+    if(bud->is_being_rendered) return;
+#endif
+    bud->is_being_rendered = true;
     bud->plugin->render(bud->plugin, full_buffer_len, render_pass_id);
     bud->render_pass_id = render_pass_id;
+    bud->is_being_rendered = false;
 }
 
 static bool bl00mbox_audio_channel_render(bl00mbox_channel_t * chan, int16_t * out, bool adding){

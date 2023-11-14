@@ -20,11 +20,6 @@ radspa_t * noise_burst_create(uint32_t init_var){
     radspa_signal_set(noise_burst, NOISE_BURST_TRIGGER, "trigger", RADSPA_SIGNAL_HINT_INPUT | RADSPA_SIGNAL_HINT_TRIGGER, 0);
     radspa_signal_set(noise_burst, NOISE_BURST_LENGTH_MS, "length", RADSPA_SIGNAL_HINT_INPUT, 100);
     radspa_signal_get_by_index(noise_burst, NOISE_BURST_LENGTH_MS)->unit = "ms";
-
-    noise_burst_data_t * data = noise_burst->plugin_data;
-    data->counter = 15;
-    data->limit = 15;
-
     return noise_burst;
 }
 
@@ -33,27 +28,62 @@ radspa_t * noise_burst_create(uint32_t init_var){
 void noise_burst_run(radspa_t * noise_burst, uint16_t num_samples, uint32_t render_pass_id){
     noise_burst_data_t * plugin_data = noise_burst->plugin_data;
     radspa_signal_t * output_sig = radspa_signal_get_by_index(noise_burst, NOISE_BURST_OUTPUT);
-    if(output_sig->buffer == NULL) return;
     radspa_signal_t * trigger_sig = radspa_signal_get_by_index(noise_burst, NOISE_BURST_TRIGGER);
     radspa_signal_t * length_ms_sig = radspa_signal_get_by_index(noise_burst, NOISE_BURST_LENGTH_MS);
 
+    int16_t trigger = radspa_signal_get_const_value(trigger_sig, render_pass_id);
+    bool trigger_const = trigger != RADSPA_SIGNAL_NONCONST;
+    int16_t vel = radspa_trigger_get(trigger, &(plugin_data->trigger_prev));
+
+    bool output_const = plugin_data->counter == plugin_data->limit;
+
+    // using output_const as proxy if system is running (will no longer be true further down)
+    if((trigger_const) && ((vel < 0) || ((!vel) && output_const))){
+        if(!plugin_data->hold) plugin_data->last_out = 0;
+        plugin_data->counter = plugin_data->limit;
+        radspa_signal_set_const_value(output_sig, plugin_data->last_out);
+        return;
+    }
+
+    int16_t out = plugin_data->last_out;
+
     for(uint16_t i = 0; i < num_samples; i++){
-        int16_t ret = 0;
+        if(!(i && trigger_const)){
+            if(!trigger_const){
+                trigger = radspa_signal_get_value(trigger_sig, i, render_pass_id);
+                vel = radspa_trigger_get(trigger, &(plugin_data->trigger_prev));
+            }
 
-        int16_t trigger = radspa_signal_get_value(trigger_sig, i, render_pass_id);
-        int16_t vel = radspa_trigger_get(trigger, &(plugin_data->trigger_prev));
-
-        if(vel < 0){ // stop
-            plugin_data->counter = plugin_data->limit;
-        } else if(vel > 0 ){ // start
-            plugin_data->counter = 0;
-            int32_t length_ms = radspa_signal_get_value(length_ms_sig, i, render_pass_id);
-            plugin_data->limit = length_ms * 48;
+            if(vel < 0){ // stop
+                plugin_data->counter = plugin_data->limit;
+            } else if(vel > 0 ){ // start
+                if(output_const){
+                    output_const = false;
+                    radspa_signal_set_values(output_sig, 0, i, out);
+                }
+                plugin_data->counter = 0;
+                int32_t length_ms = radspa_signal_get_value(length_ms_sig, i, render_pass_id);
+                if(length_ms > 0){
+                    plugin_data->hold = false;
+                    plugin_data->limit = length_ms * ((SAMPLE_RATE_SORRY) / 1000);
+                } else {
+                    plugin_data->hold = true;
+                    if(length_ms){
+                        plugin_data->limit = -length_ms * ((SAMPLE_RATE_SORRY) / 1000);
+                    } else {
+                        plugin_data->limit = 1;
+                    }
+                }
+            }
         }
         if(plugin_data->counter < plugin_data->limit){
-            ret = radspa_random();
+            out = radspa_random();
             plugin_data->counter++;
+        } else if(!plugin_data->hold){
+            out = 0;
         }
-        radspa_signal_set_value(output_sig, i, ret);
+        if(!output_const) radspa_signal_set_value(output_sig, i, out);
     }
+    if(output_const) radspa_signal_set_const_value(output_sig, out);
+    plugin_data->last_out = out;
 }

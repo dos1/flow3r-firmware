@@ -7,6 +7,8 @@ typedef struct {
     int32_t read_head_position;
     int32_t read_head_offset;
     int32_t manual_prev;
+    int32_t decay_reso;
+    int16_t abs_decay_prev;
 } flanger_data_t;
 
 extern radspa_descriptor_t flanger_desc;

@@ -240,6 +240,14 @@ STATIC mp_obj_t mp_channel_bud_get_plugin_id(mp_obj_t chan, mp_obj_t bud) {
 STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_channel_bud_get_plugin_id_obj,
                                  mp_channel_bud_get_plugin_id);
 
+STATIC mp_obj_t mp_channel_bud_get_init_var(mp_obj_t chan, mp_obj_t bud) {
+    uint32_t init_var = bl00mbox_channel_bud_get_init_var(mp_obj_get_int(chan),
+                                                          mp_obj_get_int(bud));
+    return mp_obj_new_int(init_var);
+}
+STATIC MP_DEFINE_CONST_FUN_OBJ_2(mp_channel_bud_get_init_var_obj,
+                                 mp_channel_bud_get_init_var);
+
 STATIC mp_obj_t mp_channel_bud_get_num_signals(mp_obj_t chan, mp_obj_t bud) {
     uint16_t ret = bl00mbox_channel_bud_get_num_signals(mp_obj_get_int(chan),
                                                         mp_obj_get_int(bud));
@@ -301,11 +309,14 @@ STATIC MP_DEFINE_CONST_FUN_OBJ_3(mp_channel_bud_get_signal_hints_obj,
 
 STATIC mp_obj_t mp_channel_bud_set_signal_value(size_t n_args,
                                                 const mp_obj_t *args) {
+    int32_t value = mp_obj_get_int(args[3]);
+    if (value > 32767) value = 32767;
+    if (value < -32767) value = -32767;
     bool success = bl00mbox_channel_bud_set_signal_value(
-        mp_obj_get_int(args[0]),   // chan
-        mp_obj_get_int(args[1]),   // bud_index
-        mp_obj_get_int(args[2]),   // bud_signal_index
-        mp_obj_get_int(args[3]));  // value
+        mp_obj_get_int(args[0]),  // chan
+        mp_obj_get_int(args[1]),  // bud_index
+        mp_obj_get_int(args[2]),  // bud_signal_index
+        value);
     return mp_obj_new_bool(success);
 }
 STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_channel_bud_set_signal_value_obj,
@@ -536,6 +547,8 @@ STATIC const mp_map_elem_t bl00mbox_globals_table[] = {
       MP_ROM_PTR(&mp_channel_bud_get_description_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_plugin_id),
       MP_ROM_PTR(&mp_channel_bud_get_plugin_id_obj) },
+    { MP_ROM_QSTR(MP_QSTR_channel_bud_get_init_var),
+      MP_ROM_PTR(&mp_channel_bud_get_init_var_obj) },
     { MP_ROM_QSTR(MP_QSTR_channel_bud_get_num_signals),
       MP_ROM_PTR(&mp_channel_bud_get_num_signals_obj) },
 

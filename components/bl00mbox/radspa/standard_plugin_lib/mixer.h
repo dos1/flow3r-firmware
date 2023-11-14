@@ -3,10 +3,8 @@
 #include <radspa_helpers.h>
 
 typedef struct {
+    int32_t dc;
     uint8_t num_inputs;
-    radspa_signal_t * output_sig;
-    radspa_signal_t * gain_sig;
-    radspa_signal_t * input_sigs[];
 } mixer_data_t;
 
 extern radspa_descriptor_t mixer_desc;

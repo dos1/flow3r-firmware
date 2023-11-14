@@ -6,11 +6,14 @@
 #define BL00MBOX_DEFAULT_CHANNEL_VOLUME 8000
 #define BL00MBOX_CHANNELS 32
 #define BL00MBOX_BACKGROUND_MUTE_OVERRIDE_ENABLE
+#define BL00MBOX_AUTO_FOREGROUNDING
+#define BL00MBOX_LOOPS_ENABLE
 
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "radspa.h"
+#include "radspa_helpers.h"
 
 struct _bl00mbox_bud_t;
 struct _bl00mbox_connection_source_t;
@@ -24,7 +27,9 @@ typedef struct _bl00mbox_bud_t{
     char * name;
     uint64_t index; // unique index number for bud
     uint32_t render_pass_id; // may be used by host to determine whether recomputation is necessary
+    uint32_t init_var; // init var that was used for plugin creation
     uint8_t channel; // index of channel that owns the plugin
+    volatile bool is_being_rendered; // true if rendering the plugin is in progress, else false.
     struct _bl00mbox_bud_t * chan_next; //for linked list in bl00mbox_channel_t
 } bl00mbox_bud_t;
 
