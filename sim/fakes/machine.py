@@ -1,3 +1,4 @@
+import os
 import sys
 
 
@@ -32,7 +33,7 @@ class I2C:
 
 def reset():
     print("beep boop i have reset")
-    sys.exit(0)
+    os.execv(sys.executable, ["python"] + sys.argv)
 
 
 def disk_mode_flash():
