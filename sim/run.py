@@ -16,6 +16,7 @@ projectpath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 import random
 import pygame
 import cmath
+import gzip
 import wasmer
 import wasmer_compiler_cranelift
 
