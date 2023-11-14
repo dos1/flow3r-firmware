@@ -50,7 +50,7 @@ class CaptouchPetalState:
 
     @property
     def bottom(self) -> bool:
-        return not self.bottom
+        return not self.top
 
     @property
     def pads(self) -> CaptouchPetalPadsState:
