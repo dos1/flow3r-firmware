@@ -9,6 +9,7 @@ import os
 import sys
 import builtins
 import argparse
+import traceback
 
 
 projectpath = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
@@ -126,6 +127,9 @@ def _stat(path):
 
 
 os.stat = _stat
+
+
+sys.print_exception = lambda x: print(traceback.format_exc())
 
 
 def sim_main():
