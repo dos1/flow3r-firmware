@@ -97,6 +97,16 @@ class Wasm:
         self.free(p)
         return res
 
+    def ctx_x(self, ctx):
+        return self._i.exports.ctx_x(ctx)
+
+    def ctx_y(self, ctx):
+        return self._i.exports.ctx_y(ctx)
+
+    def ctx_logo(self, ctx, *args):
+        args = [float(a) for a in args]
+        return self._i.exports.ctx_logo(ctx, *args)
+
     def ctx_destroy(self, ctx):
         return self._i.exports.ctx_destroy(ctx)
 
@@ -229,16 +239,17 @@ class Context:
 
     @property
     def x(self):
-        return 0
+        return _wasm.ctx_x(self._ctx)
 
     @property
     def y(self):
-        return 0
+        return _wasm.ctx_y(self._ctx)
 
     def _emit(self, text):
         _wasm.ctx_parse(self._ctx, text)
 
-    def logo(self, x, y, r):
+    def logo(self, x, y, dim):
+        _wasm.ctx_logo(self._ctx, x, y, dim)
         return self
 
     def move_to(self, x, y):
