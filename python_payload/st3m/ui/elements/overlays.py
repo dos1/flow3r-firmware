@@ -195,6 +195,7 @@ class Compositor(Responder):
                 self._last_clip.copy(self._clip_rect)
             self._last_enabled = []
         else:
+            self._last_fps_string = ""
             self._clip_rect.clear()
             for i in range(len(self._enabled)):
                 redraw = (
