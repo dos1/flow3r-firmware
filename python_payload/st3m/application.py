@@ -325,6 +325,7 @@ class MenuItemAppLaunch(MenuItem):
                 self._instance = self._bundle.load()
             except BundleLoadException as e:
                 log.error(f"Could not load {self.label()}: {e}")
+                sys.print_exception(e)
                 err = LoadErrorView(e)
                 vm.push(err)
                 return
