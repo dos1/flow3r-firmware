@@ -1,5 +1,6 @@
 import math
 import os
+import sys_kernel
 
 try:
     import inspect
@@ -144,6 +145,10 @@ def sd_card_plugged() -> bool:
     except OSError:
         # OSError: [Errno 19] ENODEV
         return False
+
+
+def is_simulator() -> bool:
+    return sys_kernel.hardware_version() == "simulator"
 
 
 tau = math.pi * 2

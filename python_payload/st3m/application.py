@@ -8,6 +8,7 @@ from st3m.input import InputState
 import st3m.wifi
 from st3m.goose import Optional, List, Dict
 from st3m.logging import Log
+from st3m.utils import is_simulator
 from st3m import settings
 from ctx import Context
 from st3m.ui import led_patterns
@@ -179,11 +180,13 @@ class BundleMetadata:
         containing_path = os.path.dirname(self.path)
         package_name = os.path.basename(self.path)
 
-        if sys.path[1].endswith("python_payload"):
+        if is_simulator():
             # We are in the simulator. Hack around to get this to work.
             prefix = "/flash/sys"
-            assert containing_path.startswith(prefix)
-            containing_path = containing_path.replace(prefix, sys.path[1])
+            if containing_path.startswith(prefix):
+                containing_path = containing_path.replace(prefix, sys.path[1])
+            else:
+                containing_path = containing_path.replace("/flash", "/tmp/flow3r-sim")
 
         new_sys_path = old_sys_path + [containing_path]
         self._sys_path_set(new_sys_path)
