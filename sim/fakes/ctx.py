@@ -103,8 +103,38 @@ class Wasm:
     def ctx_render_ctx(self, ctx, dctx):
         return self._i.exports.ctx_render_ctx(ctx, dctx)
 
+    def stbi_load_from_memory(self, buf):
+        p = self.malloc(len(buf))
+        mem = self._i.exports.memory.uint8_view(p)
+        mem[0 : len(buf)] = buf
+        wh = self.malloc(4 * 3)
+        res = self._i.exports.stbi_load_from_memory(p, len(buf), wh, wh + 4, wh + 8, 4)
+        whmem = self._i.exports.memory.uint32_view(wh // 4)
+        r = (res, whmem[0], whmem[1], whmem[2])
+        self.free(p)
+        self.free(wh)
+
+        res, w, h, c = r
+        b = self._i.exports.memory.uint8_view(res)
+        if c == 3:
+            return r
+        for j in range(h):
+            for i in range(w):
+                b[i * 4 + j * w * 4 + 0] = int(
+                    b[i * 4 + j * w * 4 + 0] * b[i * 4 + j * w * 4 + 3] / 255
+                )
+                b[i * 4 + j * w * 4 + 1] = int(
+                    b[i * 4 + j * w * 4 + 1] * b[i * 4 + j * w * 4 + 3] / 255
+                )
+                b[i * 4 + j * w * 4 + 2] = int(
+                    b[i * 4 + j * w * 4 + 2] * b[i * 4 + j * w * 4 + 3] / 255
+                )
+        return r
+
 
 _wasm = Wasm()
+
+_img_cache = {}
 
 
 class Context:
@@ -137,7 +167,7 @@ class Context:
 
     @image_smoothing.setter
     def image_smoothing(self, v):
-        self._emit(f"imageSmoothing 0")
+        self._emit(f"imageSmoothing {v}")
 
     @property
     def text_align(self):
@@ -294,17 +324,15 @@ class Context:
         )
         return self
 
-    def image(self, path, x, y, width, height):
-        # TODO: replace with base64 encoded, decoded version of image
-        self._emit(f"save")
-        self._emit(f"rectangle {x} {y} {width} {height}")
-        self._emit(f"rgba 0.5 0.5 0.5 0.5")
-        self._emit(f"fill")
-        self._emit(f"rectangle {x} {y} {width} {height}")
-        self._emit(f"gray 1.0")
-        self._emit(f"lineWidth 1")
-        self._emit(f"stroke")
-        self._emit(f"restore")
+    def image(self, path, x, y, w, h):
+        if not path in _img_cache:
+            buf = open(path, "rb").read()
+            _img_cache[path] = _wasm.stbi_load_from_memory(buf)
+        img, width, height, components = _img_cache[path]
+        _wasm.ctx_define_texture(
+            self._ctx, path, width, height, width * components, RGBA8, img, 0
+        )
+        _wasm.ctx_draw_texture(self._ctx, path, x, y, w, h)
         return self
 
     def rectangle(self, x, y, width, height):
