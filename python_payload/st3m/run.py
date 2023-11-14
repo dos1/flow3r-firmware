@@ -22,6 +22,7 @@ from st3m.about import About
 from st3m import settings_menu as settings, logging, processors, wifi
 from st3m.ui import led_patterns
 import st3m.wifi
+import st3m.utils
 
 import captouch, audio, leds, gc, sys_buttons, sys_display, sys_mode, media, bl00mbox
 import os
@@ -182,6 +183,9 @@ def run_app(klass, bundle_path=None):
 
 
 def _yeet_local_changes() -> None:
+    if st3m.utils.is_simulator():
+        # not implemented in simulator
+        return
     os.remove("/flash/sys/.sys-installed")
     machine.reset()
 
