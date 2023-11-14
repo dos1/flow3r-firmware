@@ -32,6 +32,8 @@ in with nixpkgs; rec {
     python3Packages.pygame
     python3Packages.wasmer
     python3Packages.wasmer-compiler-cranelift
+    python3Packages.pymad
+    python3Packages.requests
     emscripten
     ncurses5
     esp-gdb

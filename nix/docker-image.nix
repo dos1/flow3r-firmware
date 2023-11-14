@@ -25,6 +25,7 @@ pkgs.dockerTools.buildImage {
         # simulator deps
         pygame wasmer
         wasmer-compiler-cranelift
+        pymad requests
       ]))
 
       # random build tools
