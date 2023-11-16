@@ -5,6 +5,7 @@
 typedef struct {
     int64_t write_head_pos_long;
     int64_t read_head_pos_long;
+    uint32_t playback_sample_start;
     int16_t pitch_shift_prev;
     int16_t trigger_prev;
     int16_t rec_trigger_prev;

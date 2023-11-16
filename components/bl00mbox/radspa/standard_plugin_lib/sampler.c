@@ -93,7 +93,7 @@ void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_
         }
         if(data->rec_active){
             int16_t rec_in = radspa_signal_get_value(rec_in_sig, i, render_pass_id);
-            uint32_t write_head_pos = (data->write_head_pos_long * 699) >> 25; // equiv to x/48000 (acc 0.008%)
+            int32_t write_head_pos = (data->write_head_pos_long * 699) >> 25; // equiv to x/48000 (acc 0.008%)
             if(data->write_head_pos_prev == write_head_pos){
                 if(data->write_steps){
                     data->rec_acc += rec_in;
@@ -142,6 +142,7 @@ void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_
             if(trigger > 0){
                 data->playback_active = true;
                 data->read_head_pos_long = 0;
+                data->playback_sample_start = sample_start;
                 data->volume = trigger;
                 if(output_mute){
                     radspa_signal_set_values(output_sig, 0, i, 0);
@@ -161,8 +162,14 @@ void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_
             if(read_head_pos >= sample_len){
                 if(buf[STATUS] & (1<<(STATUS_PLAYBACK_LOOP))){
                     while(read_head_pos > sample_len){
-                        data->read_head_pos_long -= (uint64_t) sample_len * 48000;
-                        read_head_pos -= sample_len;
+                        if(sample_len){
+                            data->read_head_pos_long -= (uint64_t) sample_len * 48000;
+                            read_head_pos -= sample_len;
+                        } else {
+                            data->read_head_pos_long = 0;
+                            read_head_pos = 0;
+                            break;
+                        }
                     }
                 } else {
                     data->playback_active = false;
@@ -170,8 +177,15 @@ void sampler_run(radspa_t * sampler, uint16_t num_samples, uint32_t render_pass_
             }
         }
         if(data->playback_active){
-            uint32_t sample_offset_pos = read_head_pos + sample_start;
-            while(sample_offset_pos >= sample_len) sample_offset_pos -= sample_len;
+            uint32_t sample_offset_pos = read_head_pos + data->playback_sample_start;
+            while(sample_offset_pos >= sample_len){
+                if(sample_len){
+                    sample_offset_pos -= sample_len;
+                } else {
+                    sample_offset_pos = 0;
+                    break;
+                }
+            }
             ret = buf[sample_offset_pos + BUFFER_OFFSET];
             if(read_head_pos_subsample){
                 ret *= (64 - read_head_pos_subsample);
