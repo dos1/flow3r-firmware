@@ -76,23 +76,14 @@ class TinySampler(Application):
             self.samplers[i] = self.blm.new(bl00mbox.plugins.sampler, 1000)
             self.samplers[i].signals.playback_output = self.blm.mixer
             self.samplers[i].signals.record_input = self.line_in.signals.right
+            path = self.file_path + "tiny_sample_" + str(i) + ".wav"
+            if not os.path.exists(path):
+                path = "/flash/sys/samples/" + "tiny_sample_" + str(i) + ".wav"
             try:
-                path = self.file_path + "tiny_sample_" + str(i) + ".wav"
                 self.samplers[i].load(path)
                 self.has_data[i] = True
-            except OSError:
+            except (OSError, bl00mbox.Bl00mboxError) as e:
                 self.has_data[i] = False
-            except bl00mbox.Bl00mboxError:
-                self.has_data[i] = False
-            if not self.has_data[i]:  # legacy support
-                try:
-                    path = "/flash/sys/samples/" + "tiny_sample_" + str(i) + ".wav"
-                    self.samplers[i].load(path)
-                    self.has_data[i] = True
-                except OSError:
-                    self.has_data[i] = False
-                except bl00mbox.Bl00mboxError:
-                    self.has_data[i] = False
             if self.has_data[i]:
                 self.samplers[i].signals.playback_speed.tone = self.playback_speed[i]
             self.has_data_stored[i] = self.has_data[i]
@@ -373,31 +364,26 @@ class TinySampler(Application):
         elif self.mode == 4 or release_all:
             for i in range(5):
                 if self.press_event[i * 2]:
-                    try:
-                        path = self.file_path + "tiny_sample_" + str(i) + ".wav"
-                        self.samplers[i].load(path)
-                        self.has_data[i] = True
-                    except OSError:
-                        self.has_data[i] = False
-                    except bl00mbox.Bl00mboxError:
-                        self.has_data[i] = False
-                    self.has_data[i] = self.has_data_stored[i]
+                    path = self.file_path + "tiny_sample_" + str(i) + ".wav"
+                    if not os.path.exists(path):
+                        path = "/flash/sys/samples/" + "tiny_sample_" + str(i) + ".wav"
+                    if os.path.exists(path):
+                        try:
+                            self.samplers[i].load(path)
+                            self.has_data[i] = True
+                        except (OSError, bl00mbox.Bl00mboxError) as e:
+                            self.has_data_stored[i] = False
             for i in range(5):
                 if self.press_event[i * 2 + 1]:
                     if self.has_data[i]:
                         try:
-                            try:
+                            if not os.path.exists(self.file_path):
                                 os.mkdir(self.file_path)
-                            except OSError:
-                                pass
                             path = self.file_path + "tiny_sample_" + str(i) + ".wav"
                             print("saving at: " + path)
                             self.samplers[i].save(path)
                             self.has_data_stored[i] = True
-                        except OSError:
-                            print("failed")
-                            self.has_data_stored[i] = False
-                        except bl00mbox.Bl00mboxError:
+                        except (OSError, bl00mbox.Bl00mboxError) as e:
                             print("failed")
                             self.has_data_stored[i] = False
         elif self.mode == 5 or release_all:
