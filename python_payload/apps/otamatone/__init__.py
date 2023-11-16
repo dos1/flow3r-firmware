@@ -86,54 +86,80 @@ class Otamatone(Application):
         self._blob = Blob()
         self._blm = None
         self._intensity = 0.0
+        self._formants = [
+            [250, 595, 595],
+            [360, 640, 640],
+            [310, 870, 2250],
+            [450, 1030, 2380],
+            [550, 869, 2540],
+            [710, 1100, 2540],
+            [690, 1660, 2490],
+            [550, 1770, 2490],
+            [400, 1920, 2560],
+            [280, 2250, 2890],
+        ]
         self.input.captouch.petals[self.PETAL_NO].whole.repeat_disable()
 
     def _build_synth(self):
         if self._blm is None:
             self._blm = bl00mbox.Channel("Otamatone")
 
-        # Sawtooth oscillator
-        self._osc = self._blm.new(bl00mbox.patches.tinysynth)
-        # Distortion plugin used as a LUT to convert sawtooth into custom square
-        # wave.
-        self._dist = self._blm.new(bl00mbox.plugins._distortion)
-        # Lowpass.
-        self._lp = self._blm.new(bl00mbox.plugins.lowpass)
-        self._lp2 = self._blm.new(bl00mbox.plugins.lowpass)
-        # Mixer.
-        self._mixer = self._blm.new(bl00mbox.plugins.mixer, 2)
+        self._osc = self._blm.new(bl00mbox.plugins.osc)
+        self._env = self._blm.new(bl00mbox.plugins.env_adsr)
+        self._bp = self._blm.new(bl00mbox.plugins.filter)
+        self._bp2 = self._blm.new(bl00mbox.plugins.filter)
+        self._bp3 = self._blm.new(bl00mbox.plugins.filter)
+        self._mixer = self._blm.new(bl00mbox.plugins.mixer, 4)
 
-        # Wire sawtooth -> distortion -> env -> lowpass
-        self._osc.plugins.osc.signals.output = self._dist.signals.input
-        self._osc.plugins.amp.signals.input = self._dist.signals.output
-        self._lp.signals.input = self._osc.signals.output
-        self._lp2.signals.input = self._osc.signals.output
+        self._osc.signals.output = self._env.signals.input
+        self._bp.signals.input = self._env.signals.output
+        self._bp2.signals.input = self._env.signals.output
+        self._bp3.signals.input = self._env.signals.output
 
-        self._lp.signals.output = self._mixer.signals.input0
-        self._lp2.signals.output = self._mixer.signals.input1
+        self._bp.signals.output = self._mixer.signals.input[0]
+        self._bp2.signals.output = self._mixer.signals.input[1]
+        self._bp3.signals.output = self._mixer.signals.input[2]
+        self._env.signals.output = self._mixer.signals.input[3]
+        self._mixer.signals.input_gain[0].dB = 0
+        self._mixer.signals.input_gain[1].dB = 0
+        self._mixer.signals.input_gain[2].dB = -6
+        self._mixer.signals.input_gain[3].dB = -15
         self._mixer.signals.output = self._blm.mixer
 
-        # Closest thing to a waveform number for 'saw'.
-        self._osc.signals.waveform = 20000
-        self._osc.signals.attack = 1
-        self._osc.signals.decay = 0
-        self._osc.signals.sustain = 32767
-
-        # Built custom square wave (low duty cycle)
-        table_len = 129
-        self._dist.table = [
-            500 if i > (0.1 * table_len) else -5000 for i in range(table_len)
-        ]
-
+        self._osc.signals.waveform = (
+            self._osc.signals.waveform.switch.SQUARE * 3
+            + self._osc.signals.waveform.switch.SAW
+        ) // 4
+        self._osc.signals.morph = 27000
+        self._env.signals.attack = 1
+        self._env.signals.decay = 0
+        self._env.signals.sustain = 32767
+        self._bp.signals.mode.switch.BANDPASS = True
+        self._bp2.signals.mode.switch.BANDPASS = True
+        self._bp3.signals.mode.switch.BANDPASS = True
+        self._bp.signals.reso = 24000
+        self._bp2.signals.reso = 24000
+        self._bp3.signals.reso = 24000
         self._set_wah(0.8)
 
     def _set_wah(self, wah_ctrl):
-        self._lp.signals.reso = 1000 + 2500 * (1 - wah_ctrl)
-        self._lp.signals.freq = 1500 * (2 ** (2.5 * wah_ctrl))
-        self._lp.signals.gain.dB = 6 + 3 * (1 - wah_ctrl)
-        self._lp2.signals.reso = 1000 + 1000 * (1 - wah_ctrl)
-        self._lp2.signals.freq = 2800 * (2 ** (2 * wah_ctrl))
-        self._lp2.signals.gain.dB = 6 + 3 * (1 - wah_ctrl)
+        lerp = (wah_ctrl + 1) / 2 * (len(self._formants) - 1)
+        index = int(lerp)
+        lerp = lerp - index
+        if index == (len(self._formants) - 1):
+            self._bp.signals.cutoff.freq = self._formants[index][0]
+            self._bp2.signals.cutoff.freq = self._formants[index][1]
+            self._bp3.signals.cutoff.freq = self._formants[index][2]
+        else:
+            self._bp.signals.cutoff.freq = (1 - lerp) * self._formants[index][
+                0
+            ] + lerp * self._formants[index + 1][0]
+            self._bp2.signals.cutoff.freq = (1 - lerp) * self._formants[index][
+                1
+            ] + lerp * self._formants[index + 1][1]
+            self._bp3.signals.cutoff.freq = (1 - lerp) * self._formants[index][
+                2
+            ] + lerp * self._formants[index + 1][2]
         self._wah = wah_ctrl
 
     def on_exit(self):
@@ -162,7 +188,6 @@ class Otamatone(Application):
         ctx.gray(0)
         ctx.rectangle(-120, -120, 240, 240)
         ctx.fill()
-
         self._blob.draw(ctx)
 
         ctx.restore()
@@ -183,7 +208,7 @@ class Otamatone(Application):
 
         wah_petal = self.input.captouch.petals[self.WAH_PETAL_NO]
         wah_pos = ins.captouch.petals[self.WAH_PETAL_NO].position
-        wah_ctrl = wah_pos[0] / 40000
+        wah_ctrl = wah_pos[0] / 40000 - 0.2
         if wah_ctrl < -1:
             wah_ctrl = -1
         if wah_ctrl > 1:
@@ -191,16 +216,16 @@ class Otamatone(Application):
         wah_ctrl *= -1
 
         if petal.whole.pressed:
-            self._osc.signals.trigger.start()
+            self._env.signals.trigger.start()
 
         if petal.whole.down or petal.whole.pressed:
             if self._intensity < 1.0:
                 self._intensity += 0.1 * (delta_ms / 20)
-            self._osc.signals.pitch.tone = ctrl * 12
+            self._osc.signals.pitch.tone = (ctrl * 15) - 3
 
         if petal.whole.released:
             self._intensity = 0
-            self._osc.signals.trigger.stop()
+            self._env.signals.trigger.stop()
 
         if wah_petal.whole.down:
             self._set_wah(wah_ctrl)
