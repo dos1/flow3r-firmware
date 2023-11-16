@@ -10,12 +10,14 @@ from ctx import Context
 from st3m.ui.view import View, ViewManager
 
 import math
+import os
 
 
 class TinySampler(Application):
     def __init__(self, app_ctx: ApplicationContext) -> None:
         super().__init__(app_ctx)
         self.blm = None
+        self.file_path = "/sd/tiny_sampler/"
 
         self.is_recording = [False] * 5
         self.is_playing = [False] * 5
@@ -27,7 +29,7 @@ class TinySampler(Application):
         self._mode = 0
         self.press_event = [False] * 10
         self.release_event = [False] * 10
-        self.pitch_shift = [0] * 5
+        self.playback_speed = [0] * 5
 
     def _check_mode_avail(self, mode):
         if mode == 0:
@@ -68,17 +70,31 @@ class TinySampler(Application):
         if self.blm is None:
             self.blm = bl00mbox.Channel("tiny sampler")
         self.blm.volume = 32768
-        self.samplers: List[bl00mbox.patches._Patch | Any] = [None] * 5
+        self.samplers = [None] * 5
         self.line_in = self.blm.new(bl00mbox.plugins.bl00mbox_line_in)
         for i in range(5):
-            self.samplers[i] = self.blm.new(bl00mbox.patches.sampler, 1000)
-            self.samplers[i].signals.output = self.blm.mixer
-            self.samplers[i].signals.rec_in = self.line_in.signals.right
-            self.has_data[i] = self.samplers[i].load("tiny_sample_" + str(i) + ".wav")
+            self.samplers[i] = self.blm.new(bl00mbox.plugins.sampler, 1000)
+            self.samplers[i].signals.playback_output = self.blm.mixer
+            self.samplers[i].signals.record_input = self.line_in.signals.right
+            try:
+                path = self.file_path + "tiny_sample_" + str(i) + ".wav"
+                self.samplers[i].load(path)
+                self.has_data[i] = True
+            except OSError:
+                self.has_data[i] = False
+            except bl00mbox.Bl00mboxError:
+                self.has_data[i] = False
+            if not self.has_data[i]:  # legacy support
+                try:
+                    path = "/flash/sys/samples/" + "tiny_sample_" + str(i) + ".wav"
+                    self.samplers[i].load(path)
+                    self.has_data[i] = True
+                except OSError:
+                    self.has_data[i] = False
+                except bl00mbox.Bl00mboxError:
+                    self.has_data[i] = False
             if self.has_data[i]:
-                self.samplers[
-                    i
-                ].plugins.sampler.signals.pitch_shift.tone = self.pitch_shift[i]
+                self.samplers[i].signals.playback_speed.tone = self.playback_speed[i]
             self.has_data_stored[i] = self.has_data[i]
 
     def _highlight_petal(self, num: int, r: int, g: int, b: int) -> None:
@@ -230,9 +246,7 @@ class TinySampler(Application):
         if self.blm is not None:
             for i in range(5):
                 ctx.move_to(dist, text_shift)
-                ctx.text(
-                    str(int(self.samplers[i].plugins.sampler.signals.pitch_shift.tone))
-                )
+                ctx.text(str(int(self.samplers[i].signals.playback_speed.tone)))
                 ctx.move_to(0, 0)
                 ctx.rotate(6.28 / 5)
         ctx.restore()
@@ -317,23 +331,24 @@ class TinySampler(Application):
             for i in range(5):
                 if not self.is_recording[i]:
                     if self.press_event[i * 2]:
-                        self.samplers[i].signals.trigger.start()
+                        self.samplers[i].signals.playback_trigger.start()
                         self.is_playing[i] = True
                         audio.input_thru_set_mute(True)
                     if self.release_event[i * 2]:
-                        self.samplers[i].signals.trigger.stop()
+                        self.samplers[i].signals.playback_trigger.stop()
                         self.is_playing[i] = False
                         audio.input_thru_set_mute(False)
             for i in range(5):
                 if self.press_event[i * 2 + 1]:
                     if not self.is_recording[i]:
-                        self.samplers[i].signals.rec_trigger.start()
+                        self.samplers[i].sample_rate = 12000
+                        self.samplers[i].signals.record_trigger.start()
                         self.is_recording[i] = True
                         if self.mode == 0:
                             audio.input_thru_set_mute(True)
                 if self.release_event[i * 2 + 1]:
                     if self.is_recording[i]:
-                        self.samplers[i].signals.rec_trigger.stop()
+                        self.samplers[i].signals.record_trigger.stop()
                         self.is_recording[i] = False
                         self.has_data[i] = True
                         if self.mode == 0:
@@ -341,56 +356,72 @@ class TinySampler(Application):
         if self.mode == 3 or release_all:
             for i in range(5):
                 if self.press_event[i * 2]:
-                    self.samplers[i].signals.trigger.start()
+                    self.samplers[i].signals.playback_trigger.start()
                     self.is_playing[i] = True
                     audio.input_thru_set_mute(True)
                 if self.release_event[i * 2]:
-                    self.samplers[i].signals.trigger.stop()
+                    self.samplers[i].signals.playback_trigger.stop()
                     self.is_playing[i] = False
                     audio.input_thru_set_mute(False)
             for i in range(5):
                 if self.press_event[i * 2 + 1]:
-                    self.samplers[i].signals.trigger.start()
+                    self.samplers[i].signals.playback_trigger.start()
                     self.is_playing[i] = True
                 if self.release_event[i * 2 + 1]:
-                    self.samplers[i].signals.trigger.stop()
+                    self.samplers[i].signals.playback_trigger.stop()
                     self.is_playing[i] = False
         elif self.mode == 4 or release_all:
             for i in range(5):
                 if self.press_event[i * 2]:
-                    self.has_data_stored[i] = self.samplers[i].load(
-                        "tiny_sample_" + str(i) + ".wav"
-                    )
+                    try:
+                        path = self.file_path + "tiny_sample_" + str(i) + ".wav"
+                        self.samplers[i].load(path)
+                        self.has_data[i] = True
+                    except OSError:
+                        self.has_data[i] = False
+                    except bl00mbox.Bl00mboxError:
+                        self.has_data[i] = False
                     self.has_data[i] = self.has_data_stored[i]
             for i in range(5):
                 if self.press_event[i * 2 + 1]:
                     if self.has_data[i]:
-                        if self.samplers[i].save(
-                            "tiny_sample_" + str(i) + ".wav", overwrite=True
-                        ):
+                        try:
+                            try:
+                                os.mkdir(self.file_path)
+                            except OSError:
+                                pass
+                            path = self.file_path + "tiny_sample_" + str(i) + ".wav"
+                            print("saving at: " + path)
+                            self.samplers[i].save(path)
                             self.has_data_stored[i] = True
+                        except OSError:
+                            print("failed")
+                            self.has_data_stored[i] = False
+                        except bl00mbox.Bl00mboxError:
+                            print("failed")
+                            self.has_data_stored[i] = False
         elif self.mode == 5 or release_all:
             for i in range(5):
                 if self.press_event[i * 2]:
-                    self.samplers[i].plugins.sampler.signals.pitch_shift.tone += 1
-                    self.pitch_shift[i] = self.samplers[
+                    self.samplers[i].signals.playback_speed.tone += 1
+                    self.playback_speed[i] = self.samplers[
                         i
-                    ].plugins.sampler.signals.pitch_shift.tone
-                    self.samplers[i].signals.trigger.start()
+                    ].signals.playback_speed.tone
+                    self.samplers[i].signals.playback_trigger.start()
                     self.is_playing[i] = True
                 if self.release_event[i * 2]:
-                    self.samplers[i].signals.trigger.stop()
+                    self.samplers[i].signals.playback_trigger.stop()
                     self.is_playing[i] = False
             for i in range(5):
                 if self.press_event[i * 2 + 1]:
-                    self.samplers[i].plugins.sampler.signals.pitch_shift.tone -= 1
-                    self.pitch_shift[i] = self.samplers[
+                    self.samplers[i].signals.playback_speed.tone -= 1
+                    self.playback_speed[i] = self.samplers[
                         i
-                    ].plugins.sampler.signals.pitch_shift.tone
-                    self.samplers[i].signals.trigger.start()
+                    ].signals.playback_speed.tone
+                    self.samplers[i].signals.playback_trigger.start()
                     self.is_playing[i] = True
                 if self.release_event[i * 2 + 1]:
-                    self.samplers[i].signals.trigger.stop()
+                    self.samplers[i].signals.playback_trigger.stop()
                     self.is_playing[i] = False
 
         self.ct_prev = ct
@@ -409,7 +440,7 @@ class TinySampler(Application):
         audio.input_thru_set_mute(self.orig_thru_mute)
         for i in range(5):
             if self.is_recording[i]:
-                self.samplers[i].signals.rec_trigger.stop()
+                self.samplers[i].signals.record_trigger.stop()
                 self.is_recording[i] = False
         if self.blm is not None:
             self.blm.clear()

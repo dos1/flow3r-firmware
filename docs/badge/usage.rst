@@ -133,14 +133,15 @@ Your chords are saved in flash at ``/sys/harmonic_demo.json`` when exiting harmo
 tiny sampler
 ^^^^^^^^^^^^
 
-5-slot sampler! This allows you to record samples with the built-in microphone and replay and save them. There are 3 modes, cycle
-through them with left/right on the app button:
+5-slot sampler. Each slot records up to 4s at 12kHz. There are 4 page groups, cycle through the pages with left/right on the app button:
 
-- Mode 1 (default) ``Sample and Play``: Hold the bottom petals to record samples into their respective slots. Hold the corresponding top petals as indicated by the screen to replay them.
+- ``Record and Play`` (default): Hold the bottom petals to record samples into their respective slots. Hold the corresponding top petals as indicated by the screen to replay them. This mode is actually up to 3 pages depending on how many input sources are available, such as headset mic or line in. If you experience clipping or very low signal you might wanna try to readjust input gain in the audio settings for the respective source.
 
-- Mode 2 ``Save and Load``: Tap a bottom petal to save a sample into flash if recording is available in the slot. Tap a top petal to load the corresponding sample from flash if available there.
+- ``Play with/without passthrough``: If you have global passthrough for any source enabled one of the play buttons mutes passthrough while the button is pressed.
 
-- Mode 3 ``Pitch Shift``: Tap a top petal to increase replay speed of the sample by a semitone, tap a bottom one to decrease it. You can also hold the petals to directly replay the results.
+- ``Save and Load``: Tap a bottom petal to save a sample into the SD card if recording is available in the slot. Tap a top petal to load the corresponding sample from the SD card if available there. Not functioning if there is no SD card.
+
+- ``Pitch Shift``: Tap a top petal to increase replay speed of the sample by a semitone, tap a bottom one to decrease it. You can also hold the petals to directly replay the results.
 
 Samples are saved in flash at ``/sys/samples/tiny_sample_*.wav``.
 
