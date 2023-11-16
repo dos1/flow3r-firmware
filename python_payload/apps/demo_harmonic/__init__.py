@@ -74,7 +74,7 @@ class chord_organ_synth(bl00mbox.patches._Patch):
         self.plugins.multipitch.signals.shift[0].tone = 12 + 7
         self.plugins.multipitch.signals.shift[1].tone = 24 + 4
 
-        self.signals.pitch = self.plugins.osc.signals.pitch
+        self.signals.pitch = self.plugins.multipitch.signals.input
         self.signals.output = self.plugins.mixer.signals.output
         self.signals.trigger = self.plugins.multipitch.signals.trigger_in
 
