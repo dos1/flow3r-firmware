@@ -5,6 +5,8 @@
 typedef struct {
     uint32_t    env_counter;
     uint32_t    velocity;
+    uint32_t    square_mult[5];
+    uint32_t    square_min[5];
     int16_t     trigger_prev;
     uint16_t    num_samples_prev;
     int32_t     env_prev;

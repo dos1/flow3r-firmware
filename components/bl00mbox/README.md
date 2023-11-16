@@ -127,11 +127,11 @@ the sample buffer size does **not** change size dynamically. when loading a file
 
 ### env\_adsr <a name="env_adsr"></a>
 
-generates a linear ADSR envelope and optionally applies it directly to a signal.
+generates a linear ADSR envelope and optionally applies a version with "squared" slopes to a signal.
 
 ###### signals
 
-- `output [output]`: provides a version of `input` with `env_output` applied. lerps between `env_output` cornerpoints to minimize zipper noise. constant buffer if `input` is a constant buffer or if the envelope is idling.
+- `output [output]`: provides a version of `input` with `env_output` applied, however the transition phases are modified with a square function to achieve a CPU-cheap log-ish behavior. lerps between `env_output` cornerpoints to minimize zipper noise. constant buffer if `input` is a constant buffer or if the envelope is idling.
 - `input [input]`: signal to be sent to `output` with `env_output` applied. source render is only requested if envelope is not idling and `gain` is not 0.
 - `env_output [output/lazy/gain]`: provides a constant buffer with the current gain value of the envelope scaled by last event volume received by `trigger` as well as `gain`.
 - `trigger [input/lazy/trigger]`: processes start, stop and restart events as expected and honors event volume.

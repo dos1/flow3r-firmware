@@ -51,9 +51,20 @@ static inline void update_attack_coeffs(radspa_t * env_adsr, uint16_t num_sample
 static inline void update_release_coeffs(radspa_t * env_adsr, uint16_t num_samples, uint32_t render_pass_id){
     env_adsr_data_t * data = env_adsr->plugin_data;
     int16_t release = radspa_signal_get_value(&env_adsr->signals[ENV_ADSR_RELEASE], 0, render_pass_id);
-    if((data->release_prev_ms != release) || (data->num_samples_prev != num_samples)){
+    if((data->release_prev_ms != release) || (data->num_samples_prev != num_samples) || data->release_init_val_prev != data->release_init_val){
         data->release_raw = env_adsr_time_ms_to_val_rise(release, data->release_init_val, num_samples);
         data->release_prev_ms = release;
+        if(data->release_init_val_prev != data->release_init_val){;
+            uint8_t phase = ENV_ADSR_PHASE_RELEASE;
+            data->square_min[phase] = 0;
+            uint32_t delta = data->release_init_val >> 17;;
+            if(delta){
+                data->square_mult[phase] = (1UL<<31) / delta;
+            } else {
+                data->square_mult[phase] = 0;
+            }
+            data->release_init_val_prev = data->release_init_val;
+        }
     }
 }
 
@@ -71,7 +82,17 @@ static inline void update_decay_coeffs(radspa_t * env_adsr, uint16_t num_samples
     if((data->decay_prev_ms != decay) || (data->sustain_prev != data->sustain) || (data->num_samples_prev != num_samples)){
         data->decay_raw = env_adsr_time_ms_to_val_rise(decay, UINT32_MAX - data->sustain, num_samples);
         data->decay_prev_ms = decay;
-        data->sustain_prev = data->sustain;
+        if(data->sustain_prev != data->sustain){
+            uint8_t phase = ENV_ADSR_PHASE_DECAY;
+            data->square_min[phase] = data->sustain >> 17;
+            uint32_t delta = 32767 - data->square_min[phase];
+            if(delta){
+                data->square_mult[phase] = (1UL<<31) / delta;
+            } else {
+                data->square_mult[phase] = 0 ;
+            }
+            data->sustain_prev = data->sustain;
+        }
     }
 }
 
@@ -151,6 +172,17 @@ void env_adsr_run(radspa_t * env_adsr, uint16_t num_samples, uint32_t render_pas
     env = (env * gain) >> 15;
     radspa_signal_set_const_value(&env_adsr->signals[ENV_ADSR_ENV_OUTPUT], env);
 
+    if(data->square_mult[data->env_phase]){
+        uint32_t env_sq = (data->env_counter >> 17) - data->square_min[data->env_phase];
+        env_sq *= env_sq << 1;
+        env_sq = ((uint64_t) data->square_mult[data->env_phase] * env_sq) >> 32;;
+        env_sq += data->square_min[data->env_phase];
+        env = env_sq;
+
+        env = (env * data->velocity) >> 15;
+        env = (env * gain) >> 15;
+    }
+
     int16_t ret = radspa_signal_get_const_value(&env_adsr->signals[ENV_ADSR_INPUT], render_pass_id);
     if(ret == RADSPA_SIGNAL_NONCONST){
         int32_t env_slope = ((env - data->env_prev) << 15) / num_samples;
@@ -192,6 +224,10 @@ radspa_t * env_adsr_create(uint32_t init_var){
     data->sustain_prev = -1;
     data->decay_prev_ms = -1;
     data->env_prev = 0;
+    data->square_min[ENV_ADSR_PHASE_ATTACK] = 0;
+    data->square_mult[ENV_ADSR_PHASE_ATTACK] = (1UL<<31) / 32767;
+    data->square_mult[ENV_ADSR_PHASE_OFF] = 0;
+    data->square_mult[ENV_ADSR_PHASE_SUSTAIN] = 0;
 
     return env_adsr;
 }
