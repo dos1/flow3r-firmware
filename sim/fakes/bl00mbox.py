@@ -7,11 +7,19 @@ class _mock(list):
         pass
 
     def __getattr__(self, attr):
-        if attr in ["tone", "value"]:
+        if attr in ["tone", "value", "dB", "SQUARE", "SAW"]:
             return 0
         if attr in ["trigger_state"]:
             return lambda *args: 0
+        if attr in ["_Patch"]:
+            return _mock
         return _mock()
+
+    def __getitem__(self, item):
+        return _mock()
+
+    def __setitem__(self, item, val):
+        pass
 
     def __call__(self, *args, **kwargs):
         return _mock()
