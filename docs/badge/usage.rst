@@ -143,7 +143,7 @@ tiny sampler
 
 - ``Pitch Shift``: Tap a top petal to increase replay speed of the sample by a semitone, tap a bottom one to decrease it. You can also hold the petals to directly replay the results.
 
-Samples are saved in flash at ``/sys/samples/tiny_sample_*.wav``.
+Samples are saved at ``/sd/tiny_sampler/tiny_sample_*.wav``.
 
 .. _usage_apps:
 
