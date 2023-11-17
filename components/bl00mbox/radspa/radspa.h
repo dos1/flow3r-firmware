@@ -76,7 +76,7 @@ typedef struct _radspa_signal_t{
     // buffer full of samples, may be NULL.
     int16_t * buffer;
     // static value to be used when buffer is NULL for input signals only
-    volatile int16_t value;
+    int16_t value;
     // when the signal has last requested to render its source
     uint32_t render_pass_id;
 } radspa_signal_t;
