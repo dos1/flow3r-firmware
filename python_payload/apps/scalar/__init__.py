@@ -102,11 +102,7 @@ class ScalarApp(Application):
         self.synth_lp = self.blm.new(bl00mbox.plugins.filter)
         self.synth_comb = self.blm.new(bl00mbox.plugins.flanger)
         self.synth_delay.signals.input = self.synth_mixer.signals.output
-        self.synth_delay.signals.time = 69
-        self.synth_delay.signals.level = 6969
-        self.synth_delay.signals.feedback = 420
         self.synth_comb.signals.manual = self.noise_vol_amp.signals.output
-        self.synth_comb.signals.mix = -8000
         self.synth_comb.signals.input = self.synth_delay.signals.output
         self.synth_lp.signals.input = self.synth_comb.signals.output
         self.synth_lp.signals.output = self.blm.mixer
@@ -164,6 +160,59 @@ class ScalarApp(Application):
         self.noise_env.signals.output = self.blm.mixer
         self._set_sound(self._synth_sound_index)
 
+    def _load_user_settings(self):
+        try:
+            user_settings = self._try_load_settings("/sd/scalar/user_settings.json")
+        except OSError:
+            user_settings = None
+        if user_settings is not None:
+            valid_settings = True
+            try:
+                scale_key = user_settings["scale_key"]
+                scale_offset = user_settings["scale_offset"]
+                scale_mode = user_settings["scale_mode"]
+                scale_index = user_settings["scale_index"]
+                synth_sound_index = user_settings["sound_index"]
+            except:
+                valid_settings = False
+            if valid_settings:
+                self._scale_key = scale_key
+                self._scale_offset = scale_offset
+                self._scale_mode = scale_mode
+                self._scale_index = scale_index
+                self._synth_sound_index = synth_sound_index
+
+    def _save_user_settings(self):
+        user_settings = {}
+        user_settings["scale_key"] = self._scale_key
+        user_settings["scale_offset"] = self._scale_offset
+        user_settings["scale_mode"] = self._scale_mode
+        user_settings["scale_index"] = self._scale_index
+        user_settings["sound_index"] = self._synth_sound_index
+        nothing_changed = False
+        try:
+            old_user_settings = self._try_load_settings("/sd/scalar/user_settings.json")
+        except OSError:
+            old_user_settings = None
+
+        if old_user_settings is not None:
+            nothing_changed = True
+            for key in user_settings:
+                try:
+                    assert user_settings[key] == old_user_settings[key]
+                except:
+                    nothing_changed = False
+
+        if not nothing_changed:
+            try:
+                os.mkdir("/sd/scalar")
+            except OSError:
+                pass
+            try:
+                self._try_save_settings("/sd/scalar/user_settings.json", user_settings)
+            except OSError:
+                pass
+
     def _load_settings(self) -> None:
         default_path = self.app_ctx.bundle_path + "/scalar-default.json"
         settings_path = "/flash/scalar.json"
@@ -186,6 +235,15 @@ class ScalarApp(Application):
         try:
             with open(path, "r") as f:
                 return json.load(f)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise  # ignore file not found
+
+    def _try_save_settings(self, path, settings):
+        try:
+            with open(path, "w+") as f:
+                f.write(json.dumps(settings))
+                f.close()
         except OSError as e:
             if e.errno != errno.ENOENT:
                 raise  # ignore file not found
@@ -334,11 +392,13 @@ class ScalarApp(Application):
     def on_enter(self, vm: Optional[ViewManager]) -> None:
         super().on_enter(vm)
         self._load_settings()
+        self._load_user_settings()
         self._update_leds()
         self._build_synth()
 
     def on_exit(self) -> None:
         super().on_exit()
+        self._save_user_settings()
         if self.blm is not None:
             self.blm.clear()
             self.blm.free = True
