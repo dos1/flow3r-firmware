@@ -709,7 +709,7 @@ bool bl00mbox_channel_bud_set_signal_value(uint8_t channel, uint32_t bud_index, 
     while(bud->is_being_rendered) {};
 
     if(value == -32678){
-        sig->value = 0;
+        sig->value = -32767;
     } else {
         sig->value = value;
     }
