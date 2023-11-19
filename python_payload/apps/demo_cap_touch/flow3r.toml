@@ -3,7 +3,7 @@ name = "captouch demo"
 category = "Apps"
 
 [entry]
-class = "App"
+class = "CapTouchDemo"
 
 [metadata]
 author = "Flow3r Badge Authors"

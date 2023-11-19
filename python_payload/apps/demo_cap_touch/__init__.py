@@ -39,11 +39,14 @@ class CapTouchDemo(Application):
         self.last_calib = None
         self.state = 0
         self.timer = 0
-        self.button = 0
+        self.button = None
 
     def think(self, ins: InputState, delta_ms: int) -> None:
         super().think(ins, delta_ms)
-        press_event = (self.button != ins.buttons.app) and ins.buttons.app
+        if self.button is not None:
+            press_event = (self.button != ins.buttons.app) and ins.buttons.app
+        else:
+            press_event = False
         self.button = int(ins.buttons.app)
         if press_event:
             print(self.button)
@@ -115,6 +118,10 @@ class CapTouchDemo(Application):
             elif self.state == 3:
                 ctx.rgb(1.0, 0.5, 0.2)
                 ctx.text("calibrating...")
+
+    def on_enter(self, vm: Optional[ViewManager]) -> None:
+        super().on_enter(vm)
+        self.button = None
 
 
 # For running with `mpremote run`:
