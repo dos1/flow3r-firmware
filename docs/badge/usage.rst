@@ -159,8 +159,7 @@ headphone output.
 Captouch Demo
 ^^^^^^^^^^^^^
 
-Visualizes the positional data from the captouch pads. Unfortunately petal 5 is not
-fully functional with the current driver.
+Visualizes the positional data from the captouch pads. Unfortunately petal 5 is not fully functional with the current driver so it performs slightly worse than all the others. Press shoulder button in any direction to enter captouch calibration mode. *Note: calibration happens during every boot, the data is not permanently stored at this point in time. If you experience a captouch malfunction during runtime and do not wish to lose your runtime data this is useful. In the future we will probably move to calibrating more explicitely and storing the data.*
 
 Files
 ^^^^^
