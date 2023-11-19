@@ -233,11 +233,15 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
     }
 
     // _sequence_request also writes the AFE registers which just got tweaked
-    if (reprogram || tweak) {
+    if (reprogram || tweak || chip->calibration_external) {
         esp_err_t ret;
         if ((ret = _sequence_request(chip, reprogram)) != ESP_OK) {
             COMPLAIN(chip, "%s: requesting next sequence failed: %s",
                      chip->name, esp_err_to_name(ret));
+        }
+        if (chip->calibration_external) {
+            chip->calibration_external = false;
+            ESP_LOGI(TAG, "%s: captouch calibration updated", chip->name);
         }
     }
 }

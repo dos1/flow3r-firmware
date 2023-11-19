@@ -84,3 +84,7 @@ void flow3r_bsp_captouch_calibrate();
 
 // Returns true if captouch is currently calibrating.
 bool flow3r_bsp_captouch_calibrating();
+
+// Set/get calibration data. data[] should be at least 52 entries long.
+void flow3r_bsp_captouch_get_calibration_data(int32_t *data);
+void flow3r_bsp_captouch_set_calibration_data(int32_t *data);

@@ -382,3 +382,35 @@ bool flow3r_bsp_captouch_calibrating() {
     bool top = _top.calibration_pending || _top.calibration_active;
     return bot || top;
 }
+
+void flow3r_bsp_captouch_get_calibration_data(int32_t *data) {
+    while (flow3r_bsp_captouch_calibrating()) {
+    };
+    for (uint8_t i = 0; i < 13; i++) {
+        data[2 * i] = _top.channels[i].afe_offset;
+        data[2 * i + 1] = _top.channels[i].amb;
+        data[2 * i + 26] = _bot.channels[i].afe_offset;
+        data[2 * i + 27] = _bot.channels[i].amb;
+    }
+}
+
+static uint16_t amb_limit(int32_t data) {
+    return data > 65535 ? 65535 : (data < 0 ? 0 : data);
+}
+
+static uint8_t afe_limit(int32_t data) {
+    return data > 63 ? 63 : (data < 0 ? 0 : data);
+}
+
+void flow3r_bsp_captouch_set_calibration_data(int32_t *data) {
+    while (flow3r_bsp_captouch_calibrating()) {
+    };
+    for (uint8_t i = 0; i < 13; i++) {
+        _top.channels[i].afe_offset = afe_limit(data[2 * i]);
+        _top.channels[i].amb = amb_limit(data[2 * i + 1]);
+        _bot.channels[i].afe_offset = afe_limit(data[2 * i + 26]);
+        _bot.channels[i].amb = amb_limit(data[2 * i + 27]);
+    }
+    _top.calibration_external = true;
+    _bot.calibration_external = true;
+}

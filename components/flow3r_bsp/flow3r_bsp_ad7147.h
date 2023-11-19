@@ -24,13 +24,13 @@
 // 12 of them at once in a single sequence.
 typedef struct {
     // Positive AFE offset currently programmed. [0,64).
-    int8_t afe_offset;
+    volatile int8_t afe_offset;
     // Last measurement.
     uint16_t cdc;
 
     // Ambient value used for offset when checking for touch presence. Written
     // by calibration, and attempts to reach a preset calibration setpoint.
-    uint16_t amb;
+    volatile uint16_t amb;
     // Calibration samples gathered during the calibraiton process.
     uint16_t amb_meas[_AD7147_CALIB_CYCLES];
 } ad7147_channel_t;
@@ -61,8 +61,12 @@ typedef struct {
     ad7147_hw_t dev;
     bool failed;
 
+    // Request applying external calibration
     volatile bool calibration_pending;
+    // True if calibration is running or pending
     volatile bool calibration_active;
+    // Set true if external calibration is to be written to hw
+    volatile bool calibration_external;
     int8_t calibration_cycles;
 } ad7147_chip_t;
 
