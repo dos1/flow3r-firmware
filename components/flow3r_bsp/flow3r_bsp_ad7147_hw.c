@@ -276,6 +276,10 @@ esp_err_t ad7147_hw_init(ad7147_hw_t *device, flow3r_i2c_address addr,
     return _configure_full(device);
 }
 
+static inline uint8_t afe_limit(int8_t offset) {
+    return offset < 0 ? 0 : (offset > 63 ? 63 : offset);
+}
+
 esp_err_t ad7147_hw_configure_stages(ad7147_hw_t *device,
                                      const ad7147_sequence_t *seq,
                                      bool reprogram) {
@@ -291,10 +295,14 @@ esp_err_t ad7147_hw_configure_stages(ad7147_hw_t *device,
     // Configure stages as requested.
     for (size_t i = 0; i < seq->len; i++) {
         int8_t channel = seq->channels[i];
-        int8_t offset = seq->pos_afe_offsets[i];
         device->stage_config[i].cinX_connection_setup[channel] = CIN_CDC_POS;
-        unsigned int pos_offset = offset < 0 ? 0 : (offset > 63 ? 63 : offset);
-        device->stage_config[i].pos_afe_offset = pos_offset;
+
+        device->stage_config[i].pos_afe_offset =
+            afe_limit(seq->pos_afe_offsets[i]);
+        device->stage_config[i].neg_afe_offset =
+            afe_limit(seq->neg_afe_offsets[i]);
+        device->stage_config[i].neg_afe_offset_swap = true;
+        device->stage_config[i].pos_afe_offset_swap = false;
     }
     device->dev_config.sequence_stage_num = seq->len - 1;
     device->dev_config.stageX_complete_int_enable[seq->len - 1] = true;

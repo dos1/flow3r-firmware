@@ -401,7 +401,7 @@ static uint16_t amb_limit(int32_t data) {
 }
 
 static uint8_t afe_limit(int32_t data) {
-    return data > 63 ? 63 : (data < 0 ? 0 : data);
+    return data > 126 ? 126 : (data < 0 ? 0 : data);
 }
 
 void flow3r_bsp_captouch_set_calibration_data(int32_t *data) {

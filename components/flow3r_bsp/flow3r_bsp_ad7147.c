@@ -42,10 +42,16 @@ static esp_err_t _sequence_request(ad7147_chip_t *chip, bool reprogram) {
         int8_t channel = seq[i];
         int8_t offset = chip->channels[channel].afe_offset;
         seq_out.channels[i] = channel;
-        seq_out.pos_afe_offsets[i] = offset;
         // seq_out.idle_to_bias[i] = !(chip->is_bot && (channel < 10)); // jumpy
         // petal 2
         seq_out.idle_to_bias[i] = !chip->is_bot;
+        if (offset < 63) {
+            seq_out.neg_afe_offsets[i] = offset;
+            seq_out.pos_afe_offsets[i] = 0;
+        } else {
+            seq_out.neg_afe_offsets[i] = 63;
+            seq_out.pos_afe_offsets[i] = offset - 63;
+        }
     }
 
     esp_err_t ret;
@@ -119,7 +125,7 @@ static bool _channel_afe_tweak(ad7147_chip_t *chip, size_t cix) {
         // Saturated, can't do anything.
         return false;
     }
-    if (offset >= 63 && diff > 0) {
+    if (offset >= 126 && diff > 0) {
         // Saturated, can't do anything.
         return false;
     }
@@ -128,8 +134,8 @@ static bool _channel_afe_tweak(ad7147_chip_t *chip, size_t cix) {
     if (offset < 0) {
         offset = 0;
     }
-    if (offset > 63) {
-        offset = 63;
+    if (offset > 126) {
+        offset = 126;
     }
 
 #if 0
@@ -151,9 +157,9 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
     if (chip->calibration_cycles > 0) {
         // We're doing a calibration cycle on our channels. Instead of writing
         // the data to channel->cdc, write it to channel->amb_meas.
-        size_t j = chip->calibration_cycles - 1;
-        if (j < _AD7147_CALIB_CYCLES) {
-            for (size_t i = 0; i < len; i++) {
+        int8_t j = chip->calibration_cycles - 1;
+        if (j < _AD7147_CALIB_CYCLES) {  // throw away first few datapoints
+            for (int8_t i = 0; i < len; i++) {
                 chip->channels[_channel_from_readout(chip, i)].amb_meas[j] =
                     data[i];
             }
@@ -186,9 +192,18 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
                 // Calibration measurements done. Calculate average amb data for
                 // each channel.
                 for (size_t i = 0; i < chip->nchannels; i++) {
+#if 1
                     uint16_t avg =
                         _average_calib_measurements(chip->channels[i].amb_meas);
                     chip->channels[i].amb = avg;
+#else
+                    // TODO: compare performance
+                    uint32_t avg = 0;
+                    for (uint8_t j = 0; j < _AD7147_CALIB_CYCLES; j++) {
+                        avg += chip->channels[i].amb_meas[j];
+                    }
+                    chip->channels[i].amb = avg / _AD7147_CALIB_CYCLES;
+#endif
                 }
 
                 char msg[256];
@@ -210,11 +225,11 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
                         rerun |= (1 << i);
                     }
                 }
-
                 if (rerun != 0) {
                     // Rerun calibration again,
                     ESP_LOGI(TAG,
-                             "%s: calibration done, but can do better (%04x). "
+                             "%s: calibration cycle complete, but can do "
+                             "better (%04x). "
                              "Retrying.",
                              chip->name, rerun);
                     chip->calibration_cycles = _AD7147_CALIB_CYCLES + 2;
