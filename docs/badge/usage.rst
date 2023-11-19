@@ -156,10 +156,10 @@ Audio passthrough
 Make audio from the line in, onboard mic or headset mic appear on the speakers or
 headphone output.
 
-Captouch Demo
+captouch demo
 ^^^^^^^^^^^^^
 
-Visualizes the positional data from the captouch pads. Unfortunately petal 5 is not fully functional with the current driver so it performs slightly worse than all the others. Press shoulder button in any direction to enter captouch calibration mode. *Note: calibration happens during every boot, the data is not permanently stored at this point in time. If you experience a captouch malfunction during runtime and do not wish to lose your runtime data this is useful. In the future we will probably move to calibrating more explicitely and storing the data.*
+Visualizes the positional data from the captouch pads. Unfortunately petal 5 is not fully functional with the current driver so it performs slightly worse than all the others. Press app button in any direction to enter captouch calibration mode. *Note: calibration happens during every boot, the data is not permanently stored at this point in time. If you experience a captouch malfunction during runtime and do not wish to lose your runtime data this is useful. In the future we will probably move to calibrating more explicitely and storing the data.*
 
 Files
 ^^^^^
@@ -191,7 +191,7 @@ Worms
 
 Touch petals for worms!
 
-Sensors
+sensors
 ^^^^^^^
 
 Shows output of several system sensors. LED hue changes with smoothed relative altitude and goes full circle on a 1m difference. Screen rotates to an upright position if flow3r is not in a horizontal position. The sensor data shown on the display is purposefully unfiltered to reflect the expected noise floor when using the low level API calls. If no battery detected the battery voltage field shows garbage.

@@ -48,7 +48,7 @@ class CapTouchDemo(Application):
         if press_event:
             print(self.button)
         if self.state == 0:
-            if press_event and self.button == ins.buttons.PRESSED_DOWN:
+            if press_event:
                 self.state = 1
             self.dots = []
             for i in range(10):
