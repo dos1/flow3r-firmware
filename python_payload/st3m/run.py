@@ -1,25 +1,13 @@
 from st3m.reactor import Reactor, Responder
-from st3m.goose import List, Set, Optional
-from st3m.ui.menu import (
-    MenuItem,
-    MenuItemBack,
-    MenuItemForeground,
-    MenuItemNoop,
-    MenuItemAction,
-    MenuItemLaunchPersistentView,
-)
+from st3m.goose import Optional
 from st3m.ui.elements import overlays
-from st3m.ui.view import View, ViewManager, ViewTransitionBlend, ViewTransitionDirection
-from st3m.ui.elements.menus import SimpleMenu
+from st3m.ui.view import View, ViewManager, ViewTransitionBlend
 from st3m.ui.elements.sun_menu import SunMenu
 from st3m.application import (
     BundleManager,
-    BundleMetadata,
-    MenuItemAppLaunch,
     ApplicationContext,
     setup_for_app,
 )
-from st3m.about import About
 from st3m import settings_menu as settings, logging, processors, wifi
 from st3m.ui import led_patterns
 import st3m.wifi
