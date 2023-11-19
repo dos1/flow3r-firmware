@@ -10,7 +10,8 @@ from st3m.ui.menu import (
 )
 from st3m.ui.elements import overlays
 from st3m.ui.view import View, ViewManager, ViewTransitionBlend, ViewTransitionDirection
-from st3m.ui.elements.menus import SimpleMenu, SunMenu
+from st3m.ui.elements.menus import SimpleMenu
+from st3m.ui.elements.sun_menu import SunMenu
 from st3m.application import (
     BundleManager,
     BundleMetadata,
@@ -24,7 +25,14 @@ from st3m.ui import led_patterns
 import st3m.wifi
 import st3m.utils
 
-import captouch, audio, leds, gc, sys_buttons, sys_display, sys_mode, media, bl00mbox
+import captouch
+import audio
+import leds
+import gc
+import sys_buttons
+import sys_display
+import sys_mode
+import bl00mbox
 import os
 
 import machine
@@ -61,55 +69,6 @@ def run_responder(r: Responder) -> None:
     reactor = _make_reactor()
     reactor.set_top(r)
     reactor.run()
-
-
-class ApplicationMenu(SimpleMenu):
-    def _restore_sys_defaults(self) -> None:
-        if (
-            not self.vm
-            or not self.is_active()
-            or self.vm.direction != ViewTransitionDirection.BACKWARD
-        ):
-            return
-        # fall back to system defaults on app exit
-        st3m.wifi._onoff_wifi_update()
-        # set the default graphics mode, this is a no-op if
-        # it is already set
-        sys_display.set_mode(0)
-        sys_display.fbconfig(240, 240, 0, 0)
-        leds.set_slew_rate(100)
-        leds.set_gamma(1.0, 1.0, 1.0)
-        leds.set_auto_update(False)
-        leds.set_brightness(settings.num_leds_brightness.value)
-        sys_display.set_backlight(settings.num_display_brightness.value)
-        led_patterns.set_menu_colors()
-        # media.stop()
-
-    def on_enter(self, vm: Optional[ViewManager]) -> None:
-        super().on_enter(vm)
-        self._restore_sys_defaults()
-
-    def on_enter_done(self):
-        # set the defaults again in case the app continued
-        # doing stuff during the transition
-        self._restore_sys_defaults()
-        leds.update()
-
-
-def _get_bundle_menu_kinds(mgr: BundleManager) -> Set[str]:
-    kinds: Set[str] = set()
-    for bundle in mgr.bundles.values():
-        kinds.update(bundle.menu_kinds())
-    return kinds
-
-
-def _get_bundle_menu_entries(mgr: BundleManager, kind: str) -> List[MenuItem]:
-    entries: List[MenuItem] = []
-    ids = sorted(mgr.bundles.keys(), key=str.lower)
-    for id in ids:
-        bundle = mgr.bundles[id]
-        entries += bundle.menu_entries(kind)
-    return entries
 
 
 def _make_compositor(reactor: Reactor, vm: ViewManager) -> overlays.Compositor:
@@ -223,8 +182,6 @@ def run_main() -> None:
 
     leds.set_rgb(0, 255, 0, 0)
     leds.update()
-    bundles = BundleManager()
-    bundles.update()
 
     led_patterns.set_menu_colors()
     leds.set_slew_rate(20)
@@ -241,34 +198,8 @@ def run_main() -> None:
         bl00mbox.Channel(i).clear()
         bl00mbox.Channel(i).free = True
 
-    menu_settings = settings.build_menu()
-    menu_system = ApplicationMenu(
-        [
-            MenuItemBack(),
-            MenuItemLaunchPersistentView("About", About),
-            MenuItemForeground("Settings", menu_settings),
-            MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/gr33nhouse")),
-            MenuItemAppLaunch(BundleMetadata("/flash/sys/apps/updat3r")),
-            MenuItemAction("Disk Mode (Flash)", machine.disk_mode_flash),
-            MenuItemAction("Disk Mode (SD)", machine.disk_mode_sd),
-            MenuItemAction("Yeet Local Changes", _yeet_local_changes),
-            MenuItemAction("Reboot", machine.reset),
-        ],
-    )
-
-    app_kinds = _get_bundle_menu_kinds(bundles)
-    menu_categories = ["Badge", "Music", "Media", "Apps", "Games"]
-    for kind in app_kinds:
-        if kind not in ["Hidden", "System"] and kind not in menu_categories:
-            menu_categories.append(kind)
-
-    categories = [
-        MenuItemForeground(kind, ApplicationMenu([MenuItemBack()] + entries))
-        for kind in menu_categories
-        if (entries := _get_bundle_menu_entries(bundles, kind))
-    ]
-    categories.append(MenuItemForeground("System", menu_system))
-    menu_main = SunMenu(categories)
+    bundles = BundleManager()
+    bundles.update()
 
     if override_main_app is not None:
         requested = [b for b in bundles.bundles.values() if b.name == override_main_app]
@@ -277,7 +208,9 @@ def run_main() -> None:
         if len(requested) == 0:
             raise Exception(f"Requested bundle {override_main_app} not found")
         run_view(requested[0].load(), debug_vm=True)
-    run_view(menu_main, debug_vm=False)
+    else:
+        menu_main = SunMenu(bundles)
+        run_view(menu_main, debug_vm=False)
 
 
 __all__ = [
