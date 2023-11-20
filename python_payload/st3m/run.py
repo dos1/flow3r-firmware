@@ -9,7 +9,6 @@ from st3m.application import (
     setup_for_app,
 )
 from st3m import settings_menu as settings, logging, processors, wifi
-from st3m.ui import led_patterns
 import st3m.wifi
 import st3m.utils
 
@@ -169,10 +168,6 @@ def run_main() -> None:
     leds.set_auto_update(False)
 
     leds.set_rgb(0, 255, 0, 0)
-    leds.update()
-
-    led_patterns.set_menu_colors()
-    leds.set_slew_rate(20)
     leds.update()
 
     try:

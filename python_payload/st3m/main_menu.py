@@ -134,3 +134,10 @@ class MainMenu(SunMenu):
         self._items = categories
         # # self._scroll_controller = ScrollController()
         # self._scroll_controller.set_item_count(len(categories))
+
+    def on_enter(self, vm):
+        super().on_enter(vm)
+        if self.vm.direction == ViewTransitionDirection.FORWARD:
+            led_patterns.set_menu_colors()
+            leds.set_slew_rate(20)
+            leds.update()
