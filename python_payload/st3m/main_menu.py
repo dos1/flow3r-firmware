@@ -7,14 +7,11 @@ from ctx import Context
 
 from st3m.goose import Optional, List, Set
 from st3m.ui.view import ViewManager, ViewTransitionDirection
-from st3m.ui.elements.visuals import Sun
 from st3m import InputState
 from st3m import settings_menu as settings
-from st3m.utils import lerp
 import st3m.wifi
 from st3m.ui import led_patterns
 from st3m.ui.menu import (
-    MenuController,
     MenuItem,
     MenuItemBack,
     MenuItemForeground,
@@ -27,7 +24,7 @@ from st3m.application import (
     MenuItemAppLaunch,
 )
 from st3m.about import About
-from st3m.ui.elements.menus import SimpleMenu
+from st3m.ui.elements.menus import SimpleMenu, SunMenu
 
 
 class ApplicationMenu(SimpleMenu):
@@ -84,19 +81,8 @@ def _yeet_local_changes() -> None:
     machine.reset()
 
 
-class SunMenu(MenuController):
-    """
-    A circular menu with a rotating sun.
-    """
-
-    __slots__ = (
-        "_ts",
-        "_sun",
-    )
-
+class MainMenu(SunMenu):
     def __init__(self, bundles: Optional[list] = None) -> None:
-        self._ts = 0
-        self._sun = Sun()
         if bundles:
             self._bundles = bundles
         else:
@@ -148,41 +134,3 @@ class SunMenu(MenuController):
         self._items = categories
         # # self._scroll_controller = ScrollController()
         # self._scroll_controller.set_item_count(len(categories))
-
-    def think(self, ins: InputState, delta_ms: int) -> None:
-        super().think(ins, delta_ms)
-        self._sun.think(ins, delta_ms)
-        self._ts += delta_ms
-
-    def _draw_item_angled(
-        self, ctx: Context, item: MenuItem, angle: float, activity: float
-    ) -> None:
-        size = lerp(20, 40, activity)
-        color = lerp(0, 1, activity)
-        if color < 0.01:
-            return
-
-        ctx.save()
-        ctx.translate(-120, 0).rotate(angle).translate(140, 0)
-        ctx.font_size = size
-        ctx.rgba(1.0, 1.0, 1.0, color).move_to(0, 0)
-        item.draw(ctx)
-        ctx.restore()
-
-    def draw(self, ctx: Context) -> None:
-        ctx.gray(0)
-        ctx.rectangle(-120, -120, 240, 240).fill()
-
-        self._sun.draw(ctx)
-
-        ctx.font_size = 40
-        ctx.text_align = ctx.CENTER
-        ctx.text_baseline = ctx.MIDDLE
-
-        angle_per_item = 0.4
-
-        current = self._scroll_controller.current_position()
-
-        for ix, item in enumerate(self._items):
-            rot = (ix - current) * angle_per_item
-            self._draw_item_angled(ctx, item, rot, 1 - abs(rot))

@@ -2,7 +2,7 @@ from st3m.reactor import Reactor, Responder
 from st3m.goose import Optional
 from st3m.ui.elements import overlays
 from st3m.ui.view import View, ViewManager, ViewTransitionBlend
-from st3m.ui.elements.sun_menu import SunMenu
+from st3m.main_menu import MainMenu
 from st3m.application import (
     BundleManager,
     ApplicationContext,
@@ -197,7 +197,7 @@ def run_main() -> None:
             raise Exception(f"Requested bundle {override_main_app} not found")
         run_view(requested[0].load(), debug_vm=True)
     else:
-        menu_main = SunMenu(bundles)
+        menu_main = MainMenu(bundles)
         run_view(menu_main, debug_vm=False)
 
 
