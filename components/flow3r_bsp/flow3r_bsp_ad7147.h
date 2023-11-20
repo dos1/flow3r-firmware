@@ -61,8 +61,9 @@ typedef struct {
     ad7147_hw_t dev;
     bool failed;
 
-    bool calibration_pending;
-    size_t calibration_cycles;
+    volatile bool calibration_pending;
+    volatile bool calibration_active;
+    int8_t calibration_cycles;
 } ad7147_chip_t;
 
 // Call to initialize the chip at a given address. Structure must be zeroed, and

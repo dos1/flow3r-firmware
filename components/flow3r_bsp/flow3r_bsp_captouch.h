@@ -83,6 +83,4 @@ flow3r_bsp_captouch_petal_pad_state_t *flow3r_bsp_captouch_pad_for_petal(
 void flow3r_bsp_captouch_calibrate();
 
 // Returns true if captouch is currently calibrating.
-//
-// TODO(q3k): this seems glitchy, investigate.
 bool flow3r_bsp_captouch_calibrating();

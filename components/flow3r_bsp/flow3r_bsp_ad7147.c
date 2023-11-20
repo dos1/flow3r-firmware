@@ -158,17 +158,18 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
     if (chip->seq_position == 0) {
         // Deal with calibration pending flag, possibly starting calibration.
         if (chip->calibration_pending) {
-            if (chip->calibration_cycles == 0) {
+            if (!chip->calibration_active) {
                 ESP_LOGI(TAG, "%s: calibration starting...", chip->name);
                 chip->calibration_cycles = _AD7147_CALIB_CYCLES;
+                chip->calibration_active = true;
             }
             chip->calibration_pending = false;
         }
 
-        if (chip->calibration_cycles > 0) {
+        if (chip->calibration_active) {
             // Deal with active calibration.
             chip->calibration_cycles--;
-            if (chip->calibration_cycles == 0) {
+            if (chip->calibration_cycles <= 0) {
                 // Calibration measurements done. Calculate average amb data for
                 // each channel.
                 for (size_t i = 0; i < chip->nchannels; i++) {
@@ -206,6 +207,7 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
                              chip->name, rerun);
                     chip->calibration_cycles = _AD7147_CALIB_CYCLES;
                 } else {
+                    chip->calibration_active = false;
                     ESP_LOGI(TAG, "%s: calibration done.", chip->name);
                 }
             }

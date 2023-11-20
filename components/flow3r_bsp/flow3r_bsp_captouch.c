@@ -378,7 +378,7 @@ void flow3r_bsp_captouch_calibrate() {
 }
 
 bool flow3r_bsp_captouch_calibrating() {
-    bool bot = _bot.calibration_pending || _bot.calibration_cycles > 0;
-    bool top = _top.calibration_pending || _top.calibration_cycles > 0;
+    bool bot = _bot.calibration_pending || _bot.calibration_active;
+    bool top = _top.calibration_pending || _top.calibration_active;
     return bot || top;
 }
