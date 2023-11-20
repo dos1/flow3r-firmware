@@ -7,7 +7,7 @@
 
 #define TIMEOUT_MS 1000
 
-#define CIN CDC_NONE 0
+#define CIN_CDC_NONE 0
 #define CIN_CDC_NEG 1
 #define CIN_CDC_POS 2
 #define CIN_BIAS 3
@@ -281,8 +281,9 @@ esp_err_t ad7147_hw_configure_stages(ad7147_hw_t *device,
                                      bool reprogram) {
     // Reset all stage/channel configuration.
     for (size_t i = 0; i < 12; i++) {
+        uint8_t idle_con = seq->idle_to_bias[i] ? CIN_BIAS : CIN_CDC_NONE;
         for (int8_t j = 0; j < 13; j++) {
-            device->stage_config[i].cinX_connection_setup[j] = CIN_BIAS;
+            device->stage_config[i].cinX_connection_setup[j] = idle_con;
         }
         device->dev_config.stageX_complete_int_enable[i] = false;
     }

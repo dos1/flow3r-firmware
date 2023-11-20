@@ -43,6 +43,9 @@ static esp_err_t _sequence_request(ad7147_chip_t *chip, bool reprogram) {
         int8_t offset = chip->channels[channel].afe_offset;
         seq_out.channels[i] = channel;
         seq_out.pos_afe_offsets[i] = offset;
+        // seq_out.idle_to_bias[i] = !(chip->is_bot && (channel < 10)); // jumpy
+        // petal 2
+        seq_out.idle_to_bias[i] = !chip->is_bot;
     }
 
     esp_err_t ret;

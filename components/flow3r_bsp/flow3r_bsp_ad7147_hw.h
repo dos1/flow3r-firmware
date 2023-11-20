@@ -100,6 +100,8 @@ typedef struct {
     // For each sequencer stage, AFE offset that this stage should use when
     // sampling the configured channel.
     int8_t pos_afe_offsets[12];
+    // Whether idle pads are supposed to be connected to bias. Awful hack.
+    bool idle_to_bias[12];
 } ad7147_sequence_t;
 
 // Configure sequencer stages.

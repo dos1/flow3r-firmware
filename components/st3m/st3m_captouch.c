@@ -31,8 +31,7 @@ static bool _calibrating = false;
 static inline void _pad_feed(st3m_petal_pad_state_t *pad, uint16_t data,
                              uint8_t index) {
     bool top = (index % 2) == 0;
-    int32_t thres =
-        top ? (TOP_PETAL_THRESHOLD) : (BOTTOM_PETAL_THRESHOLD);
+    int32_t thres = top ? (TOP_PETAL_THRESHOLD) : (BOTTOM_PETAL_THRESHOLD);
     thres = pad->pressed_prev ? thres - (PETAL_HYSTERESIS)
                               : thres;  // some hysteresis
     pad->raw = data;
@@ -85,7 +84,7 @@ static inline void _petal_process(st3m_petal_state_t *petal, uint8_t index) {
     } else {
         petal->pressure = (petal->base.pressure + petal->tip.pressure) / 2;
         int32_t raw = petal->base.raw + petal->tip.raw;
-        if(index == 5) raw *= 2;
+        if (index == 5) raw *= 2;
         petal->pressed = raw > thres;
         int32_t base = petal->base.raw;
         int32_t tip = petal->tip.raw;

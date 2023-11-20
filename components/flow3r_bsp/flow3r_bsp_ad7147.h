@@ -40,6 +40,8 @@ typedef struct {
 typedef struct {
     // Opaque name used to prefix log messages.
     const char *name;
+    // True for bottom chip, false for top
+    bool is_bot;
 
     // [0, n_channels) are the expected connected channels to the inputs of the
     // chip.

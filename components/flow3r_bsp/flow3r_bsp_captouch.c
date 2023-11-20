@@ -106,6 +106,7 @@ static bool _interrupt_shared = false;
 
 static ad7147_chip_t _top = {
     .name = "top",
+    .is_bot = false,
     .nchannels = 12,
     .sequences = {
         {
@@ -120,6 +121,7 @@ static ad7147_chip_t _top = {
 
 static ad7147_chip_t _bot = {
     .name = "bot",
+    .is_bot = true,
     .nchannels = 13,
     .sequences = {
         /// This is the ideal sequence we want. First, all the bottom sensors.
