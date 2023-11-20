@@ -22,6 +22,9 @@
 #define AD7147_REG_DEVICE_ID 0x17
 #define AD7147_REG_STAGE0_CONNECTION 0x80
 
+// uncomment only when u need it else clang-tidy complains
+// static const char *TAG = "flow3r-bsp-ad7147-hw";
+
 // Write single register at `reg`.
 static esp_err_t _i2c_write(const ad7147_hw_t *dev, uint16_t reg,
                             uint16_t data) {
@@ -161,7 +164,14 @@ static esp_err_t _configure_stage(const ad7147_hw_t *dev, uint8_t stage) {
         afe_offset,
         sensitivity,
     };
-    return _i2c_write_multiple(dev, reg, tx, 4);
+    esp_err_t ret = _i2c_write_multiple(dev, reg, tx, 4);
+#if 0
+    uint16_t rx[4];
+    ESP_LOGE(TAG, "write stage config: %u %u %u %u", tx[0], tx[1], tx[2], tx[3]);
+    _i2c_read(dev, reg, rx, 4);
+    ESP_LOGE(TAG, "read stage config:  %u %u %u %u", rx[0], rx[1], rx[2], rx[3]);
+#endif
+    return ret;
 }
 
 // Configure entire device per stage_config and dev_config.

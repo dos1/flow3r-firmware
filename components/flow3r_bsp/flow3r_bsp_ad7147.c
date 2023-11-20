@@ -128,6 +128,15 @@ static bool _channel_afe_tweak(ad7147_chip_t *chip, size_t cix) {
     if (offset > 63) {
         offset = 63;
     }
+
+#if 0
+    // keep around for debugging pls~
+    int32_t old_offset = chip->channels[cix].afe_offset;
+    int32_t chan = cix;
+    ESP_LOGE(TAG, "%s, channel %ld: new afe: %ld, old afe: %ld, reading: %ld", chip->name, chan,
+    offset, old_offset, cur);
+#endif
+
     chip->channels[cix].afe_offset = offset;
     return true;
 }
@@ -140,9 +149,11 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
         // We're doing a calibration cycle on our channels. Instead of writing
         // the data to channel->cdc, write it to channel->amb_meas.
         size_t j = chip->calibration_cycles - 1;
-        for (size_t i = 0; i < len; i++) {
-            chip->channels[_channel_from_readout(chip, i)].amb_meas[j] =
-                data[i];
+        if (j < _AD7147_CALIB_CYCLES) {
+            for (size_t i = 0; i < len; i++) {
+                chip->channels[_channel_from_readout(chip, i)].amb_meas[j] =
+                    data[i];
+            }
         }
     } else {
         // Normal measurement, apply to channel->cdc.
@@ -151,8 +162,7 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
         }
     }
 
-    bool reprogram = _sequence_advance(chip);
-    bool tweak = false;
+    bool reprogram = _sequence_advance(chip) || chip->calibration_external;
 
     // Synchronize on beginning of sequence for calibration logic.
     if (chip->seq_position == 0) {
@@ -160,7 +170,7 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
         if (chip->calibration_pending) {
             if (!chip->calibration_active) {
                 ESP_LOGI(TAG, "%s: calibration starting...", chip->name);
-                chip->calibration_cycles = _AD7147_CALIB_CYCLES;
+                chip->calibration_cycles = _AD7147_CALIB_CYCLES + 2;
                 chip->calibration_active = true;
             }
             chip->calibration_pending = false;
@@ -193,8 +203,7 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
                 // Can we tweak the AFE to get a better measurement?
                 uint16_t rerun = 0;
                 for (size_t i = 0; i < chip->nchannels; i++) {
-                    tweak = _channel_afe_tweak(chip, i);
-                    if (tweak) {
+                    if (_channel_afe_tweak(chip, i)) {
                         rerun |= (1 << i);
                     }
                 }
@@ -205,7 +214,8 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
                              "%s: calibration done, but can do better (%04x). "
                              "Retrying.",
                              chip->name, rerun);
-                    chip->calibration_cycles = _AD7147_CALIB_CYCLES;
+                    chip->calibration_cycles = _AD7147_CALIB_CYCLES + 2;
+                    reprogram = true;
                 } else {
                     chip->calibration_active = false;
                     ESP_LOGI(TAG, "%s: calibration done.", chip->name);
@@ -233,7 +243,7 @@ static void _on_data(void *user, uint16_t *data, size_t len) {
     }
 
     // _sequence_request also writes the AFE registers which just got tweaked
-    if (reprogram || tweak || chip->calibration_external) {
+    if (reprogram) {
         esp_err_t ret;
         if ((ret = _sequence_request(chip, reprogram)) != ESP_OK) {
             COMPLAIN(chip, "%s: requesting next sequence failed: %s",
@@ -255,7 +265,7 @@ esp_err_t flow3r_bsp_ad7147_chip_init(ad7147_chip_t *chip,
     if ((ret = ad7147_hw_init(&chip->dev, address, _on_data, chip)) != ESP_OK) {
         return ret;
     }
-    _calibration_request(chip);
+    // _calibration_request(chip);
     if ((ret = _sequence_request(chip, false)) != ESP_OK) {
         return ret;
     }
