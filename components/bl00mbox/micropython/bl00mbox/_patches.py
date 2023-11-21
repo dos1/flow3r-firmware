@@ -242,10 +242,7 @@ class sampler(_Patch):
 class sequencer(_Patch):
     def __init__(self, chan, num_tracks, num_steps):
         super().__init__(chan)
-        self.num_steps = num_steps
-        self.num_tracks = num_tracks
-        init_var = (self.num_steps * 256) + (self.num_tracks)  # magic
-        self.plugins.seq = chan.new(bl00mbox.plugins.sequencer, init_var)
+        self.plugins.seq = chan.new(bl00mbox.plugins.sequencer, num_tracks, num_steps)
 
         self.signals.bpm = self.plugins.seq.signals.bpm
         self.signals.beat_div = self.plugins.seq.signals.beat_div
@@ -254,6 +251,8 @@ class sequencer(_Patch):
         self.signals.step_start = self.plugins.seq.signals.step_start
         self.signals.sync_in = self.plugins.seq.signals.sync_in
 
+        self.num_tracks = num_tracks
+        self.num_steps = num_steps
         tracktable = [-32767] + ([0] * self.num_steps)
         self.plugins.seq.table = tracktable * self.num_tracks
 
@@ -380,28 +379,28 @@ class karplus_strong(_Patch):
 
         self.plugins.flanger = chan._new_plugin(bl00mbox.plugins.flanger)
 
-        self.plugins.flanger.signals.resonance = 32500
+        self.plugins.flanger.signals.resonance = 0
+        self.plugins.flanger.signals.decay = 1000
         self.plugins.flanger.signals.manual.tone = "A2"
 
         self.plugins.flanger.signals.input = self.plugins.noise.signals.output
 
         self.signals.trigger = self.plugins.noise.signals.trigger
+        self.signals.trigger_length = self.plugins.noise.signals.length
         self.signals.pitch = self.plugins.flanger.signals.manual
         self.signals.output = self.plugins.flanger.signals.output
 
         self.signals.level = self.plugins.flanger.signals.level
         self.signals.decay = self.plugins.flanger.signals.decay
-        self.decay = 1000
+        self.signals.resonance = self.plugins.flanger.signals.resonance
 
     @property
     def decay(self):
-        return self._decay
+        # deprecated
+        return self.plugins.flanger.signals.decay.value
 
     @decay.setter
     def decay(self, val):
-        tone = self.plugins.flanger.signals.manual.tone
-        loss = (50 * (2 ** (-tone / 12))) // (val / 1000)
-        if loss < 2:
-            loss = 2
-        self.plugins.flanger.signals.resonance = 32767 - loss
-        self._decay = val
+        # deprecated
+        self.plugins.flanger.signals.resonance = -2
+        self.plugins.flanger.signals.decay = int(val)

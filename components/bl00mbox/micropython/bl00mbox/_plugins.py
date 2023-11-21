@@ -39,10 +39,12 @@ def _fill():
     for name, value in plugins_list.items():
         setattr(plugins, name, _PluginDescriptor(value))
         # legacy
-        if name == "sequencer":
+        if name == "sequencer" or name == "distortion":
             setattr(plugins, "_" + name, _PluginDescriptor(value))
-        if name == "sampler":
+        elif name == "sampler":
             setattr(plugins, "_sampler_ram", _PluginDescriptor(value))
+        elif name == "delay_static":
+            setattr(plugins, "delay", _PluginDescriptor(value))
 
 
 _fill()
@@ -431,12 +433,12 @@ class _Sampler(_Plugin):
             table[self._SAMPLE_RATE] = int(val)
 
 
-"""
 @_plugin_set_subclass(9000)
 class _Distortion(_Plugin):
-    def symmetric_power(self, power=2, volume=32767, gate=0):
-        table = list(range(129))
-        for num in table:
+    def curve_set_power(self, power=2, volume=32767, gate=0):
+        volume = min(max(volume, -32767), 32767)
+        table = [0] * 129
+        for num in range(len(table)):
             if num < 64:
                 ret = num / 64  # scale to [0..1[ range
                 ret = ret**power
@@ -447,25 +449,60 @@ class _Distortion(_Plugin):
                 ret = (128 - num) / 64  # scale to [0..1] range
                 ret = ret**power
                 table[num] = int(volume * (1 - ret))
-        gate = int(gate) >> 9
+        gate = min(abs(int(gate)), 32767) >> 9
         for i in range(64 - gate, 64 + gate):
             table[i] = 0
+        self.table = table
+
+    @property
+    def _secret_sauce(self):
+        table = self.table_int16_array
+        return table[129]
+
+    @_secret_sauce.setter
+    def _secret_sauce(self, val):
+        val = min(max(int(val), 0), 7)
+        table = self.table_int16_array
+        table[129] = val
+
+    @property
+    def curve(self):
+        return self.table[:129]
+
+    @curve.setter
+    def curve(self, points):
+        # interpolation only implemented for len(points) <= 129,
+        # for longer lists data may be dropped.
+        points_size = len(points)
+        if not points_size:
+            return
+        table = [0] * 129
+        for x, num in enumerate(table):
+            position = x * points_size / 129
+            lower = int(position)
+            lerp = position - lower
+            if position < points_size - 1:
+                table[x] = int(
+                    (1 - lerp) * points[position] + lerp * points[position + 1]
+                )
+            else:
+                table[x] = int(points[points_size - 1])
         self.table = table
 
     def __repr__(self):
         ret = super().__repr__()
         wave = self.table[:129]
         ret += "\n  curve:\n"
-        ret += "   " + "_"*67 + "\n"
-        ret += "  |" + " "*67 + "|\n"
+        ret += "   " + "_" * 67 + "\n"
+        ret += "  |" + " " * 67 + "|\n"
         symbols = "UW"
         symbol_counter = 0
         for i in range(15, -1, -1):
             line = "  |  "
             for k in range(63):
-                vals = wave[2*k:2*k+4]
-                upper = ((max(vals)>>8) + 128) >> 4
-                lower = ((min(vals)>>8) + 128) >> 4
+                vals = wave[2 * k : 2 * k + 4]
+                upper = ((max(vals) >> 8) + 128) >> 4
+                lower = ((min(vals) >> 8) + 128) >> 4
                 if (i >= lower) and (i <= upper):
                     line += symbols[symbol_counter]
                     symbol_counter = (symbol_counter + 1) % len(symbols)
@@ -473,9 +510,20 @@ class _Distortion(_Plugin):
                     line += " "
             line += "  |\n"
             ret += line
-        ret += "  |" + "_"*67 + "|"
+        ret += "  |" + "_" * 67 + "|"
         return ret
-"""
+
+
+@_plugin_set_subclass(172)
+class _PolySqueeze(_Plugin):
+    def __init__(self, channel, plugin_id, bud_num, num_outputs=3, num_inputs=10):
+        if bud_num is None:
+            outs = min(max(num_outputs, 16), 1)
+            ins = min(max(num_inputs, 32), num_outputs)
+            init_var = outs + (ins * 256)
+            super().__init__(channel, plugin_id, init_var=init_var)
+        else:
+            super().__init__(channel, plugin_id, bud_num=bud_num)
 
 
 @_plugin_set_subclass(420)
@@ -516,15 +564,11 @@ class _Osc(_Plugin):
 
 @_plugin_set_subclass(56709)
 class _Sequencer(_Plugin):
-    def __init__(self, channel, plugin_id, bud_num, init_var=None, tracks=4, steps=16):
+    def __init__(self, channel, plugin_id, bud_num, num_tracks=4, num_steps=16):
         if bud_num is None:
-            if init_var is None:
-                self.num_steps = steps % 256
-                self.num_tracks = tracks % 256
-                init_var = (self.num_steps * 256) + (self.num_tracks)
-            else:
-                self.num_tracks = init_var % 256
-                self.num_steps = (init_var // 256) % 256
+            self.num_steps = num_steps % 256
+            self.num_tracks = num_tracks % 256
+            init_var = (self.num_steps * 256) + (self.num_tracks)
 
             super().__init__(channel, plugin_id, init_var=init_var)
 
@@ -593,3 +637,37 @@ class _Sequencer(_Plugin):
             self.trigger_start(track, step)
         else:
             self.trigger_clear(track, step)
+
+    def save_track_pattern(self, track_index):
+        start = track_index * (self.num_steps + 1)
+        stop = start + self.num_steps + 1
+        track = {}
+        table = self.table
+        if self.table[start] == -32767:
+            track["type"] = "trigger"
+        else:
+            track["type"] = "value"
+        track["steps"] = list(table[start + 1 : stop])
+        return track
+
+    def load_track_pattern(self, track, track_index):
+        start = track_index * (self.num_steps + 1)
+        table = self.table_int16_array
+        stop = start + 1 + min(self.num_steps, len(track["steps"]))
+        for i in range(start + 1, stop):
+            x = track["steps"][i - start - 1]
+            assert (x < 32768) and (x > -32768)
+            table[i] = x
+        if track["type"] == "trigger":
+            table[start] = -32767
+        else:
+            table[start] = 32767
+
+    def save_pattern(self):
+        beat = {}
+        beat["tracks"] = [self.save_track_pattern(i) for i in range(self.num_tracks)]
+        return beat
+
+    def load_pattern(self, beat):
+        num_tracks = min(len(beat["tracks"]), self.num_tracks)
+        [self.load_track_pattern(beat["tracks"][i], i) for i in range(num_tracks)]

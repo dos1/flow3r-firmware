@@ -2,7 +2,7 @@
 
 radspa_t * delay_create(uint32_t init_var);
 radspa_descriptor_t delay_desc = {
-    .name = "delay",
+    .name = "delay_static",
     .id = 42069,
     .description = "simple delay with ms input and feedback\n"
                     "init_var: delay buffer length in ms, default 500",

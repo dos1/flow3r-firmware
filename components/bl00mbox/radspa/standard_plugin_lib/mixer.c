@@ -86,7 +86,7 @@ void mixer_run(radspa_t * mixer, uint16_t num_samples, uint32_t render_pass_id){
             for(uint16_t i = 0; i < num_samples; i++){
                 bool invert = data->dc < 0;
                 if(invert) data->dc = -data->dc;
-                data->dc = ((uint64_t) data->dc * (((1<<12) - 1)<<20)) >> 32;
+                data->dc = ((uint64_t) data->dc * (((1UL<<12) - 1)<<20)) >> 32;
                 if(invert) data->dc = -data->dc;
                 data->dc += ret[i];
                 ret[i] -= (data->dc >> 12);
@@ -96,7 +96,7 @@ void mixer_run(radspa_t * mixer, uint16_t num_samples, uint32_t render_pass_id){
                 for(uint16_t i = 0; i < num_samples; i++){
                     bool invert = data->dc < 0;
                     if(invert) data->dc = -data->dc;
-                    data->dc = ((uint64_t) data->dc * (((1<<12) - 1)<<20)) >> 32;
+                    data->dc = ((uint64_t) data->dc * (((1UL<<12) - 1)<<20)) >> 32;
                     if(invert) data->dc = -data->dc;
                     ret[i] = -(data->dc >> 12);
                     ret_init = true;

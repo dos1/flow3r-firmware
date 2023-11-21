@@ -22,13 +22,13 @@ radspa_descriptor_t flanger_desc = {
 #define FLANGER_LEVEL 5
 #define FLANGER_MIX 6
 
-static inline int16_t fixed_point_list_access(int32_t * buf, uint32_t fp_index, uint32_t buf_len){
-    uint32_t index = (fp_index) >> (FIXED_POINT_DIGITS);
+static inline int32_t fixed_point_list_access(int32_t * buf, int32_t fp_index, uint32_t buf_len){
+    int32_t index = (fp_index) >> (FIXED_POINT_DIGITS);
     while(index >= buf_len) index -= buf_len;
-    uint32_t next_index = index + 1;
+    int32_t next_index = index + 1;
     while(next_index >= buf_len) next_index -= buf_len;
 
-    uint32_t subindex = (fp_index) & ((1<<(FIXED_POINT_DIGITS)) - 1);
+    int32_t subindex = (fp_index) & ((1<<(FIXED_POINT_DIGITS)) - 1);
     int32_t ret =  buf[index] * ((1<<(FIXED_POINT_DIGITS)) - subindex);
     ret += (buf[next_index]) * subindex;
     ret = ret >> (FIXED_POINT_DIGITS);
@@ -61,7 +61,7 @@ void flanger_run(radspa_t * flanger, uint16_t num_samples, uint32_t render_pass_
     radspa_signal_t * mix_sig = radspa_signal_get_by_index(flanger, FLANGER_MIX);
 
     int32_t reso = radspa_signal_get_value(reso_sig, 0, render_pass_id);
-    reso = reso << 16;
+    reso = reso << 14;
     int32_t level = radspa_signal_get_value(level_sig, 0, render_pass_id);
     int32_t mix = radspa_signal_get_value(mix_sig, 0, render_pass_id);
     int32_t decay = radspa_signal_get_value(decay_sig, 0, render_pass_id);
@@ -78,9 +78,9 @@ void flanger_run(radspa_t * flanger, uint16_t num_samples, uint32_t render_pass_
         int32_t sgn_decay = decay > 0 ? 1 : -1;
         int32_t abs_decay = decay * sgn_decay;
         if((abs_decay != data->abs_decay_prev) || (manual != data->manual_prev)){
-            int32_t decay_invert = - ((data->read_head_offset * 50) >> FIXED_POINT_DIGITS)/decay;
-            decay_invert += 34614; // magic number
-            data->decay_reso = radspa_sct_to_rel_freq(radspa_clip(decay_invert), 0) >> 1;
+            int32_t decay_invert = - ((data->read_head_offset * 50) >> FIXED_POINT_DIGITS)/abs_decay;
+            decay_invert += 34614 - 4800 - 2400; // magic number
+            data->decay_reso = radspa_sct_to_rel_freq(radspa_clip(decay_invert), 0);
         }
         int32_t tmp = reso + sgn_decay * data->decay_reso;
         if((sgn_decay == 1) && (tmp < reso)){
@@ -103,8 +103,14 @@ void flanger_run(radspa_t * flanger, uint16_t num_samples, uint32_t render_pass_
         while(data->read_head_position < 0) data->read_head_position += VARIABLE_NAME; //underflow
 
         buf[data->write_head_position] = dry;
-        int32_t wet = fixed_point_list_access(buf, data->read_head_position, FLANGER_BUFFER_SIZE) << 1;
-        buf[data->write_head_position] += ((int64_t) wet * reso) >> 32;
+        int32_t wet = fixed_point_list_access(buf, data->read_head_position, FLANGER_BUFFER_SIZE) << 3;
+        bool sgn_wet = wet > 0;
+        bool sgn_reso = reso > 0;
+        if(sgn_wet != sgn_reso){
+            buf[data->write_head_position] -= ((int64_t) (-wet) * reso) >> 32;
+        } else {
+            buf[data->write_head_position] += ((int64_t) wet * reso) >> 32;
+        }
 
         int32_t ret = radspa_add_sat(radspa_mult_shift(dry, dry_vol), radspa_mult_shift(radspa_clip(wet), mix));
         ret = radspa_clip(radspa_gain(ret, level));
