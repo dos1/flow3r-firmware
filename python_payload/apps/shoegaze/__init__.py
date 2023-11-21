@@ -13,7 +13,7 @@ import bl00mbox
 
 import leds
 import random
-
+import math
 import sys_display
 
 chords = [
@@ -52,56 +52,61 @@ class ShoegazeApp(Application):
     def _build_synth(self) -> None:
         if self.blm is None:
             self.blm = bl00mbox.Channel("shoegaze")
-        self.main_lp = self.blm.new(bl00mbox.plugins.lowpass)
-        self.main_fuzz = self.blm.new(bl00mbox.patches.fuzz)
+        self.main_fuzz = self.blm.new(bl00mbox.plugins.distortion)
         self.main_mixer = self.blm.new(bl00mbox.plugins.mixer, 2)
         self.git_strings = [
             self.blm.new(bl00mbox.patches.karplus_strong) for i in range(4)
         ]
         self.bass_string = self.blm.new(bl00mbox.patches.karplus_strong)
         self.git_mixer = self.blm.new(bl00mbox.plugins.mixer, 4)
-        self.git_fuzz = self.blm.new(bl00mbox.patches.fuzz)
-        self.git_delay = self.blm.new(bl00mbox.plugins.delay)
-        self.git_lp = self.blm.new(bl00mbox.plugins.lowpass)
-        self.bass_lp = self.blm.new(bl00mbox.plugins.lowpass)
+        # self.git_mixer.signals.block_dc.switch.ON = True
+        # self.main_mixer.signals.block_dc.switch.ON = True
+        self.git_fuzz = self.blm.new(bl00mbox.plugins.distortion)
+        self.git_delay = self.blm.new(bl00mbox.plugins.delay_static)
 
-        self.git_mixer.signals.input0 = self.git_strings[0].signals.output
-        self.git_mixer.signals.input1 = self.git_strings[1].signals.output
-        self.git_mixer.signals.input2 = self.git_strings[2].signals.output
-        self.git_mixer.signals.input3 = self.git_strings[3].signals.output
+        self.git_lp = self.blm.new(bl00mbox.plugins.filter)
+        self.bass_lp = self.blm.new(bl00mbox.plugins.filter)
+        self.main_lp = self.blm.new(bl00mbox.plugins.filter)
+        self.git_lp.signals.cutoff.freq = 700
+        self.git_lp.signals.reso = 10000
+        self.bass_lp.signals.cutoff.freq = 400
+        self.bass_lp.signals.reso = 12000
+        self.main_lp.signals.cutoff.freq = 2500
+        self.main_lp.signals.reso = 8000
+
+        for i in range(4):
+            self.git_mixer.signals.input[i] = self.git_strings[i].signals.output
+            self.git_strings[i].signals.reso = -2
+            self.git_strings[i].signals.decay = 3000
+        self.bass_string.signals.reso = -2
+        self.bass_string.signals.decay = 1000
+
         self.git_mixer.signals.output = self.git_lp.signals.input
+        self.git_fuzz._special_sauce = 2
         self.git_fuzz.signals.input = self.git_lp.signals.output
+        self.main_mixer.signals.input[0] = self.git_delay.signals.output
 
         self.bass_lp.signals.input = self.bass_string.signals.output
-        self.main_mixer.signals.input1 = self.bass_lp.signals.output
+        self.main_mixer.signals.input[1] = self.bass_lp.signals.output
+        self.main_mixer.signals.input_gain[1].dB = -3
 
+        self.main_fuzz._special_sauce = 2
         self.main_fuzz.signals.input = self.main_mixer.signals.output
         self.main_fuzz.signals.output = self.main_lp.signals.input
         self.main_lp.signals.output = self.blm.mixer
+        self.git_delay.signals.input = self.git_fuzz.signals.output
 
         self.git_delay.signals.time = 200
         self.git_delay.signals.dry_vol = 32767
-        self.git_delay.signals.level = 16767
         self.git_delay.signals.feedback = 27000
 
-        self.git_fuzz.intensity = 8
-        self.git_fuzz.gate = 1500
-        self.git_fuzz.volume = 12000
-        self.git_lp.signals.freq = 700
-        self.git_lp.signals.reso = 2500
-
-        self.bass_lp.signals.freq = 400
-        self.bass_lp.signals.reso = 3000
-        self.main_fuzz.intensity = 8
-        self.main_fuzz.gate = 1500
-        self.main_fuzz.volume = 32000
+        self.main_fuzz.curve_set_power(8, 32000, 1500)
+        self.git_fuzz.curve_set_power(8, 12000, 1500)
 
         self.main_mixer.signals.gain = 2000
-        self.main_lp.signals.reso = 2000
 
         self.bass_lp.signals.gain = 32767
         self.git_lp.signals.gain = 32767
-        self.main_lp.signals.freq = 2500
         self.main_lp.signals.gain = 2000
         self.git_mixer.signals.gain = 4000
         self.main_lp.signals.input = self.main_fuzz.signals.output
@@ -111,10 +116,9 @@ class ShoegazeApp(Application):
         if self.blm is None:
             return
         if self.delay_on:
-            self.git_delay.signals.input = self.git_fuzz.signals.output
-            self.main_mixer.signals.input0 = self.git_delay.signals.output
+            self.git_delay.signals.level = 16767
         else:
-            self.main_mixer.signals.input0 = self.git_fuzz.signals.output
+            self.git_delay.signals.level = 0
 
     def _try_load_settings(self, path):
         try:
@@ -153,7 +157,7 @@ class ShoegazeApp(Application):
             self.chord_index = i
             if self.organ_on and self._organ_chords[i] is not None:
                 tmp = self._organ_chords[i]
-                tmp[0] -= 12
+                # tmp[0] -= 12
                 self.chord = tmp
             else:
                 self.chord = chords[i]
@@ -247,14 +251,12 @@ class ShoegazeApp(Application):
             if petals[i].whole.pressed:
                 self._git_string_tuning[k] = self.chord[k] - 12
                 self.git_strings[k].signals.pitch.tone = self._git_string_tuning[k]
-                self.git_strings[k].decay = 3000
                 self.git_strings[k].signals.trigger.start()
 
             self.git_strings[k].signals.pitch.tone = self._git_string_tuning[k] + detune
 
         if petals[0].whole.pressed:
             self.bass_string.signals.pitch.tone = self.chord[0] - 24
-            self.bass_string.decay = 1000
             self.bass_string.signals.trigger.start()
 
         leds.set_all_rgb(*colours.hsv_to_rgb(self.hue + self._rand_rot * 1.2, 1, 0.7))
