@@ -73,84 +73,78 @@ class GayDrums(Application):
 
         self._bpm_saved = None
         self._steps_saved = None
-        self._seq_table_saved = None
+        self._seq_beat_saved = None
         self._file_settings = None
-
-        self._load_settings()
+        self.settings_path = "/flash/gay_drums.json"
+        self.try_loading = True
 
     def _try_load_settings(self, path):
         try:
             with open(path, "r") as f:
-                return json.load(f)
+                settings = json.load(f)
+                self._file_settings = settings
+                return settings
         except OSError as e:
-            if e.errno != errno.ENOENT:
-                raise  # ignore file not found
-
-    def _try_write_default_settings(self, path: str, default_path: str) -> None:
-        with open(path, "w") as outfile, open(default_path, "r") as infile:
-            outfile.write(infile.read())
+            pass
 
     def _try_save_settings(self, path, settings):
         try:
             with open(path, "w+") as f:
                 f.write(json.dumps(settings))
                 f.close()
+                self._file_settings = settings
         except OSError as e:
-            if e.errno != errno.ENOENT:
-                raise  # ignore file not found
+            pass
 
     def _save_settings(self):
-        default_path = self.app_ctx.bundle_path + "/gay_drums-default.json"
-        settings_path = "/flash/gay_drums.json"
-        settings = self._try_load_settings(default_path)
-        assert settings is not None, "failed to load default settings"
+        if not self.init_complete:
+            return
 
         file_difference = False
-        for i, beat in enumerate(settings["beats"]):
-            beat["bpm"] = self.bpm
-            beat["steps"] = self.steps
-            beat["sequencer_table"] = self.seq.plugins.seq.table
+        settings = {}
+        beat = {}
+        settings["beats"] = [beat]
+        beat["bpm"] = self.bpm
+        beat["steps"] = self.steps
+        beat["pattern"] = self.tracks_dump_pattern()
 
-            if self._file_settings is None:
-                file_difference = True
-            else:
-                file_beat = self._file_settings["beats"][i]
-                for i in beat:
-                    if beat.get(i) != file_beat.get(i):
-                        file_difference = True
-                        break
+        if self._file_settings is None:
+            file_difference = True
+        else:
+            file_beat = self._file_settings["beats"][0]
+            for i in beat:
+                if beat.get(i) != file_beat.get(i):
+                    file_difference = True
+                    break
         if file_difference:
-            self._try_save_settings(settings_path, settings)
-            self._file_settings = settings
+            self._try_save_settings(self.settings_path, settings)
 
     def _load_settings(self):
-        default_path = self.app_ctx.bundle_path + "/gay_drums-default.json"
-        settings_path = "/flash/gay_drums.json"
+        settings = self._try_load_settings(self.settings_path)
 
-        settings = self._try_load_settings(default_path)
-        assert settings is not None, "failed to load default settings"
-
-        user_settings = self._try_load_settings(settings_path)
-
-        if user_settings is None:
-            self._try_write_default_settings(settings_path, default_path)
-            self._file_settings = settings
+        if settings is None:
             self.stopped = False
-        else:
-            settings.update(user_settings)
-            self._file_settings = user_settings
-            for i, beat in enumerate(settings["beats"]):
-                if self.blm is None:
-                    self._bpm_saved = beat["bpm"]
-                    self._steps_saved = beat["steps"]
-                    self._seq_table_saved = beat["sequencer_table"]
-                else:
-                    self.bpm = beat["bpm"]
-                    if not self.stopped:
-                        self.seq.signals.bpm.value = self.bpm
-                    self.steps = beat["steps"]
-                    self.seq.plugins.seq.table = beat["sequencer_table"]
-                    self._tracks_empty = self.tracks_are_empty()
+        elif self.blm is not None:
+            beat = settings["beats"][0]
+            if "sequencer_table" in beat:
+                # legacy support
+                a = beat["sequencer_table"]
+                pattern = {}
+                tracks = []
+                for i in range(8):
+                    track = {}
+                    track["type"] = "trigger"
+                    track["steps"] = a[(33 * i) + 1 : 33 * (i + 1)]
+                    tracks += [track]
+                pattern["tracks"] = tracks
+                self.seq.load_pattern(pattern)
+            else:
+                self.tracks_load_pattern(beat["pattern"])
+            self.bpm = beat["bpm"]
+            if not self.stopped:
+                self.seq.signals.bpm.value = self.bpm
+            self.steps = beat["steps"]
+            self._tracks_empty = self.tracks_are_empty()
 
     @property
     def steps(self):
@@ -167,7 +161,10 @@ class GayDrums(Application):
     def iterate_loading(self) -> Iterator[Tuple[int, str]]:
         if self.blm is None:
             self.blm = bl00mbox.Channel("gay drums")
-        self.seq = self.blm.new(bl00mbox.patches.sequencer, num_tracks=8, num_steps=32)
+        self.seq = self.blm.new(bl00mbox.plugins.sequencer, 8, 32)
+        if self.try_loading:
+            self._load_settings()
+            self.try_loading = False
 
         if self._bpm_saved is None:
             bpm = 80
@@ -182,8 +179,8 @@ class GayDrums(Application):
         self.seq.signals.bpm = bpm
         self.bpm = self.seq.signals.bpm.value
 
-        if self._seq_table_saved is not None:
-            self.seq.plugins.seq.table = self._seq_table_saved
+        if self._seq_beat_saved is not None:
+            self.tracks_load_pattern(self._seq_beat_saved)
             self._tracks_empty = self.tracks_are_empty()
         if self.stopped:
             self.seq.signals.bpm = 0
@@ -192,35 +189,50 @@ class GayDrums(Application):
             self.blm.foreground = False
 
         yield 0, "kick.wav"
-        self.nya = self.blm.new(bl00mbox.patches.sampler, "nya.wav")
-        self.nya.signals.output = self.blm.mixer
-        self.nya.signals.trigger = self.seq.plugins.seq.signals.track6
-        self.kick = self.blm.new(bl00mbox.patches.sampler, "kick.wav")
-        self.kick.signals.output = self.blm.mixer
-        self.kick.signals.trigger = self.seq.plugins.seq.signals.track0
+        self.nya = self.blm.new(bl00mbox.plugins.sampler, "/flash/sys/samples/nya.wav")
+        self.nya.signals.playback_output = self.blm.mixer
+        self.nya.signals.playback_trigger = self.seq.signals.track[6]
+        self.kick = self.blm.new(
+            bl00mbox.plugins.sampler, "/flash/sys/samples/kick.wav"
+        )
+        self.kick.signals.playback_output = self.blm.mixer
+        self.kick.signals.playback_trigger = self.seq.signals.track[0]
         yield 1, "hihat.wav"
-        self.woof = self.blm.new(bl00mbox.patches.sampler, "bark.wav")
-        self.woof.signals.output = self.blm.mixer
-        self.woof.signals.trigger = self.seq.plugins.seq.signals.track7
-        self.hat = self.blm.new(bl00mbox.patches.sampler, "hihat.wav")
-        self.hat.signals.output = self.blm.mixer
-        self.hat.signals.trigger = self.seq.plugins.seq.signals.track1
+        self.woof = self.blm.new(
+            bl00mbox.plugins.sampler, "/flash/sys/samples/bark.wav"
+        )
+        self.woof.signals.playback_output = self.blm.mixer
+        self.woof.signals.playback_trigger = self.seq.signals.track[7]
+        self.hat = self.blm.new(
+            bl00mbox.plugins.sampler, "/flash/sys/samples/hihat.wav"
+        )
+        self.hat.signals.playback_output = self.blm.mixer
+        self.hat.signals.playback_trigger = self.seq.signals.track[1]
         yield 2, "close.wav"
-        self.close = self.blm.new(bl00mbox.patches.sampler, "close.wav")
-        self.close.signals.output = self.blm.mixer
-        self.close.signals.trigger = self.seq.plugins.seq.signals.track2
+        self.close = self.blm.new(
+            bl00mbox.plugins.sampler, "/flash/sys/samples/close.wav"
+        )
+        self.close.signals.playback_output = self.blm.mixer
+        self.close.signals.playback_trigger = self.seq.signals.track[2]
         yield 3, "open.wav"
-        self.open = self.blm.new(bl00mbox.patches.sampler, "open.wav")
-        self.open.signals.output = self.blm.mixer
-        self.open.signals.trigger = self.seq.plugins.seq.signals.track3
+        self.open = self.blm.new(
+            bl00mbox.plugins.sampler, "/flash/sys/samples/open.wav"
+        )
+        self.open.signals.playback_output = self.blm.mixer
+        self.open.signals.playback_trigger = self.seq.signals.track[3]
         yield 4, "snare.wav"
-        self.snare = self.blm.new(bl00mbox.patches.sampler, "snare.wav")
-        self.snare.signals.output = self.blm.mixer
-        self.snare.signals.trigger = self.seq.plugins.seq.signals.track4
+        self.snare = self.blm.new(
+            bl00mbox.plugins.sampler, "/flash/sys/samples/snare.wav"
+        )
+        self.snare.signals.playback_output = self.blm.mixer
+        self.snare.signals.playback_trigger = self.seq.signals.track[4]
         yield 5, "crash.wav"
-        self.crash = self.blm.new(bl00mbox.patches.sampler, "crash.wav")
-        self.crash.signals.output = self.blm.mixer
-        self.crash.signals.trigger = self.seq.plugins.seq.signals.track5
+        self.crash = self.blm.new(
+            bl00mbox.plugins.sampler, "/flash/sys/samples/crash.wav"
+        )
+        self.crash.signals.playback_output = self.blm.mixer
+        self.crash.signals.playback_speed.tone = 2
+        self.crash.signals.playback_trigger = self.seq.signals.track[5]
         yield 6, ""
 
     def _highlight_petal(self, num: int, r: int, g: int, b: int) -> None:
@@ -272,6 +284,26 @@ class GayDrums(Application):
                     return False
         return True
 
+    def tracks_dump_pattern(self):
+        tracks = [None] * 6
+        for t in range(6):
+            track = {}
+            steps = [0] * 16
+            for s in range(16):
+                steps[s] = self.track_get_state(t, s)
+            track["steps"] = steps
+            track["name"] = self.track_names[t]
+            tracks[t] = track
+        beat = {}
+        beat["tracks"] = tracks
+        return beat
+
+    def tracks_load_pattern(self, beat):
+        for track in range(6):
+            steps = beat["tracks"][track]["steps"]
+            for step in range(16):
+                self.track_set_state(track, step, steps[step])
+
     def track_get_state(self, track: int, step: int) -> int:
         sequencer_track = track
         if track > 1:
@@ -295,6 +327,14 @@ class GayDrums(Application):
                 return 1
             else:
                 return 2
+
+    def track_set_state(self, track, step, state):
+        # lol
+        last = self.track_get_state(track, step)
+        while self.track_get_state(track, step) != state:
+            self.track_incr_state(track, step)
+            if last == self.track_get_state(track, step):
+                break
 
     def track_incr_state(self, track: int, step: int) -> None:
         sequencer_track = track
@@ -329,12 +369,20 @@ class GayDrums(Application):
                     step += 16
         else:
             state = self.seq.trigger_state(sequencer_track, step)
-            if state == 0:
-                new_state = 16000
-            elif state == 32767:
-                new_state = 0
+            if track == 3:
+                if state == 0:
+                    new_state = 10000
+                elif state > 16500:
+                    new_state = 0
+                else:
+                    new_state = 20000
             else:
-                new_state = 32767
+                if state == 0:
+                    new_state = 16000
+                elif state == 32767:
+                    new_state = 0
+                else:
+                    new_state = 32767
             self.seq.trigger_start(sequencer_track, step, new_state)
             self.seq.trigger_start(sequencer_track, step + 16, new_state)
 
@@ -611,7 +659,7 @@ class GayDrums(Application):
             self.ct_prev = ins.captouch
             return
 
-        st = self.seq.signals.step.value
+        st = self.seq.signals.step.value % 16
         rgb = self._track_col(self.track)
         leds.set_all_rgb(0, 0, 0)
         self._highlight_petal(10 - (4 - (st // 4)), *rgb)
@@ -732,7 +780,7 @@ class GayDrums(Application):
         self._bpm_saved = self.bpm
         self._steps_saved = self.steps
         self._save_settings()
-        self._seq_table_saved = self.seq.plugins.seq.table
+        self._seq_beat_saved = self.tracks_dump_pattern()
         if self.tracks_are_empty() or self.stopped:
             self.blm.background_mute_override = False
             self.blm.clear()
