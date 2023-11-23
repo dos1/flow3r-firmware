@@ -112,7 +112,7 @@ class CapTouchDemo(Application):
                 ctx.text("down: start 3s countdown")
                 pos += 20
                 ctx.move_to(0, pos)
-                ctx.text("left/right: canel")
+                ctx.text("left/right: cancel")
             elif self.state == 2:
                 ctx.text("calibrating in " + str(1 + int(self.timer / 1000)))
             elif self.state == 3:
