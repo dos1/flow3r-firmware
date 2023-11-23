@@ -252,7 +252,7 @@ class Pressable:
         """
         True if the button is held down, after first being pressed.
         """
-        return self.state == self.DOWN
+        return self.state in (self.DOWN, self.REPEATED)
 
     @property
     def up(self) -> bool:
