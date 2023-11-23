@@ -1,7 +1,8 @@
 from st3m import logging
 from st3m.application import Application, ApplicationContext
-from st3m.goose import List
+from st3m.goose import List, Optional
 from st3m.input import InputState
+from st3m.ui.view import ViewManager
 from ctx import Context
 
 log = logging.Log(__name__, level=logging.INFO)
