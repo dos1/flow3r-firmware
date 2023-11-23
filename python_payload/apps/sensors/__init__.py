@@ -48,6 +48,9 @@ class App(Application):
         self.data_exists = False
         self.rotate = 0
         self.alt_smooth = None
+        self.rot_velo = 0
+        self.rot_mass = 2
+        self.rot_friction = 0.93
 
     def draw_background(self, ctx):
         ctx.rgb(0, 0, 0).rectangle(-120, -120, 240, 240).fill()
@@ -106,16 +109,21 @@ class App(Application):
         damp = 0.69
 
         if self.data_exists:
-            inc = inclination(self.acc)
-            if (inc > 0.3) and (inc < 3.11):
-                delta = azimuth(self.acc) - self.rotate
-                if delta > 3.14:
-                    delta -= 6.28
-                elif delta < -3.14:
-                    delta += 6.28
-                self.rotate += (1 - damp) * delta
+            inc = inclination(self.acc) / 3.14
+            delta = azimuth(self.acc) - self.rotate
+            if delta > 3.14:
+                delta -= 6.28
+            elif delta < -3.14:
+                delta += 6.28
+            delta /= 3.14  # normalize to 1
+            if delta > 0:
+                self.rot_velo += delta * (1 - delta) * inc * (1 - inc)
             else:
-                self.rotate *= damp
+                delta = -delta
+                self.rot_velo -= delta * (1 - delta) * inc * (1 - inc)
+            self.rotate += self.rot_velo / self.rot_mass
+            self.rotate = self.rotate % 6.28
+            self.rot_velo *= self.rot_friction
             ctx.rotate(-self.rotate)
 
         if self.draw_background_request > 0:
