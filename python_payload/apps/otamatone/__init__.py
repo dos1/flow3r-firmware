@@ -98,7 +98,6 @@ class Otamatone(Application):
             [400, 1920, 2560],
             [280, 2250, 2890],
         ]
-        self.input.captouch.petals[self.PETAL_NO].whole.repeat_disable()
 
     def _build_synth(self):
         if self._blm is None:
