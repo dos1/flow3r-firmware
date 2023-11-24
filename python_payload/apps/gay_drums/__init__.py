@@ -319,14 +319,12 @@ class GayDrums(Application):
                 return 0
         else:
             state = self.seq.trigger_state(sequencer_track, step)
-            if state == 0:
+            if state <= 0:
                 return 0
-            elif state == 32767:
-                return 3
-            elif state < 16384:
+            elif state < 17000:
                 return 1
             else:
-                return 2
+                return 3
 
     def track_set_state(self, track, step, state):
         # lol
@@ -368,23 +366,27 @@ class GayDrums(Application):
                     self.seq.trigger_clear(3, step)
                     step += 16
         else:
-            state = self.seq.trigger_state(sequencer_track, step)
+            state = self.track_get_state(track, step)
             if track == 3:
                 if state == 0:
                     new_state = 10000
-                elif state > 16500:
-                    new_state = 0
-                else:
+                elif state == 1:
                     new_state = 20000
+                else:
+                    new_state = 0
             else:
                 if state == 0:
                     new_state = 16000
-                elif state == 32767:
-                    new_state = 0
-                else:
+                elif state == 1:
                     new_state = 32767
-            self.seq.trigger_start(sequencer_track, step, new_state)
-            self.seq.trigger_start(sequencer_track, step + 16, new_state)
+                else:
+                    new_state = 0
+            if new_state <= 0:
+                self.seq.trigger_clear(sequencer_track, step)
+                self.seq.trigger_clear(sequencer_track, step + 16)
+            else:
+                self.seq.trigger_start(sequencer_track, step, new_state)
+                self.seq.trigger_start(sequencer_track, step + 16, new_state)
 
     def draw_track_step_marker(self, ctx: Context, data: Tuple[int, int]) -> None:
         track, step = data
