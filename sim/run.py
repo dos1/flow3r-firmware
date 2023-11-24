@@ -115,6 +115,7 @@ os.listdir = _mkmock(os.listdir)
 os.stat = _mkmock(os.stat)
 os.statvfs = _mkmock(os.statvfs)
 os.mkdir = _mkmock(os.mkdir)
+os.unlink = _mkmock(os.unlink)
 builtins.open = _mkmock(builtins.open)
 
 orig_stat = os.stat
