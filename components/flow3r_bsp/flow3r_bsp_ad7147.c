@@ -268,7 +268,7 @@ esp_err_t flow3r_bsp_ad7147_chip_init(ad7147_chip_t *chip,
     if ((ret = ad7147_hw_init(&chip->dev, address, _on_data, chip)) != ESP_OK) {
         return ret;
     }
-    // _calibration_request(chip);
+    _calibration_request(chip);
     if ((ret = _sequence_request(chip, false)) != ESP_OK) {
         return ret;
     }
