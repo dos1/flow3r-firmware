@@ -175,13 +175,35 @@ All printf() (and other stdio) calls will be piped to the default Micropython RE
 
 If you're debugging the USB stack, or want to see Guru Meditation crashes, connect to UART0 over the USB-C connector's sideband pins (**TODO**: link to flow3rpot).
 
-You can also disable the USB stack and make the badge stay in UART/JTAG mode: **TODO: issue 23**. Then, you can use openocd/gdb:
+gdb Debugging
+-------------
+
+You can also disable the TinyUSB stack and make the badge stay in UART/JTAG mode:
+
+``idf.py menuconfig`` -> Component config -> debug config -> usb gdb mode
+
+Console output (including REPL) is not currently implemented in this mode.
+
+Do a clean build with ``rm -r build; idf.py app-flash``
+
+In one terminal:
 
 ::
-	
-	$ OPENOCD_COMMANDS="-f board/esp32s3-builtin.cfg" idf.py opencod
 
-*TODO: document how to start gdb*
+	$ OPENOCD_COMMANDS="-f board/esp32s3-builtin.cfg" idf.py openocd
+
+In another terminal:
+
+::
+
+	$ idf.py gdb
+
+If experiencing issues with ctrl-c, try calling gdb directly (reusing the ``build/gdbinit/gdbinit`` created by the above command)
+
+::
+
+	$ xtensa-esp32s3-elf-gdb -x build/gdbinit/gdbinit build/flow3r.elf
+
 
 Porting Doom (or other alternate firmware)
 ------------------------------------------
