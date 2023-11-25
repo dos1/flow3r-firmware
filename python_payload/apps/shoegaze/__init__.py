@@ -59,8 +59,8 @@ class ShoegazeApp(Application):
         ]
         self.bass_string = self.blm.new(bl00mbox.patches.karplus_strong)
         self.git_mixer = self.blm.new(bl00mbox.plugins.mixer, 4)
-        # self.git_mixer.signals.block_dc.switch.ON = True
-        # self.main_mixer.signals.block_dc.switch.ON = True
+        self.git_mixer.signals.block_dc.switch.ON = True
+        self.main_mixer.signals.block_dc.switch.ON = True
         self.git_fuzz = self.blm.new(bl00mbox.plugins.distortion)
         self.git_delay = self.blm.new(bl00mbox.plugins.delay_static)
 
@@ -101,14 +101,11 @@ class ShoegazeApp(Application):
         self.git_delay.signals.feedback = 27000
 
         self.main_fuzz.curve_set_power(8, 32000, 1500)
-        self.git_fuzz.curve_set_power(8, 12000, 1500)
-
-        self.main_mixer.signals.gain = 2000
+        self.git_fuzz.curve_set_power(9, 12000, 750)
 
         self.bass_lp.signals.gain = 32767
         self.git_lp.signals.gain = 32767
         self.main_lp.signals.gain = 2000
-        self.git_mixer.signals.gain = 4000
         self.main_lp.signals.input = self.main_fuzz.signals.output
         self._update_connections()
 
