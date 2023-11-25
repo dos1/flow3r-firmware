@@ -182,7 +182,7 @@ class Reader(ActionView):
             if y > 120 + line_height or y < -120 - line_height:
                 continue
             ctx.move_to(x, y)
-            ctx.text(line)
+            ctx.text(line[:10240])
 
         ctx.restore()
 
