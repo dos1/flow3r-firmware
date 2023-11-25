@@ -83,7 +83,7 @@ class UpdaterApp(Application):
         self._sd_failed = False
 
         if self._sd_present:
-            self._state_text = "getting latest version..."
+            self._state_text = "getting latest version...\n\n(check your connection\nif you're stuck here)"
 
             if not st3m.wifi.enabled() or (
                 not st3m.wifi.is_connected() and not st3m.wifi.is_connecting()
@@ -145,7 +145,7 @@ class UpdaterApp(Application):
             latest_version_number = self.version_to_number(
                 self.selected_version["tag"].replace("v", "")
             )
-            self._state_text = f"latest version: {self.selected_version['name']}"
+            self._state_text = f"latest version: \n{self.selected_version['name']}"
             if latest_version_number > self._firmware_version_number:
                 self._state_text += (
                     "\n\npress app shoulder button\nto start downloading"
