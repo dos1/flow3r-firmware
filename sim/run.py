@@ -111,11 +111,25 @@ def _mkmock(fun):
     return _wrap
 
 
+def _mkmock2(fun):
+    orig = fun
+
+    def _wrap(path1, path2, *args, **kwargs):
+        path1 = _path_replace(path1)
+        path2 = _path_replace(path2)
+        return orig(path1, path2, *args, **kwargs)
+
+    return _wrap
+
+
 os.listdir = _mkmock(os.listdir)
+os.rename = _mkmock2(os.rename)
 os.stat = _mkmock(os.stat)
 os.statvfs = _mkmock(os.statvfs)
 os.mkdir = _mkmock(os.mkdir)
+os.rmdir = _mkmock(os.rmdir)
 os.unlink = _mkmock(os.unlink)
+os.remove = _mkmock(os.remove)
 builtins.open = _mkmock(builtins.open)
 
 orig_stat = os.stat
