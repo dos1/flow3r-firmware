@@ -289,9 +289,13 @@ class TinySampler(Application):
             return
         if self.input.buttons.app.left.pressed:
             self.mode -= 1
+            if self.mode == 3:
+                self.mode -= 1
             release_all = True
         elif self.input.buttons.app.right.pressed:
             self.mode += 1
+            if self.mode == 3:
+                self.mode += 1
             release_all = True
         else:
             release_all = False
