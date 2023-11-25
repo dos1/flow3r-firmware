@@ -174,8 +174,16 @@ class Reader(ActionView):
             ctx.font_size = 32
         else:
             ctx.font_size = 16
-        ctx.move_to(self.viewport_offset[0], self.viewport_offset[1])
-        ctx.text(f"{self.content}")
+
+        line_height = ctx.font_size
+
+        for i, line in enumerate(self.content):
+            x, y = self.viewport_offset[0], self.viewport_offset[1] + i * line_height
+            if y > 120 + line_height or y < -120 - line_height:
+                continue
+            ctx.move_to(x, y)
+            ctx.text(line)
+
         ctx.restore()
 
     def _draw_media(self, ctx: Context) -> None:
@@ -195,7 +203,7 @@ class Reader(ActionView):
     def _read_file(self) -> None:
         try:
             with open(self.path, "r", encoding="utf-8") as f:
-                self.content = f.read()
+                self.content = f.readlines()
         except:
             self.has_error = True
 
