@@ -26,6 +26,7 @@ User manual
    badge/assembly.rst
    badge/mods.rst
    badge/usage.rst
+   badge/updating_firmware.rst
 
 .. toctree::
    :maxdepth: 1

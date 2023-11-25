@@ -75,7 +75,7 @@ This is the SPI flash partition layout we use:
 | ``vfs``      | 12MiB  | FAT32 filesystem (with [#WL]_ layer). |
 +--------------+--------+---------------------------------------+
 
-
+.. [#WL] Wear leveling, to protect internal flash from death by repeat sector write.
 
 Accessing files from a PC
 -------------------------
@@ -203,11 +203,7 @@ Instructions on how to run ``esptool.py`` are given with every firmware update r
 Updating Firmware
 -----------------
 
-Download a `release <https://git.flow3r.garden/flow3r/flow3r-firmware/-/releases>`_, extract the tarball and follow instructions in the README. There will be notes on how to perform updates through either :ref:`Disk Mode`, `Recovery Mode`_ or through a low-level flash_.
-
-Or, if you're at CCCamp2023, visit our firmware update station, once it is availble.
-
-.. [#WL] Wear leveling, to protect internal flash from death by repeat sector write.
+(Moved to :ref:`its own section <updating_firmware>`)
 
 Versioning
 ----------
