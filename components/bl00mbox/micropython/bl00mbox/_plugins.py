@@ -478,13 +478,11 @@ class _Distortion(_Plugin):
             return
         table = [0] * 129
         for x, num in enumerate(table):
-            position = x * points_size / 129
+            position = x * (points_size - 1) / 129
             lower = int(position)
             lerp = position - lower
             if position < points_size - 1:
-                table[x] = int(
-                    (1 - lerp) * points[position] + lerp * points[position + 1]
-                )
+                table[x] = int((1 - lerp) * points[lower] + lerp * points[lower + 1])
             else:
                 table[x] = int(points[points_size - 1])
         self.table = table
