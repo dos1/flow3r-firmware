@@ -48,9 +48,16 @@ There are three ways to install this firmware to your badge:
 If you have a web browser which supports WebSerial, you can connect your badge
 to your computer then navigate to:
 
-  https://flash.flow3r.garden/?v=${version}
+  https://flow3r.garden/flasher/
 
-// Option 2: Update via the badge
+// Option 2: Update via updat3r
+
+Since firmware v1.3.0, there is a built-in wifi updater.
+
+Ensure wifi is connected, and then go to Settings -> Check For Updates and
+follow the instructions.
+
+// Option 3: Update via the badge
 
 Put your badge into SD Card Disk Mode: either by selecting 'Disk Mode (SD)'
 from the badge's System menu, or by rebooting into Recovery Mode (by holding
@@ -62,14 +69,14 @@ Now, with the badge connected to a computer, you should see a USB Mass Storage
 Then, stop disk mode, and from the Recovery Mode (boot the badge with the right
 trigger pushed down), select 'Flash Firmware Image', then flow3r.bin.
 
-// Option 3: Update using esptool.py
+// Option 4: Update using esptool.py
 
-You can also fully flash the badge, meaning you can update it even if its
-firmware is totally bricked. To do that, start the badge in bootrom mode (this
-is different from recovery mode!) by holding down the left trigger while
-powering it up.
+You can also fully flash the badge from the commandline. To do that, start the
+badge in bootloader mode (this is different from recovery mode!) by holding
+down the left trigger while powering it up.
 
-Then, run esptool.py with the following arguments:
+Extract the .bin files from a release tarball, and run esptool.py with the
+following arguments:
 
     esptool.py -p /dev/ttyACM0 -b 460800 \\
         --before default_reset --after no_reset --chip esp32s3 \\
