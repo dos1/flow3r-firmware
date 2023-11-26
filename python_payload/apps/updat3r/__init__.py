@@ -35,7 +35,10 @@ class UpdaterApp(Application):
         ctx.font_size = 15
         ctx.move_to(0, -90)
         ctx.text("you are running")
-        ctx.font_size = 25
+        if len(self._firmware_version) > 10:
+            ctx.font_size = 18
+        else:
+            ctx.font_size = 25
         ctx.move_to(0, -70)
         ctx.text(self._firmware_version)
 
@@ -62,8 +65,14 @@ class UpdaterApp(Application):
     def version_to_number(self, version: str):
         if "dev" in version:
             return 0
+
         major, minor, patch = version.split(".")
-        version_number = (int(major) * 1000000) + (int(major) * 1000) + int(patch)
+
+        try:
+            version_number = (int(major) * 1000000) + (int(major) * 1000) + int(patch)
+        except ValueError:
+            return 0
+
         return version_number
 
     def on_enter(self, vm: Optional[ViewManager]):

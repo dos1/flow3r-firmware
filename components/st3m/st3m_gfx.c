@@ -902,7 +902,7 @@ void st3m_gfx_show_textview(st3m_gfx_textview_t *tv) {
     // Draw version.
     ctx_font_size(ctx, 15.0);
     ctx_gray(ctx, 0.6);
-    ctx_move_to(ctx, 0, 100);
+    ctx_move_to(ctx, 0, 90);
     ctx_text(ctx, st3m_version);
 
     ctx_restore(ctx);
