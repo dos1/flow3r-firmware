@@ -57,7 +57,7 @@ Since firmware v1.3.0, there is a built-in wifi updater.
 Ensure wifi is connected, and then go to Settings -> Check For Updates and
 follow the instructions.
 
-// Option 3: Update via the badge
+// Option 3: Update via USB mass storage
 
 Put your badge into SD Card Disk Mode: either by selecting 'Disk Mode (SD)'
 from the badge's System menu, or by rebooting into Recovery Mode (by holding
